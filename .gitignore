@@ -40,6 +40,8 @@ COOJA.testlog
 *.cc26x0-cc13x0
 *.z1
 *.zoul
+*.iotlab
+*.nrf52840
 
 # do not ignore platform makefiles
 !Makefile.cc2538dk
