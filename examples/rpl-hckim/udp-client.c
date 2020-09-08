@@ -1,6 +1,6 @@
 #include "contiki.h"
 #include "net/routing/routing.h"
-#include "random.h"
+#include "lib/random.h"
 #include "net/netstack.h"
 #include "net/ipv6/simple-udp.h"
 
