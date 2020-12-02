@@ -55,6 +55,9 @@
 #define LOG_MODULE "TCP/IP"
 #define LOG_LEVEL LOG_LEVEL_TCPIP
 
+// HCK log
+static uint16_t tcpip_fw_ok_count;
+
 #ifdef UIP_FALLBACK_INTERFACE
 extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;
 #endif
@@ -731,9 +734,11 @@ send_packet:
     linkaddr = NULL;
   }
 
-  LOG_INFO("output: sending to ");
+  // LOG_INFO("output: sending to "); // original log
+  LOG_INFO("HCK fwo|%u output: sending to ", ++tcpip_fw_ok_count);
   LOG_INFO_LLADDR((linkaddr_t *)linkaddr);
   LOG_INFO_("\n");
+
   tcpip_output(linkaddr);
 
   if(nbr) {

@@ -173,7 +173,8 @@ uip_sr_update_node(void *graph, const uip_ipaddr_t *child, const uip_ipaddr_t *p
     child_node->parent = parent_node;
   }
 
-  LOG_INFO("NS: updating link, child ");
+  // LOG_INFO("NS: updating link, child "); // original log
+  LOG_INFO("HCK child|%u NS: updating link, child ", num_nodes);
   LOG_INFO_6ADDR(child);
   LOG_INFO_(", parent ");
   LOG_INFO_6ADDR(parent);

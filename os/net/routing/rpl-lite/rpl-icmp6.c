@@ -56,6 +56,16 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
+// HCK log - RPL control messages
+static uint16_t dis_input_count;
+static uint16_t dis_output_count;
+static uint16_t dio_input_count;
+static uint16_t dio_output_count;
+static uint16_t dao_input_count;
+static uint16_t dao_output_count;
+static uint16_t dao_ack_input_count;
+static uint16_t dao_ack_output_count;
+
 /*---------------------------------------------------------------------------*/
 #define RPL_DIO_GROUNDED                 0x80
 #define RPL_DIO_MOP_SHIFT                3
@@ -136,7 +146,8 @@ dis_input(void)
     goto discard;
   }
 
-  LOG_INFO("received a DIS from ");
+  // LOG_INFO("received a DIS from "); // original log
+  LOG_INFO("HCK dis_i|%u received a DIS from ", ++dis_input_count);
   LOG_INFO_6ADDR(&UIP_IP_BUF->srcipaddr);
   LOG_INFO_("\n");
 
@@ -161,7 +172,8 @@ rpl_icmp6_dis_output(uip_ipaddr_t *addr)
     addr = &rpl_multicast_addr;
   }
 
-  LOG_INFO("sending a DIS to ");
+  // LOG_INFO("sending a DIS to "); // original log
+  LOG_INFO("HCK dis_o|%u sending a DIS to ", ++dis_output_count);
   LOG_INFO_6ADDR(addr);
   LOG_INFO_("\n");
 
@@ -312,11 +324,16 @@ dio_input(void)
     }
   }
 
+/* original log
   LOG_INFO("received a %s-DIO from ",
+      uip_is_addr_mcast(&UIP_IP_BUF->destipaddr) ? "multicast" : "unicast");
+ */
+  LOG_INFO("HCK dio_i|%u received a %s-DIO from ", ++dio_input_count,
       uip_is_addr_mcast(&UIP_IP_BUF->destipaddr) ? "multicast" : "unicast");
   LOG_INFO_6ADDR(&from);
   LOG_INFO_(", instance_id %u, DAG ID ", (unsigned)dio.instance_id);
   LOG_INFO_6ADDR(&dio.dag_id);
+
   LOG_INFO_(", version %u, dtsn %u, rank %u\n",
          (unsigned)dio.version,
          (unsigned)dio.dtsn,
@@ -442,7 +459,12 @@ rpl_icmp6_dio_output(uip_ipaddr_t *uc_addr)
     addr = addr != NULL ? addr : &rpl_multicast_addr;
   }
 
+/* original log
   LOG_INFO("sending a %s-DIO with rank %u to ",
+         uc_addr != NULL ? "unicast" : "multicast",
+         (unsigned)curr_instance.dag.rank);
+ */
+  LOG_INFO("HCK dio_o|%u sending a %s-DIO with rank %u to ", ++dio_output_count,
          uc_addr != NULL ? "unicast" : "multicast",
          (unsigned)curr_instance.dag.rank);
   LOG_INFO_6ADDR(addr);
@@ -525,7 +547,8 @@ dao_input(void)
   }
 
   /* Destination Advertisement Object */
-  LOG_INFO("received a %sDAO from ", dao.lifetime == 0 ? "No-path " : "");
+  // LOG_INFO("received a %sDAO from ", dao.lifetime == 0 ? "No-path " : ""); // original log
+  LOG_INFO("HCK dao_i|%u received a %sDAO from ", ++dao_input_count, dao.lifetime == 0 ? "No-path " : "");
   LOG_INFO_6ADDR(&UIP_IP_BUF->srcipaddr);
   LOG_INFO_(", seqno %u, lifetime %u, prefix ", dao.sequence, dao.lifetime);
   LOG_INFO_6ADDR(&dao.prefix);
@@ -604,7 +627,13 @@ rpl_icmp6_dao_output(uint8_t lifetime)
   memcpy(buffer + pos, ((const unsigned char *)parent_ipaddr) + 8, 8); /* Interface identifier */
   pos += 8;
 
+/* original log
   LOG_INFO("sending a %sDAO seqno %u, tx count %u, lifetime %u, prefix ",
+         lifetime == 0 ? "No-path " : "",
+         curr_instance.dag.dao_last_seqno, curr_instance.dag.dao_transmissions, lifetime);
+ */
+  LOG_INFO("HCK dao_o|%u sending a %sDAO seqno %u, tx count %u, lifetime %u, prefix ",
+         ++dao_output_count,
          lifetime == 0 ? "No-path " : "",
          curr_instance.dag.dao_last_seqno, curr_instance.dag.dao_transmissions, lifetime);
   LOG_INFO_6ADDR(prefix);
@@ -638,7 +667,13 @@ dao_ack_input(void)
     goto discard;
   }
 
+/*
   LOG_INFO("received a DAO-%s with seqno %d (%d %d) and status %d from ",
+         status < RPL_DAO_ACK_UNABLE_TO_ACCEPT ? "ACK" : "NACK", sequence,
+         curr_instance.dag.dao_last_seqno, curr_instance.dag.dao_last_seqno, status);
+ */
+  LOG_INFO("HCK daoA_i|%u received a DAO-%s with seqno %d (%d %d) and status %d from ",
+         ++dao_ack_input_count,
          status < RPL_DAO_ACK_UNABLE_TO_ACCEPT ? "ACK" : "NACK", sequence,
          curr_instance.dag.dao_last_seqno, curr_instance.dag.dao_last_seqno, status);
   LOG_INFO_6ADDR(&UIP_IP_BUF->srcipaddr);
@@ -664,7 +699,12 @@ rpl_icmp6_dao_ack_output(uip_ipaddr_t *dest, uint8_t sequence, uint8_t status)
   buffer[2] = sequence;
   buffer[3] = status;
 
+/*
   LOG_INFO("sending a DAO-%s seqno %d to ",
+          status < RPL_DAO_ACK_UNABLE_TO_ACCEPT ? "ACK" : "NACK", sequence);
+ */
+  LOG_INFO("HCK daoA_o|%u sending a DAO-%s seqno %d to ",
+          ++dao_ack_output_count,
           status < RPL_DAO_ACK_UNABLE_TO_ACCEPT ? "ACK" : "NACK", sequence);
   LOG_INFO_6ADDR(dest);
   LOG_INFO_(" with status %d\n", status);
