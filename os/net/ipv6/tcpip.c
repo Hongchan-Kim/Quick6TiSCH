@@ -735,7 +735,7 @@ send_packet:
   }
 
   // LOG_INFO("output: sending to "); // original log
-  LOG_INFO("HCK fwo|%u output: sending to ", ++tcpip_fw_ok_count);
+  LOG_INFO("HCK fwo %u | output: sending to ", ++tcpip_fw_ok_count);
   LOG_INFO_LLADDR((linkaddr_t *)linkaddr);
   LOG_INFO_("\n");
 

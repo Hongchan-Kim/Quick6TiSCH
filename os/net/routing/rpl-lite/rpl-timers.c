@@ -160,7 +160,7 @@ rpl_timers_dio_reset(const char *str)
      * Section 4.2, RFC 6206.
      */
     // LOG_INFO("reset DIO timer (%s)\n", str); // original log
-    LOG_INFO("HCK rdt|%u reset DIO timer (%s)\n", ++rpl_dio_reset_count, str);
+    LOG_INFO("HCK rdt %u | reset DIO timer (%s)\n", ++rpl_dio_reset_count, str);
     
     if(!rpl_get_leaf_only()) {
         curr_instance.dag.dio_counter = 0;

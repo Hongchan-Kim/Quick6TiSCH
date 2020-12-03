@@ -33,7 +33,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 {
 
   // LOG_INFO("Received response '%.*s' from ", datalen, (char *) data); // original log
-  LOG_INFO("HCK rxd|%u Received response '%.*s' from ", ++app_rxd_count, datalen, (char *) data);
+  LOG_INFO("HCK rxd %u | Received response '%.*s' from ", ++app_rxd_count, datalen, (char *) data);
   LOG_INFO_6ADDR(sender_addr);
 #if LLSEC802154_CONF_ENABLED
   LOG_INFO_(" LLSEC LV:%d", uipbuf_get_attr(UIPBUF_ATTR_LLSEC_LEVEL));
@@ -63,7 +63,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
     if(NETSTACK_ROUTING.node_is_reachable() && NETSTACK_ROUTING.get_root_ipaddr(&dest_ipaddr)) {
       /* Send to DAG root */
       // LOG_INFO("Sending request %u to ", count); // original log
-      LOG_INFO("HCK txu|%u Sending request %u to ", count, count);
+      LOG_INFO("HCK txu %u | Sending request %u to ", count, count);
       LOG_INFO_6ADDR(&dest_ipaddr);
       LOG_INFO_("\n");
       snprintf(str, sizeof(str), "hello %d", count);

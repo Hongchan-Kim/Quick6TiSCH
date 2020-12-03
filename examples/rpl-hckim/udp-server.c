@@ -36,14 +36,16 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-#define WITH_SERVER_REPLY  1
+#define WITH_SERVER_REPLY  0
 #define UDP_CLIENT_PORT	8765
 #define UDP_SERVER_PORT	5678
 
 static struct simple_udp_connection udp_conn;
 
 static uint16_t app_rxu_count;
+#if WITH_SERVER_REPLY
 static uint16_t app_txd_count;
+#endif
 
 PROCESS(udp_server_process, "UDP server");
 AUTOSTART_PROCESSES(&udp_server_process);
@@ -58,13 +60,13 @@ udp_rx_callback(struct simple_udp_connection *c,
          uint16_t datalen)
 {
   // LOG_INFO("Received request '%.*s' from ", datalen, (char *) data); // original log
-  LOG_INFO("HCK rxu|%u Received request '%.*s' from ", ++app_rxu_count, datalen, (char *) data);
+  LOG_INFO("HCK rxu %u | Received request '%.*s' from ", ++app_rxu_count, datalen, (char *) data);
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");
 #if WITH_SERVER_REPLY
   /* send back the same string to the client as an echo reply */
   // LOG_INFO("Sending response.\n"); // original log
-  LOG_INFO("HCK txd|%u Sending response.\n", ++app_txd_count);
+  LOG_INFO("HCK txd %u | Sending response.\n", ++app_txd_count);
   simple_udp_sendto(&udp_conn, data, datalen, sender_addr);
 #endif /* WITH_SERVER_REPLY */
 }

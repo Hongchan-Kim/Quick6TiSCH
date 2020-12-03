@@ -243,7 +243,7 @@ rpl_local_repair(const char *str)
 {
   if(curr_instance.used) { /* Check needed because this is a public function */
     // LOG_WARN("local repair (%s)\n", str); // original log
-    LOG_WARN("HCK lr|%u local repair (%s)\n", ++rpl_local_repair_count, str);
+    LOG_WARN("HCK lr %u | local repair (%s)\n", ++rpl_local_repair_count, str);
     if(!rpl_dag_root_is_root()) {
       curr_instance.dag.state = DAG_INITIALIZED; /* Reset DAG state */
     }
