@@ -29,6 +29,7 @@
 
 #include "contiki.h"
 #include "net/routing/routing.h"
+#include "lib/random.h"
 #include "net/netstack.h"
 #include "net/ipv6/simple-udp.h"
 
@@ -36,19 +37,56 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-#define WITH_SERVER_REPLY  0
 #define UDP_CLIENT_PORT	8765
 #define UDP_SERVER_PORT	5678
 
+#define DOWNWARD_TRAFFIC  1
+#if DOWNWARD_TRAFFIC
+#define START_DELAY       (1 * 60 * CLOCK_SECOND)
+#define SEND_INTERVAL		  (60 * CLOCK_SECOND)
+#endif
+
 static struct simple_udp_connection udp_conn;
 
-static uint16_t app_rxu_count;
-#if WITH_SERVER_REPLY
-static uint16_t app_txd_count;
-#endif
+#define NONE_ROOT_NUM 16
+static uint16_t non_root_info[NONE_ROOT_NUM][3] = { // id, addr, rx
+    {1, 0x9768, 0},
+    {2, 0x8867, 0},
+    {3, 0x8676, 0},
+    {4, 0xb181, 0},
+    {5, 0x8968, 0},
+    {6, 0xc279, 0},
+    //{7, 0xa371, 0}, // root node
+    {8, 0xa683, 0},
+    //{9, 0xb677, 0}, // disabled
+    {10, 0x8976, 0},
+    {11, 0x8467, 0},
+    {12, 0xb682, 0},
+    {13, 0xb176, 0},
+    {14, 0x2860, 0},
+    {15, 0xa377, 0},
+    {16, 0xb978, 0},
+    {17, 0xa168, 0},
+    {18, 0x3261, 0}
+};
+#define DOWN_INTERVAL     (SEND_INTERVAL / NONE_ROOT_NUM)
 
 PROCESS(udp_server_process, "UDP server");
 AUTOSTART_PROCESSES(&udp_server_process);
+/*---------------------------------------------------------------------------*/
+static uint16_t
+sender_index_from_addr(const uip_ipaddr_t *sender_addr)
+{
+  uint16_t sender_uid = (sender_addr->u8[14] << 8) + sender_addr->u8[15];
+
+  uint16_t i = 0;
+  for(i = 0; i < NONE_ROOT_NUM; i++) {
+    if(non_root_info[i][1] == sender_uid) {
+      return i;
+    }
+  }
+  return NONE_ROOT_NUM;
+}
 /*---------------------------------------------------------------------------*/
 static void
 udp_rx_callback(struct simple_udp_connection *c,
@@ -58,21 +96,30 @@ udp_rx_callback(struct simple_udp_connection *c,
          uint16_t receiver_port,
          const uint8_t *data,
          uint16_t datalen)
-{
-  // LOG_INFO("Received request '%.*s' from ", datalen, (char *) data); // original log
-  LOG_INFO("HCK rxu %u | Received request '%.*s' from ", ++app_rxu_count, datalen, (char *) data);
+{  
+  uint16_t sender_index = sender_index_from_addr(sender_addr);
+  if(sender_index == NONE_ROOT_NUM) {
+    LOG_INFO("Fail to receive: out of index\n");
+    return;
+  }
+  LOG_INFO("HCK rxu %u from %u %x | Received message '%.*s' from ", 
+            ++non_root_info[sender_index][2], non_root_info[sender_index][0],
+            non_root_info[sender_index][1],
+            datalen, (char *) data);
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");
-#if WITH_SERVER_REPLY
-  /* send back the same string to the client as an echo reply */
-  // LOG_INFO("Sending response.\n"); // original log
-  LOG_INFO("HCK txd %u | Sending response.\n", ++app_txd_count);
-  simple_udp_sendto(&udp_conn, data, datalen, sender_addr);
-#endif /* WITH_SERVER_REPLY */
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_server_process, ev, data)
 {
+#if DOWNWARD_TRAFFIC
+  static struct etimer periodic_timer;
+  static unsigned count = 1;
+  static unsigned curr = 0;
+  static char str[32];
+  uip_ipaddr_t dest_ipaddr;
+#endif
+
   PROCESS_BEGIN();
 
   /* Initialize DAG root */
@@ -81,6 +128,33 @@ PROCESS_THREAD(udp_server_process, ev, data)
   /* Initialize UDP connection */
   simple_udp_register(&udp_conn, UDP_SERVER_PORT, NULL,
                       UDP_CLIENT_PORT, udp_rx_callback);
+
+#if DOWNWARD_TRAFFIC
+  etimer_set(&periodic_timer, (START_DELAY + random_rand() % DOWN_INTERVAL));
+  while(1) {
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+
+    uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, non_root_info[curr][1]);
+
+    /* Send to clients */
+    LOG_INFO("HCK txd %u to %u %x | Sending message %u to ", 
+              count, non_root_info[curr][0], non_root_info[curr][1], count);
+    LOG_INFO_6ADDR(&dest_ipaddr);
+    LOG_INFO_("\n");
+    snprintf(str, sizeof(str), "hello %d", count);
+    simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+
+    curr++;
+    if(curr >= NONE_ROOT_NUM) {
+      curr = 0;
+      count++;
+    }
+
+    /* Add some jitter */
+    etimer_set(&periodic_timer, DOWN_INTERVAL);
+    //  - CLOCK_SECOND + (random_rand() % (2 * CLOCK_SECOND)));
+  }
+#endif
 
   PROCESS_END();
 }

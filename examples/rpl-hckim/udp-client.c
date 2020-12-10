@@ -8,10 +8,10 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-#define WITH_SERVER_REPLY  1
 #define UDP_CLIENT_PORT	8765
 #define UDP_SERVER_PORT	5678
 
+#define START_DELAY       (1 * 60 * CLOCK_SECOND)
 #define SEND_INTERVAL		  (60 * CLOCK_SECOND)
 
 static struct simple_udp_connection udp_conn;
@@ -31,21 +31,17 @@ udp_rx_callback(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {
-
-  // LOG_INFO("Received response '%.*s' from ", datalen, (char *) data); // original log
-  LOG_INFO("HCK rxd %u | Received response '%.*s' from ", ++app_rxd_count, datalen, (char *) data);
+  LOG_INFO("HCK rxd %u | Received message '%.*s' from ", ++app_rxd_count, datalen, (char *) data);
   LOG_INFO_6ADDR(sender_addr);
 #if LLSEC802154_CONF_ENABLED
   LOG_INFO_(" LLSEC LV:%d", uipbuf_get_attr(UIPBUF_ATTR_LLSEC_LEVEL));
 #endif
   LOG_INFO_("\n");
-
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_client_process, ev, data)
 {
   static struct etimer periodic_timer;
-  // static unsigned count; // original
   static unsigned count = 1;
   static char str[32];
   uip_ipaddr_t dest_ipaddr;
@@ -56,14 +52,13 @@ PROCESS_THREAD(udp_client_process, ev, data)
   simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL,
                       UDP_SERVER_PORT, udp_rx_callback);
 
-  etimer_set(&periodic_timer, random_rand() % SEND_INTERVAL);
+  etimer_set(&periodic_timer, (START_DELAY + random_rand() % SEND_INTERVAL));
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
 
     if(NETSTACK_ROUTING.node_is_reachable() && NETSTACK_ROUTING.get_root_ipaddr(&dest_ipaddr)) {
       /* Send to DAG root */
-      // LOG_INFO("Sending request %u to ", count); // original log
-      LOG_INFO("HCK txu %u | Sending request %u to ", count, count);
+      LOG_INFO("HCK txu %u | Sending message %u to ", count, count);
       LOG_INFO_6ADDR(&dest_ipaddr);
       LOG_INFO_("\n");
       snprintf(str, sizeof(str), "hello %d", count);
