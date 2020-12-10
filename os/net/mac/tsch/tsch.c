@@ -71,6 +71,9 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+static uint16_t tsch_qloss_count;
+static uint16_t tsch_enqueue_count;
+
 /* The address of the last node we received an EB from (other than our time source).
  * Used for recovery */
 static linkaddr_t last_eb_nbr_addr;
@@ -1123,7 +1126,7 @@ send_packet(mac_callback_t sent, void *ptr)
     p = tsch_queue_add_packet(addr, max_transmissions, sent, ptr);
     n = tsch_queue_get_nbr(addr);
     if(p == NULL) {
-      LOG_ERR("! can't send packet to ");
+      LOG_ERR("HCK qloss %u ! can't send packet to ", ++tsch_qloss_count);
       LOG_ERR_LLADDR(addr);
       LOG_ERR_(" with seqno %u, queue %u/%u %u/%u\n",
           tsch_packet_seqno, tsch_queue_nbr_packet_count(n),
@@ -1132,7 +1135,7 @@ send_packet(mac_callback_t sent, void *ptr)
       ret = MAC_TX_ERR;
     } else {
       p->header_len = hdr_len;
-      LOG_INFO("send packet to ");
+      LOG_INFO("HCK enqueue %u send packet to ", ++tsch_enqueue_count);
       LOG_INFO_LLADDR(addr);
       LOG_INFO_(" with seqno %u, queue %u/%u %u/%u, len %u %u\n",
              tsch_packet_seqno, tsch_queue_nbr_packet_count(n),

@@ -48,8 +48,8 @@
 
 static struct simple_udp_connection udp_conn;
 
-#define NONE_ROOT_NUM 16
-static uint16_t non_root_info[NONE_ROOT_NUM][3] = { // id, addr, rx
+#define NON_ROOT_NUM 16
+static uint16_t non_root_info[NON_ROOT_NUM][3] = { // id, addr, rx
     {1, 0x9768, 0},
     {2, 0x8867, 0},
     {3, 0x8676, 0},
@@ -69,7 +69,7 @@ static uint16_t non_root_info[NONE_ROOT_NUM][3] = { // id, addr, rx
     {17, 0xa168, 0},
     {18, 0x3261, 0}
 };
-#define DOWN_INTERVAL     (SEND_INTERVAL / NONE_ROOT_NUM)
+#define DOWN_INTERVAL     (SEND_INTERVAL / NON_ROOT_NUM)
 
 PROCESS(udp_server_process, "UDP server");
 AUTOSTART_PROCESSES(&udp_server_process);
@@ -80,12 +80,12 @@ sender_index_from_addr(const uip_ipaddr_t *sender_addr)
   uint16_t sender_uid = (sender_addr->u8[14] << 8) + sender_addr->u8[15];
 
   uint16_t i = 0;
-  for(i = 0; i < NONE_ROOT_NUM; i++) {
+  for(i = 0; i < NON_ROOT_NUM; i++) {
     if(non_root_info[i][1] == sender_uid) {
       return i;
     }
   }
-  return NONE_ROOT_NUM;
+  return NON_ROOT_NUM;
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -98,7 +98,7 @@ udp_rx_callback(struct simple_udp_connection *c,
          uint16_t datalen)
 {  
   uint16_t sender_index = sender_index_from_addr(sender_addr);
-  if(sender_index == NONE_ROOT_NUM) {
+  if(sender_index == NON_ROOT_NUM) {
     LOG_INFO("Fail to receive: out of index\n");
     return;
   }
@@ -145,7 +145,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
     simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
 
     curr++;
-    if(curr >= NONE_ROOT_NUM) {
+    if(curr >= NON_ROOT_NUM) {
       curr = 0;
       count++;
     }
