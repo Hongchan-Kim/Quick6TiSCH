@@ -73,6 +73,10 @@
 
 static uint16_t tsch_qloss_count;
 static uint16_t tsch_enqueue_count;
+static uint16_t tsch_EB_qloss_count;
+static uint16_t tsch_EB_enqueue_count;
+static uint16_t tsch_noack_count;
+static uint16_t tsch_ok_count;
 
 /* The address of the last node we received an EB from (other than our time source).
  * Used for recovery */
@@ -535,6 +539,13 @@ tsch_tx_process_pending(void)
     LOG_INFO_LLADDR(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
     LOG_INFO_(", seqno %u, status %d, tx %d\n",
       packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO), p->ret, p->transmissions);
+
+    if(p->ret == MAC_TX_NOACK) {
+      LOG_INFO("HCK noack %u\n", ++tsch_noack_count);
+    } else if(p->ret == MAC_TX_OK) {
+      LOG_INFO("HCK ok %u\n", ++tsch_ok_count);
+    }
+    
     /* Call packet_sent callback */
     mac_call_sent_callback(p->sent, p->ptr, p->ret, p->transmissions);
     /* Free packet queuebuf */
@@ -922,9 +933,9 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
           struct tsch_packet *p;
           /* Enqueue EB packet, for a single transmission only */
           if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
-            LOG_ERR("! could not enqueue EB packet\n");
+            LOG_ERR("HCK EBql %u ! could not enqueue EB packet\n", ++tsch_EB_qloss_count);
           } else {
-              LOG_INFO("TSCH: enqueue EB packet %u %u\n",
+              LOG_INFO("HCK EBenq %u TSCH: enqueue EB packet %u %u\n", ++tsch_EB_enqueue_count,
                        packetbuf_totlen(), packetbuf_hdrlen());
             p->tsch_sync_ie_offset = tsch_sync_ie_offset;
             p->header_len = hdr_len;
@@ -1135,7 +1146,7 @@ send_packet(mac_callback_t sent, void *ptr)
       ret = MAC_TX_ERR;
     } else {
       p->header_len = hdr_len;
-      LOG_INFO("HCK enqueue %u send packet to ", ++tsch_enqueue_count);
+      LOG_INFO("HCK enq %u send packet to ", ++tsch_enqueue_count);
       LOG_INFO_LLADDR(addr);
       LOG_INFO_(" with seqno %u, queue %u/%u %u/%u, len %u %u\n",
              tsch_packet_seqno, tsch_queue_nbr_packet_count(n),

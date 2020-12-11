@@ -306,6 +306,10 @@ rpl_neighbor_set_preferred_parent(rpl_nbr_t *nbr)
     LOG_INFO_6ADDR(rpl_neighbor_get_ipaddr(nbr));
     LOG_INFO_("\n");
 
+    LOG_INFO("HCK lastP %x\n", 
+        (rpl_neighbor_get_ipaddr(nbr) == NULL) ? 0 : 
+        (rpl_neighbor_get_ipaddr(nbr)->u8[14] << 8) + (rpl_neighbor_get_ipaddr(nbr)->u8[15]));
+
 #ifdef RPL_CALLBACK_PARENT_SWITCH
     RPL_CALLBACK_PARENT_SWITCH(curr_instance.dag.preferred_parent, nbr);
 #endif /* RPL_CALLBACK_PARENT_SWITCH */

@@ -100,6 +100,7 @@ simple_energest_step(void)
   LOG_INFO("Radio Tx    : %10lu/%10lu (%lu permil)\n", delta_tx, delta_time, to_permil(delta_tx, delta_time));
   LOG_INFO("Radio Rx    : %10lu/%10lu (%lu permil)\n", delta_rx, delta_time, to_permil(delta_rx, delta_time));
   LOG_INFO("Radio total : %10lu/%10lu (%lu permil)\n", delta_tx+delta_rx, delta_time, to_permil(delta_tx+delta_rx, delta_time));
+  LOG_INFO("HCK dc %lu permil\n", to_permil(curr_tx+curr_rx, curr_time));
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(simple_energest_process, ev, data)

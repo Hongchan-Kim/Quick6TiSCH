@@ -40,12 +40,6 @@
 #define UDP_CLIENT_PORT	8765
 #define UDP_SERVER_PORT	5678
 
-#define DOWNWARD_TRAFFIC  1
-#if DOWNWARD_TRAFFIC
-#define START_DELAY       (1 * 60 * CLOCK_SECOND)
-#define SEND_INTERVAL		  (60 * CLOCK_SECOND)
-#endif
-
 static struct simple_udp_connection udp_conn;
 
 #define NON_ROOT_NUM 16
@@ -69,7 +63,10 @@ static uint16_t non_root_info[NON_ROOT_NUM][3] = { // id, addr, rx
     {17, 0xa168, 0},
     {18, 0x3261, 0}
 };
+
+#if DOWNWARD_TRAFFIC
 #define DOWN_INTERVAL     (SEND_INTERVAL / NON_ROOT_NUM)
+#endif
 
 PROCESS(udp_server_process, "UDP server");
 AUTOSTART_PROCESSES(&udp_server_process);
