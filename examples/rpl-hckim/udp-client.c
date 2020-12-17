@@ -8,8 +8,18 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
+#include "node-info.h"
+
 #define UDP_CLIENT_PORT	8765
 #define UDP_SERVER_PORT	5678
+
+#ifndef APP_START_DELAY
+#define APP_START_DELAY     (1 * 60 * CLOCK_SECOND)
+#endif
+
+#ifndef APP_SEND_INTERVAL
+#define APP_SEND_INTERVAL   (1 * 60 * CLOCK_SECOND)
+#endif
 
 static struct simple_udp_connection udp_conn;
 
@@ -45,11 +55,13 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
   PROCESS_BEGIN();
 
+  print_node_info();
+
   /* Initialize UDP connection */
   simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL,
                       UDP_SERVER_PORT, udp_rx_callback);
 
-  etimer_set(&periodic_timer, (START_DELAY + random_rand() % SEND_INTERVAL));
+  etimer_set(&periodic_timer, (APP_START_DELAY + random_rand() % APP_SEND_INTERVAL));
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
 
@@ -66,7 +78,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
     }
 
     /* Add some jitter */
-    etimer_set(&periodic_timer, SEND_INTERVAL
+    etimer_set(&periodic_timer, APP_SEND_INTERVAL
       - CLOCK_SECOND + (random_rand() % (2 * CLOCK_SECOND)));
   }
 

@@ -37,53 +37,27 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
+#include "node-info.h"
+
 #define UDP_CLIENT_PORT	8765
 #define UDP_SERVER_PORT	5678
 
+#ifndef APP_START_DELAY
+#define APP_START_DELAY     (1 * 60 * CLOCK_SECOND)
+#endif
+
+#ifndef APP_SEND_INTERVAL
+#define APP_SEND_INTERVAL   (1 * 60 * CLOCK_SECOND)
+#endif
+
 static struct simple_udp_connection udp_conn;
 
-#define NON_ROOT_NUM 16
-static uint16_t non_root_info[NON_ROOT_NUM][3] = { // id, addr, rx
-    {1, 0x9768, 0},
-    {2, 0x8867, 0},
-    {3, 0x8676, 0},
-    {4, 0xb181, 0},
-    {5, 0x8968, 0},
-    {6, 0xc279, 0},
-    //{7, 0xa371, 0}, // root node
-    {8, 0xa683, 0},
-    //{9, 0xb677, 0}, // disabled
-    {10, 0x8976, 0},
-    {11, 0x8467, 0},
-    {12, 0xb682, 0},
-    {13, 0xb176, 0},
-    {14, 0x2860, 0},
-    {15, 0xa377, 0},
-    {16, 0xb978, 0},
-    {17, 0xa168, 0},
-    {18, 0x3261, 0}
-};
-
 #if DOWNWARD_TRAFFIC
-#define DOWN_INTERVAL     (SEND_INTERVAL / NON_ROOT_NUM)
+#define APP_DOWN_INTERVAL     (APP_SEND_INTERVAL / NON_ROOT_NUM)
 #endif
 
 PROCESS(udp_server_process, "UDP server");
 AUTOSTART_PROCESSES(&udp_server_process);
-/*---------------------------------------------------------------------------*/
-static uint16_t
-sender_index_from_addr(const uip_ipaddr_t *sender_addr)
-{
-  uint16_t sender_uid = (sender_addr->u8[14] << 8) + sender_addr->u8[15];
-
-  uint16_t i = 0;
-  for(i = 0; i < NON_ROOT_NUM; i++) {
-    if(non_root_info[i][1] == sender_uid) {
-      return i;
-    }
-  }
-  return NON_ROOT_NUM;
-}
 /*---------------------------------------------------------------------------*/
 static void
 udp_rx_callback(struct simple_udp_connection *c,
@@ -94,7 +68,7 @@ udp_rx_callback(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {  
-  uint16_t sender_index = sender_index_from_addr(sender_addr);
+  uint16_t sender_index = non_root_index_from_addr(sender_addr);
   if(sender_index == NON_ROOT_NUM) {
     LOG_INFO("Fail to receive: out of index\n");
     return;
@@ -119,6 +93,8 @@ PROCESS_THREAD(udp_server_process, ev, data)
 
   PROCESS_BEGIN();
 
+  print_node_info();
+
   /* Initialize DAG root */
   NETSTACK_ROUTING.root_start();
 
@@ -127,7 +103,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
                       UDP_CLIENT_PORT, udp_rx_callback);
 
 #if DOWNWARD_TRAFFIC
-  etimer_set(&periodic_timer, (START_DELAY + random_rand() % DOWN_INTERVAL));
+  etimer_set(&periodic_timer, (APP_START_DELAY + random_rand() % APP_DOWN_INTERVAL));
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
 
@@ -147,9 +123,8 @@ PROCESS_THREAD(udp_server_process, ev, data)
       count++;
     }
 
-    /* Add some jitter */
-    etimer_set(&periodic_timer, DOWN_INTERVAL);
-    //  - CLOCK_SECOND + (random_rand() % (2 * CLOCK_SECOND)));
+    /* Add no jitter */
+    etimer_set(&periodic_timer, APP_DOWN_INTERVAL);
   }
 #endif
 

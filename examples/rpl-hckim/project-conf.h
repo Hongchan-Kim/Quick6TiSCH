@@ -9,8 +9,8 @@
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
 
 #define DOWNWARD_TRAFFIC                           1
-#define START_DELAY                                (1 * 60 * CLOCK_SECOND)
-#define SEND_INTERVAL                              (1 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (CLOCK_SECOND * 60)
 
@@ -20,4 +20,12 @@
 /* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
    m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
 #define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
+
+
+#define IOT_LAB_LYON                               1
+#define IOT_LAB_PARIS                              2
+
+#define TESTBED_SITE                               IOT_LAB_LYON
+//#define TESTBED_SITE                               IOT_LAB_PARIS
+
 #endif /* PROJECT_CONF_H_ */ 
