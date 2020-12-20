@@ -53,7 +53,6 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
-// HCK log - RPL
 static uint16_t rpl_parent_switch_count;
 
 /* A configurable function called after every RPL parent switch */
@@ -299,7 +298,6 @@ void
 rpl_neighbor_set_preferred_parent(rpl_nbr_t *nbr)
 {
   if(curr_instance.dag.preferred_parent != nbr) {
-    // LOG_INFO("parent switch: "); // original log
     LOG_INFO("HCK ps %u | parent switch: ", ++rpl_parent_switch_count);    
     LOG_INFO_6ADDR(rpl_neighbor_get_ipaddr(curr_instance.dag.preferred_parent));
     LOG_INFO_(" -> ");

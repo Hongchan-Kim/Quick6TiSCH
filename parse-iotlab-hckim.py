@@ -8,8 +8,8 @@ non_root_address_list = list()
 
 
 # STEP-0-2: metric indicators
-metric_list = ['id', 'addr', 'txu', 'rxu', 'txd', 'rxd', 'dis_o', 'dio_o', 'dao_o', 'daoA_o', 
-            'ps', 'child', 'fwo', 'qloss', 'enq', 'EBql', 'EBenq', 'noack', 'ok', 'dc', 'lastP']
+metric_list = ['id', 'addr', 'txu', 'rxu', 'txd', 'rxd', 'dis_o', 'dio_o', 'dao_o', 'daoA_o',
+            'rdt', 'ps', 'child', 'fwo', 'qloss', 'enq', 'EBql', 'EBenq', 'noack', 'ok', 'dc', 'lastP']
 
 
 # STEP-0-3: location of metric indicator and value
