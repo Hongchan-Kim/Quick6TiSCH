@@ -64,6 +64,9 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
+static uint16_t rpl_parent_switch_count;
+static uint16_t rpl_local_repair_count;
+
 /* A configurable function called after every RPL parent switch */
 #ifdef RPL_CALLBACK_PARENT_SWITCH
 void RPL_CALLBACK_PARENT_SWITCH(rpl_parent_t *old, rpl_parent_t *new);
@@ -238,7 +241,7 @@ static void
 rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
 {
   if(dag != NULL && dag->preferred_parent != p) {
-    LOG_INFO("rpl_set_preferred_parent ");
+    LOG_INFO("HCK ps %u | rpl_set_preferred_parent ", ++rpl_parent_switch_count);
     if(p != NULL) {
       LOG_INFO_6ADDR(rpl_parent_get_ipaddr(p));
     } else {
@@ -251,6 +254,10 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
       LOG_INFO_("NULL");
     }
     LOG_INFO_("\n");
+
+    LOG_INFO("HCK lastP %x\n", 
+        (p == NULL) ? 0 : 
+        (rpl_parent_get_ipaddr(p)->u8[14] << 8) + (rpl_parent_get_ipaddr(p)->u8[15]));
 
 #ifdef RPL_CALLBACK_PARENT_SWITCH
     RPL_CALLBACK_PARENT_SWITCH(dag->preferred_parent, p);
@@ -1343,7 +1350,7 @@ rpl_local_repair(rpl_instance_t *instance)
     LOG_WARN("local repair requested for instance NULL\n");
     return;
   }
-  LOG_INFO("Starting a local instance repair\n");
+  LOG_INFO("HCK lr %u | Starting a local instance repair\n", ++rpl_local_repair_count);
   for(i = 0; i < RPL_MAX_DAG_PER_INSTANCE; i++) {
     if(instance->dag_table[i].used) {
       instance->dag_table[i].rank = RPL_INFINITE_RANK;

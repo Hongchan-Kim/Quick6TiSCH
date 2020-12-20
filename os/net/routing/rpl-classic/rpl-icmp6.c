@@ -64,6 +64,17 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
+static uint16_t rpl_dis_input_count;
+static uint16_t rpl_dis_output_count;
+static uint16_t rpl_dio_input_count;
+static uint16_t rpl_dio_mcast_output_count;
+static uint16_t rpl_dio_ucast_output_count;
+static uint16_t rpl_dao_input_count;
+//static uint16_t rpl_dao_output_count; // not implemented yet
+//static uint16_t rpl_dao_ack_input_count; // not implemented yet
+//static uint16_t rpl_dao_ack_output_count; // not implemented yet
+
+
 /*---------------------------------------------------------------------------*/
 #define RPL_DIO_GROUNDED                 0x80
 #define RPL_DIO_MOP_SHIFT                3
@@ -217,7 +228,7 @@ dis_input(void)
   rpl_instance_t *end;
 
   /* DAG Information Solicitation */
-  LOG_INFO("Received a DIS from ");
+  LOG_INFO("HCK dis_i %u | Received a DIS from ", ++rpl_dis_input_count);
   LOG_INFO_6ADDR(&UIP_IP_BUF->srcipaddr);
   LOG_INFO_("\n");
 
@@ -274,7 +285,7 @@ dis_output(uip_ipaddr_t *addr)
     addr = &tmpaddr;
   }
 
-  LOG_INFO("Sending a DIS to ");
+  LOG_INFO("HCK dis_o %u | Sending a DIS to ", ++rpl_dis_output_count);
   LOG_INFO_6ADDR(addr);
   LOG_INFO_("\n");
 
@@ -307,7 +318,7 @@ dio_input(void)
   uip_ipaddr_copy(&from, &UIP_IP_BUF->srcipaddr);
 
   /* DAG Information Object */
-  LOG_INFO("Received a DIO from ");
+  LOG_INFO("HCK dio_i %u | Received a DIO from ", ++rpl_dio_input_count);
   LOG_INFO_6ADDR(&from);
   LOG_INFO_("\n");
 
@@ -606,7 +617,8 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
     }
   }
 
-  LOG_INFO("Sending unicast-DIO with rank %u to ",
+  LOG_INFO("HCK dioU_o %u | Sending unicast-DIO with rank %u to ",
+         ++rpl_dio_ucast_output_count,
          (unsigned)dag->rank);
   LOG_INFO_6ADDR(uc_addr);
   LOG_INFO_("\n");
@@ -614,12 +626,14 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
 #else /* RPL_LEAF_ONLY */
   /* Unicast requests get unicast replies! */
   if(uc_addr == NULL) {
-    LOG_INFO("Sending a multicast-DIO with rank %u\n",
+    LOG_INFO("HCK dioM_o %u | Sending a multicast-DIO with rank %u\n",
+           ++rpl_dio_mcast_output_count,
            (unsigned)instance->current_dag->rank);
     uip_create_linklocal_rplnodes_mcast(&addr);
     uip_icmp6_send(&addr, ICMP6_RPL, RPL_CODE_DIO, pos);
   } else {
-    LOG_INFO("Sending unicast-DIO with rank %u to ",
+    LOG_INFO("HCK dioU_o %u | Sending unicast-DIO with rank %u to ",
+           ++rpl_dio_ucast_output_count,
            (unsigned)instance->current_dag->rank);
     LOG_INFO_6ADDR(uc_addr);
     LOG_INFO_("\n");
@@ -1025,7 +1039,7 @@ dao_input(void)
   uint8_t instance_id;
 
   /* Destination Advertisement Object */
-  LOG_INFO("Received a DAO from ");
+  LOG_INFO("HCK dao_i %u | Received a DAO from ", ++rpl_dao_input_count);
   LOG_INFO_6ADDR(&UIP_IP_BUF->srcipaddr);
   LOG_INFO_("\n");
 
