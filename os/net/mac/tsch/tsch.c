@@ -71,12 +71,26 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
-static uint16_t tsch_qloss_count;
-static uint16_t tsch_enqueue_count;
-static uint16_t tsch_EB_qloss_count;
-static uint16_t tsch_EB_enqueue_count;
-static uint16_t tsch_noack_count;
-static uint16_t tsch_ok_count;
+static uint16_t tsch_eb_output_count;
+static uint16_t tsch_ka_output_count;
+
+static uint16_t tsch_eb_qloss_count; // tsch_send_eb_process
+static uint16_t tsch_eb_enqueue_count; // tsch_send_eb_process
+static uint16_t tsch_eb_noack_count; // tsch_tx_process_pending
+static uint16_t tsch_eb_ack_count; // tsch_tx_process_pending
+static uint16_t tsch_eb_error_count; // tsch_tx_process_pending
+
+static uint16_t tsch_ka_qloss_count; // send_packet
+static uint16_t tsch_ka_enqueue_count; // send_packet
+static uint16_t tsch_ka_noack_count; // tsch_tx_process_pending
+static uint16_t tsch_ka_ack_count; // tsch_tx_process_pending
+static uint16_t tsch_ka_error_count; // tsch_tx_process_pending
+
+static uint16_t tsch_ip_qloss_count; // send_packet
+static uint16_t tsch_ip_enqueue_count; // send_packet
+static uint16_t tsch_ip_noack_count; // tsch_tx_process_pending
+static uint16_t tsch_ip_ack_count; // tsch_tx_process_pending
+static uint16_t tsch_ip_error_count; // tsch_tx_process_pending
 
 /* The address of the last node we received an EB from (other than our time source).
  * Used for recovery */
@@ -326,7 +340,7 @@ keepalive_send(void *ptr)
         packetbuf_clear();
         packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, destination);
         NETSTACK_MAC.send(keepalive_packet_sent, NULL);
-        LOG_INFO("sending KA to ");
+        LOG_INFO("HCK ka_o %u | sending KA to ", ++tsch_ka_output_count);
         LOG_INFO_LLADDR(destination);
         LOG_INFO_("\n");
     } else {
@@ -540,10 +554,30 @@ tsch_tx_process_pending(void)
     LOG_INFO_(", seqno %u, status %d, tx %d\n",
       packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO), p->ret, p->transmissions);
 
-    if(p->ret == MAC_TX_NOACK) {
-      LOG_INFO("HCK noack %u\n", ++tsch_noack_count);
-    } else if(p->ret == MAC_TX_OK) {
-      LOG_INFO("HCK ok %u\n", ++tsch_ok_count);
+    if(p->sent == NULL) { // EB
+      if(p->ret == MAC_TX_NOACK) {
+        LOG_INFO("HCK eb_no %u\n", ++tsch_eb_noack_count);
+      } else if(p->ret == MAC_TX_OK) {
+        LOG_INFO("HCK eb_a %u\n", ++tsch_eb_ack_count);
+      } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
+        LOG_INFO("HCK eb_er %u\n", ++tsch_eb_error_count);
+      }
+    } else if(p->sent == keepalive_packet_sent) { // KA
+      if(p->ret == MAC_TX_NOACK) {
+        LOG_INFO("HCK ka_no %u\n", ++tsch_ka_noack_count);
+      } else if(p->ret == MAC_TX_OK) {
+        LOG_INFO("HCK ka_a %u\n", ++tsch_ka_ack_count);
+      } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
+        LOG_INFO("HCK ka_er %u\n", ++tsch_ka_error_count);
+      }
+    } else {
+      if(p->ret == MAC_TX_NOACK) { // IP layer packet
+        LOG_INFO("HCK ip_no %u\n", ++tsch_ip_noack_count);
+      } else if(p->ret == MAC_TX_OK) {
+        LOG_INFO("HCK ip_a %u\n", ++tsch_ip_ack_count);
+      } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
+        LOG_INFO("HCK ip_er %u\n", ++tsch_ip_error_count);
+      }
     }
     
     /* Call packet_sent callback */
@@ -933,10 +967,11 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
           struct tsch_packet *p;
           /* Enqueue EB packet, for a single transmission only */
           if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
-            LOG_ERR("HCK EBql %u ! could not enqueue EB packet\n", ++tsch_EB_qloss_count);
+            LOG_ERR("HCK eb_ql %u ! could not enqueue EB packet\n", ++tsch_eb_qloss_count);
           } else {
-              LOG_INFO("HCK EBenq %u TSCH: enqueue EB packet %u %u\n", ++tsch_EB_enqueue_count,
+              LOG_INFO("HCK eb_eq %u TSCH: enqueue EB packet %u %u\n", ++tsch_eb_enqueue_count,
                        packetbuf_totlen(), packetbuf_hdrlen());
+              LOG_INFO("HCK eb_o %u\n", ++tsch_eb_output_count);
             p->tsch_sync_ie_offset = tsch_sync_ie_offset;
             p->header_len = hdr_len;
           }
@@ -1137,21 +1172,32 @@ send_packet(mac_callback_t sent, void *ptr)
     p = tsch_queue_add_packet(addr, max_transmissions, sent, ptr);
     n = tsch_queue_get_nbr(addr);
     if(p == NULL) {
-      LOG_ERR("HCK qloss %u ! can't send packet to ", ++tsch_qloss_count);
+      LOG_ERR("! can't send packet to ");
       LOG_ERR_LLADDR(addr);
       LOG_ERR_(" with seqno %u, queue %u/%u %u/%u\n",
           tsch_packet_seqno, tsch_queue_nbr_packet_count(n),
           TSCH_QUEUE_NUM_PER_NEIGHBOR, tsch_queue_global_packet_count(),
           QUEUEBUF_NUM);
       ret = MAC_TX_ERR;
+      if(sent == keepalive_packet_sent) {
+        LOG_ERR("HCK ka_ql %u\n", ++tsch_ka_qloss_count);
+      } else {
+        LOG_ERR("HCK ip_ql %u\n", ++tsch_ip_qloss_count);
+      }
     } else {
       p->header_len = hdr_len;
-      LOG_INFO("HCK enq %u send packet to ", ++tsch_enqueue_count);
+      LOG_INFO("send packet to ");
       LOG_INFO_LLADDR(addr);
       LOG_INFO_(" with seqno %u, queue %u/%u %u/%u, len %u %u\n",
              tsch_packet_seqno, tsch_queue_nbr_packet_count(n),
              TSCH_QUEUE_NUM_PER_NEIGHBOR, tsch_queue_global_packet_count(),
              QUEUEBUF_NUM, p->header_len, queuebuf_datalen(p->qb));
+      if(sent == keepalive_packet_sent) {
+        LOG_ERR("HCK ka_eq %u\n", ++tsch_ka_enqueue_count);
+      } else {
+        LOG_ERR("HCK ka_eq %u\n", ++tsch_ip_enqueue_count);
+      }
+
     }
   }
   if(ret != MAC_TX_DEFERRED) {
