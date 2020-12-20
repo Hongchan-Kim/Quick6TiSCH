@@ -64,6 +64,11 @@
 rpl_stats_t rpl_stats;
 #endif
 
+static uint8_t first_subtree_print;
+static uint8_t next_subtree_print;
+static uint16_t subtree_print_count;
+static uint16_t average_subtree_nodes;
+
 static enum rpl_mode mode = RPL_MODE_MESH;
 /*---------------------------------------------------------------------------*/
 enum rpl_mode
@@ -121,6 +126,22 @@ rpl_purge_routes(void)
 #if RPL_WITH_MULTICAST
   uip_mcast6_route_t *mcast_route;
 #endif
+
+  if(first_subtree_print < RPL_FIRST_SUBTREE_PERIOD) {
+    first_subtree_print++;
+  } else {
+    if(rpl_has_joined()) {
+      average_subtree_nodes = 
+        (average_subtree_nodes * subtree_print_count + uip_ds6_route_num_routes() * 100) / (subtree_print_count + 1);
+      subtree_print_count++;
+    }
+    next_subtree_print++;
+    if(next_subtree_print >= RPL_NEXT_SUBTREE_PERIOD) {
+      next_subtree_print = 0;
+      LOG_INFO("HCK stn %u / 100\n", average_subtree_nodes);
+    }
+  } 
+
 
   /* First pass, decrement lifetime */
   r = uip_ds6_route_head();
