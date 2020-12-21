@@ -81,6 +81,9 @@
 #define LOG_MODULE "6LoWPAN"
 #define LOG_LEVEL LOG_LEVEL_6LOWPAN
 
+static uint32_t ip_ucast_transmission_count; // packet_sent
+static uint16_t ip_ucast_ack_count; // packet_sent
+
 #define GET16(ptr,index) (((uint16_t)((ptr)[index] << 8)) | ((ptr)[(index) + 1]))
 #define SET16(ptr,index,value) do {     \
   (ptr)[index] = ((value) >> 8) & 0xff; \
@@ -1471,6 +1474,18 @@ packet_sent(void *ptr, int status, int transmissions)
   if(linkaddr_cmp(dest, &linkaddr_null)) {
     return;
   }
+
+  /* unicast only */
+  if(status == MAC_TX_NOACK || status == MAC_TX_OK) {
+    ip_ucast_transmission_count += transmissions;
+  }
+  LOG_INFO("HCK ip_ut %lu\n", ip_ucast_transmission_count);
+  if(status == MAC_TX_OK) {
+    LOG_INFO("HCK ip_ua %u\n", ++ip_ucast_ack_count);
+  }
+  LOG_INFO("HCK ip_E %lu\n", 
+          100 * ip_ucast_transmission_count / (uint32_t)ip_ucast_ack_count);
+
 
   /* Update neighbor link statistics */
   link_stats_packet_sent(dest, status, transmissions);
