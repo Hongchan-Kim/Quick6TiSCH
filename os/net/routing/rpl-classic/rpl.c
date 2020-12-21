@@ -51,6 +51,7 @@
 #include "net/routing/rpl-classic/rpl-private.h"
 #include "net/routing/rpl-classic/rpl-dag-root.h"
 #include "net/ipv6/multicast/uip-mcast6.h"
+#include <net/mac/tsch/tsch.h>
 
 #include "sys/log.h"
 
@@ -66,8 +67,8 @@ rpl_stats_t rpl_stats;
 
 static uint8_t first_subtree_print;
 static uint8_t next_subtree_print;
-static uint16_t subtree_print_count;
-static uint16_t average_subtree_nodes;
+static uint32_t subtree_print_count;
+static uint32_t average_subtree_nodes;
 
 static enum rpl_mode mode = RPL_MODE_MESH;
 /*---------------------------------------------------------------------------*/
@@ -130,18 +131,17 @@ rpl_purge_routes(void)
   if(first_subtree_print < RPL_FIRST_SUBTREE_PERIOD) {
     first_subtree_print++;
   } else {
-    if(rpl_has_joined()) {
+    if((tsch_is_associated == 1) && rpl_has_joined()) {
       average_subtree_nodes = 
-        (average_subtree_nodes * subtree_print_count + uip_ds6_route_num_routes() * 100) / (subtree_print_count + 1);
+        (average_subtree_nodes * subtree_print_count + ((uint32_t)uip_ds6_route_num_routes()) * 100) / (subtree_print_count + 1);
       subtree_print_count++;
     }
     next_subtree_print++;
     if(next_subtree_print >= RPL_NEXT_SUBTREE_PERIOD) {
       next_subtree_print = 0;
-      LOG_INFO("HCK stn %u / 100\n", average_subtree_nodes);
+      LOG_INFO("HCK stn %lu / 100\n", average_subtree_nodes);
     }
   } 
-
 
   /* First pass, decrement lifetime */
   r = uip_ds6_route_head();
