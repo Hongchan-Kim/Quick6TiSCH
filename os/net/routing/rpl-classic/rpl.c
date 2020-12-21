@@ -323,6 +323,7 @@ rpl_ipv6_neighbor_callback(uip_ds6_nbr_t *nbr)
       p = rpl_find_parent_any_dag(instance, &nbr->ipaddr);
       if(p != NULL) {
         p->rank = RPL_INFINITE_RANK;
+        p->hop_distance = 0xff; /* hckim to measure hop distance accurately */
         /* Trigger DAG rank recalculation. */
         LOG_DBG("rpl_ipv6_neighbor_callback infinite rank\n");
         p->flags |= RPL_PARENT_FLAG_UPDATED;

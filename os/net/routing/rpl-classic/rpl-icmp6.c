@@ -344,7 +344,8 @@ dio_input(void)
 
   dio.dtsn = buffer[i++];
   /* two reserved bytes */
-  i += 2;
+  i += 1;
+  dio.hop_distance = buffer[i++]; /* hckim to measure hop distance accurately */
 
   memcpy(&dio.dag_id, buffer + i, sizeof(dio.dag_id));
   i += sizeof(dio.dag_id);
@@ -538,7 +539,7 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
 
   /* reserved 2 bytes */
   buffer[pos++] = 0; /* flags */
-  buffer[pos++] = 0; /* reserved */
+  buffer[pos++] = dag->hop_distance; /* reserved */ /* hckim to measure hop distance accurately */
 
   memcpy(buffer + pos, &dag->dag_id, sizeof(dag->dag_id));
   pos += 16;
@@ -723,6 +724,7 @@ dao_input_storing(void)
       LOG_WARN("Loop detected when receiving a unicast DAO from a node with a lower rank! (%u < %u)\n",
              DAG_RANK(parent->rank, instance), DAG_RANK(dag->rank, instance));
       parent->rank = RPL_INFINITE_RANK;
+      parent->hop_distance = 0xff; /* hckim to measure hop distance accurately */
       parent->flags |= RPL_PARENT_FLAG_UPDATED;
       return;
     }
@@ -731,6 +733,7 @@ dao_input_storing(void)
     if(parent != NULL && parent == dag->preferred_parent) {
       LOG_WARN("Loop detected when receiving a unicast DAO from our parent\n");
       parent->rank = RPL_INFINITE_RANK;
+      parent->hop_distance = 0xff; /* hckim to measure hop distance accurately */
       parent->flags |= RPL_PARENT_FLAG_UPDATED;
       return;
     }

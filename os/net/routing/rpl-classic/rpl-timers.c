@@ -49,11 +49,17 @@
 #include "lib/random.h"
 #include "sys/ctimer.h"
 #include "sys/log.h"
+#include <net/mac/tsch/tsch.h>
 
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
 static uint16_t rpl_dio_reset_count;
+
+static uint8_t first_hop_distance_print;
+static uint8_t next_hop_distance_print;
+static uint32_t hop_distance_print_count;
+static uint32_t average_hop_distance;
 
 /* A configurable function called after update of the RPL DIO interval */
 #ifdef RPL_CALLBACK_NEW_DIO_INTERVAL
@@ -96,6 +102,21 @@ handle_periodic_timer(void *ptr)
     }
   }
   rpl_recalculate_ranks();
+
+  if(first_hop_distance_print < RPL_FIRST_SUBTREE_PERIOD) {
+    first_hop_distance_print++;
+  } else {
+    if((tsch_is_associated == 1) && rpl_has_joined()) {
+      average_hop_distance = 
+        (average_hop_distance * hop_distance_print_count + ((uint32_t)dag->hop_distance) * 100) / (hop_distance_print_count + 1);
+      hop_distance_print_count++;
+    }
+    next_hop_distance_print++;
+    if(next_hop_distance_print >= RPL_NEXT_SUBTREE_PERIOD) {
+      next_hop_distance_print = 0;
+      LOG_INFO("HCK ahd %lu / 100\n", average_hop_distance);
+    }
+  } 
 
   /* handle DIS */
 #if RPL_DIS_SEND

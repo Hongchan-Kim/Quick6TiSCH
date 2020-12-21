@@ -429,6 +429,7 @@ rpl_set_root(uint8_t instance_id, uip_ipaddr_t *dag_id)
   instance->lifetime_unit = RPL_DEFAULT_LIFETIME_UNIT;
 
   dag->rank = ROOT_RANK(instance);
+  dag->hop_distance = 0; /* hckim to measure hop distance accurately */
 
   if(instance->current_dag != dag && instance->current_dag != NULL) {
     /* Remove routes installed by DAOs. */
@@ -615,6 +616,7 @@ rpl_alloc_dag(uint8_t instance_id, uip_ipaddr_t *dag_id)
       memset(dag, 0, sizeof(*dag));
       dag->used = 1;
       dag->rank = RPL_INFINITE_RANK;
+      dag->hop_distance = 0xff; /* hckim to measure hop distance accurately */
       dag->min_rank = RPL_INFINITE_RANK;
       dag->instance = instance;
       return dag;
@@ -716,6 +718,7 @@ rpl_add_parent(rpl_dag_t *dag, rpl_dio_t *dio, uip_ipaddr_t *addr)
     } else {
       p->dag = dag;
       p->rank = dio->rank;
+      p->hop_distance = dio->hop_distance; /* hckim to measure hop distance accurately */
       p->dtsn = dio->dtsn;
 #if RPL_WITH_MC
       memcpy(&p->mc, &dio->mc, sizeof(p->mc));
@@ -821,6 +824,8 @@ rpl_select_dag(rpl_instance_t *instance, rpl_parent_t *p)
   instance->of->update_metric_container(instance);
   /* Update the DAG rank. */
   best_dag->rank = rpl_rank_via_parent(best_dag->preferred_parent);
+  best_dag->hop_distance = best_dag->preferred_parent->hop_distance + 1; /* hckim to measure hop distance accurately */
+
   if(last_parent == NULL || best_dag->rank < best_dag->min_rank) {
     /* This is a slight departure from RFC6550: if we had no preferred parent before,
      * reset min_rank. This helps recovering from temporary bad link conditions. */
@@ -938,12 +943,15 @@ rpl_select_parent(rpl_dag_t *dag)
 #else /* RPL_WITH_PROBING */
     rpl_set_preferred_parent(dag, best);
     dag->rank = rpl_rank_via_parent(dag->preferred_parent);
+    dag->hop_distance = dag->preferred_parent->hop_distance + 1; /* hckim to measure hop distance accurately */
 #endif /* RPL_WITH_PROBING */
   } else {
     rpl_set_preferred_parent(dag, NULL);
   }
 
   dag->rank = rpl_rank_via_parent(dag->preferred_parent);
+  dag->hop_distance = dag->preferred_parent->hop_distance + 1; /* hckim to measure hop distance accurately */
+  
   return dag->preferred_parent;
 }
 /*---------------------------------------------------------------------------*/
@@ -967,6 +975,7 @@ rpl_nullify_parent(rpl_parent_t *parent)
      need to handle this condition in order to trigger uip_ds6_defrt_rm. */
   if(parent == dag->preferred_parent || dag->preferred_parent == NULL) {
     dag->rank = RPL_INFINITE_RANK;
+    dag->hop_distance = 0xff; /* hckim to measure hop distance accurately */
     if(dag->joined) {
       if(dag->instance->def_route != NULL) {
         LOG_DBG("Removing default route ");
@@ -996,6 +1005,7 @@ rpl_move_parent(rpl_dag_t *dag_src, rpl_dag_t *dag_dst, rpl_parent_t *parent)
   if(parent == dag_src->preferred_parent) {
       rpl_set_preferred_parent(dag_src, NULL);
       dag_src->rank = RPL_INFINITE_RANK;
+      dag_src->hop_distance = 0xff; /* hckim to measure hop distance accurately */
     if(dag_src->joined && dag_src->instance->def_route != NULL) {
       LOG_DBG("Removing default route ");
       LOG_DBG_6ADDR(rpl_parent_get_ipaddr(parent));
@@ -1192,6 +1202,7 @@ rpl_join_instance(uip_ipaddr_t *from, rpl_dio_t *dio)
   rpl_set_preferred_parent(dag, p);
   instance->of->update_metric_container(instance);
   dag->rank = rpl_rank_via_parent(p);
+  dag->hop_distance = p->hop_distance + 1; /* hckim to measure hop distance accurately */
   /* So far this is the lowest rank we are aware of. */
   dag->min_rank = dag->rank;
 
@@ -1255,6 +1266,7 @@ rpl_add_dag(uip_ipaddr_t *from, rpl_dio_t *dio)
     }
   }
   p->rank = dio->rank;
+  p->hop_distance = dio->hop_distance; /* hckim to measure hop distance accurately */
 
   /* Determine the objective function by using the
      objective code point of the DIO. */
@@ -1287,6 +1299,7 @@ rpl_add_dag(uip_ipaddr_t *from, rpl_dio_t *dio)
 
   rpl_set_preferred_parent(dag, p);
   dag->rank = rpl_rank_via_parent(p);
+  dag->hop_distance = p->hop_distance + 1; /* hckim to measure hop distance accurately */
   dag->min_rank = dag->rank; /* So far this is the lowest rank we know of. */
 
   LOG_INFO("Joined DAG with instance ID %u, rank %hu, DAG ID ",
@@ -1327,8 +1340,10 @@ global_repair(uip_ipaddr_t *from, rpl_dag_t *dag, rpl_dio_t *dio)
   if(p == NULL) {
     LOG_ERR("Failed to add a parent during the global repair\n");
     dag->rank = RPL_INFINITE_RANK;
+    dag->hop_distance = 0xff; /* hckim to measure hop distance accurately */
   } else {
     dag->rank = rpl_rank_via_parent(p);
+    dag->hop_distance = p->hop_distance + 1; /* hckim to measure hop distance accurately */
     dag->min_rank = dag->rank;
     LOG_DBG("rpl_process_parent_event global repair\n");
     rpl_process_parent_event(dag->instance, p);
@@ -1627,6 +1642,7 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
     }
   }
   p->rank = dio->rank;
+  p->hop_distance = dio->hop_distance; /* hckim to measure hop distance accurately */
 
   if(dio->rank == RPL_INFINITE_RANK && p == dag->preferred_parent) {
     /* Our preferred parent advertised an infinite rank, reset DIO timer */
