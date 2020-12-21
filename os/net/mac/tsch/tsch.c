@@ -71,6 +71,8 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+static uint16_t tsch_leaving_count;
+
 static uint16_t tsch_eb_output_count;
 static uint16_t tsch_ka_output_count;
 
@@ -85,12 +87,17 @@ static uint16_t tsch_ka_enqueue_count; // send_packet
 static uint16_t tsch_ka_noack_count; // tsch_tx_process_pending
 static uint16_t tsch_ka_ack_count; // tsch_tx_process_pending
 static uint16_t tsch_ka_error_count; // tsch_tx_process_pending
+static uint32_t tsch_ka_transmission_count; // keepalive_packet_sent
 
 static uint16_t tsch_ip_qloss_count; // send_packet
 static uint16_t tsch_ip_enqueue_count; // send_packet
 static uint16_t tsch_ip_noack_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_ack_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_error_count; // tsch_tx_process_pending
+
+static clock_time_t clock_last_leaving;
+static clock_time_t clock_inst_leaving_time;
+static clock_time_t clock_avg_leaving_time;
 
 /* The address of the last node we received an EB from (other than our time source).
  * Used for recovery */
@@ -314,6 +321,13 @@ keepalive_packet_sent(void *ptr, int status, int transmissions)
   LOG_INFO("KA sent to ");
   LOG_INFO_LLADDR(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
   LOG_INFO_(", st %d-%d\n", status, transmissions);
+
+  if(status == MAC_TX_NOACK || status == MAC_TX_OK) {
+    tsch_ka_transmission_count += transmissions;
+  }
+  LOG_INFO("HCK ka_tx %lu\n", tsch_ka_transmission_count);
+  LOG_INFO("HCK ka_E %lu / 100\n", 
+          100 * tsch_ka_transmission_count / (uint32_t)tsch_ka_ack_count);
 
   /* We got no ack, try to resynchronize */
   if(status == MAC_TX_NOACK) {
@@ -780,7 +794,8 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
 #endif
 
       tsch_association_count++;
-      LOG_INFO("association done (%u), sec %u, PAN ID %x, asn-%x.%lx, jp %u, timeslot id %u, hopping id %u, slotframe len %u with %u links, from ",
+      LOG_INFO("HCK asso %u | association done (%u), sec %u, PAN ID %x, asn-%x.%lx, jp %u, timeslot id %u, hopping id %u, slotframe len %u with %u links, from ",
+             tsch_association_count,
              tsch_association_count,
              tsch_is_pan_secured,
              frame.src_pid,
@@ -791,6 +806,12 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
              ies.ie_tsch_slotframe_and_link.num_links);
       LOG_INFO_LLADDR((const linkaddr_t *)&frame.src_addr);
       LOG_INFO_("\n");
+
+      if(tsch_association_count > 1) {
+        clock_inst_leaving_time = clock_time() - clock_last_leaving;
+        clock_avg_leaving_time = (clock_avg_leaving_time * (tsch_association_count - 2) + clock_inst_leaving_time) / (tsch_association_count - 1);
+      }
+      LOG_INFO("HCK lvT %lu inst %lu\n", clock_avg_leaving_time, clock_inst_leaving_time);
 
       return 1;
     }
@@ -916,8 +937,10 @@ PROCESS_THREAD(tsch_process, ev, data)
      * as long as we are associated */
     PROCESS_YIELD_UNTIL(!tsch_is_associated);
 
-    LOG_WARN("leaving the network, stats: tx %lu, rx %lu, sync %lu\n",
-      tx_count, rx_count, sync_count);
+    clock_last_leaving = clock_time();
+
+    LOG_WARN("HCK leav %u | leaving the network, stats: tx %lu, rx %lu, sync %lu\n",
+      ++tsch_leaving_count, tx_count, rx_count, sync_count);
 
     /* Will need to re-synchronize */
     tsch_reset();
