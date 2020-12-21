@@ -106,9 +106,10 @@ handle_periodic_timer(void *ptr)
   if(first_hop_distance_print < RPL_FIRST_SUBTREE_PERIOD) {
     first_hop_distance_print++;
   } else {
-    if((tsch_is_associated == 1) && rpl_has_joined()) {
+    if((tsch_is_associated == 1) && (dag->preferred_parent != NULL) && rpl_has_joined()) {
+      uint8_t my_hop_distance = dag->preferred_parent->hop_distance + 1;
       average_hop_distance = 
-        (average_hop_distance * hop_distance_print_count + ((uint32_t)dag->hop_distance) * 100) / (hop_distance_print_count + 1);
+        (average_hop_distance * hop_distance_print_count + (uint32_t)my_hop_distance * 100) / (hop_distance_print_count + 1);
       hop_distance_print_count++;
     }
     next_hop_distance_print++;

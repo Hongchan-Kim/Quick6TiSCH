@@ -539,7 +539,8 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
 
   /* reserved 2 bytes */
   buffer[pos++] = 0; /* flags */
-  buffer[pos++] = dag->hop_distance; /* reserved */ /* hckim to measure hop distance accurately */
+  uint8_t my_hop_distance = dag->preferred_parent->hop_distance + 1;
+  buffer[pos++] = my_hop_distance; /* reserved */ /* hckim to measure hop distance accurately */
 
   memcpy(buffer + pos, &dag->dag_id, sizeof(dag->dag_id));
   pos += 16;
