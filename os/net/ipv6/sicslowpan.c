@@ -82,7 +82,9 @@
 #define LOG_LEVEL LOG_LEVEL_6LOWPAN
 
 static uint32_t ip_ucast_transmission_count; // packet_sent
-static uint16_t ip_ucast_ack_count; // packet_sent
+static uint16_t ip_ucast_ok_count;
+static uint16_t ip_ucast_noack_count;
+static uint16_t ip_ucast_error_count;
 
 #define GET16(ptr,index) (((uint16_t)((ptr)[index] << 8)) | ((ptr)[(index) + 1]))
 #define SET16(ptr,index,value) do {     \
@@ -1479,13 +1481,14 @@ packet_sent(void *ptr, int status, int transmissions)
   if(status == MAC_TX_NOACK || status == MAC_TX_OK) {
     ip_ucast_transmission_count += transmissions;
   }
-  LOG_INFO("HCK ip_ut %lu\n", ip_ucast_transmission_count);
+  LOG_INFO("HCK ip_uc_tx %lu\n", ip_ucast_transmission_count);
   if(status == MAC_TX_OK) {
-    LOG_INFO("HCK ip_ua %u\n", ++ip_ucast_ack_count);
+    LOG_INFO("HCK ip_uc_ok %u\n", ++ip_ucast_ok_count);
+  } else if(status == MAC_TX_NOACK) {
+    LOG_INFO("HCK ip_uc_noack %u\n", ++ip_ucast_noack_count);
+  } else if(status == MAC_TX_ERR || status == MAC_TX_ERR_FATAL) {
+    LOG_INFO("HCK ip_uc_err %u\n", ++ip_ucast_error_count);
   }
-  LOG_INFO("HCK ip_E %lu\n", 
-          100 * ip_ucast_transmission_count / (uint32_t)ip_ucast_ack_count);
-
 
   /* Update neighbor link statistics */
   link_stats_packet_sent(dest, status, transmissions);

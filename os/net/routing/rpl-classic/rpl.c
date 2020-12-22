@@ -65,7 +65,7 @@
 rpl_stats_t rpl_stats;
 #endif
 
-static uint8_t first_subtree_print;
+static uint8_t first_subtree_measure;
 static uint8_t next_subtree_print;
 static uint32_t subtree_print_count;
 static uint32_t average_subtree_nodes;
@@ -128,8 +128,8 @@ rpl_purge_routes(void)
   uip_mcast6_route_t *mcast_route;
 #endif
 
-  if(first_subtree_print < RPL_FIRST_SUBTREE_PERIOD) {
-    first_subtree_print++;
+  if(first_subtree_measure < RPL_FIRST_MEASURE_PERIOD) {
+    first_subtree_measure++;
   } else {
     if((tsch_is_associated == 1) && rpl_has_joined()) {
       average_subtree_nodes = 
@@ -137,9 +137,9 @@ rpl_purge_routes(void)
       subtree_print_count++;
     }
     next_subtree_print++;
-    if(next_subtree_print >= RPL_NEXT_SUBTREE_PERIOD) {
+    if(next_subtree_print >= RPL_NEXT_MEASURE_PERIOD) {
       next_subtree_print = 0;
-      LOG_INFO("HCK stn %lu / 100\n", average_subtree_nodes);
+      LOG_INFO("HCK subtreeN %lu / 100\n", average_subtree_nodes);
     }
   } 
 

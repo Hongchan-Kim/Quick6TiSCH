@@ -73,7 +73,7 @@ udp_rx_callback(struct simple_udp_connection *c,
     LOG_INFO("Fail to receive: out of index\n");
     return;
   }
-  LOG_INFO("HCK rxu %u from %u %x | Received message '%.*s' from ", 
+  LOG_INFO("HCK rx_up %u from %u %x | Received message '%.*s' from ", 
             ++non_root_info[sender_index][2], non_root_info[sender_index][0],
             non_root_info[sender_index][1],
             datalen, (char *) data);
@@ -110,7 +110,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
     uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, non_root_info[curr][1]);
 
     /* Send to clients */
-    LOG_INFO("HCK txd %u to %u %x | Sending message %u to ", 
+    LOG_INFO("HCK tx_down %u to %u %x | Sending message %u to ", 
               count, non_root_info[curr][0], non_root_info[curr][1], count);
     LOG_INFO_6ADDR(&dest_ipaddr);
     LOG_INFO_("\n");

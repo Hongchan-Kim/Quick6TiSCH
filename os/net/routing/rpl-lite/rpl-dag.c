@@ -52,8 +52,6 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
-static uint16_t rpl_local_repair_count;
-
 /*---------------------------------------------------------------------------*/
 extern rpl_of_t rpl_of0, rpl_mrhof;
 static rpl_of_t * const objective_functions[] = RPL_SUPPORTED_OFS;
@@ -242,7 +240,7 @@ void
 rpl_local_repair(const char *str)
 {
   if(curr_instance.used) { /* Check needed because this is a public function */
-    LOG_WARN("HCK lr %u | local repair (%s)\n", ++rpl_local_repair_count, str);
+    LOG_WARN("local repair (%s)\n", str);
     if(!rpl_dag_root_is_root()) {
       curr_instance.dag.state = DAG_INITIALIZED; /* Reset DAG state */
     }

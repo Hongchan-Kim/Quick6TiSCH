@@ -1354,7 +1354,7 @@ rpl_local_repair(rpl_instance_t *instance)
     LOG_WARN("local repair requested for instance NULL\n");
     return;
   }
-  LOG_INFO("HCK lr %u | Starting a local instance repair\n", ++rpl_local_repair_count);
+  LOG_INFO("HCK local_repair %u | Starting a local instance repair\n", ++rpl_local_repair_count);
   for(i = 0; i < RPL_MAX_DAG_PER_INSTANCE; i++) {
     if(instance->dag_table[i].used) {
       instance->dag_table[i].rank = RPL_INFINITE_RANK;
