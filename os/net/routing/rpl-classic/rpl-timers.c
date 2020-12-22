@@ -108,7 +108,6 @@ handle_periodic_timer(void *ptr)
   } else {
     if((tsch_is_associated == 1) && (dag->preferred_parent != NULL) && rpl_has_joined()) {
       uint8_t my_hop_distance = dag->preferred_parent->hop_distance + 1;
-      LOG_INFO("khc %u %u\n", dag->preferred_parent->hop_distance, my_hop_distance);
       average_hop_distance = 
         (average_hop_distance * hop_distance_print_count + (uint32_t)my_hop_distance * 100) / (hop_distance_print_count + 1);
       hop_distance_print_count++;

@@ -545,7 +545,6 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
   } else {
     my_hop_distance = dag->preferred_parent->hop_distance + 1;
   }
-  LOG_INFO("khc0 %u\n", my_hop_distance);
   buffer[pos++] = my_hop_distance; /* reserved */ /* hckim to measure hop distance accurately */
 
   memcpy(buffer + pos, &dag->dag_id, sizeof(dag->dag_id));

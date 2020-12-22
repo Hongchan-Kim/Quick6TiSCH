@@ -118,10 +118,10 @@ while line:
                 current_metric = message[IND]
                 if current_metric in metric_list:
                     current_metric_index = metric_list.index(current_metric)
-                    if current_metric == 'rxu':
+                    if current_metric == 'rx_up':
                         tx_node_index = non_root_address_list.index(message[ADDR]) + 1 # index in parsed array
                         parsed[tx_node_index][current_metric_index] = message[VAL]
-                    elif current_metric == 'txd':
+                    elif current_metric == 'tx_down':
                         rx_node_index = non_root_address_list.index(message[ADDR]) + 1 # index in parsed array
                         parsed[rx_node_index][current_metric_index] = message[VAL]
                     else:
@@ -137,3 +137,57 @@ for i in range(NODE_NUM):
     for j in range(METRIC_NUM - 1):
         print(parsed[i][j], '\t', end='')
     print(parsed[i][-1])
+
+
+# STEP-3-1: result list and array
+result_list = ['id', 'addr', 'pdr', 'uPdr', 'dPdr', 
+               'ps', 'hopD', 'subTN', 'ipLlR', 'ipQlR', 'linkE', 'leave', 'dc']
+RESULT_NUM = len(result_list)
+result = [[0 for i in range(RESULT_NUM)] for j in range(NODE_NUM)]
+
+for i in range(NODE_NUM):
+    for j in range(RESULT_NUM):
+        if result_list[j] == 'id':
+            result[i][j] = parsed[i][metric_list.index('id')]
+        elif result_list[j] == 'addr':
+            result[i][j] = parsed[i][metric_list.index('addr')]
+        elif result_list[j] == 'pdr':
+            if i == ROOT_INDEX:
+                result[i][j] = 0
+            else:
+                result[i][j] = round((float(parsed[i][metric_list.index('rx_up')]) + float(parsed[i][metric_list.index('rx_down')])) / (float(parsed[i][metric_list.index('tx_up')]) + float(parsed[i][metric_list.index('tx_down')])) * 100, 2)
+        elif result_list[j] == 'uPdr':
+            if i == ROOT_INDEX:
+                result[i][j] = 0
+            else:
+                result[i][j] = round(float(parsed[i][metric_list.index('rx_up')]) / float(parsed[i][metric_list.index('tx_up')]) * 100, 2)
+        elif result_list[j] == 'dPdr':
+            if i == ROOT_INDEX:
+                result[i][j] = 0
+            else:
+                result[i][j] = round(float(parsed[i][metric_list.index('rx_down')]) / float(parsed[i][metric_list.index('tx_down')]) * 100, 2)
+        elif result_list[j] == 'ps':
+            result[i][j] = parsed[i][metric_list.index('ps')]
+        elif result_list[j] == 'hopD':
+            result[i][j] = float(parsed[i][metric_list.index('avg_hopD')]) / 100
+        elif result_list[j] == 'subTN':
+            result[i][j] = float(parsed[i][metric_list.index('subtreeN')]) / 100
+        elif result_list[j] == 'ipLlR':
+            result[i][j] = round(float(parsed[i][metric_list.index('ip_noack')]) / (float(parsed[i][metric_list.index('ip_qloss')]) + float(parsed[i][metric_list.index('ip_enqueue')])), 2)
+        elif result_list[j] == 'ipQlR':
+            result[i][j] = round(float(parsed[i][metric_list.index('ip_qloss')]) / (float(parsed[i][metric_list.index('ip_qloss')]) + float(parsed[i][metric_list.index('ip_enqueue')])), 2)
+        elif result_list[j] == 'linkE':
+            result[i][j] = round((float(parsed[i][metric_list.index('ka_tx')]) + float(parsed[i][metric_list.index('ip_uc_tx')])) / (float(parsed[i][metric_list.index('ka_ok')]) + float(parsed[i][metric_list.index('ip_uc_ok')])), 2)
+        elif result_list[j] == 'leave':
+            result[i][j] = parsed[i][metric_list.index('leaving')]
+        elif result_list[j] == 'dc':
+            result[i][j] = float(parsed[i][metric_list.index('dc')]) / 10
+        
+# STEP-3-2: print result
+for i in range(RESULT_NUM - 1):
+    print(result_list[i], '\t', end='')
+print(result_list[-1])
+for i in range(NODE_NUM):
+    for j in range(RESULT_NUM - 1):
+        print(result[i][j], '\t', end='')
+    print(result[i][-1])
