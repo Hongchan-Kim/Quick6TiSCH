@@ -10,7 +10,7 @@
 
 #define DOWNWARD_TRAFFIC                           1
 #define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND)
-#define APP_SEND_INTERVAL                          (1 * 10 * CLOCK_SECOND)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
 
 #define RPL_FIRST_MEASURE_PERIOD                   (3 * 60)
 #define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)

@@ -65,7 +65,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
 
-    if(NETSTACK_ROUTING.node_is_reachable() && NETSTACK_ROUTING.get_root_ipaddr(&dest_ipaddr)) {
+    uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, root_info[1]);
+
+    //if(NETSTACK_ROUTING.node_is_reachable() && NETSTACK_ROUTING.get_root_ipaddr(&dest_ipaddr)) {
       /* Send to DAG root */
       LOG_INFO("HCK tx_up %u | Sending message %u to ", count, count);
       LOG_INFO_6ADDR(&dest_ipaddr);
@@ -73,9 +75,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
       snprintf(str, sizeof(str), "hello %d", count);
       simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
       count++;
-    } else {
+ /* } else {
       LOG_INFO("Not reachable yet\n");
-    }
+    } */
 
     /* Add some jitter */
     etimer_set(&periodic_timer, APP_SEND_INTERVAL
