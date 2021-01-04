@@ -50,8 +50,8 @@ metric_list = ['id', 'addr',
             'asso', 'leaving', 'leave_time',
             'dis_send', 'dioU_send', 'dioM_send',
             'ps', 'lastP', 'local_repair',
-            'avg_hopD', 'rdt',
-            'subtreeN',
+            'hopD_sum', 'hopD_cnt', 'rdt',
+            'subtree_sum', 'subtree_cnt',
             'dc']
 
 # STEP-2-2: location of metric indicator and value
@@ -130,6 +130,7 @@ while line:
 f.close()
 
 # STEP-2-6: print parsed log
+'''
 for i in range(METRIC_NUM - 1):
     print(metric_list[i], '\t', end='')
 print(metric_list[-1])
@@ -137,11 +138,13 @@ for i in range(NODE_NUM):
     for j in range(METRIC_NUM - 1):
         print(parsed[i][j], '\t', end='')
     print(parsed[i][-1])
+'''
 
 
 # STEP-3-1: result list and array
-result_list = ['id', 'addr', 'pdr', 'uPdr', 'dPdr', 
-               'ps', 'hopD', 'subTN', 'ipLlR', 'ipQlR', 'linkE', 'leave', 'dc']
+result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 
+               'ps', 'lastP', 'hopD', 'subTN', 'ip_ql', 'ip_eq', 'ip_no', 'ipLlR', 'ipQlR',
+               'ka_tx', 'ka_ok', 'ip_ut', 'ip_uo', 'linkE', 'leave', 'dc']
 RESULT_NUM = len(result_list)
 result = [[0 for i in range(RESULT_NUM)] for j in range(NODE_NUM)]
 
@@ -151,33 +154,66 @@ for i in range(NODE_NUM):
             result[i][j] = parsed[i][metric_list.index('id')]
         elif result_list[j] == 'addr':
             result[i][j] = parsed[i][metric_list.index('addr')]
-        elif result_list[j] == 'pdr':
-            if i == ROOT_INDEX:
-                result[i][j] = 0
-            else:
-                result[i][j] = round((float(parsed[i][metric_list.index('rx_up')]) + float(parsed[i][metric_list.index('rx_down')])) / (float(parsed[i][metric_list.index('tx_up')]) + float(parsed[i][metric_list.index('tx_down')])) * 100, 2)
+        elif result_list[j] == 'tx_up':
+            result[i][j] = parsed[i][metric_list.index('tx_up')]
+        elif result_list[j] == 'rx_up':
+            result[i][j] = parsed[i][metric_list.index('rx_up')]
         elif result_list[j] == 'uPdr':
-            if i == ROOT_INDEX:
+            if i == ROOT_INDEX or int(parsed[i][metric_list.index('tx_up')]) == 0:
                 result[i][j] = 0
             else:
                 result[i][j] = round(float(parsed[i][metric_list.index('rx_up')]) / float(parsed[i][metric_list.index('tx_up')]) * 100, 2)
+        elif result_list[j] == 'tx_dw':
+            result[i][j] = parsed[i][metric_list.index('tx_down')]
+        elif result_list[j] == 'rx_dw':
+            result[i][j] = parsed[i][metric_list.index('rx_down')]
         elif result_list[j] == 'dPdr':
-            if i == ROOT_INDEX:
+            if i == ROOT_INDEX or int(parsed[i][metric_list.index('tx_down')]) == 0:
                 result[i][j] = 0
             else:
                 result[i][j] = round(float(parsed[i][metric_list.index('rx_down')]) / float(parsed[i][metric_list.index('tx_down')]) * 100, 2)
+        elif result_list[j] == 'pdr':
+            if i == ROOT_INDEX or int(parsed[i][metric_list.index('tx_up')]) + int(parsed[i][metric_list.index('tx_down')]) == 0:
+                result[i][j] = 0
+            else:
+                result[i][j] = round((float(parsed[i][metric_list.index('rx_up')]) + float(parsed[i][metric_list.index('rx_down')])) / (float(parsed[i][metric_list.index('tx_up')]) + float(parsed[i][metric_list.index('tx_down')])) * 100, 2)
         elif result_list[j] == 'ps':
             result[i][j] = parsed[i][metric_list.index('ps')]
+        elif result_list[j] == 'lastP':
+            result[i][j] = parsed[i][metric_list.index('lastP')]
         elif result_list[j] == 'hopD':
-            result[i][j] = float(parsed[i][metric_list.index('avg_hopD')]) / 100
+            if int(parsed[i][metric_list.index('hopD_cnt')]) == 0:
+                result[i][j] = 0
+            else:
+                result[i][j] = round(float(parsed[i][metric_list.index('hopD_sum')]) / float(parsed[i][metric_list.index('hopD_cnt')]), 2)
         elif result_list[j] == 'subTN':
-            result[i][j] = float(parsed[i][metric_list.index('subtreeN')]) / 100
+            if int(parsed[i][metric_list.index('subtree_cnt')]) == 0:
+                result[i][j] = 0
+            else:
+                result[i][j] = round(float(parsed[i][metric_list.index('subtree_sum')]) / float(parsed[i][metric_list.index('subtree_cnt')]), 2)
+        elif result_list[j] == 'ip_ql':
+            result[i][j] = parsed[i][metric_list.index('ip_qloss')]
+        elif result_list[j] == 'ip_eq':
+            result[i][j] = parsed[i][metric_list.index('ip_enqueue')]
+        elif result_list[j] == 'ip_no':
+            result[i][j] = parsed[i][metric_list.index('ip_noack')]
         elif result_list[j] == 'ipLlR':
-            result[i][j] = round(float(parsed[i][metric_list.index('ip_noack')]) / (float(parsed[i][metric_list.index('ip_qloss')]) + float(parsed[i][metric_list.index('ip_enqueue')])), 2)
+            result[i][j] = round(float(parsed[i][metric_list.index('ip_noack')]) / (float(parsed[i][metric_list.index('ip_qloss')]) + float(parsed[i][metric_list.index('ip_enqueue')])) * 100, 2)
         elif result_list[j] == 'ipQlR':
-            result[i][j] = round(float(parsed[i][metric_list.index('ip_qloss')]) / (float(parsed[i][metric_list.index('ip_qloss')]) + float(parsed[i][metric_list.index('ip_enqueue')])), 2)
+            result[i][j] = round(float(parsed[i][metric_list.index('ip_qloss')]) / (float(parsed[i][metric_list.index('ip_qloss')]) + float(parsed[i][metric_list.index('ip_enqueue')])) * 100, 2)
+        elif result_list[j] == 'ka_tx':
+            result[i][j] = parsed[i][metric_list.index('ka_tx')]
+        elif result_list[j] == 'ka_ok':
+            result[i][j] = parsed[i][metric_list.index('ka_ok')]
+        elif result_list[j] == 'ip_ut':
+            result[i][j] = parsed[i][metric_list.index('ip_uc_tx')]
+        elif result_list[j] == 'ip_uo':
+            result[i][j] = parsed[i][metric_list.index('ip_uc_ok')]
         elif result_list[j] == 'linkE':
-            result[i][j] = round((float(parsed[i][metric_list.index('ka_tx')]) + float(parsed[i][metric_list.index('ip_uc_tx')])) / (float(parsed[i][metric_list.index('ka_ok')]) + float(parsed[i][metric_list.index('ip_uc_ok')])), 2)
+            if int(parsed[i][metric_list.index('ka_ok')]) + int(parsed[i][metric_list.index('ip_uc_ok')]) == 0:
+                result[i][j] = 0
+            else:
+                result[i][j] = round((float(parsed[i][metric_list.index('ka_tx')]) + float(parsed[i][metric_list.index('ip_uc_tx')])) / (float(parsed[i][metric_list.index('ka_ok')]) + float(parsed[i][metric_list.index('ip_uc_ok')])), 2)
         elif result_list[j] == 'leave':
             result[i][j] = parsed[i][metric_list.index('leaving')]
         elif result_list[j] == 'dc':

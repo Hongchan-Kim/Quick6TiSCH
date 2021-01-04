@@ -56,10 +56,10 @@
 
 static uint16_t rpl_dio_reset_count;
 
-static uint8_t first_hop_distance_measure;
-static uint8_t next_hop_distance_print;
-static uint32_t hop_distance_print_count;
-static uint32_t average_hop_distance;
+static uint16_t first_hop_distance_measure;
+static uint16_t next_hop_distance_print;
+static uint32_t hop_distance_measure_count;
+static uint32_t hop_distance_measure_sum;
 
 /* A configurable function called after update of the RPL DIO interval */
 #ifdef RPL_CALLBACK_NEW_DIO_INTERVAL
@@ -106,16 +106,25 @@ handle_periodic_timer(void *ptr)
   if(first_hop_distance_measure < RPL_FIRST_MEASURE_PERIOD) {
     first_hop_distance_measure++;
   } else {
-    if((tsch_is_associated == 1) && (dag->preferred_parent != NULL) && rpl_has_joined()) {
+    if((tsch_is_associated == 1) && (dag->preferred_parent != NULL) 
+      && (dag->preferred_parent->rank != RPL_INFINITE_RANK) 
+      && (dag->preferred_parent->hop_distance != 0xff)) {
       uint8_t my_hop_distance = dag->preferred_parent->hop_distance + 1;
-      average_hop_distance = 
-        (average_hop_distance * hop_distance_print_count + (uint32_t)my_hop_distance * 100) / (hop_distance_print_count + 1);
-      hop_distance_print_count++;
+
+      hop_distance_measure_sum += (uint32_t)my_hop_distance;
+      hop_distance_measure_count++;
+/*
+      hop_distance_measure_avg = 
+        (hop_distance_measure_avg * hop_distance_measure_count + (uint32_t)my_hop_distance * 100) / (hop_distance_measure_count + 1);
+      hop_distance_measure_count++;
+*/
     }
     next_hop_distance_print++;
-    if(next_hop_distance_print >= RPL_NEXT_MEASURE_PERIOD) {
+    if(next_hop_distance_print >= RPL_NEXT_PRINT_PERIOD) {
       next_hop_distance_print = 0;
-      LOG_INFO("HCK avg_hopD %lu / 100\n", average_hop_distance);
+      LOG_INFO("HCK hopD_sum %lu\n", hop_distance_measure_sum);
+      LOG_INFO("HCK hopD_cnt %lu\n", hop_distance_measure_count);
+      LOG_INFO("HCK hopD_avg %lu / 100\n", hop_distance_measure_sum / hop_distance_measure_count);
     }
   } 
 
