@@ -1214,9 +1214,9 @@ send_packet(mac_callback_t sent, void *ptr)
              TSCH_QUEUE_NUM_PER_NEIGHBOR, tsch_queue_global_packet_count(),
              QUEUEBUF_NUM, p->header_len, queuebuf_datalen(p->qb));
       if(sent == keepalive_packet_sent) {
-        LOG_ERR("HCK ka_enqueue %u\n", ++tsch_ka_enqueue_count);
+        LOG_INFO("HCK ka_enqueue %u\n", ++tsch_ka_enqueue_count);
       } else {
-        LOG_ERR("HCK ip_enqueue %u\n", ++tsch_ip_enqueue_count);
+        LOG_INFO("HCK ip_enqueue %u\n", ++tsch_ip_enqueue_count);
       }
 
     }
