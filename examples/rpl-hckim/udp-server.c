@@ -50,6 +50,10 @@
 #define APP_SEND_INTERVAL   (1 * 60 * CLOCK_SECOND)
 #endif
 
+#ifndef APP_MAX_TX
+#define APP_MAX_TX          100
+#endif
+
 static struct simple_udp_connection udp_conn;
 
 #if DOWNWARD_TRAFFIC
@@ -107,20 +111,22 @@ PROCESS_THREAD(udp_server_process, ev, data)
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
 
-    uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, non_root_info[curr][1]);
+    if(count <= APP_MAX_TX) {
+      uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, non_root_info[curr][1]);
 
-    /* Send to clients */
-    LOG_INFO("HCK tx_down %u to %u %x | Sending message %u to ", 
-              count, non_root_info[curr][0], non_root_info[curr][1], count);
-    LOG_INFO_6ADDR(&dest_ipaddr);
-    LOG_INFO_("\n");
-    snprintf(str, sizeof(str), "hello %d", count);
-    simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+      /* Send to clients */
+      LOG_INFO("HCK tx_down %u to %u %x | Sending message %u to ", 
+                count, non_root_info[curr][0], non_root_info[curr][1], count);
+      LOG_INFO_6ADDR(&dest_ipaddr);
+      LOG_INFO_("\n");
+      snprintf(str, sizeof(str), "hello %d", count);
+      simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
 
-    curr++;
-    if(curr >= NON_ROOT_NUM) {
-      curr = 0;
-      count++;
+      curr++;
+      if(curr >= NON_ROOT_NUM) {
+        curr = 0;
+        count++;
+      }
     }
 
     /* Add no jitter */
