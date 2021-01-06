@@ -9,11 +9,13 @@
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
 
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND)
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
+#define EVALUATION_DURATION                        (30 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (10 * 60 * CLOCK_SECOND)
+#define APP_SEND_INTERVAL                          (1 * 5 * CLOCK_SECOND)
+#define APP_MAX_TX                                 (EVALUATION_DURATION / APP_SEND_INTERVAL)
 
-#define RPL_FIRST_MEASURE_PERIOD                   (3 * 60)
-#define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
+#define RPL_FIRST_MEASURE_PERIOD                   (5 * 60)
+#define RPL_NEXT_PRINT_PERIOD                      (1 * 60)
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 
@@ -26,13 +28,41 @@
 #define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
 
 
+#define ORCHESTRA_RULE_1 { &eb_per_time_source, \
+                          &unicast_per_neighbor_rpl_storing, \
+                          &default_common }
+
+#define ORCHESTRA_RULE_2 { &eb_per_time_source, \
+                          &unicast_per_neighbor_link_based, \
+                          &default_common }
+
+//#define ORCHESTRA_CONF_RULES ORCHESTRA_RULE_1 // neighbor-storing
+#define ORCHESTRA_CONF_RULES ORCHESTRA_RULE_2 // link-based
+
+
 #define IOT_LAB_LYON_2                             1
 #define IOT_LAB_LYON_17                            2
 #define IOT_LAB_LILLE_46                           3
+#define IOT_LAB_LILLE_31                           4
 #define IOT_LAB_TEMP                               9
 
 //#define TESTBED_SITE                               IOT_LAB_LYON_2
 //#define TESTBED_SITE                               IOT_LAB_LYON_17
-#define TESTBED_SITE                               IOT_LAB_LILLE_46
+//#define TESTBED_SITE                               IOT_LAB_LILLE_46
+#define TESTBED_SITE                               IOT_LAB_LILLE_31
+
+#if TESTBED_SITE == IOT_LAB_LYON_2
+#define NODE_NUM        2
+#elif TESTBED_SITE == IOT_LAB_LYON_17
+#define NODE_NUM        17
+#elif TESTBED_SITE == IOT_LAB_LILLE_46
+#define NODE_NUM        46
+#elif TESTBED_SITE == IOT_LAB_LILLE_31
+#define NODE_NUM        31
+#endif
+
+#define NBR_TABLE_CONF_MAX_NEIGHBORS    (NODE_NUM)
+#define UIP_CONF_MAX_ROUTES             (NODE_NUM)
+
 
 #endif /* PROJECT_CONF_H_ */ 
