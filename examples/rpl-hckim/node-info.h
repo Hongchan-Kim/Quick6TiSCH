@@ -6,15 +6,7 @@
 
 #include <stdio.h>
 
-#if TESTBED_SITE == IOT_LAB_LYON_2
-#define NODE_NUM        2
-#elif TESTBED_SITE == IOT_LAB_LYON_17
-#define NODE_NUM        17
-#elif TESTBED_SITE == IOT_LAB_LILLE_46
-#define NODE_NUM        46
-#endif
-
-#define NON_ROOT_NUM    (NODE_NUM - 1)
+#define NON_ROOT_NUM                    (NODE_NUM - 1)
 
 extern uint16_t root_info[3];
 extern uint16_t non_root_info[NON_ROOT_NUM][3];
