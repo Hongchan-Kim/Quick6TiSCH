@@ -8,10 +8,14 @@ non_root_address_list = list()
 
 # STEP-1-2: extract node info (id and address)
 parser = argparse.ArgumentParser()
+parser.add_argument('iter', type=int)
 parser.add_argument('any_id', type=int)
 args = parser.parse_args()
 
-file_name = 'log-' + str(args.any_id) + '.txt'
+print('iter: ', args.iter)
+print('any_id: ', args.any_id)
+
+file_name = 'log-' + str(args.iter) + '-' + str(args.any_id) + '.txt'
 f = open(file_name, 'r')
 
 line = f.readline()
@@ -72,7 +76,7 @@ for node_id in non_root_id_list:
     parsed[node_index][metric_list.index('id')] = node_id
     parsed[node_index][metric_list.index('addr')] = non_root_address_list[non_root_id_list.index(node_id)]
 
-    file_name = 'log-' + str(node_id) + '.txt'
+    file_name = 'log-' + str(args.iter) + '-' + str(node_id) + '.txt'
     f = open(file_name, 'r')
 
     line = f.readline()
@@ -104,7 +108,7 @@ ROOT_INDEX = 0
 parsed[ROOT_INDEX][metric_list.index('id')] = ROOT_ID
 parsed[ROOT_INDEX][metric_list.index('addr')] = ROOT_ADDR
 
-file_name = 'log-' + str(ROOT_ID) + '.txt'
+file_name = 'log-' + str(args.iter) + '-' + str(ROOT_ID) + '.txt'
 f = open(file_name, 'r')
 
 line = f.readline()
