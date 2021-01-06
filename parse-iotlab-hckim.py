@@ -47,7 +47,7 @@ metric_list = ['id', 'addr',
             'ka_send', 'ka_qloss', 'ka_enqueue', 'ka_tx', 'ka_ok', 'ka_noack', 'ka_err',
             'eb_send', 'eb_qloss', 'eb_enqueue', 'eb_ok', 'eb_noack', 'eb_err',
             'ip_qloss', 'ip_enqueue', 'ip_ok', 'ip_noack', 'ip_err', 
-            'asso', 'leaving', 'leave_time',
+            'asso', 'leaving', 'leave_time', 'tsch_tx', 'tsch_rx',
             'dis_send', 'dioU_send', 'dioM_send',
             'ps', 'lastP', 'local_repair',
             'hopD_sum', 'hopD_cnt', 'rdt',
@@ -144,7 +144,7 @@ for i in range(NODE_NUM):
 # STEP-3-1: result list and array
 result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 
                'ps', 'lastP', 'hopD', 'subTN', 'ip_ql', 'ip_eq', 'ip_no', 'ipLlR', 'ipQlR',
-               'ka_tx', 'ka_ok', 'ip_ut', 'ip_uo', 'linkE', 'leave', 'dc']
+               'ka_tx', 'ka_ok', 'ip_ut', 'ip_uo', 'linkE', 'leave', 'cell', 'dc']
 RESULT_NUM = len(result_list)
 result = [[0 for i in range(RESULT_NUM)] for j in range(NODE_NUM)]
 
@@ -216,6 +216,8 @@ for i in range(NODE_NUM):
                 result[i][j] = round((float(parsed[i][metric_list.index('ka_tx')]) + float(parsed[i][metric_list.index('ip_uc_tx')])) / (float(parsed[i][metric_list.index('ka_ok')]) + float(parsed[i][metric_list.index('ip_uc_ok')])), 2)
         elif result_list[j] == 'leave':
             result[i][j] = parsed[i][metric_list.index('leaving')]
+        elif result_list[j] == 'cell':
+            result[i][j] = int(parsed[i][metric_list.index('tsch_tx')]) + int(parsed[i][metric_list.index('tsch_rx')])
         elif result_list[j] == 'dc':
             result[i][j] = float(parsed[i][metric_list.index('dc')]) / 10
         

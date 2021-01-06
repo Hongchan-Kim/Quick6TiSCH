@@ -95,6 +95,9 @@ static uint16_t tsch_ip_noack_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_ok_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_error_count; // tsch_tx_process_pending
 
+static uint32_t tsch_tx_process_pending_count;
+static uint32_t tsch_rx_process_pending_count;
+
 static clock_time_t clock_last_leaving;
 static clock_time_t clock_inst_leaving_time;
 static clock_time_t clock_avg_leaving_time;
@@ -531,6 +534,8 @@ tsch_rx_process_pending()
       && frame.fcf.frame_version == FRAME802154_IEEE802154_2015
       && frame.fcf.frame_type == FRAME802154_BEACONFRAME;
 
+    LOG_INFO("HCK tsch_rx %lu\n", ++tsch_rx_process_pending_count);
+
     if(is_data) {
       /* Skip EBs and other control messages */
       /* Copy to packetbuf for processing */
@@ -561,7 +566,7 @@ tsch_tx_process_pending(void)
     struct tsch_packet *p = dequeued_array[dequeued_index];
     /* Put packet into packetbuf for packet_sent callback */
     queuebuf_to_packetbuf(p->qb);
-    LOG_INFO("packet sent to ");
+    LOG_INFO("HCK tsch_tx %lu packet sent to ", ++tsch_tx_process_pending_count);
     LOG_INFO_LLADDR(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
     LOG_INFO_(", seqno %u, status %d, tx %d\n",
       packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO), p->ret, p->transmissions);

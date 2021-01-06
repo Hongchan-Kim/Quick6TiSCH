@@ -147,7 +147,7 @@ rpl_purge_routes(void)
       next_subtree_print = 0;
       LOG_INFO("HCK subtree_sum %lu\n", subtree_measure_sum);
       LOG_INFO("HCK subtree_cnt %lu\n", subtree_measure_count);
-      LOG_INFO("HCK subtree_avg %lu / 100\n", subtree_measure_sum / subtree_measure_count);
+      LOG_INFO("HCK subtree_avg %lu / 100\n", 100 * subtree_measure_sum / subtree_measure_count);
     }
   } 
 

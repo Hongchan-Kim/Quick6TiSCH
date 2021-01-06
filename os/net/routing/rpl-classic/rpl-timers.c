@@ -124,7 +124,7 @@ handle_periodic_timer(void *ptr)
       next_hop_distance_print = 0;
       LOG_INFO("HCK hopD_sum %lu\n", hop_distance_measure_sum);
       LOG_INFO("HCK hopD_cnt %lu\n", hop_distance_measure_count);
-      LOG_INFO("HCK hopD_avg %lu / 100\n", hop_distance_measure_sum / hop_distance_measure_count);
+      LOG_INFO("HCK hopD_avg %lu / 100\n", 100 * hop_distance_measure_sum / hop_distance_measure_count);
     }
   } 
 
