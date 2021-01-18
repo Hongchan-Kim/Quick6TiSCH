@@ -48,8 +48,9 @@
 #include "net/routing/rpl-classic/rpl-private.h"
 #endif
 
-#define DEBUG DEBUG_PRINT
-#include "net/ipv6/uip-debug.h"
+#include "sys/log.h"
+#define LOG_MODULE "ALICE"
+#define LOG_LEVEL  LOG_LEVEL_MAC
 
 /* A net-layer sniffer for packets sent and received */
 static void orchestra_packet_received(void);
@@ -164,10 +165,10 @@ orchestra_init(void)
   linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
   /* Initialize all Orchestra rules */
   for(i = 0; i < NUM_RULES; i++) {
+    LOG_INFO("Initializing rule %s (%u)\n", all_rules[i]->name, i);
     if(all_rules[i]->init != NULL) {
-      PRINTF("ALICE: initializing rule %u\n", i);
       all_rules[i]->init(i);
     }
   }
-  PRINTF("ALICE: initialization done\n");
+  LOG_INFO("ALICE: initialization done\n");
 }

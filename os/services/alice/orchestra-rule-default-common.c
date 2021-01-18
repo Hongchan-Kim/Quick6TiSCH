@@ -42,14 +42,12 @@
 #include "net/packetbuf.h"
 #include "net/routing/routing.h"
 
-
-
-#define DEBUG DEBUG_PRINT
-#include "net/ipv6/uip-debug.h"
-
+#include "sys/log.h"
+#define LOG_MODULE "ALICE"
+#define LOG_LEVEL  LOG_LEVEL_MAC
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 0;
+static uint16_t channel_offset = 0; // alice hckim
 
 #if ORCHESTRA_EBSF_PERIOD > 0
 /* There is a slotframe for EBs, use this slotframe for non-EB traffic only */
@@ -64,7 +62,6 @@ static int
 neighbor_has_uc_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL && !linkaddr_cmp(linkaddr, &linkaddr_null)) {
-//    if(orchestra_parent_knows_us 
     if((orchestra_parent_knows_us || !ORCHESTRA_UNICAST_SENDER_BASED)
        && linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
       return 1;
@@ -90,16 +87,13 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
     *channel_offset = slotframe_handle;
   }
 
-
   //ksh.. return 0 and pass to unicast slotframe
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME && neighbor_has_uc_link(dest)) {
     return 0;
   }//ksh.. 
 
-
   return 1;
-
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -113,10 +107,9 @@ init(uint16_t sf_handle)
   tsch_schedule_add_link(sf_common,
       LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED,
       ORCHESTRA_COMMON_SHARED_TYPE, &tsch_broadcast_address,
-      0, channel_offset);
+      0, channel_offset, 1);
 
-  PRINTF("AILCE: Broadcast/Default sf length: %u\n", ORCHESTRA_COMMON_SHARED_PERIOD);
-
+  LOG_INFO("AILCE: Broadcast/Default sf length: %u\n", ORCHESTRA_COMMON_SHARED_PERIOD);
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule default_common = {
@@ -125,4 +118,5 @@ struct orchestra_rule default_common = {
   select_packet,
   NULL,
   NULL,
+  "default common",
 };

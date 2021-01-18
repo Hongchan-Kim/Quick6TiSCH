@@ -46,16 +46,14 @@
  * - a sender-based or receiver-based slotframe for unicast to RPL parents and children
  * - a common shared slotframe for any other traffic (mostly broadcast)
  *  */
-#define ORCHESTRA_RULES { &eb_per_time_source, &default_common , &unicast_per_neighbor_rpl_storing}
-/* Example configuration for RPL non-storing mode: */
-/* #define ORCHESTRA_RULES { &eb_per_time_source, &unicast_per_neighbor_rpl_ns, &default_common } */
-
+#define ORCHESTRA_RULES { &eb_per_time_source, \
+                          &default_common, \
+                          &unicast_per_neighbor_rpl_storing}
 #endif /* ORCHESTRA_CONF_RULES */
 
 #ifndef MULTIPLE_CHANNEL_OFFSETS
 #define MULTIPLE_CHANNEL_OFFSETS 1 //ksh.. use multiple channel offsets.
 #endif
-
 
 /* Length of the various slotframes. Tune to balance network capacity,
  * contention, energy, latency. */
@@ -92,14 +90,8 @@
 #else /* ORCHESTRA_CONF_LINKADDR_HASH */
 #define ORCHESTRA_LINKADDR_HASH(addr)             ((addr != NULL) ? (addr)->u8[LINKADDR_SIZE - 1] : -1)
 
-
-
 #define ORCHESTRA_LINKADDR_HASH2(addr1, addr2)    ((addr1 != NULL && addr2 != NULL) ? ( ((((addr1)->u8[LINKADDR_SIZE-2] + (addr1)->u8[LINKADDR_SIZE-1])*512) +(addr2)->u8[LINKADDR_SIZE-2]+(addr2)->u8[LINKADDR_SIZE-1]) )  : -1)
 #define ORCHESTRA_LINKADDR_HASH3(addr1)    ((addr1 != NULL) ? (  (addr1)->u8[LINKADDR_SIZE-2]*17+(addr1)->u8[LINKADDR_SIZE-1])  : -1)
-
-
-
-
 
 #endif /* ORCHESTRA_CONF_LINKADDR_HASH */
 
