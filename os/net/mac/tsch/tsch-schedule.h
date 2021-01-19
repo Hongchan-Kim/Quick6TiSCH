@@ -104,6 +104,16 @@ int tsch_schedule_remove_all_slotframes(void);
 struct tsch_link *tsch_schedule_add_link(struct tsch_slotframe *slotframe,
                                          uint8_t link_options, enum link_type link_type, const linkaddr_t *address,
                                          uint16_t timeslot, uint16_t channel_offset, uint8_t do_remove);
+
+// alice-implementation
+#if WITH_ALICE == 1
+struct tsch_link *
+tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
+                       uint8_t link_options, enum link_type link_type, 
+                       const linkaddr_t *address, const linkaddr_t *neighbor,
+                       uint16_t timeslot, uint16_t channel_offset);
+#endif
+
 /**
 * \brief Looks for a link from a handle
 * \param handle The target handle
@@ -120,6 +130,13 @@ struct tsch_link *tsch_schedule_get_link_by_handle(uint16_t handle);
  */
 struct tsch_link *tsch_schedule_get_link_by_timeslot(struct tsch_slotframe *slotframe,
                                                      uint16_t timeslot, uint16_t channel_offset);
+
+// alice-implementation
+#ifdef MULTIPLE_CHANNEL_OFFSETS
+// ksh: timeslot and channel offset
+struct tsch_link *tsch_schedule_get_link_by_ts_choff(struct tsch_slotframe *slotframe, 
+                                                     uint16_t timeslot, uint16_t channel_offset);
+#endif
 
 /**
  * \brief Removes a link
@@ -138,6 +155,22 @@ int tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link
  */
 int tsch_schedule_remove_link_by_timeslot(struct tsch_slotframe *slotframe,
                                           uint16_t timeslot, uint16_t channel_offset);
+
+// alice-implementation
+#ifdef MULTIPLE_CHANNEL_OFFSETS
+// ksh: timeslot and channel offset
+int tsch_schedule_remove_link_by_ts_choff(struct tsch_slotframe *slotframe, 
+                                          uint16_t timeslot, uint16_t channel_offset);
+#endif
+
+/*---------------------------------------------------------------------------*/
+// alice-implementation
+// ksh: Thomas Wang 32bit-Interger Mix Function
+uint16_t
+real_hash(uint32_t value, uint16_t mod); // ksh: Thomas Wang method..
+uint16_t
+real_hash5(uint32_t value, uint16_t mod); // ksh: ..
+/*---------------------------------------------------------------------------*/
 
 /**
  * \brief Returns the next active link after a given ASN, and a backup link (for the same ASN, with Rx flag)

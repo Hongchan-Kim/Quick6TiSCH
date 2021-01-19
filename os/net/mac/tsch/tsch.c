@@ -192,6 +192,24 @@ PROCESS(tsch_pending_events_process, "pending events process");
 /* Other function prototypes */
 static void packet_input(void);
 
+/*---------------------------------------------------------------------------*/
+// alice-implementation
+#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+uint16_t currSFID = 0;
+uint16_t nextSFID = 0;
+uint16_t limitSFID = 0;
+
+// ksh: returns the current SFID for ALICE
+uint16_t alice_tsch_schedule_get_current_sfid(struct tsch_slotframe *sf){
+  uint16_t mod = TSCH_ASN_MOD(tsch_current_asn, sf->size);
+  struct tsch_asn_t newasn;
+  TSCH_ASN_COPY(newasn, tsch_current_asn);
+  TSCH_ASN_DEC(newasn, mod);
+  return TSCH_ASN_DIVISION(newasn, sf->size);
+}
+#endif
+/*---------------------------------------------------------------------------*/
+
 /* Getters and setters */
 
 /*---------------------------------------------------------------------------*/

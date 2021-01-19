@@ -227,7 +227,8 @@ enum {
 #if TSCH_WITH_LINK_SELECTOR
   PACKETBUF_ATTR_TSCH_SLOTFRAME,
   PACKETBUF_ATTR_TSCH_TIMESLOT,
-  PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET,
+  // alice-implementation
+  PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET, // ksh: added
 #endif /* TSCH_WITH_LINK_SELECTOR */
 
   /* Scope 1 attributes: used between two neighbors only. */

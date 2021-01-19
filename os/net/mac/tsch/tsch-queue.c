@@ -67,6 +67,11 @@
 #error TSCH_QUEUE_NUM_PER_NEIGHBOR must be power of two
 #endif
 
+// alice-implementation
+#ifdef ALICE_CALLBACK_PACKET_SELECTION // ksh: alice packet selection
+int ALICE_CALLBACK_PACKET_SELECTION(uint16_t* ts, uint16_t* choff, const linkaddr_t rx_lladdr);
+#endif
+
 /* We have as many packets are there are queuebuf in the system */
 MEMB(packet_memb, struct tsch_packet, QUEUEBUF_NUM);
 NBR_TABLE(struct tsch_neighbor, tsch_neighbors);
@@ -421,12 +426,69 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
 #if TSCH_WITH_LINK_SELECTOR
         int packet_attr_slotframe = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
         int packet_attr_timeslot = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
+
+// alice-implementation
+#ifdef MULTIPLE_CHANNEL_OFFSETS // ksh: ..
+        int packet_attr_channel_offset = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
+#endif
+
+// alice-implementation
+#ifdef ALICE_CALLBACK_PACKET_SELECTION
+        if(packet_attr_slotframe == ALICE_UNICAST_SF_ID) {
+          linkaddr_t rx_lladdr;
+          linkaddr_copy(&rx_lladdr, queuebuf_addr(n->tx_array[get_index]->qb, PACKETBUF_ADDR_RECEIVER));
+          uint16_t packet_ts = link->timeslot;
+          uint16_t packet_choff = link->channel_offset;
+
+          // ksh: this function calculates timeoffset and channeloffset 
+          // on the basis of the link-level packet destiation (rx_lladdr) and the current SFID.
+          
+          // ksh: Decides packet_ts and packet_choff, checks rpl neighbor relations.
+          int r = ALICE_CALLBACK_PACKET_SELECTION(&packet_ts, &packet_choff, rx_lladdr);
+          if(r == 0) { // ksh: no unicast link
+		        tsch_queue_free_packet(n->tx_array[get_index]); // ksh: ALICE early packet drop
+            return NULL;
+          } else { // ksh: has unicast link
+            if(packet_attr_slotframe != 0xffff && link->slotframe_handle != ALICE_UNICAST_SF_ID) {
+              return NULL;
+            }
+            if(packet_attr_timeslot != 0xffff && link->timeslot!= packet_ts) {
+              return NULL;
+            }
+            if(link->channel_offset != packet_choff) { 
+              return NULL;
+            }
+          }
+          return n->tx_array[get_index];
+        } else {// ksh: This is EB or RPL slotframe
+          if(packet_attr_slotframe != 0xffff && link->slotframe_handle!= packet_attr_slotframe) {
+            return NULL;
+          }
+          if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
+            return NULL;
+          }
+          if(packet_attr_channel_offset != link->channel_offset) { 
+            return NULL; 
+          }
+        }
+#else // ksh: original source code ALICE_CALLBACK_PACKET_SELECTION
+
         if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
           return NULL;
         }
         if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
           return NULL;
         }
+
+// alice-implementation
+#ifdef MULTIPLE_CHANNEL_OFFSETS // ksh: ..
+        if(packet_attr_channel_offset != 0xffff && packet_attr_channel_offset != link->channel_offset) { //ksh..
+          return NULL;
+        }
+#endif 
+
+#endif // ksh ALICE_CALLBACK_PACKET_SELECTION end
+
 #endif
         return n->tx_array[get_index];
       }
