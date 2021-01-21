@@ -61,10 +61,12 @@
 #define LOG_MODULE "TSCH Sched"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+#if ALICE_CHECK
 // alice-implementation
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
-void ALICE_TSCH_CALLBACK_SLOTFRAME_START(uint16_t sfid, uint16_t sfsize); 
+#ifdef ALICE_CALLBACK_SLOTFRAME_START
+void ALICE_CALLBACK_SLOTFRAME_START(uint16_t sfid, uint16_t sfsize); 
 #endif 
+#endif
 
 /* Pre-allocated space for links */
 MEMB(link_memb, struct tsch_link, TSCH_SCHEDULE_MAX_LINKS);
@@ -105,6 +107,7 @@ tsch_schedule_add_slotframe(uint16_t handle, uint16_t size)
 }
 /*---------------------------------------------------------------------------*/
 
+#if ALICE_CHECK
 /*---------------------------------------------------------------------------*/
 // alice-implementation
 // ksh: Thomas Wang 32bit-Interger Mix Function
@@ -132,6 +135,7 @@ real_hash5(uint32_t value, uint16_t mod) //ksh..
   return (uint16_t)(a % (uint32_t)mod);
 }
 /*---------------------------------------------------------------------------*/
+#endif
 
 /*---------------------------------------------------------------------------*/
 /* Removes all slotframes, resulting in an empty schedule */
@@ -187,6 +191,7 @@ tsch_schedule_get_slotframe_by_handle(uint16_t handle)
 }
 /*---------------------------------------------------------------------------*/
 
+#if ALICE_CHECK
 /*---------------------------------------------------------------------------*/
 // alice-implementation
 #ifdef MULTIPLE_CHANNEL_OFFSETS
@@ -201,7 +206,8 @@ tsch_schedule_remove_link_by_ts_choff(struct tsch_slotframe *slotframe,
 /*---------------------------------------------------------------------------*/
 // ksh: get link by timeslot and channel offset
 struct tsch_link *
-tsch_schedule_get_link_by_ts_choff(struct tsch_slotframe *slotframe, uint16_t timeslot, uint16_t channel_offset)
+tsch_schedule_get_link_by_ts_choff(struct tsch_slotframe *slotframe, 
+                                   uint16_t timeslot, uint16_t channel_offset)
 {
   if(!tsch_is_locked()) {
     if(slotframe != NULL) {
@@ -216,11 +222,11 @@ tsch_schedule_get_link_by_ts_choff(struct tsch_slotframe *slotframe, uint16_t ti
       return l;
     }
   }
-
   return NULL;
 }
 #endif
 /*---------------------------------------------------------------------------*/
+#endif
 
 /*---------------------------------------------------------------------------*/
 /* Looks for a link from a handle */
@@ -297,6 +303,11 @@ tsch_schedule_add_link(struct tsch_slotframe *slotframe,
     if(timeslot > (slotframe->size.val - 1)) {
       LOG_ERR("! add_link invalid timeslot: %u\n", timeslot);
       return NULL;
+#if ALICE_CHECK
+    } else if(channel_offset > 15) { // alice-implementation
+      LOG_ERR("! add_link invalid channel_offset: %u\n", channel_offset);
+      return NULL;
+#endif
     }
 
     if(do_remove) {
@@ -360,13 +371,14 @@ tsch_schedule_add_link(struct tsch_slotframe *slotframe,
 }
 /*---------------------------------------------------------------------------*/
 
+#if ALICE_CHECK
 /*---------------------------------------------------------------------------*/
 // alice-implementation
 #if WITH_ALICE == 1 // ksh: set link option by timeslot and channel offset
 struct tsch_link *
 tsch_schedule_set_link_option_by_ts_choff(struct tsch_slotframe *slotframe, uint16_t timeslot, uint16_t channel_offset, uint8_t* link_options) //ksh ..
 {
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+#ifdef ALICE_CALLBACK_SLOTFRAME_START
   if(1) { //ksh: 20190708 if(!tsch_is_locked()) {
 #else
   if(!tsch_is_locked()) { 
@@ -392,7 +404,8 @@ tsch_schedule_set_link_option_by_ts_choff(struct tsch_slotframe *slotframe, uint
 /* Adds a link to a slotframe, return a pointer to it (NULL if failure) */
 struct tsch_link *
 tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
-                       uint8_t link_options, enum link_type link_type, const linkaddr_t *address, const linkaddr_t *neighbor,
+                       uint8_t link_options, enum link_type link_type, const linkaddr_t *address, 
+                       const linkaddr_t *neighbor,
                        uint16_t timeslot, uint16_t channel_offset)
 {
   struct tsch_link *l = NULL;
@@ -410,7 +423,7 @@ tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
 
     /* Start with removing the link currently installed at this timeslot (needed
      * to keep neighbor state in sync with link options etc.) */
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+#ifdef ALICE_CALLBACK_SLOTFRAME_START
     if(0) {// ksh: 20190708 if(!tsch_get_lock()) {
 #else
     if(!tsch_get_lock()) {
@@ -428,7 +441,8 @@ tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
         list_add(slotframe->links_list, l);
         /* Initialize link */
         l->handle = current_link_handle++;
-
+        
+        // alice-implementation
         l->link_option_alice = link_options; // ksh: neighbor's original setting.
         tsch_schedule_set_link_option_by_ts_choff(slotframe, timeslot, channel_offset, &link_options); // ksh: defined
 
@@ -468,6 +482,7 @@ tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
   return l;
 }
 #endif
+#endif /* ALICE_CHECK */
 /*---------------------------------------------------------------------------*/
 /* Removes a link from slotframe. Return 1 if success, 0 if failure */
 int
@@ -475,7 +490,7 @@ tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link *l)
 {
   if(slotframe != NULL && l != NULL && l->slotframe_handle == slotframe->handle) {
 // alice-implementation
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+#ifdef ALICE_CALLBACK_SLOTFRAME_START
     if(1) { // ksh: 20190708 if(tsch_get_lock()) {
 #else
     if(tsch_get_lock()) {
@@ -570,9 +585,10 @@ tsch_schedule_get_link_by_timeslot(struct tsch_slotframe *slotframe,
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
+#if ALICE_CHECK
 // alice-implementation
 // ksh: alice time varying schedule
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+#ifdef ALICE_CALLBACK_SLOTFRAME_START
 void tsch_schedule_alice_data_Sf_reschedule(struct tsch_asn_t *asn) {
   if(!tsch_is_locked()) { 
     int flag = 0;
@@ -584,7 +600,7 @@ void tsch_schedule_alice_data_Sf_reschedule(struct tsch_asn_t *asn) {
     if((currSFID == 0 && nextSFID == limitSFID)
       || (!(currSFID == 0 && nextSFID == limitSFID) && (currSFID > nextSFID))) {   
       nextSFID = currSFID;
-      ALICE_TSCH_CALLBACK_SLOTFRAME_START(nextSFID, (uint16_t)sf->size.val);
+      ALICE_CALLBACK_SLOTFRAME_START(nextSFID, (uint16_t)sf->size.val);
     }
 
     uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
@@ -607,11 +623,13 @@ void tsch_schedule_alice_data_Sf_reschedule(struct tsch_asn_t *asn) {
         nextSFID = currSFID + 1;
       }
 
-      ALICE_TSCH_CALLBACK_SLOTFRAME_START(nextSFID, (uint16_t)sf->size.val);
+      ALICE_CALLBACK_SLOTFRAME_START(nextSFID, (uint16_t)sf->size.val);
     } // ksh: if (flag == 0 && currSFID == nextSFID) end 
   } // ksh: tsch is locked 
 }
-#endif // ksh: ALICE_TSCH_CALLBACK_SLOTFRAME_START end
+#endif // ksh: ALICE_CALLBACK_SLOTFRAME_START end
+#endif /* AALICE_CHECK */
+
 /*---------------------------------------------------------------------------*/
 static struct tsch_link *
 default_tsch_link_comparator(struct tsch_link *a, struct tsch_link *b)
@@ -652,17 +670,19 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
     /* For each slotframe, look for the earliest occurring link */
     while(sf != NULL) {
 
+#if ALICE_CHECK
 // alice-implementation
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START // ksh: ..
+#ifdef ALICE_CALLBACK_SLOTFRAME_START // ksh: ..
       if(sf->handle == ALICE_UNICAST_SF_ID ) {
-        uint16_t mod=TSCH_ASN_MOD(*asn, sf->size);
-        struct tsch_asn_t newasn;
-        TSCH_ASN_COPY(newasn, *asn);
-        TSCH_ASN_DEC(newasn, mod);
-        currSFID = TSCH_ASN_DIVISION(newasn, sf->size);
+        uint16_t mod = TSCH_ASN_MOD(*asn, sf->size);
+        struct tsch_asn_t new_asn;
+        TSCH_ASN_COPY(new_asn, *asn);
+        TSCH_ASN_DEC(new_asn, mod);
+        currSFID = TSCH_ASN_DIVISION(new_asn, sf->size);
 
         tsch_schedule_alice_data_Sf_reschedule(asn); // ksh: ALICE time varying scheduling
       }
+#endif
 #endif
 
       /* Get timeslot from ASN, given the slotframe length */
@@ -674,11 +694,13 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
           l->timeslot - timeslot :
           sf->size.val + l->timeslot - timeslot;
 
+#if ALICE_CHECK
 // alice-implementation
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START // ksh: ..
+#ifdef ALICE_CALLBACK_SLOTFRAME_START // ksh: ..
         if(sf->handle == ALICE_UNICAST_SF_ID && currSFID != nextSFID && l->timeslot > timeslot){
           time_to_timeslot = 999; //maximum value;
         }
+#endif
 #endif
 
         if(curr_best == NULL || time_to_timeslot < time_to_curr_best) {

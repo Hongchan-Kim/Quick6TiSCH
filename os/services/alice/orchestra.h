@@ -45,7 +45,7 @@
 struct orchestra_rule {
   void (* init)(uint16_t slotframe_handle);
   void (* new_time_source)(const struct tsch_neighbor *old, const struct tsch_neighbor *new);
-  int  (* select_packet)(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset); //ksh..
+  int  (* select_packet)(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset); // ksh: ..
   void (* child_added)(const linkaddr_t *addr);
   void (* child_removed)(const linkaddr_t *addr);
   const char *name;
@@ -53,7 +53,6 @@ struct orchestra_rule {
 
 struct orchestra_rule eb_per_time_source;
 struct orchestra_rule unicast_per_neighbor_rpl_storing;
-//struct orchestra_rule unicast_per_neighbor_rpl_ns;
 struct orchestra_rule default_common;
 
 extern linkaddr_t orchestra_parent_linkaddr;
@@ -63,7 +62,7 @@ extern int orchestra_parent_knows_us;
 void orchestra_init(void);
 /* Callbacks requied for Orchestra to operate */
 /* Set with #define TSCH_CALLBACK_PACKET_READY orchestra_callback_packet_ready */
-void orchestra_callback_packet_ready(void);
+int orchestra_callback_packet_ready(void);
 /* Set with #define TSCH_CALLBACK_NEW_TIME_SOURCE orchestra_callback_new_time_source */
 void orchestra_callback_new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new);
 /* Set with #define NETSTACK_CONF_ROUTING_NEIGHBOR_ADDED_CALLBACK orchestra_callback_child_added */
@@ -71,14 +70,10 @@ void orchestra_callback_child_added(const linkaddr_t *addr);
 /* Set with #define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK orchestra_callback_child_removed */
 void orchestra_callback_child_removed(const linkaddr_t *addr);
 
-//#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START//ksh..
-//ksh. alice time varying scheduling
-void alice_callback_slotframe_start (uint16_t a, uint16_t b);
-//#endif
-
-//#ifdef ALICE_CALLBACK_PACKET_SELECTION //ksh..
-//int alice_callback_packet_selection (uint16_t ts_ch, uint16_t flag, const linkaddr_t rx_lladdr);
+// alice-implementation
+// ksh: alice time varying scheduling
+void alice_callback_slotframe_start(uint16_t a, uint16_t b);
+// ksh: alice packet selection
 int alice_callback_packet_selection(uint16_t* ts, uint16_t* choff, const linkaddr_t rx_lladdr);
-//#endif
 
 #endif /* __ORCHESTRA_H__ */

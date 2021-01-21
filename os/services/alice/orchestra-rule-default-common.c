@@ -47,8 +47,6 @@
 #define LOG_LEVEL  LOG_LEVEL_MAC
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 0; // alice hckim
-
 #if ORCHESTRA_EBSF_PERIOD > 0
 /* There is a slotframe for EBs, use this slotframe for non-EB traffic only */
 #define ORCHESTRA_COMMON_SHARED_TYPE              LINK_TYPE_NORMAL
@@ -66,7 +64,7 @@ neighbor_has_uc_link(const linkaddr_t *linkaddr)
        && linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
       return 1;
     }
-    if(nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr) != NULL ){//&& !linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
+    if(nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr) != NULL ) { // && !linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
       return 1;
     }
   }
@@ -83,16 +81,15 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
   if(timeslot != NULL) {
     *timeslot = 0;
   }
-  if(channel_offset != NULL) {//ksh.
+  if(channel_offset != NULL) { // ksh
     *channel_offset = slotframe_handle;
   }
 
-  //ksh.. return 0 and pass to unicast slotframe
+  // ksh: return 0 and pass to unicast slotframe
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME && neighbor_has_uc_link(dest)) {
     return 0;
-  }//ksh.. 
-
+  } // ksh 
   return 1;
 }
 /*---------------------------------------------------------------------------*/
@@ -100,14 +97,13 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-  channel_offset = slotframe_handle;
   /* Default slotframe: for broadcast or unicast to neighbors we
    * do not have a link to */
   struct tsch_slotframe *sf_common = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_COMMON_SHARED_PERIOD);
   tsch_schedule_add_link(sf_common,
       LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED,
       ORCHESTRA_COMMON_SHARED_TYPE, &tsch_broadcast_address,
-      0, channel_offset, 1);
+      0, ORCHESTRA_DEFAULT_COMMON_CHANNEL_OFFSET, 1);
 
   LOG_INFO("AILCE: Broadcast/Default sf length: %u\n", ORCHESTRA_COMMON_SHARED_PERIOD);
 }

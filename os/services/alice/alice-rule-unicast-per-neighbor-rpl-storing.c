@@ -81,22 +81,25 @@ static uint16_t
 get_node_timeslot(const linkaddr_t *addr1, const linkaddr_t *addr2)
 {
   if(addr1 != NULL && addr2 != NULL && ORCHESTRA_UNICAST_PERIOD > 0) {
-    return real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2) + (uint32_t)sfid_schedule), (ORCHESTRA_UNICAST_PERIOD)); //link-based
+    return real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2) 
+                        + (uint32_t)sfid_schedule), (ORCHESTRA_UNICAST_PERIOD)); //link-based
   } else {
     return 0xffff;
   }
 }
 /*---------------------------------------------------------------------------*/
-//ksh. newly defined function
 static uint16_t
 get_node_channel_offset(const linkaddr_t *addr1, const linkaddr_t *addr2)
 {
+// ksh: newly defined function
 #if ORCHESTRA_ONE_CHANNEL_OFFSET
-  return slotframe_handle; //ksh.. only one channel offset is allowed for unicast slotframe.
+  return slotframe_handle; //ksh: only one channel offset is allowed for unicast slotframe.
 #endif
-  int num_ch = (sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE) / sizeof(uint8_t)) - 1; //ksh.
-  if(addr1 != NULL && addr2 != NULL  && num_ch > 0) { //ksh.   
-       return 1 + real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2) + (uint32_t)sfid_schedule), num_ch); //link-based
+
+  int num_ch = (sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE) / sizeof(uint8_t)) - 1; // ksh.
+  if(addr1 != NULL && addr2 != NULL  && num_ch > 0) { // ksh.   
+       return 1 + real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2) 
+                              + (uint32_t)sfid_schedule), num_ch); //link-based
   } else {
     return 1 + 0; 
   }
@@ -116,14 +119,15 @@ is_root()
   return 0;
 }
 /*---------------------------------------------------------------------------*/
+// ksh: remove current slotframe scheduling and re-schedule this slotframe.
 static void
-alice_schedule_unicast_slotframe(void) //ksh. //remove current slotframe scheduling and re-schedule this slotframe.
+alice_schedule_unicast_slotframe(void)
 {
   uint16_t timeslot_us, timeslot_ds, channel_offset_us, channel_offset_ds;
-  uint16_t timeslot_us_p, timeslot_ds_p, channel_offset_us_p, channel_offset_ds_p; //parent's schedule
+  uint16_t timeslot_us_p, timeslot_ds_p, channel_offset_us_p, channel_offset_ds_p; // parent's schedule
   uint8_t link_option_up, link_option_down;
 
-  // remove the whole links scheduled in the unicast slotframe
+  // ksh: remove the whole links scheduled in the unicast slotframe
   struct tsch_link *l;
   l = list_head(sf_unicast->links_list);
   while(l != NULL) {
@@ -131,19 +135,26 @@ alice_schedule_unicast_slotframe(void) //ksh. //remove current slotframe schedul
     l = list_head(sf_unicast->links_list);
   }
 
-  if(is_root() != 1) { // schedule the links between parent-node and current node
+  if(is_root() != 1) {
+    // No root
+    // ksh: schedule the links between parent-node and current node
     timeslot_us_p = get_node_timeslot(&linkaddr_node_addr, &orchestra_parent_linkaddr);
     channel_offset_us_p = get_node_channel_offset(&linkaddr_node_addr, &orchestra_parent_linkaddr);
     link_option_up = link_option_tx;
-    tsch_schedule_add_link_alice(sf_unicast, link_option_up, LINK_TYPE_NORMAL, &tsch_broadcast_address, &orchestra_parent_linkaddr, timeslot_us_p, channel_offset_us_p);
+    tsch_schedule_add_link_alice(sf_unicast, link_option_up, LINK_TYPE_NORMAL, 
+                                &tsch_broadcast_address, &orchestra_parent_linkaddr, 
+                                timeslot_us_p, channel_offset_us_p);
 
     timeslot_ds_p = get_node_timeslot(&orchestra_parent_linkaddr, &linkaddr_node_addr);
     channel_offset_ds_p = get_node_channel_offset(&orchestra_parent_linkaddr, &linkaddr_node_addr);
     link_option_down = link_option_rx;
-    tsch_schedule_add_link_alice(sf_unicast, link_option_down, LINK_TYPE_NORMAL, &tsch_broadcast_address, &orchestra_parent_linkaddr, timeslot_ds_p, channel_offset_ds_p);
+    tsch_schedule_add_link_alice(sf_unicast, link_option_down, LINK_TYPE_NORMAL, 
+                                &tsch_broadcast_address, &orchestra_parent_linkaddr, 
+                                timeslot_ds_p, channel_offset_ds_p);
   } // is_root end
 
-  // schedule the links between child-node and current node // (lookup all route next hops)
+  // schedule the links between child-node and current node
+  // lookup all route next hops
   nbr_table_item_t *item = nbr_table_head(nbr_routes);
   while(item != NULL) {
     linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
@@ -153,13 +164,17 @@ alice_schedule_unicast_slotframe(void) //ksh. //remove current slotframe schedul
     channel_offset_us = get_node_channel_offset(addr, &linkaddr_node_addr);
     link_option_up = link_option_rx; // 20190507 ksh..
     // add links (upstream)
-    tsch_schedule_add_link_alice(sf_unicast, link_option_up, LINK_TYPE_NORMAL, &tsch_broadcast_address, addr, timeslot_us, channel_offset_us);
+    tsch_schedule_add_link_alice(sf_unicast, link_option_up, LINK_TYPE_NORMAL, 
+                                &tsch_broadcast_address, addr, timeslot_us, 
+                                channel_offset_us);
 
     timeslot_ds = get_node_timeslot(&linkaddr_node_addr, addr); 
     channel_offset_ds = get_node_channel_offset(&linkaddr_node_addr, addr);
     link_option_down = link_option_tx; // 20190507 ksh..
     // add links (downstream)
-    tsch_schedule_add_link_alice(sf_unicast, link_option_down, LINK_TYPE_NORMAL, &tsch_broadcast_address, addr, timeslot_ds, channel_offset_ds);
+    tsch_schedule_add_link_alice(sf_unicast, link_option_down, LINK_TYPE_NORMAL, 
+                                &tsch_broadcast_address, addr, timeslot_ds, 
+                                channel_offset_ds);
 
     // move to the next item for while loop.
     item = nbr_table_next(nbr_routes, item);
@@ -180,8 +195,6 @@ neighbor_has_uc_link(const linkaddr_t *linkaddr)
   }
   return 0;
 }
-/*---------------------------------------------------------------------------*/
-
 /*---------------------------------------------------------------------------*/ //ksh. packet_selection_callback. 
 #ifdef ALICE_CALLBACK_PACKET_SELECTION
 int
@@ -190,7 +203,6 @@ alice_callback_packet_selection(uint16_t* ts, uint16_t* choff, const linkaddr_t 
 // packet destination is rx_lladdr. 
 // Checks if rx_lladdr is still the node's RPL neighbor.
 // and checks wether this can be transmitted at the current link's cell (*ts,*choff). 
-
   uint16_t cur_ts = *ts;
   uint16_t cur_choff = *choff;
   int is_neighbor = 0;
@@ -205,11 +217,11 @@ alice_callback_packet_selection(uint16_t* ts, uint16_t* choff, const linkaddr_t 
     if(*ts == cur_ts && *choff == cur_choff) {
       return is_neighbor; // is_neighbor = 1; (parent)
     }
-
     return is_neighbor;
   }
 
-  // schedule the links between child-node and current node // (lookup all route next hops)
+  // schedule the links between child-node and current node
+  // (lookup all route next hops)
   nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, &rx_lladdr);
   if(item != NULL) {
     is_neighbor = 1;
@@ -230,7 +242,7 @@ alice_callback_packet_selection(uint16_t* ts, uint16_t* choff, const linkaddr_t 
 }
 #endif //ALICE_CALLBACK_PACKET_SELECTION
 /*---------------------------------------------------------------------------*/ //ksh. slotframe_callback. 
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
+#ifdef ALICE_CALLBACK_SLOTFRAME_START
 void
 alice_callback_slotframe_start(uint16_t sfid, uint16_t sfsize)
 {  
@@ -258,7 +270,8 @@ static int
 select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
 {
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
-  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME && neighbor_has_uc_link(dest)) {
+  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME 
+     && neighbor_has_uc_link(dest)) {
     if(slotframe != NULL) {
       *slotframe = slotframe_handle;
     }
@@ -282,36 +295,36 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
         // *channel_offset=0;
       }
     }
-
     return 1;
   }
   return 0;
 }
 /*---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*/
 static void
 new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new)
 {
-  if(new != old) {   
-    const linkaddr_t *new_addr = new != NULL ? tsch_queue_get_nbr_address(new) : NULL;
+  if(new != old) {
+    //const linkaddr_t *new_addr = new != NULL ? tsch_queue_get_nbr_address(new) : NULL;
+    const linkaddr_t *new_addr = tsch_queue_get_nbr_address(new);
     if(new_addr != NULL) {
       linkaddr_copy(&orchestra_parent_linkaddr, new_addr);    
     } else {
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
 
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START//ksh..
+#ifdef ALICE_CALLBACK_SLOTFRAME_START
     uint16_t mod = TSCH_ASN_MOD(tsch_current_asn, sf_unicast->size);
-    struct tsch_asn_t newasn;
-    TSCH_ASN_COPY(newasn, tsch_current_asn);
-    TSCH_ASN_DEC(newasn, mod);
-    currSFID = TSCH_ASN_DEVISION(newasn, sf_unicast->size);
-    nextSFID = currSFID;
-#endif
+    struct tsch_asn_t new_asn;
 
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
-    sfid_schedule = alice_tsch_schedule_get_current_sfid(sf_unicast);//ksh..
+    TSCH_ASN_COPY(new_asn, tsch_current_asn);
+    TSCH_ASN_DEC(new_asn, mod);
+
+    currSFID = TSCH_ASN_DIVISION(new_asn, sf_unicast->size);
+    //currSFID = alice_tsch_schedule_get_current_sfid(sf_unicast);
+    nextSFID = currSFID;
+
+    // hckim actually this is same with currSFID
+    sfid_schedule = alice_tsch_schedule_get_current_sfid(sf_unicast); // ksh: ..
 #endif
 
     alice_schedule_unicast_slotframe(); 
@@ -327,16 +340,21 @@ init(uint16_t sf_handle)
 
   LOG_INFO("AILCE: unicast sf length: %u\n", ORCHESTRA_UNICAST_PERIOD);
 
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
-  limitSFID = (uint16_t)((uint32_t)65536 / (uint32_t)ORCHESTRA_UNICAST_PERIOD); //65535= 4Byte max value (0,65535) #65536
+#ifdef ALICE_CALLBACK_SLOTFRAME_START
+  // ksh: 65535 = 4Byte max value (0,65535) #65536
+  // upper bound of ASFN
+  limitSFID = (uint16_t)((uint32_t)65536 / (uint32_t)ORCHESTRA_UNICAST_PERIOD);
   LOG_INFO("limitSFID: %u\n", limitSFID);
 #endif 
 
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START
-  sfid_schedule = alice_tsch_schedule_get_current_sfid(sf_unicast);//ksh..
+#ifdef ALICE_CALLBACK_SLOTFRAME_START
+  // current ASFN
+  sfid_schedule = alice_tsch_schedule_get_current_sfid(sf_unicast);
 #else
-  sfid_schedule = 0; //sfid (ASN) will not be used.
+  sfid_schedule = 0; // ksh: sfid (ASFN) will not be used.
 #endif
+
+  // hckim no tsch_schedule_add_link in init()
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule unicast_per_neighbor_rpl_storing = {

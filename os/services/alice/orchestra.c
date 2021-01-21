@@ -111,19 +111,21 @@ orchestra_callback_child_removed(const linkaddr_t *addr)
   }
 }
 /*---------------------------------------------------------------------------*/
-void
+int
 orchestra_callback_packet_ready(void)
 {
   int i;
   /* By default, use any slotframe, any timeslot */
-  uint16_t slotframe = 9;
+  uint16_t slotframe = 0xffff;
   uint16_t timeslot = 0xffff;
   uint16_t channel_offset = 0; //ksh. (default) 
+  int matched_rule = -1;
 
   /* Loop over all rules until finding one able to handle the packet */
   for(i = 0; i < NUM_RULES; i++) {
     if(all_rules[i]->select_packet != NULL) {
       if(all_rules[i]->select_packet(&slotframe, &timeslot, &channel_offset)) {
+        matched_rule = i;
         break;
       }
     }
@@ -132,8 +134,10 @@ orchestra_callback_packet_ready(void)
 #if TSCH_WITH_LINK_SELECTOR
   packetbuf_set_attr(PACKETBUF_ATTR_TSCH_SLOTFRAME, slotframe);
   packetbuf_set_attr(PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
-  packetbuf_set_attr(PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET, channel_offset); //ksh.
+  packetbuf_set_attr(PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET, channel_offset); // ksh
 #endif
+
+  return matched_rule;
 }
 /*---------------------------------------------------------------------------*/
 void

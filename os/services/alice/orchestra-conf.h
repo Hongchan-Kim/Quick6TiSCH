@@ -52,7 +52,7 @@
 #endif /* ORCHESTRA_CONF_RULES */
 
 #ifndef MULTIPLE_CHANNEL_OFFSETS
-#define MULTIPLE_CHANNEL_OFFSETS 1 //ksh.. use multiple channel offsets.
+#define MULTIPLE_CHANNEL_OFFSETS 1 // ksh: enable multiple channel offsets
 #endif
 
 /* Length of the various slotframes. Tune to balance network capacity,
@@ -89,11 +89,20 @@
 #define ORCHESTRA_LINKADDR_HASH                   ORCHESTRA_CONF_LINKADDR_HASH
 #else /* ORCHESTRA_CONF_LINKADDR_HASH */
 #define ORCHESTRA_LINKADDR_HASH(addr)             ((addr != NULL) ? (addr)->u8[LINKADDR_SIZE - 1] : -1)
-
-#define ORCHESTRA_LINKADDR_HASH2(addr1, addr2)    ((addr1 != NULL && addr2 != NULL) ? ( ((((addr1)->u8[LINKADDR_SIZE-2] + (addr1)->u8[LINKADDR_SIZE-1])*512) +(addr2)->u8[LINKADDR_SIZE-2]+(addr2)->u8[LINKADDR_SIZE-1]) )  : -1)
-#define ORCHESTRA_LINKADDR_HASH3(addr1)    ((addr1 != NULL) ? (  (addr1)->u8[LINKADDR_SIZE-2]*17+(addr1)->u8[LINKADDR_SIZE-1])  : -1)
-
 #endif /* ORCHESTRA_CONF_LINKADDR_HASH */
+
+/* The hash function used to assign timeslot for a pair of given nodes. */
+#ifdef ORCHESTRA_CONF_LINKADDR_HASH2
+#define ORCHESTRA_LINKADDR_HASH2                  ORCHESTRA_CONF_LINKADDR_HASH2
+#else /* ORCHESTRA_CONF_LINKADDR_HASH2 */
+#define ORCHESTRA_LINKADDR_HASH2(addr1, addr2)    ((addr1 != NULL && addr2 != NULL) ? (((((addr1)->u8[LINKADDR_SIZE - 2] + (addr1)->u8[LINKADDR_SIZE-1]) * 512) + (addr2)->u8[LINKADDR_SIZE - 2] + (addr2)->u8[LINKADDR_SIZE - 1]))  : -1)
+#endif /* ORCHESTRA_CONF_LINKADDR_HASH2 */
+
+#ifdef ORCHESTRA_CONF_LINKADDR_HASH3
+#define ORCHESTRA_LINKADDR_HASH3                  ORCHESTRA_CONF_LINKADDR_HASH3
+#else /* ORCHESTRA_CONF_LINKADDR_HASH3 */
+#define ORCHESTRA_LINKADDR_HASH3(addr1)           ((addr1 != NULL) ? ((addr1)->u8[LINKADDR_SIZE - 2] * 17 + (addr1)->u8[LINKADDR_SIZE - 1])  : -1)
+#endif /* ORCHESTRA_CONF_LINKADDR_HASH3 */
 
 /* The maximum hash */
 #ifdef ORCHESTRA_CONF_MAX_HASH
@@ -108,5 +117,20 @@
 #else /* ORCHESTRA_CONF_COLLISION_FREE_HASH */
 #define ORCHESTRA_COLLISION_FREE_HASH             0 /* Set to 1 if ORCHESTRA_LINKADDR_HASH returns unique hashes */
 #endif /* ORCHESTRA_CONF_COLLISION_FREE_HASH */
+
+/* Channel offset for the EB rule, default 0 */
+#ifdef ORCHESTRA_CONF_EB_CHANNEL_OFFSET
+#define ORCHESTRA_EB_CHANNEL_OFFSET               ORCHESTRA_CONF_EB_CHANNEL_OFFSET
+#else
+#define ORCHESTRA_EB_CHANNEL_OFFSET               0
+#endif
+
+/* Channel offset for the default common rule, default 1 */
+#ifdef ORCHESTRA_CONF_DEFAULT_COMMON_CHANNEL_OFFSET
+#define ORCHESTRA_DEFAULT_COMMON_CHANNEL_OFFSET   ORCHESTRA_CONF_DEFAULT_COMMON_CHANNEL_OFFSET
+#else
+#define ORCHESTRA_DEFAULT_COMMON_CHANNEL_OFFSET   1
+#endif
+
 
 #endif /* __ORCHESTRA_CONF_H__ */

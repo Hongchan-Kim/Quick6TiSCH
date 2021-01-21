@@ -45,7 +45,6 @@
 #define LOG_LEVEL  LOG_LEVEL_MAC
 
 static uint16_t slotframe_handle = 0;
-static uint16_t channel_offset = 0;
 static struct tsch_slotframe *sf_eb;
 
 /*---------------------------------------------------------------------------*/
@@ -70,7 +69,7 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
     if(timeslot != NULL) {
       *timeslot = get_node_timeslot(&linkaddr_node_addr);
     }
-    if(channel_offset != NULL) {//ksh.
+    if(channel_offset != NULL) { // ksh
       *channel_offset = slotframe_handle;
     }
     return 1;
@@ -93,10 +92,10 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     if(old_ts == get_node_timeslot(&linkaddr_node_addr)) {
       /* This was the same timeslot as slot. Reset original link options */
       tsch_schedule_add_link(sf_eb, LINK_OPTION_TX, LINK_TYPE_ADVERTISING_ONLY,
-        &tsch_broadcast_address, old_ts, 0, 1);
+        &tsch_broadcast_address, old_ts, ORCHESTRA_EB_CHANNEL_OFFSET, 1);
     } else {
       /* Remove slot */
-      tsch_schedule_remove_link_by_timeslot(sf_eb, old_ts, 0);
+      tsch_schedule_remove_link_by_timeslot(sf_eb, old_ts, ORCHESTRA_EB_CHANNEL_OFFSET);
     }
   }
   if(new_ts != 0xffff) {
@@ -107,7 +106,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     }
     /* Listen to the time source's EBs */
     tsch_schedule_add_link(sf_eb, link_options, LINK_TYPE_ADVERTISING_ONLY,
-      &tsch_broadcast_address, new_ts, 0, 1);
+      &tsch_broadcast_address, new_ts, ORCHESTRA_EB_CHANNEL_OFFSET, 1);
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -115,13 +114,12 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-  channel_offset = sf_handle;
   sf_eb = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_EBSF_PERIOD);
   /* EB link: every neighbor uses its own to avoid contention */
   tsch_schedule_add_link(sf_eb,
                          LINK_OPTION_TX,
                          LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
-                         get_node_timeslot(&linkaddr_node_addr), 0, 1);
+                         get_node_timeslot(&linkaddr_node_addr), ORCHESTRA_EB_CHANNEL_OFFSET, 1);
 
   LOG_INFO("AILCE: EB sf length: %u\n", ORCHESTRA_EBSF_PERIOD);
 }

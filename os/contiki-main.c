@@ -52,7 +52,15 @@
 #include "net/app-layer/coap/coap-engine.h"
 #include "net/app-layer/snmp/snmp.h"
 #include "services/rpl-border-router/rpl-border-router.h"
+
+// alice-implementation
+
+#if ALICE_CHECK && WITH_ALICE == 1
+#include "services/alice/orchestra.h"
+#else /* default orchestra */
 #include "services/orchestra/orchestra.h"
+#endif
+
 #include "services/shell/serial-shell.h"
 #include "services/simple-energest/simple-energest.h"
 #include "services/tsch-cs/tsch-cs.h"

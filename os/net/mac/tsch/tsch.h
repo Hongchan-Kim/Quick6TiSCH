@@ -145,11 +145,13 @@ int TSCH_CALLBACK_PACKET_READY(void);
 
 /***** External Variables *****/
 
-#ifdef ALICE_TSCH_CALLBACK_SLOTFRAME_START // alice-implementation
+#if ALICE_CHECK
+#ifdef ALICE_CALLBACK_SLOTFRAME_START // alice-implementation
 extern uint16_t currSFID; // hckim ASFN???
 extern uint16_t nextSFID;
 extern uint16_t limitSFID;
 uint16_t alice_tsch_schedule_get_current_sfid(struct tsch_slotframe *sf);
+#endif
 #endif
 
 /* Are we coordinator of the TSCH network? */
