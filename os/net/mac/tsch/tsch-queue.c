@@ -67,9 +67,9 @@
 #error TSCH_QUEUE_NUM_PER_NEIGHBOR must be power of two
 #endif
 
-#if ALICE_CHECK
-// alice-implementation
-#ifdef ALICE_CALLBACK_PACKET_SELECTION // ksh: alice packet selection
+#if WITH_ALICE == 1
+//alice-implementation-clear
+#ifdef ALICE_CALLBACK_PACKET_SELECTION //ksh: alice packet selection
 int ALICE_CALLBACK_PACKET_SELECTION(uint16_t* ts, uint16_t* choff, const linkaddr_t rx_lladdr);
 #endif
 #endif
@@ -429,14 +429,15 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
         int packet_attr_slotframe = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
         int packet_attr_timeslot = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
 
-#if ALICE_CHECK
-// alice-implementation
+#if WITH_ALICE == 1
+//alice-implementation
 #ifdef MULTIPLE_CHANNEL_OFFSETS // ksh: ..
         int packet_attr_channel_offset = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
 #endif
-#endif /* ALICE_CHECK */
+#endif
 
-// alice-implementation
+#if WITH_ALICE == 1
+//alice-implementation
 #ifdef ALICE_CALLBACK_PACKET_SELECTION
         if(packet_attr_slotframe == ALICE_UNICAST_SF_ID) {
           linkaddr_t rx_lladdr;
@@ -446,7 +447,6 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
 
           // ksh: this function calculates timeoffset and channeloffset 
           // on the basis of the link-level packet destiation (rx_lladdr) and the current SFID.
-          
           // ksh: Decides packet_ts and packet_choff, checks rpl neighbor relations.
           int r = ALICE_CALLBACK_PACKET_SELECTION(&packet_ts, &packet_choff, rx_lladdr);
           if(r == 0) { // ksh: no unicast link
@@ -485,15 +485,22 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
         }
 
 // alice-implementation
-#if ALICE_CHECK 
 #ifdef MULTIPLE_CHANNEL_OFFSETS // ksh: ..
         if(packet_attr_channel_offset != 0xffff && packet_attr_channel_offset != link->channel_offset) { //ksh..
           return NULL;
         }
 #endif
-#endif
 
 #endif // ksh ALICE_CALLBACK_PACKET_SELECTION end
+
+#else /* WITH_ALICE */
+        if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
+          return NULL;
+        }
+        if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
+          return NULL;
+        }
+#endif /* WITH_ALICE */
 
 #endif /* TSCH_WITH_LINK_SELECTOR */
         return n->tx_array[get_index];

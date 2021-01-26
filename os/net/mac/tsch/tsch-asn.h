@@ -64,15 +64,6 @@ struct tsch_asn_divisor_t {
     (asn).ls4b = (ls4b_); \
 } while(0);
 
-#if ALICE_CHECK
-// alice-implementation
-// ksh: COPY
-#define TSCH_ASN_COPY(asn1, asn2) do { \
-    (asn1).ms1b = (asn2).ms1b; \
-    (asn1).ls4b = (asn2).ls4b; \
-} while(0);
-#endif
-
 /** \brief Increment an ASN by inc (32 bits) */
 #define TSCH_ASN_INC(asn, inc) do { \
     uint32_t new_ls4b = (asn).ls4b + (inc); \
@@ -104,9 +95,14 @@ struct tsch_asn_divisor_t {
    + (uint16_t)((asn).ms1b * (div).asn_ms1b_remainder % (div).val)) \
   % (div).val
 
-#if ALICE_CHECK
-// alice-implementation
-// ksh: slotframe_callback. related function added
+#if WITH_ALICE == 1
+//alice-implementation-clear - ksh: COPY
+#define TSCH_ASN_COPY(asn1, asn2) do { \
+    (asn1).ms1b = (asn2).ms1b; \
+    (asn1).ls4b = (asn2).ls4b; \
+} while(0);
+
+//alice-implementation-clear - ksh: slotframe_callback related function added
 #define TSCH_ASN_DIVISION(asn, div) \
   (uint16_t)((uint16_t)((asn).ls4b) / (div).val)
 #endif

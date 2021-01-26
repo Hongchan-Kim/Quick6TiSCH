@@ -193,7 +193,7 @@ PROCESS(tsch_pending_events_process, "pending events process");
 static void packet_input(void);
 
 /*---------------------------------------------------------------------------*/
-#if ALICE_CHECK
+#if WITH_ALICE == 1
 // alice-implementation
 #ifdef ALICE_CALLBACK_SLOTFRAME_START
 uint16_t currSFID = 0;

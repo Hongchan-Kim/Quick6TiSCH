@@ -5,9 +5,11 @@ CONTIKI=../..
 
 MAKE_ROUTING = MAKE_ROUTING_RPL_CLASSIC
 MAKE_MAC = MAKE_MAC_TSCH
+
+MODULES += os/services/simple-energest
+
 MODULES += os/services/orchestra
 #MODULES += os/services/alice
-MODULES += os/services/simple-energest
 
 PROJECT_SOURCEFILES += node-info.c
 

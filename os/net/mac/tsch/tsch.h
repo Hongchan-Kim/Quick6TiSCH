@@ -145,7 +145,7 @@ int TSCH_CALLBACK_PACKET_READY(void);
 
 /***** External Variables *****/
 
-#if ALICE_CHECK
+#if WITH_ALICE == 1
 #ifdef ALICE_CALLBACK_SLOTFRAME_START // alice-implementation
 extern uint16_t currSFID; // hckim ASFN???
 extern uint16_t nextSFID;
