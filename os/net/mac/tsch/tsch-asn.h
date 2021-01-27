@@ -95,7 +95,7 @@ struct tsch_asn_divisor_t {
    + (uint16_t)((asn).ms1b * (div).asn_ms1b_remainder % (div).val)) \
   % (div).val
 
-#if WITH_ALICE == 1
+//#if WITH_ALICE == 1
 //alice-implementation-clear - ksh: COPY
 #define TSCH_ASN_COPY(asn1, asn2) do { \
     (asn1).ms1b = (asn2).ms1b; \
@@ -105,7 +105,7 @@ struct tsch_asn_divisor_t {
 //alice-implementation-clear - ksh: slotframe_callback related function added
 #define TSCH_ASN_DIVISION(asn, div) \
   (uint16_t)((uint16_t)((asn).ls4b) / (div).val)
-#endif
+//#endif
 
 #endif /* __TSCH_ASN_H__ */
 /** @} */

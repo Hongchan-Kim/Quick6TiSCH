@@ -95,8 +95,41 @@ static uint16_t tsch_ip_noack_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_ok_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_error_count; // tsch_tx_process_pending
 
-static uint32_t tsch_tx_process_pending_count;
-static uint32_t tsch_rx_process_pending_count;
+/* hckim for measure cell utilization during association */
+static uint32_t tsch_tx_callback_count;
+static uint32_t tsch_rx_callback_count;
+uint32_t tsch_unlocked_scheduled_cell_count;
+uint32_t tsch_unlocked_scheduled_tx_cell_count;
+uint32_t tsch_unlocked_scheduled_rx_cell_count;
+uint32_t tsch_unlocked_scheduled_idle_cell_count;
+uint32_t tsch_unlocked_scheduled_tx_operation_count;
+uint32_t tsch_unlocked_scheduled_rx_operation_count;
+static uint32_t tsch_timeslots_until_last_session;
+static struct tsch_asn_t tsch_last_asn_associated;
+static struct ctimer utilization_timer;
+
+static void
+print_utilization()
+{
+  //timeslots in current session
+  int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
+  //timeslots until last session + timeslots in current session
+  uint32_t tsch_total_associated_timeslots = 
+          tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
+  LOG_INFO("HCK cb_cnt %lu | tx %lu rx %lu\n", 
+          tsch_tx_callback_count + tsch_rx_callback_count,
+          tsch_tx_callback_count, tsch_rx_callback_count);
+  LOG_INFO("HCK act_ts %lu | tx %lu rx %lu\n", 
+          tsch_unlocked_scheduled_tx_operation_count + tsch_unlocked_scheduled_rx_operation_count,
+          tsch_unlocked_scheduled_tx_operation_count, tsch_unlocked_scheduled_rx_operation_count);
+  LOG_INFO("HCK sch_ts %lu %lu | tx %lu rx %lu idle %lu \n", 
+          tsch_unlocked_scheduled_cell_count,
+          tsch_unlocked_scheduled_tx_cell_count + tsch_unlocked_scheduled_rx_cell_count + tsch_unlocked_scheduled_idle_cell_count,
+          tsch_unlocked_scheduled_tx_cell_count, tsch_unlocked_scheduled_rx_cell_count, tsch_unlocked_scheduled_idle_cell_count);
+  LOG_INFO("HCK ass_ts %lu\n", tsch_total_associated_timeslots);
+
+  ctimer_reset(&utilization_timer);
+}
 
 static clock_time_t clock_last_leaving;
 static clock_time_t clock_inst_leaving_time;
@@ -558,7 +591,10 @@ tsch_rx_process_pending()
       && frame.fcf.frame_version == FRAME802154_IEEE802154_2015
       && frame.fcf.frame_type == FRAME802154_BEACONFRAME;
 
-    LOG_INFO("HCK tsch_rx %lu\n", ++tsch_rx_process_pending_count);
+    if(tsch_is_associated) {
+      ++tsch_rx_callback_count;
+      LOG_INFO("HCK tsch_rx %lu\n", tsch_rx_callback_count);
+    }
 
     if(is_data) {
       /* Skip EBs and other control messages */
@@ -590,7 +626,13 @@ tsch_tx_process_pending(void)
     struct tsch_packet *p = dequeued_array[dequeued_index];
     /* Put packet into packetbuf for packet_sent callback */
     queuebuf_to_packetbuf(p->qb);
-    LOG_INFO("HCK tsch_tx %lu packet sent to ", ++tsch_tx_process_pending_count);
+
+    if(tsch_is_associated) {
+      ++tsch_tx_callback_count;
+      LOG_INFO("HCK tsch_tx %lu\n", tsch_tx_callback_count);
+    }
+
+    LOG_INFO("packet sent to ");
     LOG_INFO_LLADDR(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
     LOG_INFO_(", seqno %u, status %d, tx %d\n",
       packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO), p->ret, p->transmissions);
@@ -957,12 +999,39 @@ PROCESS_THREAD(tsch_process, ev, data)
       }
     }
 
+
+    //hckim record the asn when association is achieved
+    TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
+    //hckim start ctimer to record utilization
+    ctimer_set(&utilization_timer, TSCH_NEXT_PRINT_PERIOD, print_utilization, NULL);
+
+
     /* We are part of a TSCH network, start slot operation */
     tsch_slot_operation_start();
 
     /* Yield our main process. Slot operation will re-schedule itself
      * as long as we are associated */
     PROCESS_YIELD_UNTIL(!tsch_is_associated);
+
+
+    ctimer_stop(&utilization_timer);
+    int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
+    uint32_t tsch_total_associated_timeslots = 
+            tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
+
+    LOG_INFO("HCK cb_cnt %lu | tx %lu rx %lu\n", 
+            tsch_tx_callback_count + tsch_rx_callback_count,
+            tsch_tx_callback_count, tsch_rx_callback_count);
+    LOG_INFO("HCK act_ts %lu | tx %lu rx %lu\n", 
+            tsch_unlocked_scheduled_tx_operation_count + tsch_unlocked_scheduled_rx_operation_count,
+            tsch_unlocked_scheduled_tx_operation_count, tsch_unlocked_scheduled_rx_operation_count);
+    LOG_INFO("HCK sch_ts %lu %lu | tx %lu rx %lu idle %lu \n", 
+          tsch_unlocked_scheduled_cell_count,
+          tsch_unlocked_scheduled_tx_cell_count + tsch_unlocked_scheduled_rx_cell_count + tsch_unlocked_scheduled_idle_cell_count,
+          tsch_unlocked_scheduled_tx_cell_count, tsch_unlocked_scheduled_rx_cell_count, tsch_unlocked_scheduled_idle_cell_count);
+    LOG_INFO("HCK ass_ts %lu\n", tsch_total_associated_timeslots);
+
+    tsch_timeslots_until_last_session = tsch_total_associated_timeslots;
 
     clock_last_leaving = clock_time();
 

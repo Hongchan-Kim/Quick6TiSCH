@@ -28,7 +28,7 @@
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
 #define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (NODE_NUM * 2) //(70) //alice-implementation
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (NODE_NUM * 3) //(70) //alice-implementation
 /*---------------------------------------------------------------------------*/
 
 
@@ -38,8 +38,8 @@
  */
 #define DOWNWARD_TRAFFIC                           1
 #define APP_START_DELAY                            (10 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
-#define EVALUATION_DURATION                        (30 * 60 * CLOCK_SECOND) //(30 * 60 * CLOCK_SECOND)
+#define APP_SEND_INTERVAL                          (2 * 60 * CLOCK_SECOND)
+#define EVALUATION_DURATION                        (60 * 60 * CLOCK_SECOND) //(30 * 60 * CLOCK_SECOND)
 #define APP_MAX_TX                                 (EVALUATION_DURATION / APP_SEND_INTERVAL)
 /*---------------------------------------------------------------------------*/
 
@@ -71,6 +71,7 @@
 #ifndef WITH_SECURITY
 #define WITH_SECURITY                              0
 #endif /* WITH_SECURITY */
+#define TSCH_NEXT_PRINT_PERIOD                     (1 * 60 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
 
 

@@ -485,6 +485,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
   TSCH_DEBUG_TX_EVENT();
 
+  ++tsch_unlocked_scheduled_tx_cell_count; //hckim
+
   /* First check if we have space to store a newly dequeued packet (in case of
    * successful Tx or Drop) */
   dequeued_index = ringbufindex_peek_put(&dequeued_ringbuf);
@@ -735,6 +737,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         log->tx.seqno = queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_MAC_SEQNO);
     );
 
+    ++tsch_unlocked_scheduled_tx_operation_count; //hckim
+
     /* Poll process for later processing of packet sent events and logs */
     process_poll(&tsch_pending_events_process);
   }
@@ -765,6 +769,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
   PT_BEGIN(pt);
 
   TSCH_DEBUG_RX_EVENT();
+
+  ++tsch_unlocked_scheduled_rx_cell_count; //hckim
 
   input_index = ringbufindex_peek_put(&input_ringbuf);
   if(input_index == -1) {
@@ -969,6 +975,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             );
           }
 
+          ++tsch_unlocked_scheduled_rx_operation_count; //hckim
+
           /* Poll process for processing of pending input and logs */
           process_poll(&tsch_pending_events_process);
         }
@@ -1014,6 +1022,8 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       );
 
     } else {
+      ++tsch_unlocked_scheduled_cell_count; //hckim
+
       int is_active_slot;
       TSCH_DEBUG_SLOT_START();
       tsch_in_slot_operation = 1;
@@ -1061,6 +1071,8 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
         }
       } else {
+        ++tsch_unlocked_scheduled_idle_cell_count; //hckim
+
         /* Make sure to end the burst in cast, for some reason, we were
          * in a burst but now without any more packet to send. */
         burst_link_scheduled = 0;
