@@ -96,8 +96,6 @@ static uint16_t tsch_ip_ok_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_error_count; // tsch_tx_process_pending
 
 /* hckim for measure cell utilization during association */
-static uint32_t tsch_tx_callback_count;
-static uint32_t tsch_rx_callback_count;
 uint32_t tsch_unlocked_scheduled_cell_count;
 uint32_t tsch_unlocked_scheduled_tx_cell_count;
 uint32_t tsch_unlocked_scheduled_rx_cell_count;
@@ -116,9 +114,6 @@ print_utilization()
   //timeslots until last session + timeslots in current session
   uint32_t tsch_total_associated_timeslots = 
           tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
-  LOG_INFO("HCK cb_cnt %lu | tx %lu rx %lu\n", 
-          tsch_tx_callback_count + tsch_rx_callback_count,
-          tsch_tx_callback_count, tsch_rx_callback_count);
   LOG_INFO("HCK act_ts %lu | tx %lu rx %lu\n", 
           tsch_unlocked_scheduled_tx_operation_count + tsch_unlocked_scheduled_rx_operation_count,
           tsch_unlocked_scheduled_tx_operation_count, tsch_unlocked_scheduled_rx_operation_count);
@@ -591,11 +586,6 @@ tsch_rx_process_pending()
       && frame.fcf.frame_version == FRAME802154_IEEE802154_2015
       && frame.fcf.frame_type == FRAME802154_BEACONFRAME;
 
-    if(tsch_is_associated) {
-      ++tsch_rx_callback_count;
-      LOG_INFO("HCK tsch_rx %lu\n", tsch_rx_callback_count);
-    }
-
     if(is_data) {
       /* Skip EBs and other control messages */
       /* Copy to packetbuf for processing */
@@ -626,11 +616,6 @@ tsch_tx_process_pending(void)
     struct tsch_packet *p = dequeued_array[dequeued_index];
     /* Put packet into packetbuf for packet_sent callback */
     queuebuf_to_packetbuf(p->qb);
-
-    if(tsch_is_associated) {
-      ++tsch_tx_callback_count;
-      LOG_INFO("HCK tsch_tx %lu\n", tsch_tx_callback_count);
-    }
 
     LOG_INFO("packet sent to ");
     LOG_INFO_LLADDR(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
@@ -1019,9 +1004,6 @@ PROCESS_THREAD(tsch_process, ev, data)
     uint32_t tsch_total_associated_timeslots = 
             tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
 
-    LOG_INFO("HCK cb_cnt %lu | tx %lu rx %lu\n", 
-            tsch_tx_callback_count + tsch_rx_callback_count,
-            tsch_tx_callback_count, tsch_rx_callback_count);
     LOG_INFO("HCK act_ts %lu | tx %lu rx %lu\n", 
             tsch_unlocked_scheduled_tx_operation_count + tsch_unlocked_scheduled_rx_operation_count,
             tsch_unlocked_scheduled_tx_operation_count, tsch_unlocked_scheduled_rx_operation_count);
