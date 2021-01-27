@@ -113,11 +113,6 @@ handle_periodic_timer(void *ptr)
 
       hop_distance_measure_sum += (uint32_t)my_hop_distance;
       hop_distance_measure_count++;
-/*
-      hop_distance_measure_avg = 
-        (hop_distance_measure_avg * hop_distance_measure_count + (uint32_t)my_hop_distance * 100) / (hop_distance_measure_count + 1);
-      hop_distance_measure_count++;
-*/
     }
     next_hop_distance_print++;
     if(next_hop_distance_print >= RPL_NEXT_PRINT_PERIOD) {
