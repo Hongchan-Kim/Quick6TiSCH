@@ -70,9 +70,10 @@ static uint16_t rpl_dio_recv_count;
 static uint16_t rpl_dio_mcast_send_count;
 static uint16_t rpl_dio_ucast_send_count;
 static uint16_t rpl_dao_recv_count;
-//static uint16_t rpl_dao_output_count; // not implemented yet
-//static uint16_t rpl_dao_ack_input_count; // not implemented yet
-//static uint16_t rpl_dao_ack_output_count; // not implemented yet
+static uint16_t rpl_dao_path_send_count;
+static uint16_t rpl_dao_nopath_send_count;
+static uint16_t rpl_dao_ack_recv_count;
+static uint16_t rpl_dao_ack_send_count;
 
 
 /*---------------------------------------------------------------------------*/
@@ -1271,6 +1272,12 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
     dest_ipaddr = &parent->dag->dag_id;
   }
 
+  if(lifetime == RPL_ZERO_LIFETIME) {
+    LOG_INFO("HCK daoN_send %u\n", ++rpl_dao_nopath_send_count);
+  } else {
+    LOG_INFO("HCK daoP_send %u\n", ++rpl_dao_path_send_count);
+  }
+
   LOG_INFO("Sending a %sDAO with sequence number %u, lifetime %u, prefix ",
          lifetime == RPL_ZERO_LIFETIME ? "No-Path " : "", seq_no, lifetime);
 
@@ -1327,7 +1334,8 @@ dao_ack_input(void)
     return;
   }
 
-  LOG_INFO("Received a DAO %s with sequence number %d (%d) and status %d from ",
+  LOG_INFO("HCK daoA_recv %u | Received a DAO %s with sequence number %d (%d) and status %d from ",
+         ++rpl_dao_ack_recv_count,
          status < 128 ? "ACK" : "NACK",
          sequence, instance->my_dao_seqno, status);
   LOG_INFO_6ADDR(&UIP_IP_BUF->srcipaddr);
@@ -1393,7 +1401,9 @@ dao_ack_output(rpl_instance_t *instance, uip_ipaddr_t *dest, uint8_t sequence,
 #if RPL_WITH_DAO_ACK
   unsigned char *buffer;
 
-  LOG_INFO("Sending a DAO %s with sequence number %d to ", status < 128 ? "ACK" : "NACK", sequence);
+  LOG_INFO("HCK daoA_send %u | Sending a DAO %s with sequence number %d to ", 
+          ++rpl_dao_ack_send_count,
+          status < 128 ? "ACK" : "NACK", sequence);
   LOG_INFO_6ADDR(dest);
   LOG_INFO_(" with status %d\n", status);
 
