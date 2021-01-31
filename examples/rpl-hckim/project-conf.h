@@ -9,12 +9,12 @@
 #define IOT_LAB_LYON_2                             1
 #define IOT_LAB_LYON_17                            2
 #define IOT_LAB_LILLE_46                           3
-#define IOT_LAB_LILLE_31                           4
+#define IOT_LAB_LILLE_32                           4
 
 //#define TESTBED_SITE                               IOT_LAB_LYON_2
 //#define TESTBED_SITE                               IOT_LAB_LYON_17
 //#define TESTBED_SITE                               IOT_LAB_LILLE_46
-#define TESTBED_SITE                               IOT_LAB_LILLE_31
+#define TESTBED_SITE                               IOT_LAB_LILLE_32
 
 #if TESTBED_SITE == IOT_LAB_LYON_2
 #define NODE_NUM                                   2
@@ -22,8 +22,8 @@
 #define NODE_NUM                                   17
 #elif TESTBED_SITE == IOT_LAB_LILLE_46
 #define NODE_NUM                                   46
-#elif TESTBED_SITE == IOT_LAB_LILLE_31
-#define NODE_NUM                                   31
+#elif TESTBED_SITE == IOT_LAB_LILLE_32
+#define NODE_NUM                                   32
 #endif
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
@@ -49,6 +49,7 @@
  */
 #define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST  //ksh..
 #define RPL_CONF_WITH_DAO_ACK                      1 //ksh..
+#define RPL_CONF_WITH_PROBING                      0
 #define RPL_FIRST_MEASURE_PERIOD                   (5 * 60)
 #define RPL_NEXT_PRINT_PERIOD                      (1 * 60)
 /*---------------------------------------------------------------------------*/
