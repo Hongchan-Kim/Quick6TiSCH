@@ -117,7 +117,7 @@ print_utilization()
   LOG_INFO("HCK act_ts %lu | tx %lu rx %lu\n", 
           tsch_unlocked_scheduled_tx_operation_count + tsch_unlocked_scheduled_rx_operation_count,
           tsch_unlocked_scheduled_tx_operation_count, tsch_unlocked_scheduled_rx_operation_count);
-  LOG_INFO("HCK sch_ts %lu %lu | tx %lu rx %lu idle %lu \n", 
+  LOG_INFO("HCK sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
           tsch_unlocked_scheduled_cell_count,
           tsch_unlocked_scheduled_tx_cell_count + tsch_unlocked_scheduled_rx_cell_count + tsch_unlocked_scheduled_idle_cell_count,
           tsch_unlocked_scheduled_tx_cell_count, tsch_unlocked_scheduled_rx_cell_count, tsch_unlocked_scheduled_idle_cell_count);
@@ -1007,7 +1007,7 @@ PROCESS_THREAD(tsch_process, ev, data)
     LOG_INFO("HCK act_ts %lu | tx %lu rx %lu\n", 
             tsch_unlocked_scheduled_tx_operation_count + tsch_unlocked_scheduled_rx_operation_count,
             tsch_unlocked_scheduled_tx_operation_count, tsch_unlocked_scheduled_rx_operation_count);
-    LOG_INFO("HCK sch_ts %lu %lu | tx %lu rx %lu idle %lu \n", 
+    LOG_INFO("HCK sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
           tsch_unlocked_scheduled_cell_count,
           tsch_unlocked_scheduled_tx_cell_count + tsch_unlocked_scheduled_rx_cell_count + tsch_unlocked_scheduled_idle_cell_count,
           tsch_unlocked_scheduled_tx_cell_count, tsch_unlocked_scheduled_rx_cell_count, tsch_unlocked_scheduled_idle_cell_count);

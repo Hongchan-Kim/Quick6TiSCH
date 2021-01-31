@@ -544,7 +544,11 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
   if(dag->rank == ROOT_RANK(instance)) {
     my_hop_distance = 0;
   } else {
-    my_hop_distance = dag->preferred_parent->hop_distance + 1;
+    if(dag->preferred_parent == NULL) {
+      my_hop_distance = 0xff;
+    } else {
+      my_hop_distance = dag->preferred_parent->hop_distance + 1;
+    }
   }
   buffer[pos++] = my_hop_distance; /* reserved */ /* hckim to measure hop distance accurately */
 
