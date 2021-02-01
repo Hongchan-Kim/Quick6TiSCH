@@ -37,9 +37,9 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (10 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
-#define APP_SEND_INTERVAL                          (2 * 60 * CLOCK_SECOND)
-#define EVALUATION_DURATION                        (60 * 60 * CLOCK_SECOND) //(30 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
+#define EVALUATION_DURATION                        (30 * 60 * CLOCK_SECOND) //(30 * 60 * CLOCK_SECOND)
 #define APP_MAX_TX                                 (EVALUATION_DURATION / APP_SEND_INTERVAL)
 /*---------------------------------------------------------------------------*/
 
@@ -49,7 +49,7 @@
  */
 #define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST  //ksh..
 #define RPL_CONF_WITH_DAO_ACK                      1 //ksh..
-#define RPL_CONF_WITH_PROBING                      0
+#define RPL_CONF_WITH_PROBING                      1
 #define RPL_FIRST_MEASURE_PERIOD                   (5 * 60)
 #define RPL_NEXT_PRINT_PERIOD                      (1 * 60)
 /*---------------------------------------------------------------------------*/

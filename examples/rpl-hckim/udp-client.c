@@ -59,8 +59,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
   PROCESS_BEGIN();
 
-  print_node_info();
-
   /* Initialize UDP connection */
   simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL,
                       UDP_SERVER_PORT, udp_rx_callback);
@@ -68,6 +66,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
   etimer_set(&periodic_timer, (APP_START_DELAY + random_rand() % APP_SEND_INTERVAL));
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+
+    if(count == 1) {
+      print_node_info();
+    }
 
     if(count <= APP_MAX_TX) {
       uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, root_info[1]);
