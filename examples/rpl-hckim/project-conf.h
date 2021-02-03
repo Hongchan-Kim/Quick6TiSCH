@@ -10,11 +10,15 @@
 #define IOT_LAB_LYON_17                            2
 #define IOT_LAB_LILLE_46                           3
 #define IOT_LAB_LILLE_32                           4
+#define IOT_LAB_LYON_3                             5
+#define IOT_LAB_LILLE_24                           6
 
 //#define TESTBED_SITE                               IOT_LAB_LYON_2
 //#define TESTBED_SITE                               IOT_LAB_LYON_17
 //#define TESTBED_SITE                               IOT_LAB_LILLE_46
-#define TESTBED_SITE                               IOT_LAB_LILLE_32
+//#define TESTBED_SITE                               IOT_LAB_LILLE_32
+//#define TESTBED_SITE                               IOT_LAB_LYON_3
+#define TESTBED_SITE                               IOT_LAB_LILLE_24
 
 #if TESTBED_SITE == IOT_LAB_LYON_2
 #define NODE_NUM                                   2
@@ -24,6 +28,10 @@
 #define NODE_NUM                                   46
 #elif TESTBED_SITE == IOT_LAB_LILLE_32
 #define NODE_NUM                                   32
+#elif TESTBED_SITE == IOT_LAB_LYON_3
+#define NODE_NUM                                   3
+#elif TESTBED_SITE == IOT_LAB_LILLE_24
+#define NODE_NUM                                   24
 #endif
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
@@ -37,9 +45,9 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (10 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
-#define EVALUATION_DURATION                        (30 * 60 * CLOCK_SECOND) //(30 * 60 * CLOCK_SECOND)
+#define EVALUATION_DURATION                        (100 * 60 * CLOCK_SECOND) //(30 * 60 * CLOCK_SECOND)
 #define APP_MAX_TX                                 (EVALUATION_DURATION / APP_SEND_INTERVAL)
 /*---------------------------------------------------------------------------*/
 
