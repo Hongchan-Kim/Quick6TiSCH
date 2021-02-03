@@ -466,7 +466,7 @@ tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
                  print_link_options(link_options),
                  print_link_type(link_type), timeslot, channel_offset);
         LOG_INFO_LLADDR(address);
-        LOG_INFO_("\n"); */
+        LOG_INFO_("\n");
 #endif /* ENABLE_LOG_TSCH_LINK_ADD_REMOVE */        
         /* Release the lock before we update the neighbor (will take the lock) */
         tsch_release_lock();
@@ -523,7 +523,7 @@ tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link *l)
                print_link_options(l->link_options),
                print_link_type(l->link_type), l->timeslot, l->channel_offset);
       LOG_INFO_LLADDR(&l->addr);
-      LOG_INFO_("\n"); */
+      LOG_INFO_("\n");
 #endif /* ENABLE_LOG_TSCH_LINK_ADD_REMOVE */
 
       list_remove(slotframe->links_list, l);
