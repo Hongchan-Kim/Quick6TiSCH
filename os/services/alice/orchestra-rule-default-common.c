@@ -63,10 +63,10 @@ neighbor_has_uc_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL && !linkaddr_cmp(linkaddr, &linkaddr_null)) {
     if((orchestra_parent_knows_us || !ORCHESTRA_UNICAST_SENDER_BASED)
-       && linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
+        && linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
       return 1;
     }
-    if(nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr) != NULL ) { // && !linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
+    if(nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr) != NULL ) {
       return 1;
     }
   }
@@ -83,15 +83,17 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
   if(timeslot != NULL) {
     *timeslot = 0;
   }
-  if(channel_offset != NULL) { // ksh
-    *channel_offset = slotframe_handle;
+  if(channel_offset != NULL) { //alice final check
+    *channel_offset = slotframe_handle; //equal to 1
   }
 
-  // ksh: return 0 and pass to unicast slotframe
+  //Data paccket -> return 0 and pass to unicast slotframe
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
-  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME && neighbor_has_uc_link(dest)) {
+  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
+    && neighbor_has_uc_link(dest)) {
     return 0;
-  } // ksh 
+  }
+
   return 1;
 }
 /*---------------------------------------------------------------------------*/
@@ -99,7 +101,7 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-  channel_offset = slotframe_handle;
+  channel_offset = slotframe_handle; //equal to 1
   /* Default slotframe: for broadcast or unicast to neighbors we
    * do not have a link to */
   struct tsch_slotframe *sf_common = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_COMMON_SHARED_PERIOD);

@@ -118,7 +118,10 @@ orchestra_callback_packet_ready(void)
   /* By default, use any slotframe, any timeslot */
   uint16_t slotframe = 0xffff;
   uint16_t timeslot = 0xffff;
-  uint16_t channel_offset = 0; //ksh. (default) 
+  /* The default channel offset 0xffff means that the channel offset in the scheduled
+   * tsch_link structure is used instead. Any other value specified in the packetbuf
+   * overrides per-link value, allowing to implement multi-channel Orchestra. */
+  uint16_t channel_offset = 0; // alice final check, originally 0xffff
   int matched_rule = -1;
 
   /* Loop over all rules until finding one able to handle the packet */
@@ -134,7 +137,7 @@ orchestra_callback_packet_ready(void)
 #if TSCH_WITH_LINK_SELECTOR
   packetbuf_set_attr(PACKETBUF_ATTR_TSCH_SLOTFRAME, slotframe);
   packetbuf_set_attr(PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
-  packetbuf_set_attr(PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET, channel_offset); // ksh
+  packetbuf_set_attr(PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET, channel_offset);
 #endif
 
   return matched_rule;

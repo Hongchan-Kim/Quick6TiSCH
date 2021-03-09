@@ -7,31 +7,31 @@
  * Configure testbed site, node num, topology
  */
 #define IOT_LAB_LYON_2                             1
-#define IOT_LAB_LYON_17                            2
-#define IOT_LAB_LILLE_46                           3
-#define IOT_LAB_LILLE_32                           4
-#define IOT_LAB_LYON_3                             5
-#define IOT_LAB_LILLE_24                           6
+#define IOT_LAB_LYON_3                             2
+#define IOT_LAB_LYON_17                            3
+#define IOT_LAB_LILLE_24                           4
+#define IOT_LAB_LILLE_32                           5
+#define IOT_LAB_LILLE_46                           6
 
-//#define TESTBED_SITE                               IOT_LAB_LYON_2
-//#define TESTBED_SITE                               IOT_LAB_LYON_17
-//#define TESTBED_SITE                               IOT_LAB_LILLE_46
-//#define TESTBED_SITE                               IOT_LAB_LILLE_32
+#define TESTBED_SITE                               IOT_LAB_LYON_2
 //#define TESTBED_SITE                               IOT_LAB_LYON_3
-#define TESTBED_SITE                               IOT_LAB_LILLE_24
+//#define TESTBED_SITE                               IOT_LAB_LYON_17
+//#define TESTBED_SITE                               IOT_LAB_LILLE_24
+//#define TESTBED_SITE                               IOT_LAB_LILLE_32
+//#define TESTBED_SITE                               IOT_LAB_LILLE_46
 
 #if TESTBED_SITE == IOT_LAB_LYON_2
 #define NODE_NUM                                   2
-#elif TESTBED_SITE == IOT_LAB_LYON_17
-#define NODE_NUM                                   17
-#elif TESTBED_SITE == IOT_LAB_LILLE_46
-#define NODE_NUM                                   46
-#elif TESTBED_SITE == IOT_LAB_LILLE_32
-#define NODE_NUM                                   32
 #elif TESTBED_SITE == IOT_LAB_LYON_3
 #define NODE_NUM                                   3
+#elif TESTBED_SITE == IOT_LAB_LYON_17
+#define NODE_NUM                                   17
 #elif TESTBED_SITE == IOT_LAB_LILLE_24
 #define NODE_NUM                                   24
+#elif TESTBED_SITE == IOT_LAB_LILLE_32
+#define NODE_NUM                                   32
+#elif TESTBED_SITE == IOT_LAB_LILLE_46
+#define NODE_NUM                                   46
 #endif
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
@@ -45,10 +45,10 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (10 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
+#define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
-#define EVALUATION_DURATION                        (100 * 60 * CLOCK_SECOND) //(30 * 60 * CLOCK_SECOND)
-#define APP_MAX_TX                                 (EVALUATION_DURATION / APP_SEND_INTERVAL)
+#define APP_MAX_TX                                 5
 /*---------------------------------------------------------------------------*/
 
 
@@ -92,9 +92,9 @@
 #define TSCH_SCHEDULER_LB_ORCHESTRA                2 // 2: LB-Orchestra
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -115,21 +115,18 @@
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
-#define WITH_ALICE                                 1
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 1: sender-based, 0:receiver-based
-// #define ORCHESTRA_ONE_CHANNEL_OFFSET             0 //mc-orchestra -> 1:single channel offset, 0:multiple channel offsets
-#define ALICE_CALLBACK_PACKET_SELECTION            alice_callback_packet_selection //ksh. alice packet selection
-#define ALICE_CALLBACK_SLOTFRAME_START             alice_callback_slotframe_start //ksh. alice time varying slotframe schedule
+#define WITH_ALICE_DBG                             1
+#define WITH_ALICE                                 0
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
+#define ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY    alice_f_packet_cell_matching_on_the_fly
+//#define ALICE_F_CALLBACK_SLOTFRAME_START           alice_f_callback_slotframe_start //ksh. alice time varying slotframe schedule
 #define ALICE_BROADCAST_SF_ID                      1 //slotframe handle of broadcast/default slotframe
 #define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
-#ifndef MULTIPLE_CHANNEL_OFFSETS
-#define MULTIPLE_CHANNEL_OFFSETS                   1 //ksh.. allow multiple channel offsets.
-#endif
 
 #endif /* CURRENT_TSCH_SCHEDULER */
 
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        31 // broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //31 broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              17 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 /*---------------------------------------------------------------------------*/
 
@@ -157,11 +154,11 @@
 #define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG //LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
-#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
+#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
 /*---------------------------------------------------------------------------*/
 
 

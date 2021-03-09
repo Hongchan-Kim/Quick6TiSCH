@@ -105,10 +105,9 @@ struct tsch_link *tsch_schedule_add_link(struct tsch_slotframe *slotframe,
                                          uint8_t link_options, enum link_type link_type, const linkaddr_t *address,
                                          uint16_t timeslot, uint16_t channel_offset, uint8_t do_remove);
 
-#if WITH_ALICE == 1 // alice-implementation
-struct tsch_link *tsch_schedule_add_link_alice(struct tsch_slotframe *slotframe,
-                                            uint8_t link_options, enum link_type link_type, 
-                                            const linkaddr_t *address, const linkaddr_t *neighbor,
+#if WITH_ALICE_DBG == 1 //#if WITH_ALICE == 1 /* alice implementation */
+struct tsch_link *alice_f_tsch_schedule_add_link(struct tsch_slotframe *slotframe,
+                                            uint8_t link_options, enum link_type link_type, const linkaddr_t *address,
                                             uint16_t timeslot, uint16_t channel_offset);
 #endif
 
@@ -129,12 +128,9 @@ struct tsch_link *tsch_schedule_get_link_by_handle(uint16_t handle);
 struct tsch_link *tsch_schedule_get_link_by_timeslot(struct tsch_slotframe *slotframe,
                                                      uint16_t timeslot, uint16_t channel_offset);
 
-#if WITH_ALICE == 1
-#ifdef MULTIPLE_CHANNEL_OFFSETS // alice-implementation
-// ksh: timeslot and channel offset
-struct tsch_link *tsch_schedule_get_link_by_ts_choff(struct tsch_slotframe *slotframe, 
+#if WITH_ALICE == 1 /* alice implementation */
+struct tsch_link *alice_f_tsch_schedule_get_link_by_ts_choff(struct tsch_slotframe *slotframe, 
                                                      uint16_t timeslot, uint16_t channel_offset);
-#endif
 #endif
 
 /**
@@ -155,19 +151,19 @@ int tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link
 int tsch_schedule_remove_link_by_timeslot(struct tsch_slotframe *slotframe,
                                           uint16_t timeslot, uint16_t channel_offset);
 
-#if WITH_ALICE == 1
-#ifdef MULTIPLE_CHANNEL_OFFSETS // alice-implementation
+#if WITH_ALICE == 1 /* alice implementation */
 // ksh: timeslot and channel offset
-int tsch_schedule_remove_link_by_ts_choff(struct tsch_slotframe *slotframe, 
+int alice_f_tsch_schedule_remove_link_by_ts_choff(struct tsch_slotframe *slotframe, 
                                           uint16_t timeslot, uint16_t channel_offset);
 #endif
 /*---------------------------------------------------------------------------*/
+#if WITH_ALICE_DBG == 1
 // alice-implementation
 // ksh: Thomas Wang 32bit-Interger Mix Function
 uint16_t
-real_hash(uint32_t value, uint16_t mod); // ksh: Thomas Wang method..
+alice_f_real_hash(uint32_t value, uint16_t mod); // ksh: Thomas Wang method..
 uint16_t
-real_hash5(uint32_t value, uint16_t mod); // ksh: ..
+alice_f_real_hash5(uint32_t value, uint16_t mod); // ksh: ..
 #endif
 /*---------------------------------------------------------------------------*/
 

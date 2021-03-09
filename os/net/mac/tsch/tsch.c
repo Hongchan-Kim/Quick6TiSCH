@@ -221,20 +221,19 @@ PROCESS(tsch_pending_events_process, "pending events process");
 static void packet_input(void);
 
 /*---------------------------------------------------------------------------*/
-#if WITH_ALICE == 1
-// alice-implementation
-#ifdef ALICE_CALLBACK_SLOTFRAME_START
-uint16_t currSFID = 0;
-uint16_t nextSFID = 0;
-uint16_t limitSFID = 0;
+#if WITH_ALICE == 1 /* alice implementation */
+#ifdef ALICE_F_CALLBACK_SLOTFRAME_START
+uint16_t alice_v_curr_asfn = 0;
+uint16_t alice_v_next_asfn = 0;
+uint16_t alice_v_limit_asfn = 0;
 
-// ksh: returns the current SFID (ASFN) for ALICE
+/* return the current ASFN for ALICE */
 uint16_t
-alice_tsch_schedule_get_current_sfid(struct tsch_slotframe *sf)
+alice_f_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf)
 {
   uint16_t mod = TSCH_ASN_MOD(tsch_current_asn, sf->size);
-  struct tsch_asn_t new_asn;
 
+  struct tsch_asn_t new_asn;
   TSCH_ASN_COPY(new_asn, tsch_current_asn);
   TSCH_ASN_DEC(new_asn, mod);
   

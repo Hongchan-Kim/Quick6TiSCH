@@ -151,12 +151,12 @@ int TSCH_CALLBACK_PACKET_READY(void);
 
 /***** External Variables *****/
 
-#if WITH_ALICE == 1
-#ifdef ALICE_CALLBACK_SLOTFRAME_START // alice-implementation
-extern uint16_t currSFID; // hckim ASFN???
-extern uint16_t nextSFID;
-extern uint16_t limitSFID;
-uint16_t alice_tsch_schedule_get_current_sfid(struct tsch_slotframe *sf);
+#if WITH_ALICE == 1 /* alice implementation */
+#ifdef ALICE_F_CALLBACK_SLOTFRAME_START
+extern uint16_t alice_v_curr_asfn;
+extern uint16_t alice_v_next_asfn;
+extern uint16_t alice_v_limit_asfn;
+uint16_t alice_f_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf);
 #endif
 #endif
 

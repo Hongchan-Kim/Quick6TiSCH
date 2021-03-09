@@ -29,7 +29,6 @@
  */
 /**
  * \file
-
  *         Orchestra: a slotframe dedicated to transmission of EBs.
  *         Nodes transmit at a timeslot defined as hash(MAC) % ORCHESTRA_EBSF_PERIOD
  *         Nodes listen at a timeslot defined as hash(time_source.MAC) % ORCHESTRA_EBSF_PERIOD
@@ -52,7 +51,7 @@ static uint16_t
 get_node_timeslot(const linkaddr_t *addr)
 {
 #if ORCHESTRA_EBSF_PERIOD > 0
-  return ORCHESTRA_LINKADDR_HASH3(addr) % ORCHESTRA_EBSF_PERIOD;
+  return ORCHESTRA_LINKADDR_HASH3(addr) % ORCHESTRA_EBSF_PERIOD; //alice final check
 #else
   return 0xffff;
 #endif
@@ -69,8 +68,11 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
     if(timeslot != NULL) {
       *timeslot = get_node_timeslot(&linkaddr_node_addr);
     }
-    if(channel_offset != NULL) { // ksh
-      *channel_offset = slotframe_handle;
+    /* alice implementation */
+    //alice final check
+    if(channel_offset != NULL) {
+      *channel_offset = ORCHESTRA_EB_CHANNEL_OFFSET; //hckim
+      //*channel_offset = slotframe_handle; //ksh
     }
     return 1;
   }

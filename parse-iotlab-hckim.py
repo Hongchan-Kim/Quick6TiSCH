@@ -151,7 +151,7 @@ for i in range(NODE_NUM):
 
 # STEP-3-1: result list and array
 result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 
-               'lastP', 'ps', 'hopD', 'subTN', 'QLR', 'LLR', 'linkE', 'leave', 'actTS', 'schTS', 'assTS', 'SATR', 'ASTR', 'AATR', 'dc']
+               'lastP', 'ps', 'hopD', 'subTN', 'QLR', 'LLR', 'linkE', 'leave', 'SATR', 'ASTR', 'AATR', 'dc']
 RESULT_NUM = len(result_list)
 result = [[0 for i in range(RESULT_NUM)] for j in range(NODE_NUM)]
 

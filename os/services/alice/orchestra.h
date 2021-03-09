@@ -70,10 +70,10 @@ void orchestra_callback_child_added(const linkaddr_t *addr);
 /* Set with #define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK orchestra_callback_child_removed */
 void orchestra_callback_child_removed(const linkaddr_t *addr);
 
-// alice-implementation
-// ksh: alice time varying scheduling
-void alice_callback_slotframe_start(uint16_t a, uint16_t b);
-// ksh: alice packet selection
-int alice_callback_packet_selection(uint16_t* ts, uint16_t* choff, const linkaddr_t rx_lladdr);
+/* alice implementation */
+/* alice time varying scheduling */
+void alice_f_callback_slotframe_start(uint16_t a, uint16_t b);
+/* alice packet-cell matching on the fly */
+int alice_f_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offset, const linkaddr_t rx_linkaddr);
 
 #endif /* __ORCHESTRA_H__ */

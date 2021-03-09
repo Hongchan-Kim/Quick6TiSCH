@@ -806,6 +806,13 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     if(!packet_seen) {
       /* no packets on air */
       tsch_radio_off(TSCH_RADIO_CMD_OFF_FORCE);
+
+      //hckim remove later
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "!no packet seen"));
+
+
     } else {
       TSCH_DEBUG_RX_EVENT();
       /* Save packet timestamp */
@@ -983,6 +990,12 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       }
 
       tsch_radio_off(TSCH_RADIO_CMD_OFF_END_OF_TIMESLOT);
+
+      //hckim remove later
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "!no pending packet"));
+
     }
 
     if(input_queue_drop != 0) {
