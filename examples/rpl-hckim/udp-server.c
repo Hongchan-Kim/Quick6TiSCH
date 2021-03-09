@@ -46,6 +46,10 @@
 #define APP_START_DELAY     (1 * 60 * CLOCK_SECOND)
 #endif
 
+#ifndef APP_PRINT_DELAY
+#define APP_PRINT_DELAY   (1 * 30 * CLOCK_SECOND)
+#endif
+
 #ifndef APP_SEND_INTERVAL
 #define APP_SEND_INTERVAL   (1 * 60 * CLOCK_SECOND)
 #endif
@@ -87,6 +91,8 @@ udp_rx_callback(struct simple_udp_connection *c,
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_server_process, ev, data)
 {
+  static struct etimer print_timer;
+
 #if DOWNWARD_TRAFFIC
   static struct etimer periodic_timer;
   static unsigned count = 1;
@@ -105,36 +111,39 @@ PROCESS_THREAD(udp_server_process, ev, data)
                       UDP_CLIENT_PORT, udp_rx_callback);
 
 #if DOWNWARD_TRAFFIC
-  etimer_set(&periodic_timer, (APP_START_DELAY + random_rand() % APP_DOWN_INTERVAL));
-  while(1) {
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
+  etimer_set(&periodic_timer, (APP_START_DELAY + random_rand() % APP_SEND_INTERVAL));
+#endif
 
-    if(count == 1 && curr == 0) {
+  etimer_set(&print_timer, APP_PRINT_DELAY);
+
+  while(1) {
+    PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_TIMER);
+    if(data == &print_timer) {
       print_node_info();
     }
+#if DOWNWARD_TRAFFIC
+    else if(data == &periodic_timer) {
+      if(count <= APP_MAX_TX) {
+        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, non_root_info[curr][1]);
 
-    if(count <= APP_MAX_TX) {
-      uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, non_root_info[curr][1]);
+        /* Send to clients */
+        LOG_INFO("HCK tx_down %u to %u %x | Sending message %u to ", 
+                  count, non_root_info[curr][0], non_root_info[curr][1], count);
+        LOG_INFO_6ADDR(&dest_ipaddr);
+        LOG_INFO_("\n");
+        snprintf(str, sizeof(str), "hello %d", count);
+        simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
 
-      /* Send to clients */
-      LOG_INFO("HCK tx_down %u to %u %x | Sending message %u to ", 
-                count, non_root_info[curr][0], non_root_info[curr][1], count);
-      LOG_INFO_6ADDR(&dest_ipaddr);
-      LOG_INFO_("\n");
-      snprintf(str, sizeof(str), "hello %d", count);
-      simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
-
-      curr++;
-      if(curr >= NON_ROOT_NUM) {
-        curr = 0;
-        count++;
+        curr++;
+        if(curr >= NON_ROOT_NUM) {
+          curr = 0;
+          count++;
+        }
       }
+      etimer_set(&periodic_timer, APP_DOWN_INTERVAL);
     }
-
-    /* Add no jitter */
-    etimer_set(&periodic_timer, APP_DOWN_INTERVAL);
-  }
 #endif
+  }
 
   PROCESS_END();
 }

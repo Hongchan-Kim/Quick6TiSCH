@@ -17,6 +17,10 @@
 #define APP_START_DELAY     (1 * 60 * CLOCK_SECOND)
 #endif
 
+#ifndef APP_PRINT_DELAY
+#define APP_PRINT_DELAY   (1 * 30 * CLOCK_SECOND)
+#endif
+
 #ifndef APP_SEND_INTERVAL
 #define APP_SEND_INTERVAL   (1 * 60 * CLOCK_SECOND)
 #endif
@@ -52,7 +56,11 @@ udp_rx_callback(struct simple_udp_connection *c,
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_client_process, ev, data)
 {
+  static struct etimer start_timer;
+  static struct etimer print_timer;
   static struct etimer periodic_timer;
+  static struct etimer send_timer;
+
   static unsigned count = 1;
   static char str[32];
   uip_ipaddr_t dest_ipaddr;
@@ -63,29 +71,32 @@ PROCESS_THREAD(udp_client_process, ev, data)
   simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL,
                       UDP_SERVER_PORT, udp_rx_callback);
 
-  etimer_set(&periodic_timer, (APP_START_DELAY + random_rand() % APP_SEND_INTERVAL));
+  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_SEND_INTERVAL / 2)));
+  etimer_set(&print_timer, APP_PRINT_DELAY);
+
   while(1) {
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&periodic_timer));
-
-    if(count == 1) {
+    PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_TIMER);
+    if(data == &print_timer) {
       print_node_info();
+    } else if(data == &start_timer) {
+      etimer_set(&send_timer, random_rand() % (APP_SEND_INTERVAL / 2));
+      etimer_set(&periodic_timer, APP_SEND_INTERVAL);
+    } else if(data == &send_timer) {
+      if(count <= APP_MAX_TX) {
+        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, root_info[1]);
+
+        /* Send to DAG root */
+        LOG_INFO("HCK tx_up %u | Sending message %u to ", count, count);
+        LOG_INFO_6ADDR(&dest_ipaddr);
+        LOG_INFO_("\n");
+        snprintf(str, sizeof(str), "hello %d", count);
+        simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+        count++;
+      }
+    } else if(data == &periodic_timer) {
+      etimer_set(&send_timer, random_rand() % APP_SEND_INTERVAL);
+      etimer_reset(&periodic_timer);
     }
-
-    if(count <= APP_MAX_TX) {
-      uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, root_info[1]);
-
-      /* Send to DAG root */
-      LOG_INFO("HCK tx_up %u | Sending message %u to ", count, count);
-      LOG_INFO_6ADDR(&dest_ipaddr);
-      LOG_INFO_("\n");
-      snprintf(str, sizeof(str), "hello %d", count);
-      simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
-      count++;
-    }
-
-    /* Add some jitter */
-    etimer_set(&periodic_timer, APP_SEND_INTERVAL
-      - CLOCK_SECOND + (random_rand() % (2 * CLOCK_SECOND)));
   }
 
   PROCESS_END();
