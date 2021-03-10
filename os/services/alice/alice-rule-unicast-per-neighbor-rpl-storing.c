@@ -230,9 +230,9 @@ alice_f_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_of
 #endif
 /*---------------------------------------------------------------------------*/
 /* slotframe_callback. */
-#ifdef ALICE_F_CALLBACK_SLOTFRAME_START
+#ifdef ALICE_F_TIME_VARYING_SCHEDULING
 void
-alice_f_callback_slotframe_start(uint16_t asfn, uint16_t sfsize)
+alice_f_time_varying_scheduling(uint16_t asfn, uint16_t sfsize)
 {  
   alice_v_asfn_for_schedule = asfn;  
   alice_schedule_unicast_slotframe();
@@ -282,7 +282,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
 
-#ifdef ALICE_F_CALLBACK_SLOTFRAME_START
+#ifdef ALICE_F_TIME_VARYING_SCHEDULING
     uint16_t mod = TSCH_ASN_MOD(tsch_current_asn, sf_unicast->size);
     struct tsch_asn_t new_asn;
 
@@ -309,13 +309,13 @@ init(uint16_t sf_handle)
 
   LOG_INFO("AILCE: unicast sf length: %u\n", ORCHESTRA_UNICAST_PERIOD);
 
-#ifdef ALICE_F_CALLBACK_SLOTFRAME_START
+#ifdef ALICE_F_TIME_VARYING_SCHEDULING
   /* upper bound of ASFN - 65535 = 4Byte max value (0,65535) #65536 */
-  alice_v_limit_asfn = (uint16_t)((uint32_t)65536 / (uint32_t)ORCHESTRA_UNICAST_PERIOD);
-  LOG_INFO("limitSFID: %u\n", alice_v_limit_asfn);
+  alice_v_asfn_upper_bound = (uint16_t)((uint32_t)65536 / (uint32_t)ORCHESTRA_UNICAST_PERIOD);
+  LOG_INFO("ALICE: upper bound of ASFN %u\n", alice_v_asfn_upper_bound);
 #endif 
 
-#ifdef ALICE_F_CALLBACK_SLOTFRAME_START
+#ifdef ALICE_F_TIME_VARYING_SCHEDULING
   /* current ASFN */
   alice_v_asfn_for_schedule = alice_f_tsch_schedule_get_current_asfn(sf_unicast);
 #else

@@ -13,8 +13,8 @@
 #define IOT_LAB_LILLE_32                           5
 #define IOT_LAB_LILLE_46                           6
 
-#define TESTBED_SITE                               IOT_LAB_LYON_2
-//#define TESTBED_SITE                               IOT_LAB_LYON_3
+//#define TESTBED_SITE                               IOT_LAB_LYON_2
+#define TESTBED_SITE                               IOT_LAB_LYON_3
 //#define TESTBED_SITE                               IOT_LAB_LYON_17
 //#define TESTBED_SITE                               IOT_LAB_LILLE_24
 //#define TESTBED_SITE                               IOT_LAB_LILLE_32
@@ -115,11 +115,11 @@
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
-#define WITH_ALICE_DBG                             1
-#define WITH_ALICE                                 0
+#define WITH_ALICE                                 1
+#define WITH_ALICE_DBG                             0
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
-#define ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY    alice_f_packet_cell_matching_on_the_fly
-//#define ALICE_F_CALLBACK_SLOTFRAME_START           alice_f_callback_slotframe_start //ksh. alice time varying slotframe schedule
+//#define ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY    alice_f_packet_cell_matching_on_the_fly
+//#define ALICE_F_TIME_VARYING_SCHEDULING           alice_f_time_varying_scheduling //ksh. alice time varying slotframe schedule
 #define ALICE_BROADCAST_SF_ID                      1 //slotframe handle of broadcast/default slotframe
 #define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
 

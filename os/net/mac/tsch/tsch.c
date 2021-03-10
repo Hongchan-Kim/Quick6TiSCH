@@ -221,11 +221,11 @@ PROCESS(tsch_pending_events_process, "pending events process");
 static void packet_input(void);
 
 /*---------------------------------------------------------------------------*/
-#if WITH_ALICE == 1 /* alice implementation */
-#ifdef ALICE_F_CALLBACK_SLOTFRAME_START
+#if WITH_ALICE_DBG == 1 /* alice implementation */
+#ifdef ALICE_F_TIME_VARYING_SCHEDULING
 uint16_t alice_v_curr_asfn = 0;
 uint16_t alice_v_next_asfn = 0;
-uint16_t alice_v_limit_asfn = 0;
+uint16_t alice_v_asfn_upper_bound = 0;
 
 /* return the current ASFN for ALICE */
 uint16_t

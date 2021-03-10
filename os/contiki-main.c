@@ -53,7 +53,7 @@
 #include "net/app-layer/snmp/snmp.h"
 #include "services/rpl-border-router/rpl-border-router.h"
 
-#if WITH_ALICE_DBG == 1 /* alice implementation */
+#if WITH_ALICE == 1 /* alice implementation */
 #include "services/alice/orchestra.h"
 #else /* default orchestra */
 #include "services/orchestra/orchestra.h"

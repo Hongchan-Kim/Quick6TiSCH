@@ -105,7 +105,7 @@ struct tsch_link *tsch_schedule_add_link(struct tsch_slotframe *slotframe,
                                          uint8_t link_options, enum link_type link_type, const linkaddr_t *address,
                                          uint16_t timeslot, uint16_t channel_offset, uint8_t do_remove);
 
-#if WITH_ALICE_DBG == 1 //#if WITH_ALICE == 1 /* alice implementation */
+#if WITH_ALICE == 1 /* alice implementation */
 struct tsch_link *alice_f_tsch_schedule_add_link(struct tsch_slotframe *slotframe,
                                             uint8_t link_options, enum link_type link_type, const linkaddr_t *address,
                                             uint16_t timeslot, uint16_t channel_offset);
@@ -157,7 +157,7 @@ int alice_f_tsch_schedule_remove_link_by_ts_choff(struct tsch_slotframe *slotfra
                                           uint16_t timeslot, uint16_t channel_offset);
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_ALICE_DBG == 1
+#if WITH_ALICE == 1
 // alice-implementation
 // ksh: Thomas Wang 32bit-Interger Mix Function
 uint16_t
