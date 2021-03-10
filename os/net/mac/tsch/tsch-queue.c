@@ -443,6 +443,13 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           //on the basis of the link-level packet destiation (rx_linkaddr) and the current SFID.
           //Decides packet_timeslot and packet_channel_offset, checks rpl neighbor relations.
           int r = ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY(&packet_timeslot, &packet_channel_offset, rx_linkaddr);
+
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+                  "ALICE packet-cell matching is_nbr %d p_ts %u p_ch %u l_ts %u l_ch %u", 
+                  r, packet_timeslot, packet_channel_offset,
+                  link->timeslot, link->channel_offset));
+
           if(r == 0) { //no RPL neighbor --> ALICE EARLY PACKET DROP
 		        tsch_queue_free_packet(n->tx_array[get_index]);
             return NULL;
