@@ -241,6 +241,9 @@ tsch_release_lock(void)
 static uint8_t
 tsch_get_channel_offset(struct tsch_link *link, struct tsch_packet *p)
 {
+#if WITH_ALICE
+  return link->channel_offset;
+#else
 #if TSCH_WITH_LINK_SELECTOR
   if(p != NULL) {
     uint16_t packet_channel_offset = queuebuf_attr(p->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
@@ -251,6 +254,7 @@ tsch_get_channel_offset(struct tsch_link *link, struct tsch_packet *p)
   }
 #endif
   return link->channel_offset;
+#endif
 }
 
 /**

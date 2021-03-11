@@ -446,7 +446,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
 
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-                  "ALICE packet-cell matching is_nbr %d p_ts %u p_ch %u l_ts %u l_ch %u", 
+                  "ALICE p-c-m nbr %d pts %u pch %u lts %u lch %u", 
                   r, packet_timeslot, packet_channel_offset,
                   link->timeslot, link->channel_offset));
 

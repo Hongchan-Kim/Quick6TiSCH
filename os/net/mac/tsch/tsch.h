@@ -151,7 +151,7 @@ int TSCH_CALLBACK_PACKET_READY(void);
 
 /***** External Variables *****/
 
-#if WITH_ALICE_DBG == 1 /* alice implementation */
+#if WITH_ALICE == 1 /* alice implementation */
 #ifdef ALICE_F_TIME_VARYING_SCHEDULING
 extern uint16_t alice_v_curr_asfn;
 extern uint16_t alice_v_next_asfn;

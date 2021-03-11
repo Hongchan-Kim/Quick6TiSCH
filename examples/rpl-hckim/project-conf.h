@@ -14,8 +14,8 @@
 #define IOT_LAB_LILLE_46                           6
 
 //#define TESTBED_SITE                               IOT_LAB_LYON_2
-#define TESTBED_SITE                               IOT_LAB_LYON_3
-//#define TESTBED_SITE                               IOT_LAB_LYON_17
+//#define TESTBED_SITE                               IOT_LAB_LYON_3
+#define TESTBED_SITE                               IOT_LAB_LYON_17
 //#define TESTBED_SITE                               IOT_LAB_LILLE_24
 //#define TESTBED_SITE                               IOT_LAB_LILLE_32
 //#define TESTBED_SITE                               IOT_LAB_LILLE_46
@@ -45,10 +45,10 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
-#define APP_MAX_TX                                 5
+#define APP_MAX_TX                                 30
 /*---------------------------------------------------------------------------*/
 
 
@@ -116,10 +116,9 @@
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define WITH_ALICE                                 1
-#define WITH_ALICE_DBG                             0
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
-//#define ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY    alice_f_packet_cell_matching_on_the_fly
-//#define ALICE_F_TIME_VARYING_SCHEDULING           alice_f_time_varying_scheduling //ksh. alice time varying slotframe schedule
+#define ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY    alice_f_packet_cell_matching_on_the_fly
+#define ALICE_F_TIME_VARYING_SCHEDULING           alice_f_time_varying_scheduling //ksh. alice time varying slotframe schedule
 #define ALICE_BROADCAST_SF_ID                      1 //slotframe handle of broadcast/default slotframe
 #define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
 
@@ -158,7 +157,7 @@
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
-#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
+#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
 /*---------------------------------------------------------------------------*/
 
 

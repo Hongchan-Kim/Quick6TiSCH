@@ -61,7 +61,7 @@
 #define LOG_MODULE "TSCH Sched"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
-#if WITH_ALICE_DBG == 1 /* alice implementation */
+#if WITH_ALICE == 1 /* alice implementation */
 #ifdef ALICE_F_TIME_VARYING_SCHEDULING
 void ALICE_F_TIME_VARYING_SCHEDULING(uint16_t sfid, uint16_t sfsize); 
 #endif
@@ -481,7 +481,7 @@ int
 tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link *l)
 {
   if(slotframe != NULL && l != NULL && l->slotframe_handle == slotframe->handle) {
-#if WITH_ALICE_DBG == 1 /* alice implementation */
+#if WITH_ALICE == 1 /* alice implementation */
 #ifdef ALICE_F_TIME_VARYING_SCHEDULING
     if(1) { //original: if(tsch_get_lock()) {
 #else
@@ -583,7 +583,7 @@ tsch_schedule_get_link_by_timeslot(struct tsch_slotframe *slotframe,
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_ALICE_DBG == 1 /* alice implementation */
+#if WITH_ALICE == 1 /* alice implementation */
 /* alice time varying schedule */
 #ifdef ALICE_F_TIME_VARYING_SCHEDULING
 void tsch_schedule_alice_data_sf_reschedule(struct tsch_asn_t *asn) {
@@ -667,7 +667,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
     /* For each slotframe, look for the earliest occurring link */
     while(sf != NULL) {
 
-#if WITH_ALICE_DBG == 1 /* alice implementation */
+#if WITH_ALICE == 1 /* alice implementation */
 #ifdef ALICE_F_TIME_VARYING_SCHEDULING
       if(sf->handle == ALICE_UNICAST_SF_ID) {
         /* calculate ASFN */
@@ -691,7 +691,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
           l->timeslot - timeslot :
           sf->size.val + l->timeslot - timeslot;
 
-#if WITH_ALICE_DBG == 1 /* alice-implementation */
+#if WITH_ALICE == 1 /* alice-implementation */
 #ifdef ALICE_F_TIME_VARYING_SCHEDULING
         if(sf->handle == ALICE_UNICAST_SF_ID && alice_v_curr_asfn != alice_v_next_asfn && l->timeslot > timeslot) {
           time_to_timeslot = 999; //maximum value;
