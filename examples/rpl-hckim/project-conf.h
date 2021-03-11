@@ -118,9 +118,11 @@
 #define WITH_ALICE                                 1
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY    alice_f_packet_cell_matching_on_the_fly
-#define ALICE_F_TIME_VARYING_SCHEDULING           alice_f_time_varying_scheduling //ksh. alice time varying slotframe schedule
+#define ALICE_F_TIME_VARYING_SCHEDULING            alice_f_time_varying_scheduling
 #define ALICE_BROADCAST_SF_ID                      1 //slotframe handle of broadcast/default slotframe
 #define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
+#define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
+
 
 #endif /* CURRENT_TSCH_SCHEDULER */
 

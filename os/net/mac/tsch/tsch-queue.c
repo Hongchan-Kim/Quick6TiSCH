@@ -444,11 +444,13 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           //Decides packet_timeslot and packet_channel_offset, checks rpl neighbor relations.
           int r = ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY(&packet_timeslot, &packet_channel_offset, rx_linkaddr);
 
+#if ENABLE_ALICE_PACKET_CELL_MATCHING_LOG
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
                   "ALICE p-c-m nbr %d pts %u pch %u lts %u lch %u", 
                   r, packet_timeslot, packet_channel_offset,
                   link->timeslot, link->channel_offset));
+#endif
 
           if(r == 0) { //no RPL neighbor --> ALICE EARLY PACKET DROP
 		        tsch_queue_free_packet(n->tx_array[get_index]);
