@@ -98,12 +98,6 @@
 #define ORCHESTRA_LINKADDR_HASH2(addr1, addr2)    ((addr1 != NULL && addr2 != NULL) ? (((((addr1)->u8[LINKADDR_SIZE - 2] + (addr1)->u8[LINKADDR_SIZE-1]) * 512) + (addr2)->u8[LINKADDR_SIZE - 2] + (addr2)->u8[LINKADDR_SIZE - 1]))  : -1)
 #endif /* ORCHESTRA_CONF_LINKADDR_HASH2 */
 
-#ifdef ORCHESTRA_CONF_LINKADDR_HASH3
-#define ORCHESTRA_LINKADDR_HASH3                  ORCHESTRA_CONF_LINKADDR_HASH3
-#else /* ORCHESTRA_CONF_LINKADDR_HASH3 */
-#define ORCHESTRA_LINKADDR_HASH3(addr1)           ((addr1 != NULL) ? ((addr1)->u8[LINKADDR_SIZE - 2] * 17 + (addr1)->u8[LINKADDR_SIZE - 1])  : -1)
-#endif /* ORCHESTRA_CONF_LINKADDR_HASH3 */
-
 /* The maximum hash */
 #ifdef ORCHESTRA_CONF_MAX_HASH
 #define ORCHESTRA_MAX_HASH                        ORCHESTRA_CONF_MAX_HASH

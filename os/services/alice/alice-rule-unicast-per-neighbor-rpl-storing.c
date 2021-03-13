@@ -96,6 +96,7 @@ get_node_channel_offset(const linkaddr_t *addr1, const linkaddr_t *addr2)
     return 1 + alice_f_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2)
             + (uint32_t)alice_v_asfn_for_schedule), num_ch); //link-based, except for EB channel offset (1)
   } else {
+    // alice final check: should this be 0xffff????
     return 1 + 0; //same with common shared channel offset
   }
 }
@@ -116,7 +117,7 @@ is_root()
 /*---------------------------------------------------------------------------*/
 /* Remove current slotframe scheduling and re-schedule this slotframe. */
 static void
-alice_schedule_unicast_slotframe(void)
+alice_f_schedule_unicast_slotframe(void)
 {
   /* schedule for parent node */
   uint16_t timeslot_for_parent_up, timeslot_for_parent_down;
@@ -223,7 +224,7 @@ alice_f_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_of
 
   //this packet's receiver is not the node's RPL neighbor. 
   *timeslot = 0;
-  *channel_offset = ALICE_BROADCAST_SF_ID; //alice final check
+  *channel_offset = ALICE_BROADCAST_SF_ID;
 
   return is_neighbor; //returns 0 <-- ALICE EARLY PACKET DROP
 }
@@ -235,20 +236,20 @@ void
 alice_f_time_varying_scheduling(uint16_t asfn, uint16_t sfsize)
 {  
   alice_v_asfn_for_schedule = asfn;  
-  alice_schedule_unicast_slotframe();
+  alice_f_schedule_unicast_slotframe();
 }
 #endif
 /*---------------------------------------------------------------------------*/
 static void
 child_added(const linkaddr_t *linkaddr)
 {
-  alice_schedule_unicast_slotframe();
+  alice_f_schedule_unicast_slotframe();
 }
 /*---------------------------------------------------------------------------*/
 static void
 child_removed(const linkaddr_t *linkaddr)
 {
-  alice_schedule_unicast_slotframe();
+  alice_f_schedule_unicast_slotframe();
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -296,7 +297,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     alice_v_asfn_for_schedule = alice_f_tsch_schedule_get_current_asfn(sf_unicast);
 #endif
 
-    alice_schedule_unicast_slotframe(); 
+    alice_f_schedule_unicast_slotframe(); 
   }
 }
 /*---------------------------------------------------------------------------*/

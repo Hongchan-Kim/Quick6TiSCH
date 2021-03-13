@@ -58,6 +58,7 @@ static uint16_t channel_offset = 0;
 #endif
 
 /*---------------------------------------------------------------------------*/
+/* alice implementation */
 static int
 neighbor_has_uc_link(const linkaddr_t *linkaddr)
 {
@@ -83,10 +84,12 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
   if(timeslot != NULL) {
     *timeslot = 0;
   }
-  if(channel_offset != NULL) { //alice final check
+  /* alice implementation */
+  if(channel_offset != NULL) {
     *channel_offset = slotframe_handle; //equal to 1
   }
 
+  /* alice implementation */
   //Data paccket -> return 0 and pass to unicast slotframe
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME

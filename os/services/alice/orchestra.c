@@ -121,7 +121,7 @@ orchestra_callback_packet_ready(void)
   /* The default channel offset 0xffff means that the channel offset in the scheduled
    * tsch_link structure is used instead. Any other value specified in the packetbuf
    * overrides per-link value, allowing to implement multi-channel Orchestra. */
-  uint16_t channel_offset = 0; // alice final check, originally 0xffff
+  uint16_t channel_offset = 0xffff;
   int matched_rule = -1;
 
   /* Loop over all rules until finding one able to handle the packet */

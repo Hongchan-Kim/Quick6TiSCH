@@ -241,7 +241,7 @@ tsch_release_lock(void)
 static uint8_t
 tsch_get_channel_offset(struct tsch_link *link, struct tsch_packet *p)
 {
-#if WITH_ALICE
+#if WITH_ALICE /* alice-implementation */
   return link->channel_offset;
 #else
 #if TSCH_WITH_LINK_SELECTOR
@@ -811,11 +811,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       /* no packets on air */
       tsch_radio_off(TSCH_RADIO_CMD_OFF_FORCE);
 
-      //hckim remove later
+#if ENABLE_LOG_TSCH_SLOT_LEVEL_LOG
       TSCH_LOG_ADD(tsch_log_message,
           snprintf(log->message, sizeof(log->message),
           "!no packet seen"));
-
+#endif
 
     } else {
       TSCH_DEBUG_RX_EVENT();
@@ -995,10 +995,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
       tsch_radio_off(TSCH_RADIO_CMD_OFF_END_OF_TIMESLOT);
 
-      //hckim remove later
+#if ENABLE_LOG_TSCH_SLOT_LEVEL_LOG
       TSCH_LOG_ADD(tsch_log_message,
           snprintf(log->message, sizeof(log->message),
           "!no pending packet"));
+#endif
 
     }
 

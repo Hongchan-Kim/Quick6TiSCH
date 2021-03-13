@@ -48,7 +48,7 @@
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
-#define APP_MAX_TX                                 30
+#define APP_MAX_TX                                 300
 /*---------------------------------------------------------------------------*/
 
 
@@ -91,10 +91,12 @@
 #define TSCH_SCHEDULER_NB_ORCHESTRA                1 // 1: NB-Orchestra-storing
 #define TSCH_SCHEDULER_LB_ORCHESTRA                2 // 2: LB-Orchestra
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
+#define TSCH_SCHEDULER_OST                         4 // 4: ALICE
 
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
 #define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -105,13 +107,22 @@
 #define ORCHESTRA_RULE_ALICE { &eb_per_time_source, \
                           &default_common, \
                           &unicast_per_neighbor_rpl_storing }
+#define ORCHESTRA_RULE_OST { &eb_per_time_source, \
+                          &default_common, \
+                          &unicast_per_neighbor_rpl_storing }
 
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        31 //broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_LB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_LB //link-based Orchestra
+#define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        31 //broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
@@ -121,14 +132,20 @@
 #define ALICE_F_TIME_VARYING_SCHEDULING            alice_f_time_varying_scheduling
 #define ALICE_BROADCAST_SF_ID                      1 //slotframe handle of broadcast/default slotframe
 #define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
+#define TSCH_CONF_BURST_MAX_LEN                    0
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
-
-
-#endif /* CURRENT_TSCH_SCHEDULER */
 
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //31 broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              17 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+
+#elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST //OST
+
+#define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //31 broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+
+#endif /* CURRENT_TSCH_SCHEDULER */
 /*---------------------------------------------------------------------------*/
 
 
@@ -160,6 +177,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_LOG             0
 /*---------------------------------------------------------------------------*/
 
 

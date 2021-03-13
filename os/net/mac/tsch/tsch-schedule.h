@@ -128,11 +128,6 @@ struct tsch_link *tsch_schedule_get_link_by_handle(uint16_t handle);
 struct tsch_link *tsch_schedule_get_link_by_timeslot(struct tsch_slotframe *slotframe,
                                                      uint16_t timeslot, uint16_t channel_offset);
 
-#if WITH_ALICE == 1 /* alice implementation */
-struct tsch_link *alice_f_tsch_schedule_get_link_by_ts_choff(struct tsch_slotframe *slotframe, 
-                                                     uint16_t timeslot, uint16_t channel_offset);
-#endif
-
 /**
  * \brief Removes a link
  * \param slotframe The slotframe the link belongs to
@@ -151,14 +146,8 @@ int tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link
 int tsch_schedule_remove_link_by_timeslot(struct tsch_slotframe *slotframe,
                                           uint16_t timeslot, uint16_t channel_offset);
 
-#if WITH_ALICE == 1 /* alice implementation */
-// ksh: timeslot and channel offset
-int alice_f_tsch_schedule_remove_link_by_ts_choff(struct tsch_slotframe *slotframe, 
-                                          uint16_t timeslot, uint16_t channel_offset);
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_ALICE == 1
-// alice-implementation
+#if WITH_ALICE == 1 /* alice-implementation */
 // ksh: Thomas Wang 32bit-Interger Mix Function
 uint16_t
 alice_f_real_hash(uint32_t value, uint16_t mod); // ksh: Thomas Wang method..

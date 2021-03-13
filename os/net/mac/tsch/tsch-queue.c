@@ -462,8 +462,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
             if(packet_attr_timeslot != 0xffff && packet_timeslot != link->timeslot) {
               return NULL;
             }
-            //alice final check, packet_attr_channel_offset != 0xffff?
-            if(packet_channel_offset != link->channel_offset) {
+            if(packet_attr_channel_offset != 0xffff && packet_channel_offset != link->channel_offset) {
               return NULL;
             }
           }

@@ -51,7 +51,7 @@ static uint16_t
 get_node_timeslot(const linkaddr_t *addr)
 {
 #if ORCHESTRA_EBSF_PERIOD > 0
-  return ORCHESTRA_LINKADDR_HASH3(addr) % ORCHESTRA_EBSF_PERIOD; //alice final check
+  return ORCHESTRA_LINKADDR_HASH(addr) % ORCHESTRA_EBSF_PERIOD;
 #else
   return 0xffff;
 #endif
@@ -69,10 +69,8 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
       *timeslot = get_node_timeslot(&linkaddr_node_addr);
     }
     /* alice implementation */
-    //alice final check
     if(channel_offset != NULL) {
-      *channel_offset = ORCHESTRA_EB_CHANNEL_OFFSET; //hckim
-      //*channel_offset = slotframe_handle; //ksh
+      *channel_offset = slotframe_handle; //equal to 0
     }
     return 1;
   }
