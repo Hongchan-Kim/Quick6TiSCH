@@ -152,6 +152,7 @@ static volatile int tsch_in_slot_operation = 0;
 /* If we are inside a slot, these tell the current channel and channel offset */
 uint8_t tsch_current_channel;
 uint8_t tsch_current_channel_offset;
+uint16_t tsch_current_timeslot;
 
 /* Info about the link, packet and neighbor of
  * the current (or next) slot */
@@ -811,7 +812,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       /* no packets on air */
       tsch_radio_off(TSCH_RADIO_CMD_OFF_FORCE);
 
-#if ENABLE_LOG_TSCH_SLOT_LEVEL_LOG
+#if ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG
       TSCH_LOG_ADD(tsch_log_message,
           snprintf(log->message, sizeof(log->message),
           "!no packet seen"));
@@ -995,7 +996,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
       tsch_radio_off(TSCH_RADIO_CMD_OFF_END_OF_TIMESLOT);
 
-#if ENABLE_LOG_TSCH_SLOT_LEVEL_LOG
+#if ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG
       TSCH_LOG_ADD(tsch_log_message,
           snprintf(log->message, sizeof(log->message),
           "!no pending packet"));
@@ -1062,6 +1063,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       if(is_active_slot) {
         /* If we are in a burst, we stick to current channel instead of
          * doing channel hopping, as per IEEE 802.15.4-2015 */
+        tsch_current_timeslot = current_link->timeslot; // hckim
         if(burst_link_scheduled) {
           /* Reset burst_link_scheduled flag. Will be set again if burst continue. */
           burst_link_scheduled = 0;

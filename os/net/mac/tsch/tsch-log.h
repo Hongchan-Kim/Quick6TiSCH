@@ -83,6 +83,7 @@ struct tsch_log_t {
   uint8_t burst_count;
   uint8_t channel;
   uint8_t channel_offset;
+  uint16_t timeslot; // hckim
   union {
     char message[48];
     struct {
