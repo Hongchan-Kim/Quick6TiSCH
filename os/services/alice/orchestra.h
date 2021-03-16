@@ -72,8 +72,8 @@ void orchestra_callback_child_removed(const linkaddr_t *addr);
 
 /* alice implementation */
 /* alice packet-cell matching on the fly */
-int alice_f_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offset, const linkaddr_t rx_linkaddr);
+int alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offset, const linkaddr_t rx_linkaddr);
 /* alice time varying scheduling */
-void alice_f_time_varying_scheduling(uint16_t a, uint16_t b);
+void alice_time_varying_scheduling(uint16_t a, uint16_t b);
 
 #endif /* __ORCHESTRA_H__ */

@@ -68,8 +68,8 @@
 #endif
 
 #if WITH_ALICE == 1 /* alice implementation */
-#ifdef ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY /* alice packet cell matching on the fly */
-int ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY(uint16_t* timeslot, uint16_t* channel_offset, const linkaddr_t rx_linkaddr);
+#ifdef ALICE_PACKET_CELL_MATCHING_ON_THE_FLY /* alice packet cell matching on the fly */
+int ALICE_PACKET_CELL_MATCHING_ON_THE_FLY(uint16_t* timeslot, uint16_t* channel_offset, const linkaddr_t rx_linkaddr);
 #endif
 #endif
 
@@ -431,7 +431,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
 #if WITH_ALICE == 1 /* alice implementation */
         int packet_attr_channel_offset = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
 
-#ifdef ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY
+#ifdef ALICE_PACKET_CELL_MATCHING_ON_THE_FLY
         if(packet_attr_slotframe == ALICE_UNICAST_SF_ID) {
           linkaddr_t rx_linkaddr;
           linkaddr_copy(&rx_linkaddr, queuebuf_addr(n->tx_array[get_index]->qb, PACKETBUF_ADDR_RECEIVER));
@@ -442,7 +442,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           //this function calculates time offset and channel offset 
           //on the basis of the link-level packet destiation (rx_linkaddr) and the current SFID.
           //Decides packet_timeslot and packet_channel_offset, checks rpl neighbor relations.
-          int r = ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY(&packet_timeslot, &packet_channel_offset, rx_linkaddr);
+          int r = ALICE_PACKET_CELL_MATCHING_ON_THE_FLY(&packet_timeslot, &packet_channel_offset, rx_linkaddr);
 
 #if ENABLE_ALICE_PACKET_CELL_MATCHING_LOG
           TSCH_LOG_ADD(tsch_log_message,

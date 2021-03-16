@@ -94,7 +94,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         count++;
       }
     } else if(data == &periodic_timer) {
-      etimer_set(&send_timer, random_rand() % APP_SEND_INTERVAL);
+      etimer_set(&send_timer, random_rand() % (APP_SEND_INTERVAL / 2));
       etimer_reset(&periodic_timer);
     }
   }

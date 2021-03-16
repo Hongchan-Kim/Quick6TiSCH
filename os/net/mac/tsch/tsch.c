@@ -222,14 +222,14 @@ static void packet_input(void);
 
 /*---------------------------------------------------------------------------*/
 #if WITH_ALICE == 1 /* alice implementation */
-#ifdef ALICE_F_TIME_VARYING_SCHEDULING
-uint16_t alice_v_curr_asfn = 0;
-uint16_t alice_v_next_asfn = 0;
-uint16_t alice_v_asfn_upper_bound = 0;
+#ifdef ALICE_TIME_VARYING_SCHEDULING
+uint16_t alice_curr_asfn = 0;
+uint16_t alice_next_asfn = 0;
+uint16_t alice_asfn_upper_bound = 0;
 
 /* return the current ASFN for ALICE */
 uint16_t
-alice_f_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf)
+alice_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf)
 {
   uint16_t mod = TSCH_ASN_MOD(tsch_current_asn, sf->size);
 

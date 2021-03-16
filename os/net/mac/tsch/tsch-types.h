@@ -75,7 +75,7 @@ struct tsch_link {
   uint8_t link_options;
 
 #if WITH_ALICE == 1 /* alice implementation */
-  uint8_t alice_v_link_options;
+  uint8_t alice_link_options;
 #endif
 
   /* Type of link. NORMAL = 0. ADVERTISING = 1, and indicates
