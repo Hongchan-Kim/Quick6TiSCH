@@ -48,7 +48,7 @@
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
-#define APP_MAX_TX                                 300
+#define APP_MAX_TX                                 120
 /*---------------------------------------------------------------------------*/
 
 
@@ -91,7 +91,7 @@
 #define TSCH_SCHEDULER_NB_ORCHESTRA                1 // 1: NB-Orchestra-storing
 #define TSCH_SCHEDULER_LB_ORCHESTRA                2 // 2: LB-Orchestra
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
-#define TSCH_SCHEDULER_OST                         4 // 4: ALICE
+#define TSCH_SCHEDULER_OST                         4 // 4: OST
 
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
@@ -108,8 +108,8 @@
                           &default_common, \
                           &unicast_per_neighbor_rpl_storing }
 #define ORCHESTRA_RULE_OST { &eb_per_time_source, \
-                          &default_common, \
-                          &unicast_per_neighbor_rpl_storing }
+                          &unicast_per_neighbor_rpl_storing, \
+                          &default_common }
 
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
@@ -128,8 +128,8 @@
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define WITH_ALICE                                 1
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
-#define ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY    alice_f_packet_cell_matching_on_the_fly
-#define ALICE_F_TIME_VARYING_SCHEDULING            alice_f_time_varying_scheduling
+#define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY    alice_packet_cell_matching_on_the_fly
+#define ALICE_TIME_VARYING_SCHEDULING            alice_time_varying_scheduling
 #define ALICE_BROADCAST_SF_ID                      1 //slotframe handle of broadcast/default slotframe
 #define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
 #define TSCH_CONF_BURST_MAX_LEN                    0
@@ -177,7 +177,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_LOG             0
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
 /*---------------------------------------------------------------------------*/
 
 

@@ -152,11 +152,11 @@ int TSCH_CALLBACK_PACKET_READY(void);
 /***** External Variables *****/
 
 #if WITH_ALICE == 1 /* alice implementation */
-#ifdef ALICE_F_TIME_VARYING_SCHEDULING
-extern uint16_t alice_v_curr_asfn;
-extern uint16_t alice_v_next_asfn;
-extern uint16_t alice_v_asfn_upper_bound;
-uint16_t alice_f_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf);
+#ifdef ALICE_TIME_VARYING_SCHEDULING
+extern uint16_t alice_curr_asfn;
+extern uint16_t alice_next_asfn;
+extern uint16_t alice_asfn_upper_bound;
+uint16_t alice_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf);
 #endif
 #endif
 
@@ -179,6 +179,7 @@ extern struct tsch_link *current_link;
 /* If we are inside a slot, these tell the current channel and channel offset */
 extern uint8_t tsch_current_channel;
 extern uint8_t tsch_current_channel_offset;
+extern uint16_t tsch_current_timeslot; // hckim
 /* TSCH channel hopping sequence */
 extern uint8_t tsch_hopping_sequence[TSCH_HOPPING_SEQUENCE_MAX_LEN];
 extern struct tsch_asn_divisor_t tsch_hopping_sequence_length;

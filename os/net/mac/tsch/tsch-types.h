@@ -73,11 +73,6 @@ struct tsch_link {
   /* A bit string that defines
    * b0 = Transmit, b1 = Receive, b2 = Shared, b3 = Timekeeping, b4 = reserved */
   uint8_t link_options;
-
-#if WITH_ALICE == 1 /* alice implementation */
-  uint8_t alice_v_link_options;
-#endif
-
   /* Type of link. NORMAL = 0. ADVERTISING = 1, and indicates
      the link may be used to send an Enhanced beacon. */
   enum link_type link_type;
