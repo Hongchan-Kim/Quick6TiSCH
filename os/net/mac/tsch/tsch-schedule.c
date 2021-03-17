@@ -397,7 +397,6 @@ alice_tsch_schedule_add_link(struct tsch_slotframe *slotframe,
         l->handle = current_link_handle++;
         
         /* alice-implementation */
-        l->alice_link_options = link_options; // neighbor's original setting.
         alice_tsch_schedule_set_link_option_by_ts_choff(slotframe, timeslot, channel_offset, &link_options);
 
         l->link_options = link_options;

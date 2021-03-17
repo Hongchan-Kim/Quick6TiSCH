@@ -19,9 +19,9 @@ uint16_t non_root_info[NON_ROOT_NUM][3] = {
 };
 
 #elif TESTBED_SITE == IOT_LAB_LYON_17
-uint16_t root_info[3] = {1, 0x9768, 0};
+uint16_t root_info[3] = {18, 0x3261, 0};
 uint16_t non_root_info[NON_ROOT_NUM][3] = {
-    // root node {1, 0x9768, 0},
+    {1, 0x9768, 0},
     {2, 0x8867, 0},
     {3, 0x8676, 0},
     {4, 0xb181, 0},
@@ -36,8 +36,8 @@ uint16_t non_root_info[NON_ROOT_NUM][3] = {
     {14, 0x2860, 0},
     {15, 0xa377, 0},
     {16, 0xb978, 0},
-    {17, 0xa168, 0},
-    {18, 0x3261, 0}
+    {17, 0xa168, 0}
+    // root node {18, 0x3261, 0}
 };
 
 #elif TESTBED_SITE == IOT_LAB_LILLE_24
