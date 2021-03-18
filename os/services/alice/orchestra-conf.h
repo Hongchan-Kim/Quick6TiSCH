@@ -51,10 +51,6 @@
                           &unicast_per_neighbor_rpl_storing}
 #endif /* ORCHESTRA_CONF_RULES */
 
-#ifndef MULTIPLE_CHANNEL_OFFSETS
-#define MULTIPLE_CHANNEL_OFFSETS 1 // ksh: enable multiple channel offsets
-#endif
-
 /* Length of the various slotframes. Tune to balance network capacity,
  * contention, energy, latency. */
 #ifdef ORCHESTRA_CONF_EBSF_PERIOD
