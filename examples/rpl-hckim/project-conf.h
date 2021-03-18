@@ -14,8 +14,8 @@
 #define IOT_LAB_LILLE_46                           6
 
 //#define TESTBED_SITE                               IOT_LAB_LYON_2
-//#define TESTBED_SITE                               IOT_LAB_LYON_3
-#define TESTBED_SITE                               IOT_LAB_LYON_17
+#define TESTBED_SITE                               IOT_LAB_LYON_3
+//#define TESTBED_SITE                               IOT_LAB_LYON_17
 //#define TESTBED_SITE                               IOT_LAB_LILLE_24
 //#define TESTBED_SITE                               IOT_LAB_LILLE_32
 //#define TESTBED_SITE                               IOT_LAB_LILLE_46
@@ -95,8 +95,8 @@
 
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -108,8 +108,8 @@
                           &default_common, \
                           &unicast_per_neighbor_rpl_storing }
 #define ORCHESTRA_RULE_OST { &eb_per_time_source, \
-                          &default_common, \
-                          &unicast_per_neighbor_rpl_storing }
+                          &unicast_per_neighbor_link_based, \
+                          &default_common }
 
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
@@ -126,6 +126,10 @@
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
+#define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //31 broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+
 #define WITH_ALICE                                 1
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY    alice_f_packet_cell_matching_on_the_fly
@@ -135,15 +139,36 @@
 #define TSCH_CONF_BURST_MAX_LEN                    0
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 
-#define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //31 broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              17 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
-
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST //OST
-
+#define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //31 broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              17 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        41 //31 broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+
+#define WITH_OST                                   1
+#define N_SELECTION_PERIOD                         15 //related to N_MAX: Min. traffic load = 1 / (N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
+#define N_MAX                                      8 //max t_offset 65535-1, 65535 is used for no-allocation
+#define MORE_UNDER_PROVISION                       1 //more allocation 2^MORE_UNDER_PROVISION times than under-provision
+#define NO_ON_DEMAND_PROVISION                     0
+#define INC_N_NEW_TX_REQUEST                       100
+#define MULTI_CHANNEL                              1
+#define PRR_THRES_TX_CHANGE                        70
+#define NUM_TX_MAC_THRES_TX_CHANGE                 20
+#define NUM_TX_FAIL_THRES                          5
+#define THRES_CONSEQUTIVE_N_INC                    3
+#define T_OFFSET_ALLOCATION_FAIL                   ((1 << N_MAX) + 1)
+#define T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST        ((1<<N_MAX) + 2)
+#define THRES_CONSECUTIVE_NEW_TX_REQUEST           10
+#define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          2 * NBR_TABLE_CONF_MAX_NEIGHBORS
+//#define TSCH_SCHEDULE_CONF_MAX_LINKS             2 * NBR_TABLE_CONF_MAX_NEIGHBORS
+#define RESIDUAL_ALLOC                             1
+#define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) //Under-provision uses up to 2*NODE_NUM+2
+#undef TSCH_CONF_RX_ACK_DELAY
+#define TSCH_CONF_RX_ACK_DELAY                     1300
+#undef TSCH_CONF_TX_ACK_DELAY
+#define TSCH_CONF_TX_ACK_DELAY                     1500
+
+
 
 #endif /* CURRENT_TSCH_SCHEDULER */
 /*---------------------------------------------------------------------------*/
