@@ -108,7 +108,7 @@
                           &default_common, \
                           &unicast_per_neighbor_rpl_storing }
 #define ORCHESTRA_RULE_OST { &eb_per_time_source, \
-                          &unicast_per_neighbor_link_based, \
+                          &unicast_per_neighbor_rpl_storing, \
                           &default_common }
 
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
@@ -146,6 +146,10 @@
 #define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 
 #define WITH_OST                                   1
+#define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1
+//#define NODE_ID_FROM_IPADDR(addr)                  node_id_from_ipaddr
+//#define NODE_ID_FROM_LINKADDR(addr)                node_id_from_linkaddr
+
 #define N_SELECTION_PERIOD                         15 //related to N_MAX: Min. traffic load = 1 / (N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
 #define N_MAX                                      8 //max t_offset 65535-1, 65535 is used for no-allocation
 #define MORE_UNDER_PROVISION                       1 //more allocation 2^MORE_UNDER_PROVISION times than under-provision
@@ -157,7 +161,7 @@
 #define NUM_TX_FAIL_THRES                          5
 #define THRES_CONSEQUTIVE_N_INC                    3
 #define T_OFFSET_ALLOCATION_FAIL                   ((1 << N_MAX) + 1)
-#define T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST        ((1<<N_MAX) + 2)
+#define T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST        ((1 << N_MAX) + 2)
 #define THRES_CONSECUTIVE_NEW_TX_REQUEST           10
 #define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          2 * NBR_TABLE_CONF_MAX_NEIGHBORS
 //#define TSCH_SCHEDULE_CONF_MAX_LINKS             2 * NBR_TABLE_CONF_MAX_NEIGHBORS

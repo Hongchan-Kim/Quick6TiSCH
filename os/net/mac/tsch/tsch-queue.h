@@ -55,6 +55,11 @@ extern struct tsch_neighbor *n_eb;
 
 /********** Functions *********/
 
+#if WITH_OST //hckim
+struct tsch_neighbor *tsch_queue_get_nbr_from_id(const uint16_t id);
+void tsch_queue_flush_nbr_queue(struct tsch_neighbor *n);
+#endif
+
 /**
  * \brief Add a TSCH neighbor queue
  * \param addr The link-layer address of the neighbor to be added

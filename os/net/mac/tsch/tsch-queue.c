@@ -57,6 +57,14 @@
 #include "net/nbr-table.h"
 #include <string.h>
 
+#if WITH_OST //hckim
+#include "net/ipv6/uip-ds6-route.h"
+#include "net/ipv6/uip-ds6-nbr.h"
+#include "sys/ctimer.h"
+#include "orchestra.h"
+#include "node-info.h"
+#endif
+
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "TSCH Queue"
@@ -80,6 +88,167 @@ NBR_TABLE(struct tsch_neighbor, tsch_neighbors);
 /* Broadcast and EB virtual neighbors */
 struct tsch_neighbor *n_broadcast;
 struct tsch_neighbor *n_eb;
+
+#if WITH_OST
+static struct ctimer select_N_timer;
+/*---------------------------------------------------------------------------*/
+uint8_t is_routing_nbr(uip_ds6_nbr_t *nbr)
+{
+/*
+  uint16_t parent_id;
+  uint16_t child_id;
+  linkaddr_t *addr;
+  uint16_t nbr_id;
+
+  // parent?
+  addr = &orchestra_parent_linkaddr;
+  parent_id = node_id_from_linkaddr(addr);
+  nbr_id = node_id_from_ipaddr(&(nbr->ipaddr));    
+  if(parent_id == nbr_id) {
+    return 1;
+  }
+  // 1-hop child? i.e., existing next-hop
+  nbr_table_item_t *item = nbr_table_head(nbr_routes);
+  while(item != NULL) {
+    addr = nbr_table_get_lladdr(nbr_routes, item);
+    child_id = node_id_from_linkaddr(addr);
+    if(nbr_id == child_id) {
+        return 1;
+    }
+    item = nbr_table_next(nbr_routes, item);
+  }
+*/
+  // parent?
+  if(linkaddr_cmp(&orchestra_parent_linkaddr, (linkaddr_t *)uip_ds6_nbr_get_ll(nbr))) {
+    return 1;
+  }
+
+  // 1-hop child? i.e., existing next-hop
+  nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)uip_ds6_nbr_get_ll(nbr));
+  if(item != NULL) {
+    return 1;
+  }
+
+  return 0;    
+}
+/*---------------------------------------------------------------------------*/
+void
+change_queue_N_update(uint16_t nbr_id, uint16_t updated_N)
+{
+  struct tsch_neighbor *n = tsch_queue_get_nbr_from_id(nbr_id);
+  if(n != NULL) {
+    if(!ringbufindex_empty(&n->tx_ringbuf)) {
+      int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
+      uint8_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
+
+      LOG_INFO("change_queue_N_update: %u %u (nbr %u)\n", updated_N, num_elements, nbr_id);
+
+      uint8_t j;
+      for(j = get_index; j < get_index + num_elements; j++) {
+        int8_t index;
+        if(j >= ringbufindex_size(&n->tx_ringbuf)) { //16
+          index = j - ringbufindex_size(&n->tx_ringbuf);
+        } else {
+          index = j;
+        }
+        uint8_t *packet = (uint8_t *)queuebuf_dataptr(n->tx_array[index]->qb);
+
+        packet[2] = updated_N & 0xff;
+        packet[3] = (updated_N >> 8) & 0xff;
+      }
+    }
+  }
+}
+/*---------------------------------------------------------------------------*/
+/* OST measure traffic load */
+void select_N(void* ptr)
+{
+  uip_ds6_nbr_t *nbr;
+  uint16_t nbr_id;
+  uint16_t traffic_load;
+  int i;
+
+  /* select N */
+  nbr = uip_ds6_nbr_head();
+  LOG_INFO("select_N: update my_N\n");
+  if(tsch_get_lock()) {
+    while(nbr != NULL) {
+      nbr_id = node_id_from_ipaddr(&(nbr->ipaddr));
+
+      if(is_routing_nbr(nbr) && nbr->new_add == 0) {
+        uint16_t num_slots = N_SELECTION_PERIOD * 1000 / 10;
+        // unit: packet/slot multiplied by 2^N_MAX
+        traffic_load = (nbr->num_tx) / num_slots * (1 << N_MAX);
+
+        for(i = 1; i <= N_MAX; i++) {
+          if((traffic_load >> i) < 1) {
+            uint16_t old_N = nbr->my_N;
+            uint16_t new_N = N_MAX - i + 1 - MORE_UNDER_PROVISION;
+
+            if(old_N != new_N) {
+              uint8_t change_N = 0;
+              if(new_N > old_N) { //increase my_N
+                nbr->consecutive_my_N_inc++;
+                if(nbr->consecutive_my_N_inc >= THRES_CONSEQUTIVE_N_INC) {
+                  nbr->consecutive_my_N_inc = 0;
+                  change_N = 1;
+                } else {
+                  change_N = 0;
+                }
+              } else { //decrease my_N
+                nbr->consecutive_my_N_inc = 0;
+                change_N = 1;
+              }
+              if(change_N) {
+                LOG_INFO("select_N: %u->%u (r_nbr %u)\n", old_N, new_N, nbr_id);
+                change_queue_N_update(nbr_id, new_N);
+                nbr->my_N = new_N;
+              } else {
+                LOG_INFO("select_N: %u->%u (X, %u) (r_nbr %u)\n", 
+                        old_N, new_N, nbr->consecutive_my_N_inc, nbr_id);
+              }
+            } else { //No change
+              nbr->consecutive_my_N_inc = 0;
+            }
+            break;
+          }
+        }
+      } else {
+        nbr->my_N = 5;
+        if(nbr->new_add == 1) { 
+          LOG_INFO("select_N: %u->%u (r_nbr %u, new_add)\n", nbr->my_N, nbr->my_N, nbr_id);
+          nbr->new_add = 0;
+        }
+      }
+      nbr = uip_ds6_nbr_next(nbr);
+    }
+
+    // Reset all num_tx
+    LOG_INFO("select_N: reset num_tx\n");
+    nbr = uip_ds6_nbr_head();
+    while(nbr != NULL) {
+      nbr->num_tx = 0;
+      nbr = uip_ds6_nbr_next(nbr);
+    }
+    tsch_release_lock();
+  }
+  ctimer_reset(&select_N_timer);
+}
+/*---------------------------------------------------------------------------*/
+struct tsch_neighbor *
+tsch_queue_get_nbr_from_id(const uint16_t id)
+{
+    struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
+    while(n != NULL) {
+      if(node_id_from_linkaddr(tsch_queue_get_nbr_address(n)) == id) {
+        return n;
+      }
+      n = list_item_next(n);
+    }
+  return NULL;
+}
+#endif
+
 
 /*---------------------------------------------------------------------------*/
 /* Add a TSCH neighbor */
@@ -187,6 +356,12 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
         TSCH_CALLBACK_NEW_TIME_SOURCE(old_time_src, new_time_src);
 #endif
       }
+#if WITH_OST
+      else {
+        //For First association (First DIO Rx) 
+        reset_nbr(new_addr, 1, 0);
+      }
+#endif
 
       return 1;
     }
@@ -195,8 +370,13 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
 }
 /*---------------------------------------------------------------------------*/
 /* Flush a neighbor queue */
+#if WITH_OST
+void
+tsch_queue_flush_nbr_queue(struct tsch_neighbor *n)
+#else
 static void
 tsch_queue_flush_nbr_queue(struct tsch_neighbor *n)
+#endif
 {
   while(!tsch_queue_is_empty(n)) {
     struct tsch_packet *p = tsch_queue_remove_packet_from_queue(n);
@@ -245,6 +425,14 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     /* No scheduled slots for the packet available; drop it early to save queue space. */
     LOG_DBG("tsch_queue_add_packet(): rejected by the scheduler\n");
     return NULL;
+  }
+#endif
+
+#if WITH_OST
+  /* OST measure traffic load */
+  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
+  if(nbr != NULL) {
+    nbr->num_tx++; //even if q_loss
   }
 #endif
 
@@ -425,6 +613,17 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
                                                                     make sure the backoff has expired */
 #if TSCH_WITH_LINK_SELECTOR
+#if WITH_OST && RESIDUAL_ALLOC //hckim??
+        if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
+          uint16_t target_nbr_id = (link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
+          if(node_id_from_linkaddr(tsch_queue_get_nbr_address(n)) == target_nbr_id) {
+            return n->tx_array[get_index];
+          } else {
+            return NULL;
+          }
+        }
+#endif        
+
         int packet_attr_slotframe = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
         int packet_attr_timeslot = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
 
@@ -479,7 +678,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
             return NULL; 
           }
         }
-#else
+#else /* ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY */
         if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
           return NULL;
         }
@@ -490,15 +689,15 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
         if(packet_attr_channel_offset != 0xffff && packet_attr_channel_offset != link->channel_offset) {
           return NULL;
         }
-#endif
-#else
+#endif /* ALICE_F_PACKET_CELL_MATCHING_ON_THE_FLY */
+#else /* WITH_ALICE */
         if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
           return NULL;
         }
         if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
           return NULL;
         }
-#endif
+#endif /* WITH_ALICE */
 
 #endif /* TSCH_WITH_LINK_SELECTOR */
         return n->tx_array[get_index];
@@ -539,6 +738,29 @@ tsch_queue_get_unicast_packet_for_any(struct tsch_neighbor **n, struct tsch_link
       }
       curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
     }
+
+#if WITH_OST && RESIDUAL_ALLOC //hckim??
+    if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
+      uint16_t target_nbr_id = (link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
+      printf("ERROR: No ssq Tx packet (nbr %u)\n", target_nbr_id); // This could be printed when Tx occurs by RB before reserved ssq Tx
+
+      struct tsch_neighbor *target_nbr = tsch_queue_get_nbr_from_id(target_nbr_id);
+      if(target_nbr == NULL) {
+        printf("ERROR: c1\n");
+      } else {
+        printf("ERROR: c2 %u %u\n", !target_nbr->is_broadcast, target_nbr->tx_links_count == 0);
+        //both should be 1
+        int16_t get_index = ringbufindex_peek_get(&target_nbr->tx_ringbuf);
+        int is_shared_link = link != NULL && link->link_options & LINK_OPTION_SHARED;
+        printf("ERROR: c3 %u %u\n", get_index != -1, is_shared_link != 0);
+        //both should be 1
+      }
+    }
+  } else {
+    if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
+      printf("ERROR: Locked\n");
+    }
+#endif
   }
   return NULL;
 }
@@ -600,6 +822,10 @@ tsch_queue_init(void)
   /* Add virtual EB and the broadcast neighbors */
   n_eb = tsch_queue_add_nbr(&tsch_eb_address);
   n_broadcast = tsch_queue_add_nbr(&tsch_broadcast_address);
+
+#if WITH_OST
+  ctimer_set(&select_N_timer, N_SELECTION_PERIOD * CLOCK_SECOND, select_N, NULL);
+#endif
 }
 /*---------------------------------------------------------------------------*/
 /** @} */
