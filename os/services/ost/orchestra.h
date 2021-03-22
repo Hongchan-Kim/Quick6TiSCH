@@ -75,24 +75,26 @@ void orchestra_callback_child_added(const linkaddr_t *addr);
 void orchestra_callback_child_removed(const linkaddr_t *addr);
 
 /* OST implementation */
-extern uint32_t ost_num_total_auto_rx_accum;
-void ost_reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path);
-uint16_t ost_get_tx_sf_handle_from_id(const uint16_t id);
-uint16_t ost_get_rx_sf_handle_from_id(const uint16_t id);
-uint16_t ost_get_id_from_tx_sf_handle(const uint16_t handle);
-uint16_t ost_get_id_from_rx_sf_handle(const uint16_t handle);
-uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr);
-void ost_print_nbr(void);
-void ost_remove_tx(uint16_t id);
-void ost_remove_rx(uint16_t id);
-void ost_change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot);
-void ost_change_queue_N_update(uint16_t nbr_id, uint16_t updated_N);
-uint8_t ost_get_todo_no_resource();
-uint8_t ost_get_todo_consecutive_new_tx_request();
-
-/* OST implementation */
+/* OST functions */
+int neighbor_has_uc_link(const linkaddr_t *linkaddr);
+void reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path);
+uint16_t get_tx_sf_handle_from_id(const uint16_t id);
+uint16_t get_rx_sf_handle_from_id(const uint16_t id);
+uint16_t get_id_from_tx_sf_handle(const uint16_t handle);
+uint16_t get_id_from_rx_sf_handle(const uint16_t handle);
+uint8_t is_routing_nbr(uip_ds6_nbr_t *nbr);
+void print_nbr(void);
+void remove_tx(uint16_t id);
+void remove_rx(uint16_t id);
+void change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot);
+void change_queue_N_update(uint16_t nbr_id, uint16_t updated_N);
+uint8_t get_todo_no_resource();
+uint8_t get_todo_consecutive_new_tx_request();
+/* OST variables */
+extern uint32_t num_total_auto_rx_accum;
+extern uint8_t bootstrap_period;
 #if RESIDUAL_ALLOC
-extern struct ost_ssq_schedule_t ost_ssq_schedule_list[16];
+extern struct ssq_schedule_t ssq_schedule_list[16];
 #endif
 
 #endif /* __ORCHESTRA_H__ */
