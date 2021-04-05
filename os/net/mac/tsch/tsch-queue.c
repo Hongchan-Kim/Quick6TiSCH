@@ -98,35 +98,66 @@ uint8_t is_routing_nbr(uip_ds6_nbr_t *nbr)
 {
   // parent?
   if(linkaddr_cmp(&orchestra_parent_linkaddr, (linkaddr_t *)uip_ds6_nbr_get_ll(nbr))) {
-//    LOG_INFO("zzz r_nbr p %u\n", node_id_from_linkaddr((linkaddr_t *)uip_ds6_nbr_get_ll(nbr)));
     return 1;
   }
 
   // 1-hop child? i.e., existing next-hop
   nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)uip_ds6_nbr_get_ll(nbr));
   if(item != NULL) {
-//    LOG_INFO("zzz r_nbr c %u\n", node_id_from_linkaddr((linkaddr_t *)uip_ds6_nbr_get_ll(nbr)));
     return 1;
   }
-//  LOG_INFO("zzz no r_nbr\n");
 
   return 0;    
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_01 /* checked */
-void
-change_queue_N_update(uint16_t nbr_id, uint16_t updated_N)
-{
 #if WITH_OST_03
-  printf("zzz0 %u\n", nbr_id);
-  struct tsch_neighbor *n = tsch_queue_get_nbr_from_id(nbr_id);
+void
+ost_change_queue_N_update(linkaddr_t *lladdr, uint16_t updated_N)
+{
+  struct tsch_neighbor *n = tsch_queue_get_nbr(lladdr);
   if(n != NULL) {
     if(!ringbufindex_empty(&n->tx_ringbuf)) {
       int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
       uint8_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
 
-//      LOG_INFO("zzz change_queue_N_update: %u %u (nbr %u)\n", updated_N, num_elements, nbr_id);
+//      LOG_INFO("change_queue_N_update: %u %u (nbr %u)\n", updated_N, num_elements, nbr_id);
+
+      uint8_t j;
+      for(j = get_index; j < get_index + num_elements; j++) {
+        int8_t index;
+        if(j >= ringbufindex_size(&n->tx_ringbuf)) { //16
+          index = j - ringbufindex_size(&n->tx_ringbuf);
+        } else {
+          index = j;
+        }
+        uint8_t *packet = (uint8_t *)queuebuf_dataptr(n->tx_array[index]->qb);
+
+#if WITH_OST_DBG
+        uint8_t old_2 = packet[2];
+        uint8_t old_3 = packet[3];
+#endif
+
+        packet[2] = updated_N & 0xff;
+        packet[3] = (updated_N >> 8) & 0xff;
+
+#if WITH_OST_DBG
+        LOG_INFO("zzz old %u %u new %u %u\n", old_2, old_3, packet[2], packet[3]);
+#endif
+      }
+    }
+  }
+}
+#endif
+#if WITH_OST_CHECK /* checked */
+void
+change_queue_N_update(uint16_t nbr_id, uint16_t updated_N)
+{
+  struct tsch_neighbor *n = tsch_queue_get_nbr_from_id(nbr_id);
+  if(n != NULL) {
+    if(!ringbufindex_empty(&n->tx_ringbuf)) {
+      int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
+      uint8_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
 
       uint8_t j;
       for(j = get_index; j < get_index + num_elements; j++) {
@@ -143,7 +174,6 @@ change_queue_N_update(uint16_t nbr_id, uint16_t updated_N)
       }
     }
   }
-#endif
 }
 #endif
 /*---------------------------------------------------------------------------*/
@@ -152,18 +182,13 @@ change_queue_N_update(uint16_t nbr_id, uint16_t updated_N)
 void select_N(void* ptr)
 {
   uip_ds6_nbr_t *nbr;
-  uint16_t nbr_id;
   uint16_t traffic_load;
   int i;
-
-//  LOG_INFO("zzz_select_N\n");
 
   /* select N */
   nbr = uip_ds6_nbr_head();
   if(tsch_get_lock()) {
     while(nbr != NULL) {
-      nbr_id = node_id_from_ipaddr(&(nbr->ipaddr));
-
       if(is_routing_nbr(nbr) && nbr->new_add == 0) {
         uint16_t num_slots = N_SELECTION_PERIOD * 1000 / 10;
         // unit: packet/slot multiplied by 2^N_MAX
@@ -173,8 +198,6 @@ void select_N(void* ptr)
           if((traffic_load >> i) < 1) {
             uint16_t old_N = nbr->my_N;
             uint16_t new_N = (N_MAX - i) + 1 - MORE_UNDER_PROVISION;
-
-//            LOG_INFO("zzz_new_N %u\n", new_N);
 
             if(old_N != new_N) {
               uint8_t change_N = 0;
@@ -191,7 +214,10 @@ void select_N(void* ptr)
                 change_N = 1;
               }
               if(change_N) {
-                change_queue_N_update(nbr_id, new_N);
+
+#if WITH_OST_03
+                ost_change_queue_N_update((linkaddr_t *)uip_ds6_nbr_get_ll(nbr), new_N);
+#endif
                 nbr->my_N = new_N;
               } else {
               }
@@ -229,15 +255,11 @@ tsch_queue_get_nbr_from_id(const uint16_t id)
 {
     struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
     while(n != NULL) {
-      uint16_t zzz = node_id_from_linkaddr(tsch_queue_get_nbr_address(n));
-      printf("zzz3 %u %u\n", zzz, id);
       if(node_id_from_linkaddr(tsch_queue_get_nbr_address(n)) == id) {
-        printf("zzz4\n");
         return n;
       }
       n = list_item_next(n);
     }
-  printf("zzz5\n");
   return NULL;
 }
 #endif

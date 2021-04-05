@@ -595,12 +595,6 @@ process_rx_N(frame802154_t *frame) //In short, prN
     && is_routing_nbr(nbr) == 1
     && nbr->rx_no_path == 0) { // No need to allocate rx for nbr who sent no-path dao
     //PRINTF("Rx uc: N found %u (r_nbr %u)\n", frame->pigg1, nbr_id);
-/*
-    TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-                "zzz_pigg1 %u\n", frame->pigg1);
-    );
-*/
 
 #if WITH_OST_CHECK
     if(nbr->nbr_N != frame->pigg1) {

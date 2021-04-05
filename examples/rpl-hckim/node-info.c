@@ -7,8 +7,8 @@
 #if TESTBED_SITE == IOT_LAB_LYON_2
 uint16_t root_info[3] = {7, 0xa371, 0};
 uint16_t non_root_info[NON_ROOT_NUM][3] = {
-    {2, 0x8867, 0}
-    //{3, 0x8676, 0}
+    //{2, 0x8867, 0}
+    {3, 0x8676, 0}
 };
 
 #elif TESTBED_SITE == IOT_LAB_LYON_3
