@@ -43,6 +43,16 @@
 #include "lib/random.h"
 #include <string.h>
 
+#if WITH_OST_02 /* confirmed */
+#include <stdio.h>
+#include "contiki.h"
+#include "orchestra.h"
+#include "net/ipv6/uip-ds6-route.h"
+#include "net/ipv6/uip-ds6-nbr.h"
+#include "net/mac/tsch/tsch-schedule.h"
+#endif
+
+
 #include "sys/log.h"
 #define LOG_MODULE "Frame 15.4"
 #define LOG_LEVEL LOG_LEVEL_FRAMER
@@ -99,6 +109,55 @@ create_frame(int do_create)
     linkaddr_copy((linkaddr_t *)&params.dest_addr,
                   packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
   }
+
+#if WITH_OST_02 /* confirmed */
+  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&params.dest_addr);
+  if(nbr != NULL) {
+    // nbr->my_N = node_id + 100;
+    if(nbr->my_uninstallable == 1) {
+      //printf("Tx uc: N make %u+%u (nbr %u), uninstallable\n",nbr->my_N,INC_N_NEW_TX_REQUEST, nbr_id); // only unicast frame          
+      params.pigg1 = nbr->my_N + INC_N_NEW_TX_REQUEST;
+    } else if(nbr->my_low_prr == 1) {
+      //printf("Tx uc: N make %u+%u (nbr %u), low prr\n",nbr->my_N,INC_N_NEW_TX_REQUEST, nbr_id); // only unicast frame          
+      params.pigg1 = nbr->my_N + INC_N_NEW_TX_REQUEST;
+    } else {
+      //printf("Tx uc: N make %u (nbr %u)\n",nbr->my_N, nbr_id); // only unicast frame          
+      params.pigg1 = nbr->my_N;
+    }
+  }
+/*
+  uint16_t dest_id = node_id_from_linkaddr((linkaddr_t *)&params.dest_addr);
+  uip_ds6_nbr_t *nbr = nbr_table_head(ds6_neighbors);
+  
+  while(nbr != NULL) {
+    uint16_t nbr_id = node_id_from_ipaddr(&(nbr->ipaddr));
+    if(dest_id == nbr_id) {
+      // nbr->my_N = node_id + 100;
+      if(nbr->my_uninstallable == 1) {
+        //printf("Tx uc: N make %u+%u (nbr %u), uninstallable\n",nbr->my_N,INC_N_NEW_TX_REQUEST, nbr_id); // only unicast frame          
+        params.pigg1 = nbr->my_N + INC_N_NEW_TX_REQUEST;
+      } else if(nbr->my_low_prr == 1) {
+        //printf("Tx uc: N make %u+%u (nbr %u), low prr\n",nbr->my_N,INC_N_NEW_TX_REQUEST, nbr_id); // only unicast frame          
+        params.pigg1 = nbr->my_N + INC_N_NEW_TX_REQUEST;
+      } else {
+        //printf("Tx uc: N make %u (nbr %u)\n",nbr->my_N, nbr_id); // only unicast frame          
+        params.pigg1 = nbr->my_N;
+      }
+      break;
+    }
+    nbr = nbr_table_next(ds6_neighbors, nbr);
+  }
+*/
+  if(frame802154_is_broadcast_addr(params.fcf.dest_addr_mode, params.dest_addr)) {
+    //broadcast
+    //printf("Tx uc: N make 65535 (BC)\n");    
+    params.pigg1 = 65535;
+  } else if(nbr == NULL) {
+    //In bootstrap, TSCH-associated but not rpl-associated node sends KA
+    //printf("Tx uc: N make 65535 (No nbr)\n");
+    params.pigg1 = 65535;
+  }
+#endif
 
   linkaddr_copy((linkaddr_t *)&params.src_addr,
                 packetbuf_addr(PACKETBUF_ADDR_SENDER));

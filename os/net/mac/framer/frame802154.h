@@ -205,6 +205,14 @@ typedef struct {
   uint8_t seq;                    /**< Sequence number */
   uint16_t dest_pid;              /**< Destination PAN ID */
   uint16_t src_pid;               /**< Source PAN ID */
+
+#if WITH_OST_02 /* confirmed */
+  uint16_t pigg1; // OST for N or t_offset
+#if RESIDUAL_ALLOC
+  uint16_t pigg2; // OST for subsequent schedule or matching slot, made in tsch_slot_operation.c
+#endif
+#endif
+
   frame802154_aux_hdr_t aux_hdr;  /**< Aux security header */
   uint8_t *payload;               /**< Pointer to 802.15.4 payload */
   int payload_len;                /**< Length of payload field */
