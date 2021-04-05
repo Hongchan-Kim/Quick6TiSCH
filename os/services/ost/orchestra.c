@@ -177,5 +177,5 @@ orchestra_init(void)
       all_rules[i]->init(i);
     }
   }
-  LOG_INFO("Orchestra: initialization done\n");
+  LOG_INFO("OST: initialization done\n");
 }

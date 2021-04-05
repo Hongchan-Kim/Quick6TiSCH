@@ -57,6 +57,8 @@ extern struct tsch_neighbor *n_eb;
 
 #if WITH_OST //hckim
 struct tsch_neighbor *tsch_queue_get_nbr_from_id(const uint16_t id);
+#endif
+#if WITH_OST_CHECK //hckim
 void tsch_queue_flush_nbr_queue(struct tsch_neighbor *n);
 #endif
 

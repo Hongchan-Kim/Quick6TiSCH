@@ -56,6 +56,10 @@
 #include "net/ipv6/multicast/uip-mcast6.h"
 #include "lib/random.h"
 
+#if WITH_OST_CHECK
+#include "orchestra.h"
+#endif
+
 #include "sys/log.h"
 
 #include <limits.h>
@@ -814,6 +818,30 @@ dao_input_storing(void)
       RPL_ROUTE_SET_NOPATH_RECEIVED(rep);
       rep->state.lifetime = RPL_NOPATH_REMOVAL_DELAY;
 
+#if WITH_OST_CHECK
+      //Rx No-path DAO
+      uint16_t prefix_id = (prefix.u8[14] << 8) | (prefix.u8[15]);
+      uip_ds6_nbr_t *nbr = uip_ds6_nbr_head();
+      
+      while(nbr != NULL) {
+        uint16_t nbr_id=((nbr->ipaddr.u8[14]) << 8) | (nbr->ipaddr.u8[15]);
+        if(prefix_id == nbr_id && is_routing_nbr(nbr) == 1) {
+    
+          //printf("Rx No-path DAO: remove_tx & remove_rx (r_nbr %u)\n", prefix_id);
+    
+          linkaddr_t *nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(nbr);
+          reset_nbr(nbr_lladdr, 0, 1);
+    
+          remove_tx(prefix_id);
+          remove_rx(prefix_id);
+    
+          break;
+        }
+    
+        nbr = uip_ds6_nbr_next(nbr);
+      }
+#endif
+
       /* We forward the incoming No-Path DAO to our parent, if we have
          one. */
       if(dag->preferred_parent != NULL &&
@@ -841,6 +869,17 @@ dao_input_storing(void)
     }
     return;
   }
+
+#if WITH_OST_CHECK
+  uip_ds6_nbr_t *nbr1 = uip_ds6_nbr_lookup(&dao_sender_addr);
+  if(nbr1 != NULL) {
+    if(nbr1->rx_no_path == 1) {
+      uint16_t nbr_id1 = node_id_from_ipaddr(&(nbr1->ipaddr));
+      nbr1->rx_no_path = 0;
+      LOG_INFO("rx_no_path set 0 (nbr %u)\n", nbr_id1);
+    }
+  }
+#endif
 
   LOG_INFO("Adding DAO route\n");
 

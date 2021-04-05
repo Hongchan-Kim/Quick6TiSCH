@@ -39,7 +39,9 @@
 #include "orchestra.h"
 
 static uint16_t slotframe_handle = 0;
+#if WITH_OST
 static uint16_t channel_offset = 0;
+#endif
 
 #if ORCHESTRA_EBSF_PERIOD > 0
 /* There is a slotframe for EBs, use this slotframe for non-EB traffic only */
@@ -67,6 +69,7 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
+#if WITH_OST
   /* ost implementation */
   // hckim let default slotframe has the same channel offset with unicast slotframe
   channel_offset = sf_handle - 1;
@@ -77,6 +80,16 @@ init(uint16_t sf_handle)
       LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED,
       ORCHESTRA_COMMON_SHARED_TYPE, &tsch_broadcast_address,
       0, channel_offset, 1);
+#else
+  /* Default slotframe: for broadcast or unicast to neighbors we
+   * do not have a link to */
+  struct tsch_slotframe *sf_common = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_COMMON_SHARED_PERIOD);
+  tsch_schedule_add_link(sf_common,
+      LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED,
+      ORCHESTRA_COMMON_SHARED_TYPE, &tsch_broadcast_address,
+      0, ORCHESTRA_DEFAULT_COMMON_CHANNEL_OFFSET, 1);
+
+#endif
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule default_common = {

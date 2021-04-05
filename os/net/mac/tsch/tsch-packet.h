@@ -58,9 +58,15 @@
  * \param nack Value of the NACK bit
  * \return The length of the packet that was created. -1 if failure.
  */
+#if WITH_OST_CHECK && RESIDUAL_ALLOC
+int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
+                            const linkaddr_t *dest_addr, uint8_t seqno,
+                            int16_t drift, int nack, uint16_t matching_slot);
+#else
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,
                             int16_t drift, int nack);
+#endif
 /**
  * \brief Parse enhanced ACK packet
  * \param buf The buffer where to parse the EACK from
@@ -71,8 +77,14 @@ int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
  * \param hdr_len A pointer where to store the length of the parsed header
  * \return 1 if the EACK is correct and acknowledges the specified frame, 0 otherwise
  */
+#if WITH_OST_CHECK
+int tsch_packet_parse_eack(const uint8_t *buf, int buf_size,
+    uint8_t seqno, frame802154_t *frame, struct ieee802154_ies *ies, uint8_t *hdr_len,
+    linkaddr_t *eack_src);
+#else
 int tsch_packet_parse_eack(const uint8_t *buf, int buf_size,
     uint8_t seqno, frame802154_t *frame, struct ieee802154_ies *ies, uint8_t *hdr_len);
+#endif
 /**
  * \brief Create an EB packet directly in packetbuf
  * \param hdr_len A pointer where to store the length of the created header

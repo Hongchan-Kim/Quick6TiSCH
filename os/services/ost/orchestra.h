@@ -41,7 +41,9 @@
 #include "net/mac/tsch/tsch.h"
 #include "orchestra-conf.h"
 
+#if WITH_OST
 #include "net/ipv6/uip-ds6-nbr.h" /* OST implementation */
+#endif
 
 /* The structure of an Orchestra rule */
 struct orchestra_rule {
@@ -74,9 +76,12 @@ void orchestra_callback_child_added(const linkaddr_t *addr);
 /* Set with #define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK orchestra_callback_child_removed */
 void orchestra_callback_child_removed(const linkaddr_t *addr);
 
+#if WITH_OST
 /* OST implementation */
 /* OST functions */
+#if WITH_OST_CHECK
 int neighbor_has_uc_link(const linkaddr_t *linkaddr);
+#endif
 void reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path);
 uint16_t get_tx_sf_handle_from_id(const uint16_t id);
 uint16_t get_rx_sf_handle_from_id(const uint16_t id);
@@ -95,6 +100,7 @@ extern uint32_t num_total_auto_rx_accum;
 extern uint8_t bootstrap_period;
 #if RESIDUAL_ALLOC
 extern struct ssq_schedule_t ssq_schedule_list[16];
+#endif
 #endif
 
 #endif /* __ORCHESTRA_H__ */

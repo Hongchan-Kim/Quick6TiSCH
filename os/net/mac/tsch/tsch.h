@@ -266,5 +266,10 @@ uint64_t tsch_get_network_uptime_ticks(void);
   */
 void tsch_disassociate(void);
 
+#if WITH_OST_CHECK
+void post_process_rx_N(void);
+void post_process_rx_t_offset(void);
+#endif
+
 #endif /* __TSCH_H__ */
 /** @} */

@@ -575,6 +575,11 @@ static void
 tsch_rx_process_pending()
 {
   int16_t input_index;
+
+#if WITH_OST_CHECK
+  post_process_rx_N();
+#endif
+
   /* Loop on accessing (without removing) a pending input packet */
   while((input_index = ringbufindex_peek_get(&input_ringbuf)) != -1) {
     struct input_packet *current_input = &input_array[input_index];
@@ -656,6 +661,11 @@ tsch_tx_process_pending(void)
     /* Remove dequeued packet from ringbuf */
     ringbufindex_get(&dequeued_ringbuf);
   }
+
+#if WITH_OST_CHECK
+  post_process_rx_t_offset();
+#endif
+
 }
 /*---------------------------------------------------------------------------*/
 /* Setup TSCH as a coordinator */

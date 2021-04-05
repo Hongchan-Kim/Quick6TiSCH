@@ -51,6 +51,17 @@
 #include "lib/ringbufindex.h"
 #include "sys/log.h"
 
+#if WITH_OST_CHECK
+#include "net/mac/tsch/tsch-queue.h"
+#include "net/mac/tsch/tsch-log.h"
+#include "net/mac/tsch/tsch-packet.h"
+#include "net/mac/tsch/tsch-schedule.h"
+#include "net/mac/tsch/tsch-slot-operation.h"
+#include "lib/ringbufindex.h"
+#include "orchestra.h"
+#include "node-info.h"
+#endif
+
 #if TSCH_LOG_PER_SLOT
 
 PROCESS_NAME(tsch_pending_events_process);
@@ -101,6 +112,54 @@ tsch_log_process_pending(void)
           printf(", dr %3d", log->tx.drift);
         }
         printf("\n");
+
+#if WITH_OST_CHECK
+        if(node_id_from_linkaddr(&log->tx.dest) != 0) { //unicast
+          if(log->link->slotframe_handle >= 3 && log->link->slotframe_handle < SSQ_SCHEDULE_HANDLE_OFFSET) { //tx_sf
+
+            uip_ds6_nbr_t *nbr = uip_ds6_nbr_head();
+        
+            while(nbr != NULL) {
+              uint16_t nbr_id = ((nbr->ipaddr.u8[14]) << 8) | (nbr->ipaddr.u8[15]);
+              if((node_id_from_linkaddr(&log->tx.dest)) == nbr_id) {
+                nbr->num_tx_mac++;
+
+                if(log->tx.mac_tx_status==MAC_TX_OK) {
+                  nbr->num_tx_succ_mac++;
+                  nbr->num_consecutive_tx_fail_mac = 0;
+                } else {
+                  nbr->num_consecutive_tx_fail_mac++;
+                }
+
+                uint16_t prr = 100 * nbr->num_tx_succ_mac / nbr->num_tx_mac;
+
+                if(prr <= PRR_THRES_TX_CHANGE && nbr->num_tx_mac >= NUM_TX_MAC_THRES_TX_CHANGE) {
+                  nbr->my_low_prr=1;
+                  change_queue_N_update(nbr_id, nbr->my_N + INC_N_NEW_TX_REQUEST);
+                }
+
+                if(nbr->num_consecutive_tx_fail_mac >= NUM_TX_FAIL_THRES) {
+                  struct tsch_neighbor *n = tsch_queue_get_nbr_from_id(nbr_id);
+                  if(n != NULL) {
+                    if(!tsch_queue_is_empty(n)) {
+                      if(neighbor_has_uc_link(tsch_queue_get_nbr_address(n))) {
+                        printf("Csct Tx fail -> Use RB %u\n", ringbufindex_elements(&n->tx_ringbuf));
+                        change_queue_select_packet(nbr_id, 1, nbr_id % ORCHESTRA_CONF_UNICAST_PERIOD); //Use RB
+                      } else {
+                        printf("Csct Tx fail -> Use shared slot %u\n", ringbufindex_elements(&n->tx_ringbuf));
+                        change_queue_select_packet(nbr_id, 2, 0); //Use shared slot
+                      }
+                    }
+                  }
+                }
+
+                break;
+              }
+              nbr = uip_ds6_nbr_next(nbr);
+            }
+          }
+        }
+#endif
         break;
       case tsch_log_rx:
         printf("%s-%u-%u rx ",
@@ -116,6 +175,11 @@ tsch_log_process_pending(void)
         } else {
           printf("\n");
         }
+
+#if WITH_OST_CHECK
+        printf(", a_rx %lu %lu\n", num_total_rx_accum, num_total_auto_rx_accum);
+#endif
+
         break;
       case tsch_log_message:
         printf("%s\n", log->message);

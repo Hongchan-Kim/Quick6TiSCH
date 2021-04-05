@@ -46,12 +46,14 @@
 #include "net/packetbuf.h"
 #include "net/routing/routing.h"
 
+#if WITH_OST
 /* OST implementation */
 #include "sys/ctimer.h"
 #include "sys/clock.h"
 #include "net/queuebuf.h"
 #include "net/mac/tsch/tsch-queue.h"
 #include "node-info.h"
+#endif
 
 #include "sys/log.h"
 #define LOG_MODULE "OST"
@@ -76,6 +78,7 @@ static struct tsch_slotframe *sf_unicast;
 
 /* OST implementation */
 /*---------------------------------------------------------------------------*/
+#if WITH_OST_CHECK
 void
 print_nbr(void)
 {
@@ -97,7 +100,9 @@ print_nbr(void)
   }
   printf("\n");
 }
+#endif
 /*---------------------------------------------------------------------------*/
+#if WITH_OST_CHECK
 void
 reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path)
 {
@@ -148,7 +153,9 @@ reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path)
   }
   //print_nbr();
 }
+#endif
 /*---------------------------------------------------------------------------*/
+#if WITH_OST_CHECK
 uint16_t
 get_tx_sf_handle_from_id(const uint16_t id)
 { 
@@ -172,7 +179,9 @@ get_id_from_rx_sf_handle(const uint16_t handle)
 {
   return (handle - 2) / 2; 
 }
+#endif
 /*---------------------------------------------------------------------------*/
+#if WITH_OST_CHECK
 void 
 change_attr_in_tx_queue(const linkaddr_t * dest, uint8_t is_adjust_tx_sf_size, uint8_t only_first_packet)
 {
@@ -226,6 +235,7 @@ change_attr_in_tx_queue(const linkaddr_t * dest, uint8_t is_adjust_tx_sf_size, u
     printf("ERROR: lock fail (change_attr_in_tx_queue)\n");
   }
 }
+#endif
 /*---------------------------------------------------------------------------*/
 
 /* hckim: original Orchestra implementation */
@@ -251,7 +261,11 @@ get_node_channel_offset(const linkaddr_t *addr)
   }
 }
 /*---------------------------------------------------------------------------*/
+#if WITH_OST_CHECK
 int
+#else
+static int
+#endif
 neighbor_has_uc_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL && !linkaddr_cmp(linkaddr, &linkaddr_null)) {
@@ -335,13 +349,16 @@ remove_uc_link(const linkaddr_t *linkaddr)
 static void
 child_added(const linkaddr_t *linkaddr)
 {
+#if WITH_OST_CHECK
   reset_nbr(linkaddr, 1, 0); /* OST implementation */
+#endif
   add_uc_link(linkaddr);
 }
 /*---------------------------------------------------------------------------*/
 static void
 child_removed(const linkaddr_t *linkaddr)
 {
+#if WITH_OST_CHECK
   struct tsch_neighbor *nbr = tsch_queue_get_nbr(linkaddr);
 
   if(tsch_queue_is_empty(nbr) || nbr == NULL) {
@@ -376,6 +393,9 @@ child_removed(const linkaddr_t *linkaddr)
       LOG_INFO("child_removed: do not remove this child (still needed)\n");
     }
   }
+#else
+  remove_uc_link(linkaddr);
+#endif
 }
 /*---------------------------------------------------------------------------*/
 static int
@@ -385,6 +405,7 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
      && neighbor_has_uc_link(dest)) {
+#if WITH_OST_CHECK
 
     /* OST implementation */
     uint16_t dest_id = node_id_from_linkaddr(dest);
@@ -428,6 +449,19 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
 */
 
     return 1;
+#else
+    if(slotframe != NULL) {
+      *slotframe = slotframe_handle;
+    }
+    if(timeslot != NULL) {
+      *timeslot = ORCHESTRA_UNICAST_SENDER_BASED ? get_node_timeslot(&linkaddr_node_addr) : get_node_timeslot(dest);
+    }
+    /* set per-packet channel offset */
+    if(channel_offset != NULL) {
+      *channel_offset = get_node_channel_offset(dest);
+    }
+    return 1;
+#endif
   }
   return 0;
 }
@@ -444,6 +478,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
 
+#if WITH_OST_CHECK
     /* OST implementation */
     if(old_addr != NULL) {
       if(tsch_queue_is_empty(old) || old == NULL) {
@@ -468,7 +503,9 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       remove_rx(node_id_from_linkaddr(old_addr));
       // tsch_schedule_print_proposed();
     }
-
+#else
+    remove_uc_link(old_addr);
+#endif
     add_uc_link(new_addr);
   }
 }

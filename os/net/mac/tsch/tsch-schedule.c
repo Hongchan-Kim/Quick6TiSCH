@@ -56,6 +56,10 @@
 #include "sys/rtimer.h"
 #include <string.h>
 
+#if WITH_OST_CHECK && RESIDUAL_ALLOC //hckim
+#include "orchestra.h"
+#endif
+
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "TSCH Sched"
@@ -106,6 +110,140 @@ tsch_schedule_add_slotframe(uint16_t handle, uint16_t size)
 }
 /*---------------------------------------------------------------------------*/
 
+/*---------------------------------------------------------------------------*/
+#if WITH_OST_CHECK && RESIDUAL_ALLOC //hckim
+uint16_t
+tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)
+{
+  uint16_t ssq_schedule = 0;
+  uint8_t used[16]; //0~15th slot is used
+  
+  //check slotframe schedule 
+  //PRINTF("ssq_schedule: used by slotframe ");
+  if(!tsch_is_locked()) { 
+   struct tsch_slotframe *sf = list_head(slotframe_list);
+   while(sf != NULL) {
+      uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
+      struct tsch_link *l = list_head(sf->links_list);
+
+      while(l != NULL) {
+        uint16_t time_to_timeslot =
+          l->timeslot > timeslot ?
+          l->timeslot - timeslot :
+          sf->size.val + l->timeslot - timeslot;
+
+        if((time_to_timeslot - 1) < 16) {
+          used[time_to_timeslot - 1] = 1;
+          //PRINTF("%u ", time_to_timeslot);
+        }
+
+        l = list_item_next(l);
+      }
+      sf = list_item_next(sf);
+    }
+  }
+  //PRINTF("\n");
+
+  //check matching slot schedule
+  uint8_t i;
+  uint64_t curr_ASN = (uint64_t)(asn->ls4b) + ((uint64_t)(asn->ms1b) << 32);
+  uint64_t ssq_ASN;
+
+  //PRINTF("ssq_schedule: used by ssq ");
+
+  for(i = 0; i < 16; i++) {
+    if(ssq_schedule_list[i].asn.ls4b == 0 && ssq_schedule_list[i].asn.ms1b == 0) {
+    } else {
+      ssq_ASN = (uint64_t)(ssq_schedule_list[i].asn.ls4b) + ((uint64_t)(ssq_schedule_list[i].asn.ms1b) << 32);
+      uint64_t time_to_timeslot = ssq_ASN - curr_ASN;
+      if(time_to_timeslot == 0) {
+        //PRINTF("curr ");
+      } else if(0 < time_to_timeslot && time_to_timeslot <= 16) {
+        //PRINTF("%lu ", time_to_timeslot);
+        used[time_to_timeslot - 1] = 1;
+      } else {
+        //printf("ERROR: ssq time_to_timeslot is more than 16\n");
+      }
+    }
+  }
+  //PRINTF("\n");
+
+  for(i = 0; i < 16; i++) {
+    if(used[i] == 1) {
+      ssq_schedule = ssq_schedule | (1 << i);
+    }
+  }
+
+  //printf("ssq_schedule: %d\n",ssq_schedule);
+  return ssq_schedule;
+}
+#endif
+/*---------------------------------------------------------------------------*/
+#if WITH_OST_CHECK && RESIDUAL_ALLOC //hckim
+uint8_t
+earlier_ssq_schedule_list(uint16_t *time_to_orig_schedule, struct tsch_link **link)
+{
+  uint8_t i;
+  uint8_t earliest_i;
+  uint64_t earliest_ASN = 0;
+  struct tsch_link *earliest_link;
+  uint64_t ssq_ASN;
+  uint64_t curr_ASN = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
+
+  //First, choose the earliest ssq schedule
+  for(i = 0; i < 16; i++) {
+    if(ssq_schedule_list[i].asn.ls4b == 0 && ssq_schedule_list[i].asn.ms1b == 0) {
+    } else {
+      ssq_ASN = (uint64_t)(ssq_schedule_list[i].asn.ls4b) + ((uint64_t)(ssq_schedule_list[i].asn.ms1b) << 32);
+      if(earliest_ASN == 0 || ssq_ASN < earliest_ASN) {
+        earliest_ASN = ssq_ASN;
+        earliest_link = &(ssq_schedule_list[i].link);
+        earliest_i = i;
+        if(earliest_link == NULL) {
+          //printf("ERROR: Null temp earliest_link\n");
+        }
+      }
+
+      if(ssq_ASN <= curr_ASN) {
+        //printf("ERROR: ssq_ASN(%x.%lx) <= curr_ASN(%x.%lx)\n",
+        //      ssq_schedule_list[i].asn.ms1b, ssq_schedule_list[i].asn.ls4b, tsch_current_asn.ms1b, tsch_current_asn.ls4b);
+        
+        ssq_schedule_list[i].asn.ls4b = 0;
+        ssq_schedule_list[i].asn.ms1b = 0; 
+
+        return 0; 
+      }
+    }
+  }
+
+  if(earliest_ASN == 0) {
+    //No pending ssq schedule
+    return 0;
+  } else {
+    uint64_t time_to_earliest = earliest_ASN - curr_ASN;
+
+    if(time_to_earliest < *time_to_orig_schedule) {
+      //PRINTF("Earlier ssq exists %u\n", time_to_earliest);
+      *time_to_orig_schedule = (uint16_t)time_to_earliest;
+      *link = earliest_link;
+      if(link == NULL) {
+        //printf("ERROR: Null earliest_link\n");
+      }
+      return 1;
+    } else if(time_to_earliest == *time_to_orig_schedule) {
+      //printf("ERROR: ssq overlap with orig schedule %x.%lx %x.%lx %u\n",ssq_schedule_list[earliest_i].asn.ms1b, ssq_schedule_list[earliest_i].asn.ls4b, 
+        //tsch_current_asn.ms1b,tsch_current_asn.ls4b,
+        //ssq_schedule_list[earliest_i].link.slotframe_handle);
+      ssq_schedule_list[earliest_i].asn.ms1b = 0;
+      ssq_schedule_list[earliest_i].asn.ls4b = 0;
+
+      return 0;
+    } else {
+      return 0;
+    }
+  }
+}
+#endif
 /*---------------------------------------------------------------------------*/
 #if WITH_ALICE == 1 /* alice implementation */
 /* Thomas Wang 32bit-Interger Mix Function */
@@ -682,6 +820,16 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
               /* compare the link against the current best link and return the newly selected one */
               new_best = TSCH_LINK_COMPARATOR(curr_best, l);
             }
+
+#if WITH_OST_CEHCK //hckim
+            if((curr_best->slotframe_handle == 1) && (curr_best->link_options & LINK_OPTION_TX) && (l->slotframe_handle == 2)) {
+              //Prevent Autonomous unicast Tx from interfere Autonomous broadcast Tx/Rx (They share the same c_offset in PROPOSED) 
+              //Prioritize Autonomous broadcast Tx/Rx to Autonomous unicast Tx
+              //printf("AU Tx < AB\n");
+              new_best = l;
+            }
+#endif
+
           } else {
             /* Select the link that has the Tx option */
             if(l->link_options & LINK_OPTION_TX) {
@@ -714,6 +862,22 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
     if(time_offset != NULL) {
       *time_offset = time_to_curr_best;
     }
+
+#if WITH_OST_CHECK && RESIDUAL_ALLOC //hckim
+    struct tsch_link *ssq_link = NULL;
+    uint16_t new_time_offset = *time_offset; //initialize
+    if(earlier_ssq_schedule_list(&new_time_offset, &ssq_link)) {
+      if(ssq_link != NULL) {
+        //printf("changed time_offset %u\n",new_time_offset);
+        *time_offset = new_time_offset;
+        *backup_link = NULL;
+        return ssq_link;
+      } else {
+        //printf("ERROR: ssq_link is NULL\n");
+      }
+    }
+#endif
+
   }
   if(backup_link != NULL) {
     *backup_link = curr_backup;
@@ -794,5 +958,49 @@ tsch_schedule_print(void)
     LOG_PRINT("----- end slotframe list -----\n");
   }
 }
+/*---------------------------------------------------------------------------*/
+/* Prints out the current schedule (all slotframes and links) */
+#if WITH_OST_CHECK //hckim
+void
+tsch_schedule_print_proposed(void)
+{
+  if(!tsch_is_locked()) {
+    struct tsch_slotframe *sf = list_head(slotframe_list);
+
+    //printf("[SLOTFRAMES] Opt / Size / Timeslot\n");
+
+    while(sf != NULL) {
+      if(sf->handle > 2) {
+        if(sf->handle % 2 == 0) {
+          //printf("[ID:%u] Rx / %u / ", sf->handle / 2 - 1, sf->size.val);
+        } else {
+          //printf("[ID:%u] Tx / %u / ", sf->handle / 2, sf->size.val);
+        }
+
+        struct tsch_link *l = list_head(sf->links_list);
+
+        //printf("[Slotframe] Handle %u, size %u\n", sf->handle, sf->size.val);
+        //printf("List of links:\n");
+
+        while(l != NULL) {
+          //printf("%u\n", l->timeslot);
+          l = list_item_next(l);
+        }
+      }
+      sf = list_item_next(sf);
+    }
+    //printf("\n");
+  }
+}
+#endif
+/*---------------------------------------------------------------------------*/
+#if WITH_OST_CHECK //hckim
+struct tsch_slotframe *
+tsch_schedule_get_slotframe_head(void)
+{
+  struct tsch_slotframe *sf = list_head(slotframe_list);
+  return sf;
+}
+#endif
 /*---------------------------------------------------------------------------*/
 /** @} */
