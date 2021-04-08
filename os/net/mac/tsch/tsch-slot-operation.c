@@ -196,6 +196,12 @@ uint32_t num_total_auto_rx_accum;
 uint32_t num_total_rx_accum;
 #endif
 
+#if WITH_OST_04
+uint8_t todo_no_resource;
+uint8_t todo_consecutive_new_tx_request;
+static uint8_t todo_rx_schedule_change;
+static uint16_t prN_new_N;
+#endif
 
 #if WITH_OST_CHECK //hckim
 static int delay_prN;
@@ -206,21 +212,17 @@ typedef struct t_offset_candidate {
   uint8_t priority;
 } t_offset_candidate_t;
 
-static uint16_t prN_new_N;
 static uint16_t prN_new_t_offset;
 static uip_ds6_nbr_t *prN_nbr;
 
 static uint16_t prt_new_t_offset;
 static uip_ds6_nbr_t *prt_nbr;
 
-static uint8_t todo_rx_schedule_change;
 static uint8_t todo_tx_schedule_change;
 
 static uint8_t todo_N_update;
 static uint8_t todo_N_inc;
 
-uint8_t todo_no_resource;
-uint8_t todo_consecutive_new_tx_request;
 
 static uint8_t changed_t_offset_default;
 
@@ -577,7 +579,7 @@ select_t_offset(uint16_t target_id, uint16_t N)  //similar with tx_installable
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_04 //hckim
 void
 process_rx_N(frame802154_t *frame) //In short, prN
 {
@@ -594,17 +596,35 @@ process_rx_N(frame802154_t *frame) //In short, prN
     && !frame802154_is_broadcast_addr((frame->fcf).dest_addr_mode, frame->dest_addr)
     && is_routing_nbr(nbr) == 1
     && nbr->rx_no_path == 0) { // No need to allocate rx for nbr who sent no-path dao
-    //PRINTF("Rx uc: N found %u (r_nbr %u)\n", frame->pigg1, nbr_id);
+    
+    TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+                "Rx uc: N found %u", frame->pigg1);
+    );
+#if WITH_OST_DBG
+    TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+                "Rx uc: N found %u (r_nbr %u)", frame->pigg1, nbr_id);
+    );
+#endif
 
-#if WITH_OST_CHECK
     if(nbr->nbr_N != frame->pigg1) {
+        uint16_t old_N = nbr->nbr_N;
+
       // To be used in post_process_rx_N
       if(frame->pigg1 >= INC_N_NEW_TX_REQUEST) {
         prN_new_N = (frame->pigg1) - INC_N_NEW_TX_REQUEST;
-        //PRINTF("process_rx_N: detect uninstallable or low PRR\n");
+
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "process_rx_N: detect uninstallable or low PRR");
+        );
 
         nbr->consecutive_new_tx_request++;
-        //LOG_INFO("check %u\n", nbr->consecutive_new_tx_request);
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "check %u\n", nbr->consecutive_new_tx_request);
+        );
 
         if(nbr->consecutive_new_tx_request >= THRES_CONSECUTIVE_NEW_TX_REQUEST) {
           nbr->consecutive_new_tx_request = 0;
@@ -616,7 +636,12 @@ process_rx_N(frame802154_t *frame) //In short, prN
         nbr->consecutive_new_tx_request = 0;
       }
 
-      //PRINTF("Rx uc: New N (%u->%u)\n", old_N, prN_new_N);
+      TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+                  "Rx uc: New N (%u->%u)\n", old_N, prN_new_N);
+      );
+
+#if WITH_OST_CHECK
       uint32_t result = select_t_offset(nbr_id, prN_new_N);
 
       if(result <= 65535) {
@@ -631,10 +656,10 @@ process_rx_N(frame802154_t *frame) //In short, prN
         todo_no_resource = 1;
         return;
       }
+#endif
     } else {
       nbr->consecutive_new_tx_request = 0;
     }
-#endif
   }
 /*
   uint16_t src_id = node_id_from_linkaddr((linkaddr_t *)(&(frame->src_addr)));
@@ -2028,21 +2053,27 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               static uint8_t ack_buf[TSCH_PACKET_MAX_LEN];
               static int ack_len;
 
-#if WITH_OST_CHECK //hckim generate ACK
+#if WITH_OST_04 //hckim generate ACK
+#if WITH_OST_CHECK
               rtimer_clock_t temp_now1 = RTIMER_NOW();
+#endif
               //before EACK Tx
               todo_rx_schedule_change = 0;
               todo_no_resource = 0;
               todo_consecutive_new_tx_request = 0;
 
               process_rx_N(&frame);
+#if WITH_OST_CHECK
               rtimer_clock_t temp_now2 = RTIMER_NOW();
+#endif
 #if RESIDUAL_ALLOC              
               uint16_t matching_slot = process_rx_schedule_info(&frame);
 #endif
+#if WITH_OST_CHECK
               rtimer_clock_t temp_now3 = RTIMER_NOW();
               delay_prN = (int)(temp_now2 - temp_now1);
               delay_prs = (int)(temp_now3 - temp_now2);
+#endif
 #endif
 
 #if WITH_OST_CHECK && RESIDUAL_ALLOC //hckim

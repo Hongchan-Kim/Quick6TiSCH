@@ -79,7 +79,7 @@ void orchestra_callback_child_removed(const linkaddr_t *addr);
 #if WITH_OST
 /* OST implementation */
 /* OST functions */
-#if WITH_OST_CHECK
+#if WITH_OST_04
 int neighbor_has_uc_link(const linkaddr_t *linkaddr);
 #endif
 void reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path);

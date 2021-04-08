@@ -149,8 +149,9 @@
 #define WITH_OST                                   1
 #define WITH_OST_01                                1 /* measure traffic and select N */
 #define WITH_OST_02                                1 /* frame and framer to piggyback N */
-#define WITH_OST_03                                1
- 
+#define WITH_OST_03                                1 /* update N of the packets in queue */
+#define WITH_OST_04                                1 /* process_rx_N */
+
 #define WITH_OST_CHECK                             0
 #define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1
 

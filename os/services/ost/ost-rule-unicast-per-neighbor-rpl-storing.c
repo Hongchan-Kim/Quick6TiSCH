@@ -261,7 +261,7 @@ get_node_channel_offset(const linkaddr_t *addr)
   }
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK
+#if WITH_OST_04
 int
 #else
 static int
