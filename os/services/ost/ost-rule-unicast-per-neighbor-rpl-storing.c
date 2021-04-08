@@ -102,53 +102,45 @@ print_nbr(void)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK
+#if WITH_OST_04
 void
 reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path)
 {
   if(addr != NULL) {
-    uint16_t id = node_id_from_linkaddr(addr);
-    uip_ds6_nbr_t *nbr = uip_ds6_nbr_head();
-    while(nbr != NULL) {
-      uint16_t nbr_id = node_id_from_ipaddr(&(nbr->ipaddr));
+    uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
+    if(nbr != NULL) {
+      //LOG_INFO("reset_nbr %u\n", nbr_id);
 
-      if(id == nbr_id) {
-        printf("reset_nbr %u\n", nbr_id);
+      nbr->my_N = 5;
+      ost_change_queue_N_update(addr, nbr->my_N);
 
-        nbr->my_N = 5;
-        change_queue_N_update(nbr_id, nbr->my_N);
+      nbr->my_t_offset = 0xFFFF;
 
-        nbr->my_t_offset = 0xFFFF;
+      nbr->nbr_N = 0xFFFF;
+      nbr->nbr_t_offset = 0xFFFF;
 
-        nbr->nbr_N = 0xFFFF;
-        nbr->nbr_t_offset = 0xFFFF;
+      nbr->num_tx = 0;
 
-        nbr->num_tx = 0;
-
-        if(new_add == 1) {
-          nbr->new_add = 1;
-        } else {
-          nbr->new_add = 0;
-        }
-
-        nbr->my_uninstallable = 0;
-
-        if(rx_no_path == 1 ) {
-          nbr->rx_no_path = 1;
-        } else {
-          nbr->rx_no_path = 0;
-        }
-
-        nbr->my_low_prr = 0;
-        nbr->num_tx_mac = 0;
-        nbr->num_tx_succ_mac = 0;
-        nbr->num_consecutive_tx_fail_mac = 0;
-        nbr->consecutive_my_N_inc = 0;
-        nbr->consecutive_new_tx_request = 0;
-
-        break;
+      if(new_add == 1) {
+        nbr->new_add = 1;
+      } else {
+        nbr->new_add = 0;
       }
-      nbr = uip_ds6_nbr_next(nbr);
+
+      nbr->my_uninstallable = 0;
+
+      if(rx_no_path == 1 ) {
+        nbr->rx_no_path = 1;
+      } else {
+        nbr->rx_no_path = 0;
+      }
+
+      nbr->my_low_prr = 0;
+      nbr->num_tx_mac = 0;
+      nbr->num_tx_succ_mac = 0;
+      nbr->num_consecutive_tx_fail_mac = 0;
+      nbr->consecutive_my_N_inc = 0;
+      nbr->consecutive_new_tx_request = 0;      
     }
   }
   //print_nbr();

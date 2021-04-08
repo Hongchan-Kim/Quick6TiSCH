@@ -113,7 +113,7 @@ uint8_t is_routing_nbr(uip_ds6_nbr_t *nbr)
 /*---------------------------------------------------------------------------*/
 #if WITH_OST_03
 void
-ost_change_queue_N_update(linkaddr_t *lladdr, uint16_t updated_N)
+ost_change_queue_N_update(const linkaddr_t *lladdr, uint16_t updated_N)
 {
   struct tsch_neighbor *n = tsch_queue_get_nbr(lladdr);
   if(n != NULL) {
