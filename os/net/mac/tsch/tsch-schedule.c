@@ -994,7 +994,7 @@ tsch_schedule_print_proposed(void)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_05 //hckim
 struct tsch_slotframe *
 tsch_schedule_get_slotframe_head(void)
 {

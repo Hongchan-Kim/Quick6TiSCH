@@ -52,8 +52,8 @@
 #include "lib/ccm-star.h"
 #include "lib/aes-128.h"
 
-#if WITH_OST_CHECK
-#include "node-id.h"
+#if WITH_OST_06
+//#include "node-id.h"
 #include "orchestra.h"
 #include "net/ipv6/uip-ds6-route.h"
 #include "net/ipv6/uip-ds6-nbr.h"
@@ -143,40 +143,33 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   tsch_security_set_packetbuf_attr(FRAME802154_ACKFRAME);
 #endif /* LLSEC802154_ENABLED */
 
-#if WITH_OST_CHECK
-  uint16_t dest_id = node_id_from_linkaddr(dest_addr);
-  uip_ds6_nbr_t *nbr = uip_ds6_nbr_head();
+  framer_802154_setup_params(tsch_packet_eackbuf_attr, 0, &params);
 
-//  frame802154_t p;
-  
-  while(nbr != NULL) {
-    uint16_t nbr_id = ((nbr->ipaddr.u8[14]) << 8) | (nbr->ipaddr.u8[15]);
-    if(dest_id == nbr_id && is_routing_nbr(nbr) == 1) {
-      //PRINTF("Tx EACK: t_offset make %u (nbr %u)\n", nbr->nbr_t_offset, nbr_id); // only eack  
-//      p.pigg1 = nbr->nbr_t_offset;
+#if WITH_OST_06
+//  uint16_t dest_id = ost_node_index_from_linkaddr(dest_addr);
+  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
+  if(nbr != NULL && is_routing_nbr(nbr) == 1) {
+    LOG_INFO("Tx EACK: t_offset make %u (nbr %u)\n", nbr->nbr_t_offset, nbr_id); // only eack  
+      params.pigg1 = nbr->nbr_t_offset;
 
-      if(get_todo_no_resource() == 1) {
-//        p.pigg1 = T_OFFSET_ALLOCATION_FAIL;
-      }
-      if(get_todo_consecutive_new_tx_request() == 1) {
-//        p.pigg1 = T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST;
-      }    
-      break;
+    if(get_todo_no_resource() == 1) {
+      params.pigg1 = T_OFFSET_ALLOCATION_FAIL;
     }
-    nbr = uip_ds6_nbr_next(nbr);
+    if(get_todo_consecutive_new_tx_request() == 1) {
+      params.pigg1= T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST;
+    }
   }
   if(nbr == NULL) {
-    //PRINTF("Tx EACK: t_offset make 65535 (No nbr)\n");
-//    p.pigg1 = 65535;
+    LOG_INFO("Tx EACK: t_offset make 65535 (No nbr)\n");
+    params.pigg1 = 65535;
   }
 
 #if RESIDUAL_ALLOC
-  //PRINTF("Tx EACK: matching slot make %u\n", matching_slot);
-//  p.pigg2 = matching_slot;
+  //LOG_INFO("Tx EACK: matching slot make %u\n", matching_slot);
+  //params.pigg2 = matching_slot;
 #endif
 #endif
 
-  framer_802154_setup_params(tsch_packet_eackbuf_attr, 0, &params);
   hdr_len = frame802154_hdrlen(&params);
 
   memset(buf, 0, buf_len);
@@ -200,7 +193,7 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 }
 /*---------------------------------------------------------------------------*/
 /* Parse enhanced ACK packet, extract drift and nack */
-#if WITH_OST_CHECK
+#if 0 //WITH_OST_CHECK
 int
 tsch_packet_parse_eack(const uint8_t *buf, int buf_size,
                        uint8_t seqno, frame802154_t *frame, struct ieee802154_ies *ies, uint8_t *hdr_len, 
