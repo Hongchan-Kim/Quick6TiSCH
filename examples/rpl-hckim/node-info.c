@@ -186,7 +186,7 @@ non_root_index_from_addr(const uip_ipaddr_t *sender_addr)
 /*---------------------------------------------------------------------------*/
 #if WITH_OST
 uint16_t
-node_id_from_ipaddr(const uip_ipaddr_t *addr)
+ost_node_index_from_ipaddr(const uip_ipaddr_t *addr)
 {
   uint16_t uid = (addr->u8[14] << 8) + addr->u8[15];
 
@@ -204,17 +204,17 @@ node_id_from_ipaddr(const uip_ipaddr_t *addr)
 }
 /*---------------------------------------------------------------------------*/
 uint16_t
-node_id_from_linkaddr(const linkaddr_t *addr)
+ost_node_index_from_linkaddr(const linkaddr_t *addr)
 {
-  uint16_t uid = UIP_HTONS(addr->u16[LINKADDR_SIZE/2-1]);
+  uint16_t lluid = UIP_HTONS(addr->u16[LINKADDR_SIZE/2-1]);
 
-  if(root_info[1] == uid) {
+  if(root_info[1] == lluid) {
     return 1;
   }
 
   uint16_t i = 0;
   for(i = 0; i < NON_ROOT_NUM; i++) {
-    if(non_root_info[i][1] == uid) {
+    if(non_root_info[i][1] == lluid) {
       return i + 2;
     }
   }

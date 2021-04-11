@@ -86,7 +86,7 @@ print_nbr(void)
   printf("\n[Neighbors]");
   printf(" r_nbr / my / nbr / num_tx / new_add / my_uninstallable / rx_no_path / my_low_prr\n");
   while(nbr != NULL) {
-    uint16_t nbr_id = node_id_from_ipaddr(&(nbr->ipaddr));
+    uint16_t nbr_id = ost_node_index_from_ipaddr(&(nbr->ipaddr));
 
     printf("[ID:%u]",nbr_id);
     printf(" %u / ",is_routing_nbr(nbr));
@@ -147,7 +147,7 @@ reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK
+#if WITH_OST_05
 uint16_t
 get_tx_sf_handle_from_id(const uint16_t id)
 { 
@@ -377,8 +377,8 @@ child_removed(const linkaddr_t *linkaddr)
       //it was deleted possibly already when no-path DAO rx
       LOG_INFO("child_removed: remove_tx & remove_rx\n");
       if(linkaddr!=NULL) {
-        remove_tx(node_id_from_linkaddr(linkaddr));
-        remove_rx(node_id_from_linkaddr(linkaddr));
+        remove_tx(ost_node_index_from_linkaddr(linkaddr));
+        remove_rx(ost_node_index_from_linkaddr(linkaddr));
         //tsch_schedule_print_proposed();
       }
     } else {
@@ -400,7 +400,7 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
 #if WITH_OST_CHECK
 
     /* OST implementation */
-    uint16_t dest_id = node_id_from_linkaddr(dest);
+    uint16_t dest_id = ost_node_index_from_linkaddr(dest);
     uint16_t tx_sf_handle = get_tx_sf_handle_from_id(dest_id);
     struct tsch_slotframe *tx_sf = tsch_schedule_get_slotframe_by_handle(tx_sf_handle);
 
@@ -491,8 +491,8 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
 
     LOG_INFO("new_time_source: remove_tx & remove_rx\n");
     if(old_addr != NULL) {
-      remove_tx(node_id_from_linkaddr(old_addr));
-      remove_rx(node_id_from_linkaddr(old_addr));
+      remove_tx(ost_node_index_from_linkaddr(old_addr));
+      remove_rx(ost_node_index_from_linkaddr(old_addr));
       // tsch_schedule_print_proposed();
     }
 #else

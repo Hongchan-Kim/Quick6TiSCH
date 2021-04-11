@@ -126,11 +126,11 @@ create_frame(int do_create)
     }
   }
 /*
-  uint16_t dest_id = node_id_from_linkaddr((linkaddr_t *)&params.dest_addr);
+  uint16_t dest_id = ost_node_index_from_linkaddr((linkaddr_t *)&params.dest_addr);
   uip_ds6_nbr_t *nbr = nbr_table_head(ds6_neighbors);
   
   while(nbr != NULL) {
-    uint16_t nbr_id = node_id_from_ipaddr(&(nbr->ipaddr));
+    uint16_t nbr_id = ost_node_index_from_ipaddr(&(nbr->ipaddr));
     if(dest_id == nbr_id) {
       // nbr->my_N = node_id + 100;
       if(nbr->my_uninstallable == 1) {

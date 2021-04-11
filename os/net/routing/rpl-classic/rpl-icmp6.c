@@ -874,7 +874,7 @@ dao_input_storing(void)
   uip_ds6_nbr_t *nbr1 = uip_ds6_nbr_lookup(&dao_sender_addr);
   if(nbr1 != NULL) {
     if(nbr1->rx_no_path == 1) {
-      uint16_t nbr_id1 = node_id_from_ipaddr(&(nbr1->ipaddr));
+      uint16_t nbr_id1 = ost_node_index_from_ipaddr(&(nbr1->ipaddr));
       nbr1->rx_no_path = 0;
       LOG_INFO("rx_no_path set 0 (nbr %u)\n", nbr_id1);
     }
