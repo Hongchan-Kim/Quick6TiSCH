@@ -54,6 +54,7 @@
 
 #if WITH_OST_06
 //#include "node-id.h"
+#include "net/mac/tsch/tsch-slot-operation.h"
 #include "orchestra.h"
 #include "net/ipv6/uip-ds6-route.h"
 #include "net/ipv6/uip-ds6-nbr.h"
@@ -149,15 +150,16 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 //  uint16_t dest_id = ost_node_index_from_linkaddr(dest_addr);
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
   if(nbr != NULL && is_routing_nbr(nbr) == 1) {
-    LOG_INFO("Tx EACK: t_offset make %u (nbr %u)\n", nbr->nbr_t_offset, nbr_id); // only eack  
-      params.pigg1 = nbr->nbr_t_offset;
-
+    //LOG_INFO("Tx EACK: t_offset make %u (nbr %u)\n", nbr->nbr_t_offset, nbr_id); // only eack  
+    params.pigg1 = nbr->nbr_t_offset;
+#if WITH_OST_08
     if(get_todo_no_resource() == 1) {
       params.pigg1 = T_OFFSET_ALLOCATION_FAIL;
     }
     if(get_todo_consecutive_new_tx_request() == 1) {
       params.pigg1= T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST;
     }
+#endif
   }
   if(nbr == NULL) {
     LOG_INFO("Tx EACK: t_offset make 65535 (No nbr)\n");
@@ -193,16 +195,9 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 }
 /*---------------------------------------------------------------------------*/
 /* Parse enhanced ACK packet, extract drift and nack */
-#if 0 //WITH_OST_CHECK
-int
-tsch_packet_parse_eack(const uint8_t *buf, int buf_size,
-                       uint8_t seqno, frame802154_t *frame, struct ieee802154_ies *ies, uint8_t *hdr_len, 
-                       linkaddr_t *eack_src)
-#else
 int
 tsch_packet_parse_eack(const uint8_t *buf, int buf_size,
                        uint8_t seqno, frame802154_t *frame, struct ieee802154_ies *ies, uint8_t *hdr_len)
-#endif
 {
   uint8_t curr_len = 0;
   int ret;

@@ -44,7 +44,7 @@
 /*
  * Configure App
  */
-#define DOWNWARD_TRAFFIC                           0
+#define DOWNWARD_TRAFFIC                           1
 #define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 30 * CLOCK_SECOND)
@@ -151,6 +151,12 @@
 #define WITH_OST_02                                1 /* frame and framer to piggyback N */
 #define WITH_OST_03                                1 /* update N of the packets in queue */
 #define WITH_OST_04                                1 /* process_rx_N */
+#define WITH_OST_05                                1 /* select_t_offset */
+#define WITH_OST_06                                1 /* create EACK */
+#define WITH_OST_07                                1 /* post_process_rx_N */
+#define WITH_OST_08                                1 /* process_rx_t_offset, post_process_rx_t_offset */
+#define WITH_OST_09                                1 /* etc */
+#define WITH_OST_10                                0 /* on-demand provisioning */
 
 #define WITH_OST_CHECK                             0
 #define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1

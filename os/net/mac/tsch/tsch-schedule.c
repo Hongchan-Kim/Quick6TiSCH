@@ -960,36 +960,36 @@ tsch_schedule_print(void)
 }
 /*---------------------------------------------------------------------------*/
 /* Prints out the current schedule (all slotframes and links) */
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_09 //hckim
 void
 tsch_schedule_print_proposed(void)
 {
   if(!tsch_is_locked()) {
     struct tsch_slotframe *sf = list_head(slotframe_list);
 
-    //printf("[SLOTFRAMES] Opt / Size / Timeslot\n");
+    printf("[SLOTFRAMES] Opt / Size / Timeslot\n");
 
     while(sf != NULL) {
       if(sf->handle > 2) {
         if(sf->handle % 2 == 0) {
-          //printf("[ID:%u] Rx / %u / ", sf->handle / 2 - 1, sf->size.val);
+          printf("[ID:%u] Rx / %u / ", sf->handle / 2 - 1, sf->size.val);
         } else {
-          //printf("[ID:%u] Tx / %u / ", sf->handle / 2, sf->size.val);
+          printf("[ID:%u] Tx / %u / ", sf->handle / 2, sf->size.val);
         }
 
         struct tsch_link *l = list_head(sf->links_list);
 
-        //printf("[Slotframe] Handle %u, size %u\n", sf->handle, sf->size.val);
-        //printf("List of links:\n");
+        printf("[Slotframe] Handle %u, size %u\n", sf->handle, sf->size.val);
+        printf("List of links:\n");
 
         while(l != NULL) {
-          //printf("%u\n", l->timeslot);
+          printf("%u\n", l->timeslot);
           l = list_item_next(l);
         }
       }
       sf = list_item_next(sf);
     }
-    //printf("\n");
+    printf("\n");
   }
 }
 #endif

@@ -56,7 +56,8 @@
 #include "net/ipv6/multicast/uip-mcast6.h"
 #include "lib/random.h"
 
-#if WITH_OST_CHECK
+#if WITH_OST_09
+#include "node-info.h"
 #include "orchestra.h"
 #endif
 
@@ -818,27 +819,19 @@ dao_input_storing(void)
       RPL_ROUTE_SET_NOPATH_RECEIVED(rep);
       rep->state.lifetime = RPL_NOPATH_REMOVAL_DELAY;
 
-#if WITH_OST_CHECK
+#if WITH_OST_09
       //Rx No-path DAO
-      uint16_t prefix_id = (prefix.u8[14] << 8) | (prefix.u8[15]);
-      uip_ds6_nbr_t *nbr = uip_ds6_nbr_head();
-      
-      while(nbr != NULL) {
-        uint16_t nbr_id=((nbr->ipaddr.u8[14]) << 8) | (nbr->ipaddr.u8[15]);
-        if(prefix_id == nbr_id && is_routing_nbr(nbr) == 1) {
+      uint16_t prefix_id = ost_node_index_from_ipaddr(&prefix);
+      uip_ds6_nbr_t *nbr = uip_ds6_nbr_lookup(&prefix);
+
+      if(nbr != NULL && is_routing_nbr(nbr) == 1) {
+        //printf("Rx No-path DAO: remove_tx & remove_rx (r_nbr %u)\n", prefix_id);
     
-          //printf("Rx No-path DAO: remove_tx & remove_rx (r_nbr %u)\n", prefix_id);
-    
-          linkaddr_t *nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(nbr);
-          reset_nbr(nbr_lladdr, 0, 1);
-    
-          remove_tx(prefix_id);
-          remove_rx(prefix_id);
-    
-          break;
-        }
-    
-        nbr = uip_ds6_nbr_next(nbr);
+        linkaddr_t *nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(nbr);
+        reset_nbr(nbr_lladdr, 0, 1);
+
+        remove_tx(nbr_lladdr);
+        remove_rx(prefix_id);
       }
 #endif
 
@@ -870,13 +863,13 @@ dao_input_storing(void)
     return;
   }
 
-#if WITH_OST_CHECK
-  uip_ds6_nbr_t *nbr1 = uip_ds6_nbr_lookup(&dao_sender_addr);
-  if(nbr1 != NULL) {
-    if(nbr1->rx_no_path == 1) {
-      uint16_t nbr_id1 = ost_node_index_from_ipaddr(&(nbr1->ipaddr));
-      nbr1->rx_no_path = 0;
-      LOG_INFO("rx_no_path set 0 (nbr %u)\n", nbr_id1);
+#if WITH_OST_09
+  uip_ds6_nbr_t *sender_nbr = uip_ds6_nbr_lookup(&dao_sender_addr);
+  if(sender_nbr != NULL) {
+    if(sender_nbr->rx_no_path == 1) {
+      uint16_t sender_nbr_id = ost_node_index_from_ipaddr(&(sender_nbr->ipaddr));
+      sender_nbr->rx_no_path = 0;
+      LOG_INFO("rx_no_path set 0 (nbr %u)\n", sender_nbr_id);
     }
   }
 #endif

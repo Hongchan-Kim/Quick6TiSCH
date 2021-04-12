@@ -89,12 +89,12 @@ uint16_t get_id_from_tx_sf_handle(const uint16_t handle);
 uint16_t get_id_from_rx_sf_handle(const uint16_t handle);
 uint8_t is_routing_nbr(uip_ds6_nbr_t *nbr);
 void print_nbr(void);
-void remove_tx(uint16_t id);
+void remove_tx(linkaddr_t *nbr_lladdr);
+//void remove_tx(uint16_t id);
 void remove_rx(uint16_t id);
-void change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot);
+void change_queue_select_packet(linkaddr_t *nbr_lladdr, uint16_t handle, uint16_t timeslot);
+//void change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot);
 void change_queue_N_update(uint16_t nbr_id, uint16_t updated_N);
-uint8_t get_todo_no_resource();
-uint8_t get_todo_consecutive_new_tx_request();
 /* OST variables */
 extern uint32_t num_total_auto_rx_accum;
 extern uint8_t bootstrap_period;

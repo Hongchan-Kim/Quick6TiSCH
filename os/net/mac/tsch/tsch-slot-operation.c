@@ -212,23 +212,17 @@ static uint16_t prN_new_t_offset;
 static uip_ds6_nbr_t *prN_nbr;
 #endif
 
-#if WITH_OST_CHECK //hckim
-static int delay_prN;
-static int delay_prs;
-
-
-
-static uint16_t prt_new_t_offset;
-static uip_ds6_nbr_t *prt_nbr;
-
+#if WITH_OST_08
 static uint8_t todo_tx_schedule_change;
-
 static uint8_t todo_N_update;
 static uint8_t todo_N_inc;
 
-
+static uint16_t prt_new_t_offset;
+static uip_ds6_nbr_t *prt_nbr;
 static uint8_t changed_t_offset_default;
+#endif
 
+#if WITH_OST_09 //hckim
 #if RESIDUAL_ALLOC
 struct ssq_schedule_t ssq_schedule_list[16];
 #endif
@@ -455,7 +449,7 @@ add_rx(uint16_t id, uint16_t N, uint16_t t_offset)
 
     if(tsch_schedule_get_slotframe_by_handle(handle) != NULL) {
       //printf("ERROR(add_rx): handle already exist\n");
-      return ;
+      return;
     }
 
     sf = tsch_schedule_add_slotframe(handle, size);
@@ -603,7 +597,7 @@ select_t_offset(uint16_t target_id, uint16_t N)  //similar with tx_installable
 #if WITH_OST_DBG
       TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-                  "select_t_offset: %u chosen\n", i1);
+                  "select_t_offset: %lu chosen\n", i1);
       );
 #endif
 
@@ -726,10 +720,17 @@ post_process_rx_N(void)
       remove_rx(nbr_id);
 
       add_rx(nbr_id, prN_new_N, prN_new_t_offset);
-      //printf("New Rx schedule: %u,%u (nbr %u)\n", prN_new_N, prN_new_t_offset, nbr_id);
 
+#if WITH_OST_DBG
+      TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+                  "New Rx schedule: %u,%u (nbr %u)\n", prN_new_N, prN_new_t_offset, nbr_id);
+      );
+#endif
       //print_nbr();
+#if WITH_OST_09
       //tsch_schedule_print_proposed();
+#endif
     }
   }
 
@@ -745,7 +746,7 @@ post_process_rx_N(void)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_08 //hckim
 uint8_t get_todo_no_resource()
 {
   return todo_no_resource;
@@ -757,12 +758,13 @@ uint8_t get_todo_consecutive_new_tx_request()
 }
 #endif
 /**************************************Rx t_offset from EACK -> Change Tx schedule *********************************/
-#if WITH_OST_CHECK //hckim
-void change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot)
+#if WITH_OST_08 //hckim
+void change_queue_select_packet(linkaddr_t *nbr_lladdr, uint16_t handle, uint16_t timeslot)
+//void change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot)
 {
-  struct tsch_neighbor * n = tsch_queue_get_nbr_from_id(id);
-  if(!tsch_is_locked() && n !=NULL)
-  {
+  struct tsch_neighbor *n = tsch_queue_get_nbr(nbr_lladdr);
+//  struct tsch_neighbor *n = tsch_queue_get_nbr_from_id(id);
+  if(!tsch_is_locked() && n !=NULL) {
     if(!ringbufindex_empty(&n->tx_ringbuf)) {
       int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
       uint8_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
@@ -774,7 +776,7 @@ void change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot)
         int16_t index;
 
         if(j >= ringbufindex_size(&n->tx_ringbuf)) { //16
-          index = j-ringbufindex_size(&n->tx_ringbuf);
+          index = j - ringbufindex_size(&n->tx_ringbuf);
         } else {
           index = j;
         }
@@ -790,10 +792,13 @@ void change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_08 //hckim
 void 
-add_tx(uint16_t id, uint16_t N, uint16_t t_offset)
+add_tx(linkaddr_t *nbr_lladdr, uint16_t N, uint16_t t_offset)
+//add_tx(uint16_t id, uint16_t N, uint16_t t_offset)
 {
+  uint16_t id = ost_node_index_from_linkaddr(nbr_lladdr);
+  
   if(N != 65535 && t_offset != 65535) {
     uint16_t handle = get_tx_sf_handle_from_id(id);
     uint16_t size = (1 << N);
@@ -805,7 +810,7 @@ add_tx(uint16_t id, uint16_t N, uint16_t t_offset)
     //PRINTF("add_tx: handle:%u, size:%u (nbr %u)\n", handle, size, id);
 
     if(tsch_schedule_get_slotframe_by_handle(handle) != NULL) {
-      printf("ERROR(add_tx): handle already exist\n");
+      //printf("ERROR(add_tx): handle already exist\n");
       return;
     }
 
@@ -815,43 +820,40 @@ add_tx(uint16_t id, uint16_t N, uint16_t t_offset)
       l = tsch_schedule_add_link(sf, LINK_OPTION_TX, LINK_TYPE_NORMAL, 
                                 &tsch_broadcast_address, t_offset, channel_offset, 1);
       if(l == NULL) {
-        printf("ERROR(add_tx): add_link fail\n");
+        //printf("ERROR(add_tx): add_link fail\n");
       } else {
-        change_queue_select_packet(id, handle, t_offset);
+#if WITH_OST_08
+        change_queue_select_packet(nbr_lladdr, handle, t_offset);
+        //change_queue_select_packet(id, handle, t_offset);
+#endif
       }
 
-      uip_ds6_nbr_t *nbr = uip_ds6_nbr_head();
-      
-      //reset some nbr info. 
-      while(nbr != NULL) {
-        uint16_t nbr_id = ((nbr->ipaddr.u8[14]) << 8) | (nbr->ipaddr.u8[15]);
-        if(id == nbr_id) {
-          if(nbr->my_low_prr == 1) {
-            change_queue_N_update(nbr_id, nbr->my_N);
-          }
-
-          //PRINTF("add_tx: reset my_low_prr/num_tx_mac/num_tx_succ_mac\n");
-          nbr->my_low_prr = 0;
-          nbr->num_tx_mac = 0;
-          nbr->num_tx_succ_mac = 0;
-          nbr->num_consecutive_tx_fail_mac = 0;
-          nbr->consecutive_my_N_inc = 0;
-
-          break;
+      uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)nbr_lladdr);
+      if(nbr != NULL) {
+        if(nbr->my_low_prr == 1) {
+          ost_change_queue_N_update(nbr_lladdr, nbr->my_N);
         }
-        nbr = uip_ds6_nbr_next(nbr);
+        //PRINTF("add_tx: reset my_low_prr/num_tx_mac/num_tx_succ_mac\n");
+        nbr->my_low_prr = 0;
+        nbr->num_tx_mac = 0;
+        nbr->num_tx_succ_mac = 0;
+        nbr->num_consecutive_tx_fail_mac = 0;
+        nbr->consecutive_my_N_inc = 0;
       }
     } else {
-      printf("ERROR(add_tx): add_slotframe fail\n");
+      //printf("ERROR(add_tx): add_slotframe fail\n");
     }
   }
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_08 //hckim
 void 
-remove_tx(uint16_t id)
+remove_tx(linkaddr_t *nbr_lladdr)
+//remove_tx(uint16_t id)
 {
+  uint16_t id = ost_node_index_from_linkaddr(nbr_lladdr);
+
   struct tsch_slotframe *rm_sf;
   uint16_t rm_sf_handle = get_tx_sf_handle_from_id(id);
   rm_sf = tsch_schedule_get_slotframe_by_handle(rm_sf_handle);
@@ -860,15 +862,22 @@ remove_tx(uint16_t id)
     //PRINTF("remove_tx: handle:%u, size:%u (nbr %u)\n", rm_sf_handle, rm_sf->size.val,id);
     tsch_schedule_remove_slotframe(rm_sf);
 
-    struct tsch_neighbor *n = tsch_queue_get_nbr_from_id(id);
+    struct tsch_neighbor *n = tsch_queue_get_nbr(nbr_lladdr);
+//    struct tsch_neighbor *n = tsch_queue_get_nbr_from_id(id);
     if(n != NULL) {
       if(!tsch_queue_is_empty(n)) {
         if(neighbor_has_uc_link(tsch_queue_get_nbr_address(n))) {
-          printf("remove_tx: Use RB %u\n", ringbufindex_elements(&n->tx_ringbuf));
-          change_queue_select_packet(id, 1, id % ORCHESTRA_CONF_UNICAST_PERIOD); //Use RB
+          //printf("remove_tx: Use RB %u\n", ringbufindex_elements(&n->tx_ringbuf));
+#if WITH_OST_08
+          change_queue_select_packet(nbr_lladdr, 1, id % ORCHESTRA_CONF_UNICAST_PERIOD); //Use RB
+          //change_queue_select_packet(id, 1, id % ORCHESTRA_CONF_UNICAST_PERIOD); //Use RB
+#endif
         } else {
-          printf("remove_tx: Use shared slot %u\n", ringbufindex_elements(&n->tx_ringbuf));
-          change_queue_select_packet(id, 2, 0); //Use shared slot
+          //printf("remove_tx: Use shared slot %u\n", ringbufindex_elements(&n->tx_ringbuf));
+#if WITH_OST_08
+          change_queue_select_packet(nbr_lladdr, 2, 0); //Use shared slot
+          //change_queue_select_packet(id, 2, 0); //Use shared slot
+#endif
         }
       }
     }
@@ -876,7 +885,7 @@ remove_tx(uint16_t id)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_08 //hckim
 uint8_t
 has_my_N_changed(uip_ds6_nbr_t * nbr)
 {
@@ -900,7 +909,7 @@ has_my_N_changed(uip_ds6_nbr_t * nbr)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_08 //hckim
 int8_t
 tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)  //similar with select_t_offset
 {
@@ -914,20 +923,20 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)  //similar wit
 
   t_offset_candidate_t toc[1 << N_MAX];
 
-  //Initialize 2^N toc
   uint16_t i;
   if(t_offset == 65535) {
     return -2;
   }
 
+  //Initialize 2^N toc
   for(i = 0; i < (1 << N); i++) {
     toc[i].priority = 255; //TODO
   }
 
-  if(t_offset < (1 << N) ) { // For preparation of weird t_offset
+  if(t_offset < (1 << N) ) {
     toc[t_offset].available = 1;
   } else {
-    printf("ERROR: weird t_offset %u\n", t_offset);
+    //printf("ERROR: weird t_offset %u\n", t_offset);
     return -1;
   }
 
@@ -948,14 +957,12 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)  //similar wit
           } else {
             uint16_t used_t_offset = l->timeslot;
             if(used_t_offset >= (1 << used_N)) {
-              printf("ERROR: used_t_offset is too big (tx_installable) %u %u %u %u\n", sf->handle, used_t_offset, used_N, target_id);
+              //printf("ERROR: used_t_offset is too big (tx_installable) %u %u %u %u\n", sf->handle, used_t_offset, used_N, target_id);
             }
             eliminate_overlap_toc(toc, N, used_N, used_t_offset);
-            //PRINTF("\n");
           }
 
           break;
-
         } else if (n == N_MAX) {
           printf("ERROR: weird size of slotframe");
         }
@@ -967,89 +974,84 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)  //similar wit
     //PRINTF("tx_installable: %u installable\n\n", t_offset);
     return 1;
   } else {
-    //PRINTF("tx_installable: %u uninstallable\n\n", t_offset); 
+    //PRINTF("tx_installable: %u non-installable\n\n", t_offset); 
     return -1;
   }
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_08 //hckim
 void
 process_rx_t_offset(frame802154_t* frame) //In short, prt
 {
   linkaddr_t *eack_src = tsch_queue_get_nbr_address(current_neighbor);
-  uint16_t eack_src_id = ost_node_index_from_linkaddr(eack_src);
-  uip_ds6_nbr_t *nbr = uip_ds6_nbr_head();
+  uint16_t nbr_id = ost_node_index_from_linkaddr(eack_src);
   
-  while(nbr != NULL) {
-    uint16_t nbr_id = ((nbr->ipaddr.u8[14]) << 8) | (nbr->ipaddr.u8[15]);
-    
-    if(eack_src_id == nbr_id && is_routing_nbr(nbr) == 1) {
-      //PRINTF("Rx EACK: t_offset found %u (r_nbr %u)\n", frame->pigg1, nbr_id);
+  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)eack_src);
+  if(nbr != NULL && is_routing_nbr(nbr) == 1) {
 
-      if(nbr->my_t_offset != frame->pigg1 || has_my_N_changed(nbr)) {
-        //has_my_N_changed: corner case
-        uint16_t old_t_offset = nbr->my_t_offset;
+#if WITH_OST_DBG
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "Rx EACK: t_offset found %u (r_nbr %u)", frame->pigg1, nbr_id));
+#endif
+
+    if(nbr->my_t_offset != frame->pigg1 || has_my_N_changed(nbr)) {
+      //has_my_N_changed: corner case
+      uint16_t old_t_offset = nbr->my_t_offset;
         
-        //To be used in post_process_rx_t_offset
-        prt_new_t_offset = frame->pigg1;
-        prt_nbr = nbr;
+      //To be used in post_process_rx_t_offset
+      prt_new_t_offset = frame->pigg1;
+      prt_nbr = nbr;
 
-        if(frame->pigg1 == T_OFFSET_ALLOCATION_FAIL) {
-          todo_N_inc = 1;
-          return;
-        }
-
-        if(frame->pigg1 == T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST) {
-          todo_N_inc = 1; 
-          return;          
-        }
-
-        nbr->my_t_offset = prt_new_t_offset;
-
-        //PRINTF("Rx EACK: New t_offset (%u->%u)\n",old_t_offset,prt_new_t_offset);
-
-        if(nbr->my_t_offset == old_t_offset && has_my_N_changed(nbr)) {
-          //PRINTF("corner case: has_my_N_changed\n");
-        }
-
-        int8_t result = tx_installable(nbr_id, nbr->my_N, nbr->my_t_offset);
-
-        if(result == 1) {
-          if(nbr->my_uninstallable != 0) {
-            nbr->my_uninstallable = 0;
-            todo_N_update = 1;
-          }
-          changed_t_offset_default = 0;
-          todo_tx_schedule_change = 1;
-          return;
-
-        } else if(result == -1) {
-          //printf("%u %u %u\n",old_t_offset,frame->pigg1,has_my_N_changed(nbr));
-          if(nbr->my_uninstallable != 1) {
-            nbr->my_uninstallable = 1;
-            todo_N_update = 1;
-          }
-          changed_t_offset_default = 0;
-          todo_tx_schedule_change = 1;  //Do not add, just remove
-          return;
-
-        } else if(result == -2) { //when t_offset==65535
-          if(nbr->my_uninstallable != 0) {
-            nbr->my_uninstallable = 0;
-            todo_N_update = 1;
-          }
-          changed_t_offset_default = 1;   
-          todo_tx_schedule_change = 1;  //Do not add, just remove
-        }
+      if(frame->pigg1 == T_OFFSET_ALLOCATION_FAIL) {
+        todo_N_inc = 1;
+        return;
       }
 
-      break;
-    }
+      if(frame->pigg1 == T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST) {
+        todo_N_inc = 1; 
+        return;          
+      }
 
-    nbr = uip_ds6_nbr_next(nbr);
+      nbr->my_t_offset = prt_new_t_offset;
+
+      //PRINTF("Rx EACK: New t_offset (%u->%u)\n",old_t_offset,prt_new_t_offset);
+
+      if(nbr->my_t_offset == old_t_offset && has_my_N_changed(nbr)) {
+        //PRINTF("corner case: has_my_N_changed\n");
+      }
+
+      int8_t result = tx_installable(nbr_id, nbr->my_N, nbr->my_t_offset); //1: installable, -1: non-installable
+
+      if(result == 1) { // installable
+        if(nbr->my_uninstallable != 0) {
+          nbr->my_uninstallable = 0;
+          todo_N_update = 1;
+        }
+        changed_t_offset_default = 0;
+        todo_tx_schedule_change = 1;
+        return;
+      } else if(result == -1) { // non-installable, request different t_offset
+        //printf("%u %u %u\n", old_t_offset, frame->pigg1, has_my_N_changed(nbr));
+        if(nbr->my_uninstallable != 1) {
+          nbr->my_uninstallable = 1;
+          todo_N_update = 1;
+        }
+        changed_t_offset_default = 0;
+        todo_tx_schedule_change = 1;  //Do not add, just remove
+        return;
+      } else if(result == -2) { // denial from nbr (when t_offset == 65535)
+        if(nbr->my_uninstallable != 0) {
+          nbr->my_uninstallable = 0;
+          todo_N_update = 1;
+        }
+        changed_t_offset_default = 1;   
+        todo_tx_schedule_change = 1;  //Do not add, just remove
+      }
+    }
   }
-  
+
   if(is_routing_nbr(nbr) == 0) {
     //PRINTF("Rx EACK: t_offset found %u (No r_nbr)\n", frame->pigg1);
   } else if(nbr == NULL) {
@@ -1058,51 +1060,88 @@ process_rx_t_offset(frame802154_t* frame) //In short, prt
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_08 //hckim
 //called from tsch_rx_process_pending (after slot_operation)
 void
 post_process_rx_t_offset(void)
 {
-  if(todo_N_inc == 1) {
-    uint16_t nbr_id = ost_node_index_from_ipaddr(&(prt_nbr->ipaddr));
+  linkaddr_t *nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(prt_nbr);
+  uint16_t nbr_id = ost_node_index_from_ipaddr(&(prt_nbr->ipaddr));
 
+  if(todo_N_inc == 1) {
     todo_N_inc = 0;
 
     if(prt_nbr->my_N < N_MAX) {
-      printf("N inc %u->%u\n", prt_nbr->my_N, (prt_nbr->my_N) + 1);
+
+#if WITH_OST_DBG
+      TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+                  "N inc %u->%u", prt_nbr->my_N, (prt_nbr->my_N) + 1);
+      );
+#endif
       (prt_nbr->my_N)++;
-      change_queue_N_update(nbr_id,prt_nbr->my_N);
+      ost_change_queue_N_update(nbr_lladdr, prt_nbr->my_N);
     } else {
-      printf("N inc MAX\n");
+
+#if WITH_OST_DBG
+      TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+                  "N inc MAX");
+      );
+#endif
     }
+
   } else if(todo_tx_schedule_change == 1) {
     todo_tx_schedule_change = 0;
     if(prt_nbr != NULL) {
-      uint16_t nbr_id = ost_node_index_from_ipaddr(&(prt_nbr->ipaddr));
-      remove_tx(nbr_id);
+      remove_tx(nbr_lladdr);
+      //remove_tx(nbr_id);
 
       if(prt_nbr->my_uninstallable == 0) {
         if(changed_t_offset_default == 1) {
-          printf("New t_offset 65535 (nbr %u)\n", nbr_id);
+
+#if WITH_OST_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "New t_offset 65535 (nbr %u)", nbr_id);
+          );
+#endif
+
         } else {
-          add_tx(nbr_id, prt_nbr->my_N, prt_new_t_offset);
-          printf("New Tx schedule: %u,%u (nbr %u)\n", prt_nbr->my_N, prt_new_t_offset, nbr_id);
+          add_tx(nbr_lladdr, prt_nbr->my_N, prt_new_t_offset);
+          //add_tx(nbr_id, prt_nbr->my_N, prt_new_t_offset);
+
+#if WITH_OST_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "New Tx schedule: %u,%u (nbr %u)", prt_nbr->my_N, prt_new_t_offset, nbr_id);
+          );
+#endif
         }
+
       } else {
-        printf("Uninstallable (nbr %u)\n", nbr_id);
+
+#if 1//WITH_OST_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "Uninstallable (nbr %u)", nbr_id);
+        );
+#endif
       }
 
       if(todo_N_update == 1) {
         todo_N_update = 0;
 
         if(prt_nbr->my_uninstallable == 0) {
-          change_queue_N_update(nbr_id,prt_nbr->my_N);
+          ost_change_queue_N_update(nbr_lladdr, prt_nbr->my_N);
         } else {
-          change_queue_N_update(nbr_id, prt_nbr->my_N + INC_N_NEW_TX_REQUEST);
+          ost_change_queue_N_update(nbr_lladdr, prt_nbr->my_N + INC_N_NEW_TX_REQUEST);
         }
       }
       //print_nbr();
+#if WITH_OST_09
       //tsch_schedule_print_proposed();
+#endif
     }
   }
 }
@@ -1723,14 +1762,24 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                   ack_len = 0;
                 }
 
+#if WITH_OST_DBG
+                TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                    "rcvd t_offsete %u", frame.pigg1));
+#endif
+
+#if WITH_OST_08
                 todo_tx_schedule_change = 0;
                 todo_N_update = 0;
                 todo_N_inc = 0;
 
                 if(ack_len != 0) {
                   process_rx_t_offset(&frame);
+#if WITH_OST_CHECK
                   process_rx_matching_slot(&frame);
+#endif
                 }
+#endif
 #else
                 if(tsch_packet_parse_eack(ackbuf, ack_len, seqno,
                     &frame, &ack_ies, &ack_hdrlen) == 0) {
@@ -1917,7 +1966,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
     packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
 
-#if WITH_OST_CHECK  // hckim only for log messages, common or RB slotframe
+#if WITH_OST_09  // hckim only for log messages, common or RB slotframe
     if(current_link->slotframe_handle != 0 && current_link->slotframe_handle != 2) {
       num_total_rx_accum++;
       if(current_link->slotframe_handle == 1) {
@@ -2046,25 +2095,14 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               static int ack_len;
 
 #if WITH_OST_04 //hckim generate ACK
-#if WITH_OST_CHECK
-              rtimer_clock_t temp_now1 = RTIMER_NOW();
-#endif
               //before EACK Tx
               todo_rx_schedule_change = 0;
               todo_no_resource = 0;
               todo_consecutive_new_tx_request = 0;
 
               process_rx_N(&frame);
-#if WITH_OST_CHECK
-              rtimer_clock_t temp_now2 = RTIMER_NOW();
-#endif
 #if RESIDUAL_ALLOC              
               uint16_t matching_slot = process_rx_schedule_info(&frame);
-#endif
-#if WITH_OST_CHECK
-              rtimer_clock_t temp_now3 = RTIMER_NOW();
-              delay_prN = (int)(temp_now2 - temp_now1);
-              delay_prs = (int)(temp_now3 - temp_now2);
 #endif
 #endif
 
@@ -2242,7 +2280,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
 
-#if WITH_OST_CHECK
+#if WITH_OST_09
       else if(current_packet == NULL && (current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         if(current_link->slotframe_handle > backup_link->slotframe_handle) {
            current_link = backup_link;
@@ -2256,26 +2294,27 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
 
-#if WITH_OST_CHECK //hckim
+#if WITH_OST_09 //hckim
         uint16_t rx_id = 0;
 
         if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
           if(current_link->link_options & LINK_OPTION_TX) {
             rx_id = get_id_from_tx_sf_handle(current_link->slotframe_handle);
             if(current_packet == NULL) {
-              printf("ERROR: multi_channel 3\n");
+              //printf("ERROR: multi_channel 3\n");
             }
           } else if(current_link->link_options & LINK_OPTION_RX) {
-            rx_id = node_id;
+            rx_id = ost_node_index_from_linkaddr(&linkaddr_node_addr);
           } else {
-            printf("ERROR: multi_channel 1\n");
+            //printf("ERROR: multi_channel 1\n");
           }
           struct tsch_slotframe *sf = tsch_schedule_get_slotframe_by_handle(current_link->slotframe_handle);
           if(sf != NULL) {
             uint64_t ASN = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
             if(ASN % ORCHESTRA_CONF_COMMON_SHARED_PERIOD == 0) {
+              // hckim ost check!!!!!
               //Shared slotframe should have been prioritized
-              printf("ERROR: multi_channel 4\n");
+              //printf("ERROR: multi_channel 4\n");
             }
             uint64_t ASFN = ASN / sf->size.val;
             //printf("rx_id %u, ASFN %lu, ASN %u.%u\n",rx_id,ASFN,tsch_current_asn.ms1b,tsch_current_asn.ls4b);
@@ -2284,7 +2323,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
             current_link->channel_offset = 3; //default
             current_link->channel_offset = current_link->channel_offset - minus_c_offset; // 3-0 or 3-1
           } else {
-            printf("sf removed just before, %x.%lx %u\n", tsch_current_asn.ms1b, tsch_current_asn.ls4b, current_link->slotframe_handle);
+            //printf("sf removed just before, %x.%lx %u\n", tsch_current_asn.ms1b, tsch_current_asn.ls4b, current_link->slotframe_handle);
             goto donothing;
           }
         }
@@ -2350,9 +2389,10 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         burst_link_scheduled = 0;
       }
 
-#if WITH_OST_CHECK
+#if WITH_OST_09
 donothing:
 #endif
+
       TSCH_DEBUG_SLOT_END();
     }
 

@@ -142,35 +142,8 @@ ost_change_queue_N_update(const linkaddr_t *lladdr, uint16_t updated_N)
         packet[3] = (updated_N >> 8) & 0xff;
 
 #if WITH_OST_DBG
-        LOG_INFO("zzz old %u %u new %u %u\n", old_2, old_3, packet[2], packet[3]);
+        LOG_INFO("old %u %u new %u %u\n", old_2, old_3, packet[2], packet[3]);
 #endif
-      }
-    }
-  }
-}
-#endif
-#if WITH_OST_CHECK /* checked */
-void
-change_queue_N_update(uint16_t nbr_id, uint16_t updated_N)
-{
-  struct tsch_neighbor *n = tsch_queue_get_nbr_from_id(nbr_id);
-  if(n != NULL) {
-    if(!ringbufindex_empty(&n->tx_ringbuf)) {
-      int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
-      uint8_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
-
-      uint8_t j;
-      for(j = get_index; j < get_index + num_elements; j++) {
-        int8_t index;
-        if(j >= ringbufindex_size(&n->tx_ringbuf)) { //16
-          index = j - ringbufindex_size(&n->tx_ringbuf);
-        } else {
-          index = j;
-        }
-        uint8_t *packet = (uint8_t *)queuebuf_dataptr(n->tx_array[index]->qb);
-
-        packet[2] = updated_N & 0xff;
-        packet[3] = (updated_N >> 8) & 0xff;
       }
     }
   }
@@ -219,6 +192,10 @@ void select_N(void* ptr)
                 ost_change_queue_N_update((linkaddr_t *)uip_ds6_nbr_get_ll(nbr), new_N);
 #endif
                 nbr->my_N = new_N;
+
+#if WITH_OST_DBG
+                LOG_INFO("select_N %u\n", new_N);
+#endif
               } else {
               }
             } else { //No change
@@ -371,7 +348,7 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
         TSCH_CALLBACK_NEW_TIME_SOURCE(old_time_src, new_time_src);
 #endif
       }
-#if WITH_OST_CHECK
+#if WITH_OST_09
       else {
         //For First association (First DIO Rx) 
         reset_nbr(new_addr, 1, 0);
@@ -385,7 +362,7 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
 }
 /*---------------------------------------------------------------------------*/
 /* Flush a neighbor queue */
-#if WITH_OST_CHECK
+#if WITH_OST_09
 void
 tsch_queue_flush_nbr_queue(struct tsch_neighbor *n)
 #else

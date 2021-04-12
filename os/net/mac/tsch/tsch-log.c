@@ -142,13 +142,14 @@ tsch_log_process_pending(void)
                   if(!tsch_queue_is_empty(n)) {
                     if(neighbor_has_uc_link(tsch_queue_get_nbr_address(n))) {
                       printf("Csct Tx fail -> Use RB %u\n", ringbufindex_elements(&n->tx_ringbuf));
-#if WITH_OST_CHECK
-                      change_queue_select_packet(nbr_id, 1, nbr_id % ORCHESTRA_CONF_UNICAST_PERIOD); //Use RB
+#if WITH_OST_09
+                      change_queue_select_packet(&log->tx.dest, 1, 
+                                          ORCHESTRA_LINKADDR_HASH(&log->tx.dest) % ORCHESTRA_UNICAST_PERIOD); //Use RB
 #endif
                     } else {
                       printf("Csct Tx fail -> Use shared slot %u\n", ringbufindex_elements(&n->tx_ringbuf));
-#if WITH_OST_CHECK
-                      change_queue_select_packet(nbr_id, 2, 0); //Use shared slot
+#if WITH_OST_09
+                      change_queue_select_packet(&log->tx.dest, 2, 0); //Use shared slot
 #endif
                     }
                   }
