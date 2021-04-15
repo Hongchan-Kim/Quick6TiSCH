@@ -607,7 +607,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
                                                                     make sure the backoff has expired */
 #if TSCH_WITH_LINK_SELECTOR
-#if WITH_OST_CHECK && RESIDUAL_ALLOC //hckim??
+#if WITH_OST_10 && RESIDUAL_ALLOC //hckim
         if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
           uint16_t target_nbr_id = (link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
           if(ost_node_index_from_linkaddr(tsch_queue_get_nbr_address(n)) == target_nbr_id) {
@@ -733,10 +733,11 @@ tsch_queue_get_unicast_packet_for_any(struct tsch_neighbor **n, struct tsch_link
       curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
     }
 
-#if WITH_OST_CHECK && RESIDUAL_ALLOC //hckim??
+#if WITH_OST_10 && RESIDUAL_ALLOC //hckim??
     if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
       uint16_t target_nbr_id = (link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
-      printf("ERROR: No ssq Tx packet (nbr %u)\n", target_nbr_id); // This could be printed when Tx occurs by RB before reserved ssq Tx
+      /* ERROR: No ssq Tx packet (nbr %u)\n", target_nbr_id); */
+      // This could be printed when Tx occurs by RB before reserved ssq Tx
 
       struct tsch_neighbor *target_nbr = tsch_queue_get_nbr_from_id(target_nbr_id);
       if(target_nbr == NULL) {

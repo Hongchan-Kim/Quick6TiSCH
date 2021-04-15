@@ -98,7 +98,7 @@ void change_queue_N_update(uint16_t nbr_id, uint16_t updated_N);
 /* OST variables */
 extern uint32_t num_total_auto_rx_accum;
 extern uint8_t bootstrap_period;
-#if RESIDUAL_ALLOC
+#if WITH_OST_10 && RESIDUAL_ALLOC
 extern struct ssq_schedule_t ssq_schedule_list[16];
 #endif
 #endif

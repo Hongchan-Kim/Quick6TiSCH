@@ -44,11 +44,11 @@
 /*
  * Configure App
  */
-#define DOWNWARD_TRAFFIC                           1
+#define DOWNWARD_TRAFFIC                           0
 #define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 30 * CLOCK_SECOND)
-#define APP_MAX_TX                                 10
+#define APP_MAX_TX                                 20
 /*---------------------------------------------------------------------------*/
 
 
@@ -155,16 +155,25 @@
 #define WITH_OST_06                                1 /* create EACK */
 #define WITH_OST_07                                1 /* post_process_rx_N */
 #define WITH_OST_08                                1 /* process_rx_t_offset, post_process_rx_t_offset */
-#define WITH_OST_09                                1 /* etc */
+#define WITH_OST_09                                1 /* etc for periodic provisioning */
 #define WITH_OST_10                                0 /* on-demand provisioning */
 
 #define WITH_OST_CHECK                             0
 #define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1
+#define OST_ON_DEMAND_PROVISION                    1
+#define RESIDUAL_ALLOC                             1
+
+#undef QUEUEBUF_CONF_NUM
+#define QUEUEBUF_CONF_NUM                           16
+#define TSCH_CONF_MAX_INCOMING_PACKETS              8
+#define TSCH_CONF_RX_WAIT                           800  //guard time
+#define TSCH_CONF_MAX_KEEPALIVE_TIMEOUT             (30 * CLOCK_SECOND)
+#define TSCH_CONF_MAX_EB_PERIOD                     (16 * CLOCK_SECOND)
+
 
 #define N_SELECTION_PERIOD                         15 //related to N_MAX: Min. traffic load = 1 / (N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
 #define N_MAX                                      8 //max t_offset 65535-1, 65535 is used for no-allocation
 #define MORE_UNDER_PROVISION                       1 //more allocation 2^MORE_UNDER_PROVISION times than under-provision
-#define NO_ON_DEMAND_PROVISION                     1
 #define INC_N_NEW_TX_REQUEST                       100 //Maybe used for denial message
 #define MULTI_CHANNEL                              1
 #define PRR_THRES_TX_CHANGE                        70
@@ -175,7 +184,6 @@
 #define T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST        ((1 << N_MAX) + 2)
 #define THRES_CONSECUTIVE_NEW_TX_REQUEST           10
 #define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          2 * NBR_TABLE_CONF_MAX_NEIGHBORS
-#define RESIDUAL_ALLOC                             0
 #define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) //Under-provision uses up to 2*NODE_NUM+2
 #undef TSCH_CONF_RX_ACK_DELAY
 #define TSCH_CONF_RX_ACK_DELAY                     1300

@@ -179,7 +179,7 @@ struct tsch_slotframe *tsch_schedule_slotframe_head(void);
  */
 struct tsch_slotframe *tsch_schedule_slotframe_next(struct tsch_slotframe *sf);
 
-#if WITH_OST_CHECK && RESIDUAL_ALLOC
+#if WITH_OST_10 && RESIDUAL_ALLOC
 struct ssq_schedule_t {
   struct tsch_link link;
   struct tsch_asn_t asn;

@@ -360,7 +360,7 @@ child_removed(const linkaddr_t *linkaddr)
     LOG_INFO("child_removed: immediately\n");
     remove_uc_link(linkaddr);
   } else {
-#if WITH_OST_CHECK
+#if WITH_OST_CHECK /* ??? */
     if(bootstrap_period) {
       LOG_INFO("child_removed: queued packets, flush (bootstrap)\n");
       tsch_queue_flush_nbr_queue(nbr);
@@ -473,7 +473,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       if(tsch_queue_is_empty(old) || old == NULL) {
         remove_uc_link(old_addr); // No-path DAO can be sent in shared slots
       } else {
-#if WITH_OST_CHECK
+#if WITH_OST_CHECK /* ??? */
         if(bootstrap_period) {
           tsch_queue_flush_nbr_queue(old);
         } else
