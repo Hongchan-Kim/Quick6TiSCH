@@ -174,11 +174,6 @@ tsch_log_process_pending(void)
         } else {
           printf("\n");
         }
-
-#if WITH_OST_04
-        printf(", a_rx %lu %lu\n", num_total_rx_accum, num_total_auto_rx_accum);
-#endif
-
         break;
       case tsch_log_message:
         printf("%s\n", log->message);

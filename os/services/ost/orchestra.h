@@ -41,7 +41,7 @@
 #include "net/mac/tsch/tsch.h"
 #include "orchestra-conf.h"
 
-#if WITH_OST_00
+#if WITH_OST_DONE
 #include "net/ipv6/uip-ds6-nbr.h" /* OST implementation */
 #endif
 
@@ -76,27 +76,23 @@ void orchestra_callback_child_added(const linkaddr_t *addr);
 /* Set with #define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK orchestra_callback_child_removed */
 void orchestra_callback_child_removed(const linkaddr_t *addr);
 
-#if WITH_OST_00
-/* OST implementation */
+#if WITH_OST_DONE /* OST implementation */
 /* OST functions */
+void ost_reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path);
+uint16_t ost_get_tx_sf_handle_from_id(const uint16_t id);
+uint16_t ost_get_rx_sf_handle_from_id(const uint16_t id);
+uint16_t ost_get_id_from_tx_sf_handle(const uint16_t handle);
+uint16_t ost_get_id_from_rx_sf_handle(const uint16_t handle);
+uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr);
+void ost_remove_tx(linkaddr_t *nbr_lladdr);
+void ost_remove_rx(uint16_t id);
+void ost_change_queue_select_packet(linkaddr_t *nbr_lladdr, uint16_t handle, uint16_t timeslot);
+//void ost_change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot);
+//void ost_print_nbr(void);
 #if WITH_OST_04
 int neighbor_has_uc_link(const linkaddr_t *linkaddr);
 #endif
-void reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path);
-uint16_t get_tx_sf_handle_from_id(const uint16_t id);
-uint16_t get_rx_sf_handle_from_id(const uint16_t id);
-uint16_t get_id_from_tx_sf_handle(const uint16_t handle);
-uint16_t get_id_from_rx_sf_handle(const uint16_t handle);
-uint8_t is_routing_nbr(uip_ds6_nbr_t *nbr);
-void print_nbr(void);
-void remove_tx(linkaddr_t *nbr_lladdr);
-//void remove_tx(uint16_t id);
-void remove_rx(uint16_t id);
-void change_queue_select_packet(linkaddr_t *nbr_lladdr, uint16_t handle, uint16_t timeslot);
-//void change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot);
-void change_queue_N_update(uint16_t nbr_id, uint16_t updated_N);
 /* OST variables */
-extern uint32_t num_total_auto_rx_accum;
 extern uint8_t bootstrap_period;
 #if WITH_OST_10 && RESIDUAL_ALLOC
 extern struct ssq_schedule_t ssq_schedule_list[16];

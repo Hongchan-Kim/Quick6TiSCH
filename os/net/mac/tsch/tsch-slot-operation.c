@@ -54,7 +54,7 @@
 #include "net/mac/tsch/tsch.h"
 #include "sys/critical.h"
 
-#if WITH_OST_00 /* checked */
+#if WITH_OST_DONE /* checked */
 #include "node-info.h"
 #include "orchestra.h"
 #include "net/ipv6/uip-ds6-route.h"
@@ -189,11 +189,6 @@ static struct pt slot_operation_pt;
 /* Sub-protothreads of tsch_slot_operation */
 static PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t));
 static PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t));
-
-#if WITH_OST_00 /* checked */
-uint32_t num_total_auto_rx_accum;
-uint32_t num_total_rx_accum;
-#endif
 
 #if WITH_OST_04
 uint8_t todo_no_resource;
@@ -827,8 +822,7 @@ add_tx(linkaddr_t *nbr_lladdr, uint16_t N, uint16_t t_offset)
 /*---------------------------------------------------------------------------*/
 #if WITH_OST_08 //hckim
 void 
-remove_tx(linkaddr_t *nbr_lladdr)
-//remove_tx(uint16_t id)
+ost_remove_tx(linkaddr_t *nbr_lladdr) //(uint16_t id)
 {
   uint16_t id = ost_node_index_from_linkaddr(nbr_lladdr);
 
@@ -1072,8 +1066,7 @@ post_process_rx_t_offset(void)
   } else if(todo_tx_schedule_change == 1) {
     todo_tx_schedule_change = 0;
     if(prt_nbr != NULL) {
-      remove_tx(nbr_lladdr);
-      //remove_tx(nbr_id);
+      ost_remove_tx(nbr_lladdr);
 
       if(prt_nbr->my_uninstallable == 0) {
         if(changed_t_offset_default == 1) {
@@ -1271,8 +1264,6 @@ tsch_schedule_slot_operation(struct rtimer *tm, rtimer_clock_t ref_time, rtimer_
       static uint8_t reset = 0;
       if(reset == 0) {
         if(tsch_current_asn.ls4b > (NO_DATA_PERIOD) * 1000 / 10) {
-          num_total_rx_accum = 0;
-          num_total_auto_rx_accum = 0;
           reset = 1;
         }
       }
@@ -1928,15 +1919,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     /* Start radio for at least guard time */
     tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
     packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
-
-#if WITH_OST_09  // hckim only for log messages, common or RB slotframe
-    if(current_link->slotframe_handle != 0 && current_link->slotframe_handle != 2) {
-      num_total_rx_accum++;
-      if(current_link->slotframe_handle == 1) {
-        num_total_auto_rx_accum++;
-      }
-    }
-#endif
 
     if(!packet_seen) {
       /* Check if receiving within guard time */

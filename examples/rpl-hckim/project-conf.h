@@ -145,18 +145,17 @@
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        41 //31 broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 
+#define WITH_OST_DONE                              1
 #define WITH_OST_DBG                               0
-#define WITH_OST_00                                1
-#define WITH_OST_01                                1 /* measure traffic and select N */
-#define WITH_OST_02                                1 /* frame and framer to piggyback N */
-#define WITH_OST_03                                1 /* update N of the packets in queue */
-#define WITH_OST_04                                1 /* process_rx_N */
-#define WITH_OST_05                                1 /* select_t_offset */
-#define WITH_OST_06                                1 /* create EACK */
-#define WITH_OST_07                                1 /* post_process_rx_N */
-#define WITH_OST_08                                1 /* process_rx_t_offset, post_process_rx_t_offset */
-#define WITH_OST_09                                1 /* etc for periodic provisioning */
-#define WITH_OST_10                                1 /* on-demand provisioning */
+#define WITH_OST_02                                0 /* frame and framer to piggyback N */
+#define WITH_OST_03                                0 /* update N of the packets in queue */
+#define WITH_OST_04                                0 /* process_rx_N */
+#define WITH_OST_05                                0 /* select_t_offset */
+#define WITH_OST_06                                0 /* create EACK */
+#define WITH_OST_07                                0 /* post_process_rx_N */
+#define WITH_OST_08                                0 /* process_rx_t_offset, post_process_rx_t_offset */
+#define WITH_OST_09                                0 /* etc for periodic provisioning */
+#define WITH_OST_10                                0 /* on-demand provisioning */
 
 #define WITH_OST_CHECK                             0
 #define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1

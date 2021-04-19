@@ -46,8 +46,7 @@
 #include "net/packetbuf.h"
 #include "net/routing/routing.h"
 
-#if WITH_OST_00
-/* OST implementation */
+#if WITH_OST_DONE /* OST implementation */
 #include "sys/ctimer.h"
 #include "sys/clock.h"
 #include "net/queuebuf.h"
@@ -382,8 +381,8 @@ child_removed(const linkaddr_t *linkaddr)
       //it was deleted possibly already when no-path DAO rx
       LOG_INFO("child_removed: remove_tx & remove_rx\n");
       if(linkaddr != NULL) {
-        remove_tx((linkaddr_t *)linkaddr);
-        remove_rx(ost_node_index_from_linkaddr(linkaddr));
+        ost_remove_tx((linkaddr_t *)linkaddr);
+        ost_remove_rx(ost_node_index_from_linkaddr(linkaddr));
         //tsch_schedule_print_proposed();
       }
     } else {
@@ -490,8 +489,8 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
 
     LOG_INFO("new_time_source: remove_tx & remove_rx\n");
     if(old_addr != NULL) {
-      remove_tx((linkaddr_t *)old_addr);
-      remove_rx(ost_node_index_from_linkaddr(old_addr));
+      ost_remove_tx((linkaddr_t *)old_addr);
+      ost_remove_rx(ost_node_index_from_linkaddr(old_addr));
       // tsch_schedule_print_proposed();
     }
 #else

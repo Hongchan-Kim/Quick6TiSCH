@@ -47,11 +47,6 @@
 
 /***** External Variables *****/
 
-#if WITH_OST_00
-extern uint32_t num_total_auto_rx_accum;
-extern uint32_t num_total_rx_accum;
-#endif
-
 /* A ringbuf storing outgoing packets after they were dequeued.
  * Will be processed layer by tsch_tx_process_pending */
 extern struct ringbufindex dequeued_ringbuf;

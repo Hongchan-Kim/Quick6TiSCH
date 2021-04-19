@@ -830,8 +830,8 @@ dao_input_storing(void)
         linkaddr_t *nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(nbr);
         reset_nbr(nbr_lladdr, 0, 1);
 
-        remove_tx(nbr_lladdr);
-        remove_rx(prefix_id);
+        ost_remove_tx(nbr_lladdr);
+        ost_remove_rx(prefix_id);
       }
 #endif
 

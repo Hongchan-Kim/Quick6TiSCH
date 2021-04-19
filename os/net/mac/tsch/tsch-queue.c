@@ -57,7 +57,7 @@
 #include "net/nbr-table.h"
 #include <string.h>
 
-#if WITH_OST_00 /* checked */
+#if WITH_OST_DONE /* checked */
 #include "net/ipv6/uip-ds6-route.h"
 #include "net/ipv6/uip-ds6-nbr.h"
 #include "sys/ctimer.h"
@@ -89,11 +89,9 @@ NBR_TABLE(struct tsch_neighbor, tsch_neighbors);
 struct tsch_neighbor *n_broadcast;
 struct tsch_neighbor *n_eb;
 
-#if WITH_OST_01 /* checked */
-static struct ctimer select_N_timer;
-#endif
+#if WITH_OST_DONE
+static struct ctimer ost_select_N_timer;
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_01 /* checked */
 uint8_t is_routing_nbr(uip_ds6_nbr_t *nbr)
 {
   // parent?
@@ -150,64 +148,62 @@ ost_change_queue_N_update(const linkaddr_t *lladdr, uint16_t updated_N)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_01 /* checked */
-/* OST measure traffic load */
-void select_N(void* ptr)
+#if WITH_OST_DONE /* OST select appropriate N according to the traffic load */
+void ost_select_N(void* ptr)
 {
   uip_ds6_nbr_t *nbr;
-  uint16_t traffic_load;
+  uint16_t ost_traffic_load;
   int i;
 
   /* select N */
   nbr = uip_ds6_nbr_head();
   if(tsch_get_lock()) {
     while(nbr != NULL) {
-      if(is_routing_nbr(nbr) && nbr->new_add == 0) {
-        uint16_t num_slots = N_SELECTION_PERIOD * 1000 / 10;
+      if(is_routing_nbr(nbr) && nbr->ost_newly_added == 0) {
+        uint16_t ost_num_slots = N_SELECTION_PERIOD * 1000 / 10;
         // unit: packet/slot multiplied by 2^N_MAX
-        traffic_load = (nbr->num_tx) / num_slots * (1 << N_MAX);
+        ost_traffic_load = (nbr->ost_num_tx) / ost_num_slots * (1 << N_MAX);
 
         for(i = 1; i <= N_MAX; i++) {
-          if((traffic_load >> i) < 1) {
-            uint16_t old_N = nbr->my_N;
-            uint16_t new_N = (N_MAX - i) + 1 - MORE_UNDER_PROVISION;
+          if((ost_traffic_load >> i) < 1) {
+            uint16_t ost_old_N = nbr->ost_my_N;
+            uint16_t ost_new_N = (N_MAX - i) + 1 - MORE_UNDER_PROVISION;
 
-            if(old_N != new_N) {
-              uint8_t change_N = 0;
-              if(new_N > old_N) { //increase my_N
-                nbr->consecutive_my_N_inc++;
-                if(nbr->consecutive_my_N_inc >= THRES_CONSEQUTIVE_N_INC) {
-                  nbr->consecutive_my_N_inc = 0;
-                  change_N = 1;
+            if(ost_old_N != ost_new_N) {
+              uint8_t ost_change_N = 0;
+              if(ost_new_N > ost_old_N) { //increase my_N
+                nbr->ost_consecutive_my_N_inc++;
+                if(nbr->ost_consecutive_my_N_inc >= THRES_CONSEQUTIVE_N_INC) {
+                  nbr->ost_consecutive_my_N_inc = 0;
+                  ost_change_N = 1;
                 } else {
-                  change_N = 0;
+                  ost_change_N = 0;
                 }
               } else { //decrease my_N
-                nbr->consecutive_my_N_inc = 0;
-                change_N = 1;
+                nbr->ost_consecutive_my_N_inc = 0;
+                ost_change_N = 1;
               }
-              if(change_N) {
+              if(ost_change_N) {
 
 #if WITH_OST_03
-                ost_change_queue_N_update((linkaddr_t *)uip_ds6_nbr_get_ll(nbr), new_N);
+                ost_change_queue_N_update((linkaddr_t *)uip_ds6_nbr_get_ll(nbr), ost_new_N);
 #endif
-                nbr->my_N = new_N;
+                nbr->ost_my_N = ost_new_N;
 
 #if WITH_OST_DBG
-                LOG_INFO("select_N %u\n", new_N);
+                LOG_INFO("select_N %u\n", ost_new_N);
 #endif
-              } else {
               }
             } else { //No change
-              nbr->consecutive_my_N_inc = 0;
+              nbr->ost_consecutive_my_N_inc = 0;
             }
             break;
           }
         }
       } else {
-        nbr->my_N = 5;
-        if(nbr->new_add == 1) { 
-          nbr->new_add = 0;
+        nbr->ost_my_N = 5;
+        if(nbr->ost_newly_added == 1) { 
+          nbr->ost_newly_added = 0;
         }
       }
       nbr = uip_ds6_nbr_next(nbr);
@@ -216,17 +212,17 @@ void select_N(void* ptr)
     // Reset all num_tx
     nbr = uip_ds6_nbr_head();
     while(nbr != NULL) {
-      nbr->num_tx = 0;
+      nbr->ost_num_tx = 0;
       nbr = uip_ds6_nbr_next(nbr);
     }
 
     tsch_release_lock();
   }
-  ctimer_reset(&select_N_timer);
+  ctimer_reset(&ost_select_N_timer);
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_01 /* checked */
+#if WITH_OST_DONE
 struct tsch_neighbor *
 tsch_queue_get_nbr_from_id(const uint16_t id)
 {
@@ -420,13 +416,11 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
 #endif
 
-#if WITH_OST_01 /* checked */
-  /*
-   * OST measure traffic load
-   */
+#if WITH_OST_DONE /* OST measure traffic load */
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
   if(nbr != NULL) {
-    nbr->num_tx++; //even if q_loss
+    /* OST count the number of tx even if queue loss occurs */
+    nbr->ost_num_tx++;
   }
 #endif
 
@@ -818,12 +812,13 @@ tsch_queue_init(void)
   n_eb = tsch_queue_add_nbr(&tsch_eb_address);
   n_broadcast = tsch_queue_add_nbr(&tsch_broadcast_address);
 
-#if WITH_OST_01 /* checked */
+#if WITH_OST_DONE
   /* 
-   * start select_N_timer, this timer will call select_N func periodically
-   * select_N func calculates N for OST
+   * start ost_select_N_timer
+   * this timer will call ost_select_N func periodically
+   * ost_select_N func calculates N for OST operation
   */
-  ctimer_set(&select_N_timer, N_SELECTION_PERIOD * CLOCK_SECOND, select_N, NULL);
+  ctimer_set(&ost_select_N_timer, N_SELECTION_PERIOD * CLOCK_SECOND, ost_select_N, NULL);
 #endif
 }
 /*---------------------------------------------------------------------------*/
