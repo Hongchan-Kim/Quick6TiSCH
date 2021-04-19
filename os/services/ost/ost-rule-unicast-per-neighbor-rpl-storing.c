@@ -91,58 +91,56 @@ print_nbr(void)
     printf("[ID:%u]", nbr_id);
     printf(" %u / ", is_routing_nbr(nbr));
     printf("Tx %u,%u / Rx %u,%u / %u / %u / %u / %u / %u (%u, %u, %u, %u, %u)\n",
-      nbr->my_N, nbr->my_t_offset, nbr->nbr_N, nbr->nbr_t_offset, nbr->num_tx,
-      nbr->new_add, nbr->my_uninstallable, nbr->rx_no_path, nbr->my_low_prr, 
-      nbr->num_tx_mac, nbr->num_tx_succ_mac, nbr->num_consecutive_tx_fail_mac, 
-      nbr->consecutive_my_N_inc, nbr->consecutive_new_tx_request);
+      nbr->ost_my_N, nbr->ost_my_t_offset, nbr->ost_nbr_N, nbr->ost_nbr_t_offset, nbr->ost_num_tx,
+      nbr->ost_newly_added, nbr->ost_my_uninstallable, nbr->ost_rx_no_path, nbr->ost_my_low_prr, 
+      nbr->ost_num_tx_mac, nbr->ost_num_tx_succ_mac, nbr->ost_num_consecutive_tx_fail_mac, 
+      nbr->ost_consecutive_my_N_inc, nbr->ost_consecutive_new_tx_request);
 
     nbr = uip_ds6_nbr_next(nbr);
   }
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_04
+#if WITH_OST_DONE
 void
 reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path)
 {
   if(addr != NULL) {
     uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
     if(nbr != NULL) {
-      //LOG_INFO("reset_nbr %u\n", nbr_id);
 
-      nbr->my_N = 5;
-      ost_change_queue_N_update(addr, nbr->my_N);
+      nbr->ost_my_N = 5;
+      ost_change_queue_N_update(addr, nbr->ost_my_N);
 
-      nbr->my_t_offset = 0xFFFF;
+      nbr->ost_my_t_offset = 0xFFFF;
 
-      nbr->nbr_N = 0xFFFF;
-      nbr->nbr_t_offset = 0xFFFF;
+      nbr->ost_nbr_N = 0xFFFF;
+      nbr->ost_nbr_t_offset = 0xFFFF;
 
-      nbr->num_tx = 0;
+      nbr->ost_num_tx = 0;
 
       if(new_add == 1) {
-        nbr->new_add = 1;
+        nbr->ost_newly_added = 1;
       } else {
-        nbr->new_add = 0;
+        nbr->ost_newly_added = 0;
       }
 
-      nbr->my_uninstallable = 0;
+      nbr->ost_my_uninstallable = 0;
 
       if(rx_no_path == 1 ) {
-        nbr->rx_no_path = 1;
+        nbr->ost_rx_no_path = 1;
       } else {
-        nbr->rx_no_path = 0;
+        nbr->ost_rx_no_path = 0;
       }
 
-      nbr->my_low_prr = 0;
-      nbr->num_tx_mac = 0;
-      nbr->num_tx_succ_mac = 0;
-      nbr->num_consecutive_tx_fail_mac = 0;
-      nbr->consecutive_my_N_inc = 0;
-      nbr->consecutive_new_tx_request = 0;      
+      nbr->ost_my_low_prr = 0;
+      nbr->ost_num_tx_mac = 0;
+      nbr->ost_num_tx_succ_mac = 0;
+      nbr->ost_num_consecutive_tx_fail_mac = 0;
+      nbr->ost_consecutive_my_N_inc = 0;
+      nbr->ost_consecutive_new_tx_request = 0;      
     }
   }
-  //print_nbr();
 }
 #endif
 /*---------------------------------------------------------------------------*/
@@ -255,7 +253,7 @@ get_node_channel_offset(const linkaddr_t *addr)
   }
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_04
+#if WITH_OST_DONE
 int
 #else
 static int

@@ -89,9 +89,7 @@ void ost_remove_rx(uint16_t id);
 void ost_change_queue_select_packet(linkaddr_t *nbr_lladdr, uint16_t handle, uint16_t timeslot);
 //void ost_change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot);
 //void ost_print_nbr(void);
-#if WITH_OST_04
 int neighbor_has_uc_link(const linkaddr_t *linkaddr);
-#endif
 /* OST variables */
 extern uint8_t bootstrap_period;
 #if WITH_OST_10 && RESIDUAL_ALLOC

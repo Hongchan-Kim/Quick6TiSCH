@@ -51,7 +51,7 @@
 #include "lib/ringbufindex.h"
 #include "sys/log.h"
 
-#if WITH_OST_04
+#if WITH_OST_DONE
 #include "net/mac/tsch/tsch-log.h"
 #include "net/mac/tsch/tsch-queue.h"
 #include "net/mac/tsch/tsch-packet.h"
@@ -113,41 +113,48 @@ tsch_log_process_pending(void)
         }
         printf("\n");
 
-#if WITH_OST_04
+#if WITH_OST_DONE
+        /* unicast packets only */
         if(!linkaddr_cmp(&log->tx.dest, &linkaddr_null)
           && !linkaddr_cmp(&log->tx.dest, &tsch_eb_address)
-          && !linkaddr_cmp(&log->tx.dest, &tsch_broadcast_address)) { // hckim unicast only
+          && !linkaddr_cmp(&log->tx.dest, &tsch_broadcast_address)) {
+          /* periodic provisioning tx slotframe only */
           if(log->link->slotframe_handle >= 3 
-            && log->link->slotframe_handle < SSQ_SCHEDULE_HANDLE_OFFSET) { // hckim tx_sf only
+            && log->link->slotframe_handle < SSQ_SCHEDULE_HANDLE_OFFSET) {
             
             uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&log->tx.dest);
             if(nbr != NULL) {
-              nbr->num_tx_mac++;
+              nbr->ost_num_tx_mac++;
               if(log->tx.mac_tx_status == MAC_TX_OK) {
-                nbr->num_tx_succ_mac++;
-                nbr->num_consecutive_tx_fail_mac = 0;
+                nbr->ost_num_tx_succ_mac++;
+                nbr->ost_num_consecutive_tx_fail_mac = 0;
               } else {
-                nbr->num_consecutive_tx_fail_mac++;
+                nbr->ost_num_consecutive_tx_fail_mac++;
               }
               
-              uint16_t prr = 100 * nbr->num_tx_succ_mac / nbr->num_tx_mac;
-              if(prr <= PRR_THRES_TX_CHANGE && nbr->num_tx_mac >= NUM_TX_MAC_THRES_TX_CHANGE) {
-                nbr->my_low_prr = 1;
-                ost_change_queue_N_update(&log->tx.dest, nbr->my_N + INC_N_NEW_TX_REQUEST);
+              uint16_t prr = 100 * nbr->ost_num_tx_succ_mac / nbr->ost_num_tx_mac;
+              if(prr <= PRR_THRES_TX_CHANGE && nbr->ost_num_tx_mac >= NUM_TX_MAC_THRES_TX_CHANGE) {
+                nbr->ost_my_low_prr = 1;
+                ost_change_queue_N_update(&log->tx.dest, nbr->ost_my_N + INC_N_NEW_TX_REQUEST);
               }
 
-              if(nbr->num_consecutive_tx_fail_mac >= NUM_TX_FAIL_THRES) {
+              if(nbr->ost_num_consecutive_tx_fail_mac >= NUM_TX_FAIL_THRES) {
                 struct tsch_neighbor *n = tsch_queue_get_nbr(&log->tx.dest);
                 if(n != NULL) {
                   if(!tsch_queue_is_empty(n)) {
                     if(neighbor_has_uc_link(tsch_queue_get_nbr_address(n))) {
+#if WITH_OST_DBG
                       printf("Csct Tx fail -> Use RB %u\n", ringbufindex_elements(&n->tx_ringbuf));
+#endif
 #if WITH_OST_09
+                      /* use autonomous RB slotframe */
                       change_queue_select_packet(&log->tx.dest, 1, 
-                                          ORCHESTRA_LINKADDR_HASH(&log->tx.dest) % ORCHESTRA_UNICAST_PERIOD); //Use RB
+                                          ORCHESTRA_LINKADDR_HASH(&log->tx.dest) % ORCHESTRA_UNICAST_PERIOD);
 #endif
                     } else {
+#if WITH_OST_DBG
                       printf("Csct Tx fail -> Use shared slot %u\n", ringbufindex_elements(&n->tx_ringbuf));
+#endif
 #if WITH_OST_09
                       change_queue_select_packet(&log->tx.dest, 2, 0); //Use shared slot
 #endif

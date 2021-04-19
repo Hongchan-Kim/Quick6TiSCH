@@ -190,7 +190,7 @@ static struct pt slot_operation_pt;
 static PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t));
 static PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t));
 
-#if WITH_OST_04
+#if WITH_OST_DONE
 uint8_t todo_no_resource;
 uint8_t todo_consecutive_new_tx_request;
 static uint8_t todo_rx_schedule_change;
@@ -588,9 +588,9 @@ select_t_offset(uint16_t target_id, uint16_t N)  //similar with tx_installable
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_04 //hckim
+#if WITH_OST_DONE
 void
-process_rx_N(frame802154_t *frame) //In short, prN
+process_rx_N(frame802154_t *frame) /* in short, prN */
 {
   if(tsch_is_locked()) {
     TSCH_LOG_ADD(tsch_log_message,
@@ -603,13 +603,10 @@ process_rx_N(frame802154_t *frame) //In short, prN
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)(&(frame->src_addr)));
   if(nbr != NULL
     && !frame802154_is_broadcast_addr((frame->fcf).dest_addr_mode, frame->dest_addr)
-    && is_routing_nbr(nbr) == 1
-    && nbr->rx_no_path == 0) { // No need to allocate rx for nbr who sent no-path dao
+    && ost_is_routing_nbr(nbr) == 1
+    && nbr->ost_rx_no_path == 0) {
+    /* No need to allocate rx for nbr who sent no-path dao */
     
-    TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-                "Rx uc: N found %u", frame->pigg1);
-    );
 #if WITH_OST_DBG
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
@@ -617,38 +614,39 @@ process_rx_N(frame802154_t *frame) //In short, prN
     );
 #endif
 
-    if(nbr->nbr_N != frame->pigg1) {
-        uint16_t old_N = nbr->nbr_N;
+    if(nbr->ost_nbr_N != frame->ost_pigg1) {
+#if WITH_OST_DBG
+        uint16_t old_N = nbr->ost_nbr_N;
+#endif
+      /* To be used in post_process_rx_N */
+      if(frame->ost_pigg1 >= INC_N_NEW_TX_REQUEST) {
+        prN_new_N = (frame->ost_pigg1) - INC_N_NEW_TX_REQUEST;
 
-      // To be used in post_process_rx_N
-      if(frame->pigg1 >= INC_N_NEW_TX_REQUEST) {
-        prN_new_N = (frame->pigg1) - INC_N_NEW_TX_REQUEST;
-
+#if WITH_OST_DBG
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
                     "process_rx_N: detect uninstallable or low PRR");
         );
+#endif
 
-        nbr->consecutive_new_tx_request++;
-        TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                    "check %u\n", nbr->consecutive_new_tx_request);
-        );
+        nbr->ost_consecutive_new_tx_request++;
 
-        if(nbr->consecutive_new_tx_request >= THRES_CONSECUTIVE_NEW_TX_REQUEST) {
-          nbr->consecutive_new_tx_request = 0;
+        if(nbr->ost_consecutive_new_tx_request >= THRES_CONSECUTIVE_NEW_TX_REQUEST) {
+          nbr->ost_consecutive_new_tx_request = 0;
           todo_consecutive_new_tx_request = 1;
           return;
         }
       } else {
-        prN_new_N = frame->pigg1;
-        nbr->consecutive_new_tx_request = 0;
+        prN_new_N = frame->ost_pigg1;
+        nbr->ost_consecutive_new_tx_request = 0;
       }
 
+#if WITH_OST_DBG
       TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
                   "Rx uc: New N (%u->%u)\n", old_N, prN_new_N);
       );
+#endif
 
 #if WITH_OST_05
       uint16_t nbr_index = ost_node_index_from_linkaddr((linkaddr_t *)&(frame->src_addr));
@@ -668,17 +666,19 @@ process_rx_N(frame802154_t *frame) //In short, prN
       }
 #endif
     } else {
-      nbr->consecutive_new_tx_request = 0;
+      nbr->ost_consecutive_new_tx_request = 0;
     }
   }
 
+#if WITH_OST_DBG
   if(frame802154_is_broadcast_addr((frame->fcf).dest_addr_mode, frame->dest_addr)) {
-    //LOG_INFO("Rx uc: N found %u (BC)\n", frame->pigg1);
+    LOG_INFO("Rx uc: N found %u (BC)\n", frame->pigg1);
   } else if(nbr == NULL) {
-    //LOG_INFO("Rx uc: N found %u (No nbr)\n", frame->pigg1);
+    LOG_INFO("Rx uc: N found %u (No nbr)\n", frame->pigg1);
   } else if(is_routing_nbr(nbr) == 0) {
-    //LOG_INFO("Rx uc: N found %u (No r_nbr)\n",frame->pigg1);
+    LOG_INFO("Rx uc: N found %u (No r_nbr)\n",frame->pigg1);
   }
+#endif
 }
 #endif
 /*---------------------------------------------------------------------------*/
@@ -1526,7 +1526,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* read seqno from payload */
       seqno = ((uint8_t *)(packet))[2];
 
-#if WITH_OST_02 //hckim
+#if WITH_OST_DONE
 #if WITH_OST_10 && RESIDUAL_ALLOC
       frame802154_fcf_t fcf;
       frame802154_parse_fcf((uint8_t *)(packet), &fcf);
@@ -2039,8 +2039,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               static uint8_t ack_buf[TSCH_PACKET_MAX_LEN];
               static int ack_len;
 
-#if WITH_OST_04 //hckim generate ACK
-              //before EACK Tx
+#if WITH_OST_DONE
+              /* before generate EACK */
               todo_rx_schedule_change = 0;
               todo_no_resource = 0;
               todo_consecutive_new_tx_request = 0;

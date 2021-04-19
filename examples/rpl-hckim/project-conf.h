@@ -147,9 +147,6 @@
 
 #define WITH_OST_DONE                              1
 #define WITH_OST_DBG                               0
-#define WITH_OST_02                                0 /* frame and framer to piggyback N */
-#define WITH_OST_03                                0 /* update N of the packets in queue */
-#define WITH_OST_04                                0 /* process_rx_N */
 #define WITH_OST_05                                0 /* select_t_offset */
 #define WITH_OST_06                                0 /* create EACK */
 #define WITH_OST_07                                0 /* post_process_rx_N */

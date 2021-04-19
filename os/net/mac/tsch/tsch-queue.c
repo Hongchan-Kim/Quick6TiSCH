@@ -92,7 +92,7 @@ struct tsch_neighbor *n_eb;
 #if WITH_OST_DONE
 static struct ctimer ost_select_N_timer;
 /*---------------------------------------------------------------------------*/
-uint8_t is_routing_nbr(uip_ds6_nbr_t *nbr)
+uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr)
 {
   // parent?
   if(linkaddr_cmp(&orchestra_parent_linkaddr, (linkaddr_t *)uip_ds6_nbr_get_ll(nbr))) {
@@ -109,7 +109,7 @@ uint8_t is_routing_nbr(uip_ds6_nbr_t *nbr)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_03
+#if WITH_OST_DONE
 void
 ost_change_queue_N_update(const linkaddr_t *lladdr, uint16_t updated_N)
 {
@@ -119,12 +119,14 @@ ost_change_queue_N_update(const linkaddr_t *lladdr, uint16_t updated_N)
       int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
       uint8_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
 
-//      LOG_INFO("change_queue_N_update: %u %u (nbr %u)\n", updated_N, num_elements, nbr_id);
+#if WITH_OST_DBG
+      LOG_INFO("change_queue_N_update: %u %u (nbr %u)\n", updated_N, num_elements, nbr_id);
+#endif
 
       uint8_t j;
       for(j = get_index; j < get_index + num_elements; j++) {
         int8_t index;
-        if(j >= ringbufindex_size(&n->tx_ringbuf)) { //16
+        if(j >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
           index = j - ringbufindex_size(&n->tx_ringbuf);
         } else {
           index = j;
@@ -159,7 +161,7 @@ void ost_select_N(void* ptr)
   nbr = uip_ds6_nbr_head();
   if(tsch_get_lock()) {
     while(nbr != NULL) {
-      if(is_routing_nbr(nbr) && nbr->ost_newly_added == 0) {
+      if(ost_is_routing_nbr(nbr) && nbr->ost_newly_added == 0) {
         uint16_t ost_num_slots = N_SELECTION_PERIOD * 1000 / 10;
         // unit: packet/slot multiplied by 2^N_MAX
         ost_traffic_load = (nbr->ost_num_tx) / ost_num_slots * (1 << N_MAX);
@@ -185,7 +187,7 @@ void ost_select_N(void* ptr)
               }
               if(ost_change_N) {
 
-#if WITH_OST_03
+#if WITH_OST_DONE
                 ost_change_queue_N_update((linkaddr_t *)uip_ds6_nbr_get_ll(nbr), ost_new_N);
 #endif
                 nbr->ost_my_N = ost_new_N;
