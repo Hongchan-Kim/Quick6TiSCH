@@ -39,7 +39,7 @@
 #include "orchestra.h"
 
 static uint16_t slotframe_handle = 0;
-#if WITH_OST
+#if WITH_OST_00
 static uint16_t channel_offset = 0;
 #endif
 
@@ -69,7 +69,7 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-#if WITH_OST
+#if WITH_OST_00
   /* ost implementation */
   // hckim let default slotframe has the same channel offset with unicast slotframe
   channel_offset = sf_handle - 1;

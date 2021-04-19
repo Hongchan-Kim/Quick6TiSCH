@@ -41,7 +41,7 @@
 #include "net/mac/tsch/tsch.h"
 #include "orchestra-conf.h"
 
-#if WITH_OST
+#if WITH_OST_00
 #include "net/ipv6/uip-ds6-nbr.h" /* OST implementation */
 #endif
 
@@ -76,7 +76,7 @@ void orchestra_callback_child_added(const linkaddr_t *addr);
 /* Set with #define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK orchestra_callback_child_removed */
 void orchestra_callback_child_removed(const linkaddr_t *addr);
 
-#if WITH_OST
+#if WITH_OST_00
 /* OST implementation */
 /* OST functions */
 #if WITH_OST_04

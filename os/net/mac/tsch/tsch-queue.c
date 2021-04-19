@@ -57,7 +57,7 @@
 #include "net/nbr-table.h"
 #include <string.h>
 
-#if WITH_OST /* checked */
+#if WITH_OST_00 /* checked */
 #include "net/ipv6/uip-ds6-route.h"
 #include "net/ipv6/uip-ds6-nbr.h"
 #include "sys/ctimer.h"

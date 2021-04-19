@@ -47,7 +47,7 @@
 
 /***** External Variables *****/
 
-#if WITH_OST
+#if WITH_OST_00
 extern uint32_t num_total_auto_rx_accum;
 extern uint32_t num_total_rx_accum;
 #endif

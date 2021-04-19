@@ -54,7 +54,7 @@
 #include "net/mac/tsch/tsch.h"
 #include "sys/critical.h"
 
-#if WITH_OST /* checked */
+#if WITH_OST_00 /* checked */
 #include "node-info.h"
 #include "orchestra.h"
 #include "net/ipv6/uip-ds6-route.h"
@@ -190,7 +190,7 @@ static struct pt slot_operation_pt;
 static PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t));
 static PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t));
 
-#if WITH_OST /* checked */
+#if WITH_OST_00 /* checked */
 uint32_t num_total_auto_rx_accum;
 uint32_t num_total_rx_accum;
 #endif

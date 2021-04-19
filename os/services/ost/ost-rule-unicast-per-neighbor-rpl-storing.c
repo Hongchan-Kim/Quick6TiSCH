@@ -46,7 +46,7 @@
 #include "net/packetbuf.h"
 #include "net/routing/routing.h"
 
-#if WITH_OST
+#if WITH_OST_00
 /* OST implementation */
 #include "sys/ctimer.h"
 #include "sys/clock.h"

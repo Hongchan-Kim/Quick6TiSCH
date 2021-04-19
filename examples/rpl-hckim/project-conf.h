@@ -146,7 +146,7 @@
 #define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 
 #define WITH_OST_DBG                               0
-#define WITH_OST                                   1
+#define WITH_OST_00                                1
 #define WITH_OST_01                                1 /* measure traffic and select N */
 #define WITH_OST_02                                1 /* frame and framer to piggyback N */
 #define WITH_OST_03                                1 /* update N of the packets in queue */
@@ -156,7 +156,7 @@
 #define WITH_OST_07                                1 /* post_process_rx_N */
 #define WITH_OST_08                                1 /* process_rx_t_offset, post_process_rx_t_offset */
 #define WITH_OST_09                                1 /* etc for periodic provisioning */
-#define WITH_OST_10                                0 /* on-demand provisioning */
+#define WITH_OST_10                                1 /* on-demand provisioning */
 
 #define WITH_OST_CHECK                             0
 #define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1

@@ -120,7 +120,7 @@ typedef struct uip_ds6_nbr {
 #define UIP_DS6_NBR_PACKET_LIFETIME CLOCK_SECOND * 4
 #endif                          /*UIP_CONF_QUEUE_PKT */
 
-#if WITH_OST /* checked */
+#if WITH_OST_00 /* checked */
   uint16_t my_N; //For Tx    //1. determined by me
   uint16_t my_t_offset;      //2. determined by nbr
   uint8_t my_uninstallable;
