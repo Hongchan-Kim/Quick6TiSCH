@@ -230,7 +230,7 @@ tsch_queue_get_nbr_from_id(const uint16_t id)
 {
     struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
     while(n != NULL) {
-      if(ost_node_index_from_linkaddr(tsch_queue_get_nbr_address(n)) == id) {
+      if(ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(n)) == id) {
         return n;
       }
       n = list_item_next(n);
@@ -606,7 +606,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
 #if WITH_OST_10 && RESIDUAL_ALLOC //hckim
         if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
           uint16_t target_nbr_id = (link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
-          if(ost_node_index_from_linkaddr(tsch_queue_get_nbr_address(n)) == target_nbr_id) {
+          if(ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(n)) == target_nbr_id) {
             return n->tx_array[get_index];
           } else {
             return NULL;

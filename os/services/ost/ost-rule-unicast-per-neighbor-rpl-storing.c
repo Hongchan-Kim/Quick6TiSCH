@@ -86,7 +86,7 @@ print_nbr(void)
 
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_head();
   while(nbr != NULL) {
-    uint16_t nbr_id = ost_node_index_from_ipaddr(&(nbr->ipaddr));
+    uint16_t nbr_id = ost_node_id_from_ipaddr(&(nbr->ipaddr));
 
     printf("[ID:%u]", nbr_id);
     printf(" %u / ", is_routing_nbr(nbr));
@@ -144,27 +144,27 @@ reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_05
+#if WITH_OST_DONE
 uint16_t
-get_tx_sf_handle_from_id(const uint16_t id)
+ost_get_tx_sf_handle_from_id(const uint16_t id)
 { 
   return 2 * id + 1; 
 }
 /*---------------------------------------------------------------------------*/
 uint16_t
-get_rx_sf_handle_from_id(const uint16_t id)
+ost_get_rx_sf_handle_from_id(const uint16_t id)
 {
   return 2 * id + 2; 
 }
 /*---------------------------------------------------------------------------*/
 uint16_t
-get_id_from_tx_sf_handle(const uint16_t handle)
+ost_get_id_from_tx_sf_handle(const uint16_t handle)
 {
   return (handle - 1) / 2; 
 }
 /*---------------------------------------------------------------------------*/
 uint16_t
-get_id_from_rx_sf_handle(const uint16_t handle)
+ost_get_id_from_rx_sf_handle(const uint16_t handle)
 {
   return (handle - 2) / 2; 
 }
@@ -380,7 +380,7 @@ child_removed(const linkaddr_t *linkaddr)
       LOG_INFO("child_removed: remove_tx & remove_rx\n");
       if(linkaddr != NULL) {
         ost_remove_tx((linkaddr_t *)linkaddr);
-        ost_remove_rx(ost_node_index_from_linkaddr(linkaddr));
+        ost_remove_rx(ost_node_id_from_linkaddr(linkaddr));
         //tsch_schedule_print_proposed();
       }
     } else {
@@ -403,8 +403,8 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
 #if WITH_OST_09
 
     /* OST implementation */
-    uint16_t dest_id = ost_node_index_from_linkaddr(dest);
-    uint16_t tx_sf_handle = get_tx_sf_handle_from_id(dest_id);
+    uint16_t dest_id = ost_node_id_from_linkaddr(dest);
+    uint16_t tx_sf_handle = ost_get_tx_sf_handle_from_id(dest_id);
     struct tsch_slotframe *tx_sf = tsch_schedule_get_slotframe_by_handle(tx_sf_handle);
 
     if(slotframe != NULL) {
@@ -488,7 +488,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     LOG_INFO("new_time_source: remove_tx & remove_rx\n");
     if(old_addr != NULL) {
       ost_remove_tx((linkaddr_t *)old_addr);
-      ost_remove_rx(ost_node_index_from_linkaddr(old_addr));
+      ost_remove_rx(ost_node_id_from_linkaddr(old_addr));
       // tsch_schedule_print_proposed();
     }
 #else

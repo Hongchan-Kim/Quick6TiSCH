@@ -987,9 +987,9 @@ tsch_schedule_print_proposed(void)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_05 //hckim
+#if WITH_OST_DONE
 struct tsch_slotframe *
-tsch_schedule_get_slotframe_head(void)
+ost_tsch_schedule_get_slotframe_head(void)
 {
   struct tsch_slotframe *sf = list_head(slotframe_list);
   return sf;

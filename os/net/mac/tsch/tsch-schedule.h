@@ -186,8 +186,8 @@ struct ssq_schedule_t {
 };
 #endif
 
-#if WITH_OST_05
-struct tsch_slotframe *tsch_schedule_get_slotframe_head(void);
+#if WITH_OST_DONE
+struct tsch_slotframe *ost_tsch_schedule_get_slotframe_head(void);
 #endif
 #if WITH_OST_09 //hckim
 void tsch_schedule_print_proposed(void);

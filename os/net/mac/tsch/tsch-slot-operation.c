@@ -197,11 +197,11 @@ static uint8_t todo_rx_schedule_change;
 static uint16_t prN_new_N;
 #endif
 
-#if WITH_OST_05
-typedef struct t_offset_candidate {
+#if WITH_OST_DONE
+typedef struct ost_t_offset_candidate {
   uint8_t available;
   uint8_t priority;
-} t_offset_candidate_t;
+} ost_t_offset_candidate_t;
 
 static uint16_t prN_new_t_offset;
 static uip_ds6_nbr_t *prN_nbr;
@@ -362,7 +362,7 @@ add_matching_slot(uint16_t matching_slot, uint8_t is_tx, uint16_t nbr_id)
 uint16_t 
 process_rx_schedule_info(frame802154_t* frame) 
 {
-  uint16_t nbr_id = ost_node_index_from_linkaddr((linkaddr_t *)(&(frame->src_addr)));
+  uint16_t nbr_id = ost_node_id_from_linkaddr((linkaddr_t *)(&(frame->src_addr)));
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)(&(frame->src_addr)));
   if(nbr != NULL
     && !frame802154_is_broadcast_addr((frame->fcf).dest_addr_mode, frame->dest_addr)
@@ -400,7 +400,7 @@ void
 process_rx_matching_slot(frame802154_t* frame)
 {
   linkaddr_t *eack_src = tsch_queue_get_nbr_address(current_neighbor);
-  uint16_t nbr_id = ost_node_index_from_linkaddr(eack_src);
+  uint16_t nbr_id = ost_node_id_from_linkaddr(eack_src);
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)eack_src);
   if(nbr != NULL && is_routing_nbr(nbr) == 1) {
     add_matching_slot(frame->pigg2, 1, nbr_id);
@@ -413,7 +413,7 @@ void
 add_rx(uint16_t id, uint16_t N, uint16_t t_offset)
 {
   if(N != 65535 && t_offset != 65535) {
-    uint16_t handle = get_rx_sf_handle_from_id(id);
+    uint16_t handle = ost_get_rx_sf_handle_from_id(id);
     uint16_t size = (1 << N);
     uint16_t channel_offset = 3;
 
@@ -447,7 +447,7 @@ void
 remove_rx(uint16_t id)
 {
   struct tsch_slotframe *rm_sf;
-  uint16_t rm_sf_handle = get_rx_sf_handle_from_id(id);
+  uint16_t rm_sf_handle = ost_get_rx_sf_handle_from_id(id);
   rm_sf = tsch_schedule_get_slotframe_by_handle(rm_sf_handle);
 
   if(rm_sf != NULL) {
@@ -457,9 +457,9 @@ remove_rx(uint16_t id)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_05 //hckim
+#if WITH_OST_DONE
 void
-eliminate_overlap_toc(t_offset_candidate_t *toc, uint16_t target_N, uint16_t used_N, uint16_t used_t_offset)
+eliminate_overlap_toc(ost_t_offset_candidate_t *toc, uint16_t target_N, uint16_t used_N, uint16_t used_t_offset)
 {
 #if WITH_OST_DBG
   TSCH_LOG_ADD(tsch_log_message,
@@ -468,13 +468,13 @@ eliminate_overlap_toc(t_offset_candidate_t *toc, uint16_t target_N, uint16_t use
   );
 #endif
 
-  if(target_N < used_N) { // Lower-tier used
+  if(target_N < used_N) { /* lower-tier used */
     uint16_t parent_N = used_N - 1;
     uint16_t parent_t_offset = used_t_offset % (1 << (used_N - 1)); 
 
     eliminate_overlap_toc(toc, target_N, parent_N, parent_t_offset);
 
-  } else if (target_N > used_N) { // Higher-tier used
+  } else if (target_N > used_N) { /* higher-tier used */
     uint16_t child_N = used_N + 1;
     uint16_t left_child_t_offset = used_t_offset;
     uint16_t right_child_t_offset = used_t_offset + (1 << used_N);
@@ -482,7 +482,7 @@ eliminate_overlap_toc(t_offset_candidate_t *toc, uint16_t target_N, uint16_t use
     eliminate_overlap_toc(toc, target_N, child_N, left_child_t_offset);
     eliminate_overlap_toc(toc, target_N, child_N, right_child_t_offset);
 
-  } else { // target_N == used_N
+  } else { /* target_N == used_N */
     if(used_t_offset >= (1 << target_N)) {
 
 #if WITH_OST_DBG
@@ -499,17 +499,17 @@ eliminate_overlap_toc(t_offset_candidate_t *toc, uint16_t target_N, uint16_t use
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_05 //hckim
+#if WITH_OST_DONE
 uint32_t 
-select_t_offset(uint16_t target_id, uint16_t N)  //similar with tx_installable
+select_t_offset(uint16_t target_id, uint16_t N)  /* similar with tx_installable */
 {
-  t_offset_candidate_t toc[1 << N_MAX];
+  ost_t_offset_candidate_t toc[1 << N_MAX];
 
-  /* Initialize 2^N toc */
+  /* initialize 2^N toc */
   uint16_t i;
   for(i = 0; i < (1 << N); i++) {
     toc[i].available = 1;
-    toc[i].priority = 255; //TODO
+    toc[i].priority = 255;
   }
 
   /* Check resource overlap */
@@ -520,9 +520,9 @@ select_t_offset(uint16_t target_id, uint16_t N)  //similar with tx_installable
   );
 #endif
 
-  struct tsch_slotframe *sf = tsch_schedule_get_slotframe_head();
+  struct tsch_slotframe *sf = ost_tsch_schedule_get_slotframe_head();
   while(sf != NULL) {
-    if(sf->handle > 2 && sf->handle != get_rx_sf_handle_from_id(target_id)) {
+    if(sf->handle > 2 && sf->handle != ost_get_rx_sf_handle_from_id(target_id)) {
       uint16_t n;
       for(n = 1; n <= N_MAX; n++) {
         if((sf->size.val >> n) == 1) {
@@ -648,16 +648,16 @@ process_rx_N(frame802154_t *frame) /* in short, prN */
       );
 #endif
 
-#if WITH_OST_05
-      uint16_t nbr_index = ost_node_index_from_linkaddr((linkaddr_t *)&(frame->src_addr));
+#if WITH_OST_DONE
+      uint16_t nbr_index = ost_node_id_from_linkaddr((linkaddr_t *)&(frame->src_addr));
       uint32_t result = select_t_offset(nbr_index, prN_new_N);
 
       if(result <= 65535) {
         todo_rx_schedule_change = 1;
         prN_new_t_offset = (uint16_t)result;
         prN_nbr = nbr;
-        nbr->nbr_N = prN_new_N; 
-        nbr->nbr_t_offset = prN_new_t_offset;
+        nbr->ost_nbr_N = prN_new_N; 
+        nbr->ost_nbr_t_offset = prN_new_t_offset;
         
         return;  
       } else {
@@ -691,7 +691,7 @@ post_process_rx_N(void)
     todo_rx_schedule_change = 0;
 
     if(prN_nbr != NULL) {
-      uint16_t nbr_id = ost_node_index_from_ipaddr(&(prN_nbr->ipaddr));
+      uint16_t nbr_id = ost_node_id_from_ipaddr(&(prN_nbr->ipaddr));
       remove_rx(nbr_id);
 
       add_rx(nbr_id, prN_new_N, prN_new_t_offset);
@@ -770,10 +770,10 @@ void
 add_tx(linkaddr_t *nbr_lladdr, uint16_t N, uint16_t t_offset)
 //add_tx(uint16_t id, uint16_t N, uint16_t t_offset)
 {
-  uint16_t id = ost_node_index_from_linkaddr(nbr_lladdr);
+  uint16_t id = ost_node_id_from_linkaddr(nbr_lladdr);
   
   if(N != 65535 && t_offset != 65535) {
-    uint16_t handle = get_tx_sf_handle_from_id(id);
+    uint16_t handle = ost_get_tx_sf_handle_from_id(id);
     uint16_t size = (1 << N);
     uint16_t channel_offset = 3;
 
@@ -824,10 +824,10 @@ add_tx(linkaddr_t *nbr_lladdr, uint16_t N, uint16_t t_offset)
 void 
 ost_remove_tx(linkaddr_t *nbr_lladdr) //(uint16_t id)
 {
-  uint16_t id = ost_node_index_from_linkaddr(nbr_lladdr);
+  uint16_t id = ost_node_id_from_linkaddr(nbr_lladdr);
 
   struct tsch_slotframe *rm_sf;
-  uint16_t rm_sf_handle = get_tx_sf_handle_from_id(id);
+  uint16_t rm_sf_handle = ost_get_tx_sf_handle_from_id(id);
   rm_sf = tsch_schedule_get_slotframe_by_handle(rm_sf_handle);
 
   if(rm_sf != NULL) {
@@ -862,8 +862,8 @@ uint8_t
 has_my_N_changed(uip_ds6_nbr_t * nbr)
 {
   //To check whether to match nbr->my_N and installed tx_sf
-  uint16_t nbr_id = ost_node_index_from_ipaddr(&(nbr->ipaddr));
-  uint16_t tx_sf_handle = get_tx_sf_handle_from_id(nbr_id);
+  uint16_t nbr_id = ost_node_id_from_ipaddr(&(nbr->ipaddr));
+  uint16_t tx_sf_handle = ost_get_tx_sf_handle_from_id(nbr_id);
   struct tsch_slotframe *tx_sf = tsch_schedule_get_slotframe_by_handle(tx_sf_handle);
   uint16_t tx_sf_size;
 
@@ -893,7 +893,7 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)  //similar wit
     return -1;
   }
 
-  t_offset_candidate_t toc[1 << N_MAX];
+  ost_t_offset_candidate_t toc[1 << N_MAX];
 
   uint16_t i;
   if(t_offset == 65535) {
@@ -915,9 +915,9 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)  //similar wit
   //check resource overlap
   //PRINTF("\ntx_installable (target %u,%u)\n", N, t_offset);
 
-  struct tsch_slotframe *sf = tsch_schedule_get_slotframe_head();
+  struct tsch_slotframe *sf = ost_tsch_schedule_get_slotframe_head();
   while(sf != NULL) {
-    if(sf->handle > 2 && sf->handle != get_tx_sf_handle_from_id(target_id)) {
+    if(sf->handle > 2 && sf->handle != ost_get_tx_sf_handle_from_id(target_id)) {
       uint16_t n;
       for(n = 1; n <= N_MAX; n++) {
         if((sf->size.val >> n) == 1) {
@@ -957,7 +957,7 @@ void
 process_rx_t_offset(frame802154_t* frame) //In short, prt
 {
   linkaddr_t *eack_src = tsch_queue_get_nbr_address(current_neighbor);
-  uint16_t nbr_id = ost_node_index_from_linkaddr(eack_src);
+  uint16_t nbr_id = ost_node_id_from_linkaddr(eack_src);
   
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)eack_src);
   if(nbr != NULL && is_routing_nbr(nbr) == 1) {
@@ -1038,7 +1038,7 @@ void
 post_process_rx_t_offset(void)
 {
   linkaddr_t *nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(prt_nbr);
-  uint16_t nbr_id = ost_node_index_from_ipaddr(&(prt_nbr->ipaddr));
+  uint16_t nbr_id = ost_node_id_from_ipaddr(&(prt_nbr->ipaddr));
 
   if(todo_N_inc == 1) {
     todo_N_inc = 0;
@@ -1532,7 +1532,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       frame802154_parse_fcf((uint8_t *)(packet), &fcf);
 
       int queued_pkts = ringbufindex_elements(&current_neighbor->tx_ringbuf);
-      uint16_t nbr_id = ost_node_index_from_linkaddr(tsch_queue_get_nbr_address(current_neighbor));
+      uint16_t nbr_id = ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(current_neighbor));
 
       if(fcf.ack_required) {
 #if OST_ON_DEMAND_PROVISION
@@ -1543,7 +1543,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             uint16_t ssq_schedule = tsch_schedule_get_subsequent_schedule(&tsch_current_asn);
 
             /* To disable ssq bit after periodic provision Tx */
-            uint16_t tx_sf_handle = get_tx_sf_handle_from_id(nbr_id);
+            uint16_t tx_sf_handle = ost_get_tx_sf_handle_from_id(nbr_id);
             struct tsch_slotframe *sf = tsch_schedule_get_slotframe_by_handle(tx_sf_handle); //Periodic provision
 
             if(sf != NULL) {
@@ -1854,7 +1854,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
   }
   if(current_link->slotframe_handle == 1) { // RB
     int queued_pkts = ringbufindex_elements(&current_neighbor->tx_ringbuf);
-    uint16_t nbr_id = ost_node_index_from_linkaddr(tsch_queue_get_nbr_address(current_neighbor));
+    uint16_t nbr_id = ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(current_neighbor));
 
     if(reserved_ssq(nbr_id) && queued_pkts == 0) { // Tx occurs by RB before reserved ssq Tx
       /* Remove Tx ssq by RB */
@@ -2242,12 +2242,12 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
         if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
           if(current_link->link_options & LINK_OPTION_TX) {
-            rx_id = get_id_from_tx_sf_handle(current_link->slotframe_handle);
+            rx_id = ost_get_id_from_tx_sf_handle(current_link->slotframe_handle);
             if(current_packet == NULL) {
               //printf("ERROR: multi_channel 3\n");
             }
           } else if(current_link->link_options & LINK_OPTION_RX) {
-            rx_id = ost_node_index_from_linkaddr(&linkaddr_node_addr);
+            rx_id = ost_node_id_from_linkaddr(&linkaddr_node_addr);
           } else {
             //printf("ERROR: multi_channel 1\n");
           }
@@ -2278,7 +2278,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
               /* ERROR: multi_channel 4 */
             }
           } else if(current_link->link_options & LINK_OPTION_RX) {
-            rx_id = ost_node_index_from_linkaddr(&linkaddr_node_addr);
+            rx_id = ost_node_id_from_linkaddr(&linkaddr_node_addr);
           } else {
             /* ERROR: multi_channel 5 */
           }

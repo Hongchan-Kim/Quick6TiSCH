@@ -821,7 +821,7 @@ dao_input_storing(void)
 
 #if WITH_OST_09
       //Rx No-path DAO
-      uint16_t prefix_id = ost_node_index_from_ipaddr(&prefix);
+      uint16_t prefix_id = ost_node_id_from_ipaddr(&prefix);
       uip_ds6_nbr_t *nbr = uip_ds6_nbr_lookup(&prefix);
 
       if(nbr != NULL && is_routing_nbr(nbr) == 1) {
@@ -867,7 +867,7 @@ dao_input_storing(void)
   uip_ds6_nbr_t *sender_nbr = uip_ds6_nbr_lookup(&dao_sender_addr);
   if(sender_nbr != NULL) {
     if(sender_nbr->rx_no_path == 1) {
-      uint16_t sender_nbr_id = ost_node_index_from_ipaddr(&(sender_nbr->ipaddr));
+      uint16_t sender_nbr_id = ost_node_id_from_ipaddr(&(sender_nbr->ipaddr));
       sender_nbr->rx_no_path = 0;
       LOG_INFO("rx_no_path set 0 (nbr %u)\n", sender_nbr_id);
     }

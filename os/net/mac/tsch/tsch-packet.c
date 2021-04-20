@@ -147,7 +147,7 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   framer_802154_setup_params(tsch_packet_eackbuf_attr, 0, &params);
 
 #if WITH_OST_06
-//  uint16_t dest_id = ost_node_index_from_linkaddr(dest_addr);
+//  uint16_t dest_id = ost_node_id_from_linkaddr(dest_addr);
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
   if(nbr != NULL && is_routing_nbr(nbr) == 1) {
     //LOG_INFO("Tx EACK: t_offset make %u (nbr %u)\n", nbr->nbr_t_offset, nbr_id); // only eack  
