@@ -113,13 +113,13 @@ int queuebuf_datalen(struct queuebuf *b);
 linkaddr_t *queuebuf_addr(struct queuebuf *b, uint8_t type);
 packetbuf_attr_t queuebuf_attr(struct queuebuf *b, uint8_t type);
 
-#if WITH_OST_08
-void set_queuebuf_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val);
-#endif
-
 void queuebuf_debug_print(void);
 
 int queuebuf_numfree(void);
+
+#if WITH_OST_DONE
+void set_queuebuf_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val);
+#endif
 
 #endif /* __QUEUEBUF_H__ */
 

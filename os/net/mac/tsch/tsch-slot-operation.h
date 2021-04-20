@@ -94,9 +94,9 @@ void tsch_slot_operation_sync(rtimer_clock_t next_slot_start,
  */
 void tsch_slot_operation_start(void);
 
-#if WITH_OST_08
-uint8_t get_todo_no_resource();
-uint8_t get_todo_consecutive_new_tx_request();
+#if WITH_OST_DONE
+uint8_t ost_get_ost_flag_failed_to_select_t_offset();
+uint8_t ost_get_todo_consecutive_new_tx_request();
 #endif
 
 #endif /* __TSCH_SLOT_OPERATION_H__ */

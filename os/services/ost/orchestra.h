@@ -87,7 +87,6 @@ uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr);
 void ost_remove_tx(linkaddr_t *nbr_lladdr);
 void ost_remove_rx(uint16_t id);
 void ost_change_queue_select_packet(linkaddr_t *nbr_lladdr, uint16_t handle, uint16_t timeslot);
-//void ost_change_queue_select_packet(uint16_t id, uint16_t handle, uint16_t timeslot);
 //void ost_print_nbr(void);
 int neighbor_has_uc_link(const linkaddr_t *linkaddr);
 /* OST variables */

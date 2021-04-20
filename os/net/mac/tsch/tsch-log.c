@@ -148,7 +148,7 @@ tsch_log_process_pending(void)
 #endif
 #if WITH_OST_09
                       /* use autonomous RB slotframe */
-                      change_queue_select_packet(&log->tx.dest, 1, 
+                      ost_change_queue_select_packet(&log->tx.dest, 1, 
                                           ORCHESTRA_LINKADDR_HASH(&log->tx.dest) % ORCHESTRA_UNICAST_PERIOD);
 #endif
                     } else {
@@ -156,7 +156,7 @@ tsch_log_process_pending(void)
                       printf("Csct Tx fail -> Use shared slot %u\n", ringbufindex_elements(&n->tx_ringbuf));
 #endif
 #if WITH_OST_09
-                      change_queue_select_packet(&log->tx.dest, 2, 0); //Use shared slot
+                      ost_change_queue_select_packet(&log->tx.dest, 2, 0); //Use shared slot
 #endif
                     }
                   }

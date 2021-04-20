@@ -662,7 +662,7 @@ tsch_tx_process_pending(void)
     ringbufindex_get(&dequeued_ringbuf);
   }
 
-#if WITH_OST_08
+#if WITH_OST_DONE
   post_process_rx_t_offset();
 #endif
 

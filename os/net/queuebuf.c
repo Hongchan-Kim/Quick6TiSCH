@@ -457,7 +457,7 @@ queuebuf_attr(struct queuebuf *b, uint8_t type)
   return buframptr->attrs[type].val;
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_08
+#if WITH_OST_DONE
 void
 set_queuebuf_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val)
 {
