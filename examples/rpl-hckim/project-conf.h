@@ -215,8 +215,8 @@
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
-#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_LOG             0
+#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_LOG             1
 /*---------------------------------------------------------------------------*/
 
 

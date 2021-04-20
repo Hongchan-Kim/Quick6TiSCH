@@ -214,7 +214,7 @@ static uip_ds6_nbr_t *prt_nbr;
 static uint8_t changed_t_offset_default;
 #endif
 
-#if WITH_OST_09 //hckim
+#if WITH_OST_DONE
 #if WITH_OST_10 && RESIDUAL_ALLOC
 struct ssq_schedule_t ssq_schedule_list[16];
 #endif
@@ -407,8 +407,8 @@ process_rx_matching_slot(frame802154_t* frame)
 /*---------------------------------------------------------------------------*/
 /* Rx N from Data -> Change Rx schedule */
 #if WITH_OST_DONE
-void 
-add_rx(uint16_t id, uint16_t N, uint16_t t_offset)
+void
+ost_add_rx(uint16_t id, uint16_t N, uint16_t t_offset)
 {
   if(N != 65535 && t_offset != 65535) {
     uint16_t handle = ost_get_rx_sf_handle_from_id(id);
@@ -432,8 +432,8 @@ add_rx(uint16_t id, uint16_t N, uint16_t t_offset)
 #endif
 /*---------------------------------------------------------------------------*/
 #if WITH_OST_DONE
-void 
-remove_rx(uint16_t id)
+void
+ost_remove_rx(uint16_t id)
 {
   struct tsch_slotframe *rm_sf;
   uint16_t rm_sf_handle = ost_get_rx_sf_handle_from_id(id);
@@ -677,9 +677,9 @@ post_process_rx_N(void)
 
     if(prN_nbr != NULL) {
       uint16_t nbr_id = ost_node_id_from_ipaddr(&(prN_nbr->ipaddr));
-      remove_rx(nbr_id);
+      ost_remove_rx(nbr_id);
 
-      add_rx(nbr_id, prN_new_N, prN_new_t_offset);
+      ost_add_rx(nbr_id, prN_new_N, prN_new_t_offset);
 
 #if WITH_OST_DBG
       TSCH_LOG_ADD(tsch_log_message,
@@ -739,7 +739,7 @@ void ost_change_queue_select_packet(linkaddr_t *nbr_lladdr, uint16_t handle, uin
 /*---------------------------------------------------------------------------*/
 #if WITH_OST_DONE
 void 
-add_tx(linkaddr_t *nbr_lladdr, uint16_t N, uint16_t t_offset)
+ost_add_tx(linkaddr_t *nbr_lladdr, uint16_t N, uint16_t t_offset)
 {
   uint16_t id = ost_node_id_from_linkaddr(nbr_lladdr);
   
@@ -994,7 +994,7 @@ post_process_rx_t_offset(void)
 #endif
 
         } else {
-          add_tx(nbr_lladdr, prt_nbr->ost_my_N, prt_new_t_offset);
+          ost_add_tx(nbr_lladdr, prt_nbr->ost_my_N, prt_new_t_offset);
 
 #if WITH_OST_DBG
           TSCH_LOG_ADD(tsch_log_message,
@@ -2081,6 +2081,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                             tsch_lock_requested,
                             current_link == NULL);
       );
+
 #if WITH_OST_10 & RESIDUAL_ALLOC //hckim
       if(exist_matching_slot(&tsch_current_asn)) {
         remove_matching_slot();
@@ -2125,13 +2126,12 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
 
-#if WITH_OST_09
+#if WITH_OST_DONE
       else if(current_packet == NULL && (current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         if(current_link->slotframe_handle > backup_link->slotframe_handle) {
-           current_link = backup_link;
-           current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor); //There could be Tx option in backup link
-        } else {
-          //Use current_link
+          /* There could be Tx option in backup link */
+          current_link = backup_link;
+          current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
         }
       }
 #endif
@@ -2139,37 +2139,26 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
 
-#if WITH_OST_09 //hckim
+#if WITH_OST_DONE
         uint16_t rx_id = 0;
 
         if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
           if(current_link->link_options & LINK_OPTION_TX) {
             rx_id = ost_get_id_from_tx_sf_handle(current_link->slotframe_handle);
-            if(current_packet == NULL) {
-              //printf("ERROR: multi_channel 3\n");
-            }
           } else if(current_link->link_options & LINK_OPTION_RX) {
             rx_id = ost_node_id_from_linkaddr(&linkaddr_node_addr);
-          } else {
-            //printf("ERROR: multi_channel 1\n");
           }
+
           struct tsch_slotframe *sf = tsch_schedule_get_slotframe_by_handle(current_link->slotframe_handle);
           if(sf != NULL) {
             uint64_t ASN = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
-            if(ASN % ORCHESTRA_CONF_COMMON_SHARED_PERIOD == 0) {
-              // hckim ost check!!!!!
-              //Shared slotframe should have been prioritized
-              //printf("ERROR: multi_channel 4\n");
-            }
             uint64_t ASFN = ASN / sf->size.val;
-            //printf("rx_id %u, ASFN %lu, ASN %u.%u\n",rx_id,ASFN,tsch_current_asn.ms1b,tsch_current_asn.ls4b);
             uint16_t hash_input = (uint16_t)(rx_id + ASFN);
-            uint16_t minus_c_offset = hash_ftn(hash_input, 2) ; //0 or 1
-            current_link->channel_offset = 3; //default
-            current_link->channel_offset = current_link->channel_offset - minus_c_offset; // 3-0 or 3-1
+            uint16_t minus_c_offset = hash_ftn(hash_input, 2) ; /* 0 or 1 */
+            current_link->channel_offset = 3; /* default: 3 */
+            current_link->channel_offset = current_link->channel_offset - minus_c_offset; /* 3 - 0 or 3 - 1 */
           } else {
-            //printf("sf removed just before, %x.%lx %u\n", tsch_current_asn.ms1b, tsch_current_asn.ls4b, current_link->slotframe_handle);
-            goto donothing;
+            goto ost_donothing;
           }
         }
 #if WITH_OST_10 && RESIDUAL_ALLOC 
@@ -2235,8 +2224,8 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         burst_link_scheduled = 0;
       }
 
-#if WITH_OST_09
-donothing:
+#if WITH_OST_DONE
+ost_donothing:
 #endif
 
       TSCH_DEBUG_SLOT_END();

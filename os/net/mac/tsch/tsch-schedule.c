@@ -953,7 +953,7 @@ tsch_schedule_print(void)
 }
 /*---------------------------------------------------------------------------*/
 /* Prints out the current schedule (all slotframes and links) */
-#if WITH_OST_09 //hckim
+#if WITH_OST_DONE
 void
 tsch_schedule_print_proposed(void)
 {

@@ -59,9 +59,6 @@ extern struct tsch_neighbor *n_eb;
 struct tsch_neighbor *tsch_queue_get_nbr_from_id(const uint16_t id);
 void ost_change_queue_N_update(const linkaddr_t *lladdr, uint16_t updated_N);
 #endif
-#if WITH_OST_09 //hckim
-void tsch_queue_flush_nbr_queue(struct tsch_neighbor *n);
-#endif
 
 /**
  * \brief Add a TSCH neighbor queue

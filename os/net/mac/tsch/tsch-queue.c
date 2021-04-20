@@ -346,10 +346,10 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
         TSCH_CALLBACK_NEW_TIME_SOURCE(old_time_src, new_time_src);
 #endif
       }
-#if WITH_OST_09
+#if WITH_OST_DONE
       else {
-        //For First association (First DIO Rx) 
-        reset_nbr(new_addr, 1, 0);
+        /* for first association (first DIO reception) */
+        ost_reset_nbr(new_addr, 1, 0);
       }
 #endif
 
@@ -360,13 +360,8 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
 }
 /*---------------------------------------------------------------------------*/
 /* Flush a neighbor queue */
-#if WITH_OST_09
-void
-tsch_queue_flush_nbr_queue(struct tsch_neighbor *n)
-#else
 static void
 tsch_queue_flush_nbr_queue(struct tsch_neighbor *n)
-#endif
 {
   while(!tsch_queue_is_empty(n)) {
     struct tsch_packet *p = tsch_queue_remove_packet_from_queue(n);

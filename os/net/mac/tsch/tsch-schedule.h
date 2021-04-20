@@ -188,9 +188,10 @@ struct ssq_schedule_t {
 
 #if WITH_OST_DONE
 struct tsch_slotframe *ost_tsch_schedule_get_slotframe_head(void);
-#endif
-#if WITH_OST_09 //hckim
 void tsch_schedule_print_proposed(void);
+#endif
+
+#if WITH_OST_10
 uint16_t tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn);
 #endif
 

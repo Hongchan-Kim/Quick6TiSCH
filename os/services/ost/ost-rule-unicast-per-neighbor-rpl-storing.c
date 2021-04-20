@@ -77,7 +77,7 @@ static struct tsch_slotframe *sf_unicast;
 
 /* OST implementation */
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_09
+#if WITH_OST_DBG
 void
 print_nbr(void)
 {
@@ -89,7 +89,7 @@ print_nbr(void)
     uint16_t nbr_id = ost_node_id_from_ipaddr(&(nbr->ipaddr));
 
     printf("[ID:%u]", nbr_id);
-    printf(" %u / ", is_routing_nbr(nbr));
+    printf(" %u / ", ost_is_routing_nbr(nbr));
     printf("Tx %u,%u / Rx %u,%u / %u / %u / %u / %u / %u (%u, %u, %u, %u, %u)\n",
       nbr->ost_my_N, nbr->ost_my_t_offset, nbr->ost_nbr_N, nbr->ost_nbr_t_offset, nbr->ost_num_tx,
       nbr->ost_newly_added, nbr->ost_my_uninstallable, nbr->ost_rx_no_path, nbr->ost_my_low_prr, 
@@ -103,7 +103,7 @@ print_nbr(void)
 /*---------------------------------------------------------------------------*/
 #if WITH_OST_DONE
 void
-reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path)
+ost_reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path)
 {
   if(addr != NULL) {
     uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
@@ -170,61 +170,42 @@ ost_get_id_from_rx_sf_handle(const uint16_t handle)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_09
+#if WITH_OST_DONE
+/* use shared slotframe instead of RB or ost slotframes */
 void 
-change_attr_in_tx_queue(const linkaddr_t * dest, uint8_t is_adjust_tx_sf_size, uint8_t only_first_packet)
+change_attr_in_tx_queue(const linkaddr_t * dest)
 {
-  uint16_t timeslot;
-  uint16_t sf_handle;
-  int16_t get_index = -100;
-  int16_t put_index = -200;
+  uint16_t timeslot = 0;
+  uint16_t sf_handle = 2;
+
+  int16_t get_index = 0;
   uint8_t num_elements = 0;
 
-  if(is_adjust_tx_sf_size == 0) {
-    //Use shared slot
-    timeslot = 0;
-    sf_handle = 2;
-  } else { 
-    LOG_ERR("ERROR: is_adjust_tx_sf_size cannot be 0 in Orchestra\n");
-  }
-
   if(!tsch_is_locked()) {
-    struct tsch_neighbor * dest_nbr = tsch_queue_get_nbr(dest);
+    struct tsch_neighbor *dest_nbr = tsch_queue_get_nbr(dest);
     if(dest_nbr == NULL) {
-      LOG_INFO("change_attr_in_tx_queue: My child, Tx queue for him is empty, so dest_nbr==NULL\n");
-      //thus, we don't have packets to change
+      /* we do not have packets to change */
       return;
     }
 
     tsch_queue_backoff_reset(dest_nbr);
 
     get_index = ringbufindex_peek_get(&dest_nbr->tx_ringbuf);
-    put_index = ringbufindex_peek_put(&dest_nbr->tx_ringbuf);
-    num_elements= ringbufindex_elements(&dest_nbr->tx_ringbuf);
-    LOG_INFO("get_index: %d, put_index: %d, %u\n", get_index, put_index, num_elements);
-
-    if(only_first_packet == 1 && num_elements > 0) {
-      LOG_INFO("only first packet\n");
-      num_elements = 1;      
-    }
-
+    num_elements = ringbufindex_elements(&dest_nbr->tx_ringbuf);
+    
     uint8_t i;
     for(i = get_index; i < get_index + num_elements; i++) {
       int16_t index;
 
-      if(i >= ringbufindex_size(&dest_nbr->tx_ringbuf)) { //16
+      if(i >= ringbufindex_size(&dest_nbr->tx_ringbuf)) { /* default: 16 */
         index = i - ringbufindex_size(&dest_nbr->tx_ringbuf);
       } else {
         index = i;  
       }
+
       set_queuebuf_attr(dest_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME, sf_handle);
       set_queuebuf_attr(dest_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
-      LOG_INFO("index: %u, %u %u\n", i, 
-              queuebuf_attr(dest_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME), 
-              queuebuf_attr(dest_nbr->tx_array[index]->qb,PACKETBUF_ATTR_TSCH_TIMESLOT));
     }
-  } else {
-    LOG_ERR("ERROR: lock fail (change_attr_in_tx_queue)\n");
   }
 }
 #endif
@@ -341,8 +322,8 @@ remove_uc_link(const linkaddr_t *linkaddr)
 static void
 child_added(const linkaddr_t *linkaddr)
 {
-#if WITH_OST_09
-  reset_nbr(linkaddr, 1, 0); /* OST implementation */
+#if WITH_OST_DONE
+  ost_reset_nbr(linkaddr, 1, 0);
 #endif
   add_uc_link(linkaddr);
 }
@@ -350,41 +331,28 @@ child_added(const linkaddr_t *linkaddr)
 static void
 child_removed(const linkaddr_t *linkaddr)
 {
-#if WITH_OST_09
+#if WITH_OST_DONE
   struct tsch_neighbor *nbr = tsch_queue_get_nbr(linkaddr);
 
   if(tsch_queue_is_empty(nbr) || nbr == NULL) {
-    LOG_INFO("child_removed: immediately\n");
-    remove_uc_link(linkaddr);
+    remove_uc_link(linkaddr); /* remove child immediately */
   } else {
-#if WITH_OST_CHECK /* ??? */
-    if(bootstrap_period) {
-      LOG_INFO("child_removed: queued packets, flush (bootstrap)\n");
-      tsch_queue_flush_nbr_queue(nbr);
-    } else
-#endif
-    {
-      LOG_INFO("child_removed: queued packets, use shared slot\n");
-      change_attr_in_tx_queue(linkaddr, 0, 0);
-    }  
+    change_attr_in_tx_queue(linkaddr); /* use shared slotframe for queued packets */
     remove_uc_link(linkaddr);
   }
 
   uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t*)linkaddr);  
   if(ds6_nbr != NULL) {
-    // If still routing nbr? do not remove
-    if(is_routing_nbr(ds6_nbr) == 0) { // Added this condition for the preparation of routing loop
-      reset_nbr(linkaddr, 0, 0);
-
-      //it was deleted possibly already when no-path DAO rx
-      LOG_INFO("child_removed: remove_tx & remove_rx\n");
+    /* if still routing nbr -> do not remove */
+    if(ost_is_routing_nbr(ds6_nbr) == 0) { /* condition for prepvention of routing loop */
+      ost_reset_nbr(linkaddr, 0, 0);
+      /* it was deleted possibly already when no-path DAO rx */
       if(linkaddr != NULL) {
         ost_remove_tx((linkaddr_t *)linkaddr);
         ost_remove_rx(ost_node_id_from_linkaddr(linkaddr));
-        //tsch_schedule_print_proposed();
       }
     } else {
-      LOG_INFO("child_removed: do not remove this child (still needed)\n");
+      /* do not remove this child, still needed */
     }
   }
 #else
@@ -400,37 +368,31 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
     && neighbor_has_uc_link(dest)) {
 
-#if WITH_OST_09
-
-    /* OST implementation */
+#if WITH_OST_DONE
     uint16_t dest_id = ost_node_id_from_linkaddr(dest);
     uint16_t tx_sf_handle = ost_get_tx_sf_handle_from_id(dest_id);
     struct tsch_slotframe *tx_sf = tsch_schedule_get_slotframe_by_handle(tx_sf_handle);
 
     if(slotframe != NULL) {
-      if(tx_sf != NULL) {
-        LOG_INFO("select_packet: tx_sf exist\n");
+      if(tx_sf != NULL) { /* ost tx sloftrame exists -> use ost tx slotframe */
         *slotframe = tx_sf_handle;
-      } else {
-        LOG_INFO("select_packet: use RB\n");
+      } else { /* use RB orchestra slotframe */
         *slotframe = slotframe_handle;
       }
     }
 
     if(timeslot != NULL) {
-      if(tx_sf != NULL) { // hckim: use tx_sf
+      if(tx_sf != NULL) { /* ost tx sloftrame exists -> use ost tx slotframe */
         struct tsch_link *l = list_head(tx_sf->links_list);
         /* Loop over all items. Assume there is max one link per timeslot */
         while(l != NULL) {
           if(l->slotframe_handle == tx_sf_handle) {
             break;
-          } else {
-            printf("ERROR: Weird slotframe_handle for Tx link\n");
           }
           l = list_item_next(l);
         }
         *timeslot = l->timeslot;
-      } else { // hckim: use RB
+      } else { /* use RB orchestra slotframe */
         *timeslot = ORCHESTRA_UNICAST_SENDER_BASED ? get_node_timeslot(&linkaddr_node_addr) : get_node_timeslot(dest);
       }
     }
@@ -464,32 +426,22 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
 
-#if WITH_OST_09
-    /* OST implementation */
+#if WITH_OST_DONE
     if(old_addr != NULL) {
       if(tsch_queue_is_empty(old) || old == NULL) {
-        remove_uc_link(old_addr); // No-path DAO can be sent in shared slots
+        remove_uc_link(old_addr); /* No-path DAO can be sent in shared slots */
       } else {
-#if WITH_OST_CHECK /* ??? */
-        if(bootstrap_period) {
-          tsch_queue_flush_nbr_queue(old);
-        } else
-#endif
-        {
-          change_attr_in_tx_queue(old_addr, 0, 0);
-        }  
+        change_attr_in_tx_queue(old_addr);
         remove_uc_link(old_addr);
       }
     }
 
-    reset_nbr(old_addr, 0, 0);
-    reset_nbr(new_addr, 1, 0);
+    ost_reset_nbr(old_addr, 0, 0);
+    ost_reset_nbr(new_addr, 1, 0);
 
-    LOG_INFO("new_time_source: remove_tx & remove_rx\n");
     if(old_addr != NULL) {
       ost_remove_tx((linkaddr_t *)old_addr);
       ost_remove_rx(ost_node_id_from_linkaddr(old_addr));
-      // tsch_schedule_print_proposed();
     }
 #else
     remove_uc_link(old_addr);

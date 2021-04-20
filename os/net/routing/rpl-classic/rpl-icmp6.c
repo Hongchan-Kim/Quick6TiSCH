@@ -56,7 +56,7 @@
 #include "net/ipv6/multicast/uip-mcast6.h"
 #include "lib/random.h"
 
-#if WITH_OST_09
+#if WITH_OST_DONE
 #include "node-info.h"
 #include "orchestra.h"
 #endif
@@ -819,16 +819,14 @@ dao_input_storing(void)
       RPL_ROUTE_SET_NOPATH_RECEIVED(rep);
       rep->state.lifetime = RPL_NOPATH_REMOVAL_DELAY;
 
-#if WITH_OST_09
-      //Rx No-path DAO
+#if WITH_OST_DONE
+      /* received No-path DAO */
       uint16_t prefix_id = ost_node_id_from_ipaddr(&prefix);
       uip_ds6_nbr_t *nbr = uip_ds6_nbr_lookup(&prefix);
 
-      if(nbr != NULL && is_routing_nbr(nbr) == 1) {
-        //printf("Rx No-path DAO: remove_tx & remove_rx (r_nbr %u)\n", prefix_id);
-    
+      if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {
         linkaddr_t *nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(nbr);
-        reset_nbr(nbr_lladdr, 0, 1);
+        ost_reset_nbr(nbr_lladdr, 0, 1);
 
         ost_remove_tx(nbr_lladdr);
         ost_remove_rx(prefix_id);
@@ -863,13 +861,11 @@ dao_input_storing(void)
     return;
   }
 
-#if WITH_OST_09
+#if WITH_OST_DONE
   uip_ds6_nbr_t *sender_nbr = uip_ds6_nbr_lookup(&dao_sender_addr);
   if(sender_nbr != NULL) {
-    if(sender_nbr->rx_no_path == 1) {
-      uint16_t sender_nbr_id = ost_node_id_from_ipaddr(&(sender_nbr->ipaddr));
-      sender_nbr->rx_no_path = 0;
-      LOG_INFO("rx_no_path set 0 (nbr %u)\n", sender_nbr_id);
+    if(sender_nbr->ost_rx_no_path == 1) {
+      sender_nbr->ost_rx_no_path = 0;
     }
   }
 #endif
