@@ -52,8 +52,7 @@
 #include "lib/ccm-star.h"
 #include "lib/aes-128.h"
 
-#if WITH_OST_06
-//#include "node-id.h"
+#if WITH_OST_DONE
 #include "net/mac/tsch/tsch-slot-operation.h"
 #include "orchestra.h"
 #include "net/ipv6/uip-ds6-route.h"
@@ -146,12 +145,10 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 
   framer_802154_setup_params(tsch_packet_eackbuf_attr, 0, &params);
 
-#if WITH_OST_06
-//  uint16_t dest_id = ost_node_id_from_linkaddr(dest_addr);
+#if WITH_OST_DONE
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
-  if(nbr != NULL && is_routing_nbr(nbr) == 1) {
-    //LOG_INFO("Tx EACK: t_offset make %u (nbr %u)\n", nbr->nbr_t_offset, nbr_id); // only eack  
-    params.pigg1 = nbr->nbr_t_offset;
+  if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {
+    params.ost_pigg1 = nbr->ost_nbr_t_offset;
 #if WITH_OST_08
     if(get_todo_no_resource() == 1) {
       params.pigg1 = T_OFFSET_ALLOCATION_FAIL;
@@ -163,7 +160,7 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   }
   if(nbr == NULL) {
     LOG_INFO("Tx EACK: t_offset make 65535 (No nbr)\n");
-    params.pigg1 = 65535;
+    params.ost_pigg1 = 65535;
   }
 
 #if WITH_OST_10 && RESIDUAL_ALLOC

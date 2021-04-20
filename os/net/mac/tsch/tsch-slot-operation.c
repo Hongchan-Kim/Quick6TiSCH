@@ -407,8 +407,9 @@ process_rx_matching_slot(frame802154_t* frame)
   }
 }
 #endif
-/**************************************Rx N from Data -> Change Rx schedule *********************************/
-#if WITH_OST_07 //hckim
+/*---------------------------------------------------------------------------*/
+/* Rx N from Data -> Change Rx schedule */
+#if WITH_OST_DONE
 void 
 add_rx(uint16_t id, uint16_t N, uint16_t t_offset)
 {
@@ -418,31 +419,22 @@ add_rx(uint16_t id, uint16_t N, uint16_t t_offset)
     uint16_t channel_offset = 3;
 
     struct tsch_slotframe *sf;
-    struct tsch_link *l;
-
-    //PRINTF("add_rx: handle:%u, size:%u (nbr %u)\n", handle, size, id);
 
     if(tsch_schedule_get_slotframe_by_handle(handle) != NULL) {
-      //printf("ERROR(add_rx): handle already exist\n");
       return;
     }
 
     sf = tsch_schedule_add_slotframe(handle, size);
 
     if(sf != NULL) {
-      l = tsch_schedule_add_link(sf, LINK_OPTION_RX, LINK_TYPE_NORMAL, 
-                                &tsch_broadcast_address, t_offset, channel_offset, 1);
-      if(l == NULL) {
-        //printf("ERROR(add_rx): add_link fail\n");
-      }
-    } else {
-      //printf("ERROR(add_rx): add_slotframe fail\n");
+      tsch_schedule_add_link(sf, LINK_OPTION_RX, LINK_TYPE_NORMAL, 
+                            &tsch_broadcast_address, t_offset, channel_offset, 1);
     }
   }
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_07 //hckim
+#if WITH_OST_DONE
 void 
 remove_rx(uint16_t id)
 {
@@ -451,7 +443,6 @@ remove_rx(uint16_t id)
   rm_sf = tsch_schedule_get_slotframe_by_handle(rm_sf_handle);
 
   if(rm_sf != NULL) {
-    //PRINTF("remove_rx: handle:%u, size:%u (nbr %u)\n", rm_sf_handle, rm_sf->size.val,id);
     tsch_schedule_remove_slotframe(rm_sf);
   }
 }
@@ -682,8 +673,8 @@ process_rx_N(frame802154_t *frame) /* in short, prN */
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_07 //hckim
-//called from tsch_rx_process_pending (after slot_operation)
+#if WITH_OST_DONE
+/* called from tsch_rx_process_pending (after slot_operation finished) */
 void
 post_process_rx_N(void)
 {
@@ -702,19 +693,15 @@ post_process_rx_N(void)
                   "New Rx schedule: %u,%u (nbr %u)\n", prN_new_N, prN_new_t_offset, nbr_id);
       );
 #endif
-      //print_nbr();
-      //tsch_schedule_print_proposed();
     }
   }
 
   if(todo_consecutive_new_tx_request == 1) {
     todo_consecutive_new_tx_request = 0;
-    //printf("EACK (CONSECUTIVE_NEW_TX_REQUEST)\n");
   }
 
   if(todo_no_resource == 1) {
     todo_no_resource = 0;
-    //printf("EACK (ALLOCATION_FAIL)\n");
   }
 }
 #endif
@@ -1092,7 +1079,7 @@ post_process_rx_t_offset(void)
 
       } else {
 
-#if 1//WITH_OST_DBG
+#if WITH_OST_DBG
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
                     "Uninstallable (nbr %u)", nbr_id);
@@ -1703,19 +1690,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               if(ack_len > 0) {
                 is_time_source = current_neighbor != NULL && current_neighbor->is_time_source;
 
-#if WITH_OST_06 //hckim
-/*
-                if(tsch_packet_parse_eack(ackbuf, ack_len, seqno,
-                    &frame, &ack_ies, &ack_hdrlen, tsch_queue_get_nbr_address(current_neighbor)) == 0) {
-                  //printf("ERROR: tsch_packet_parse_eack\n");
-                  ack_len = 0;
-                }
-*/
+#if WITH_OST_DONE
                 if(tsch_packet_parse_eack(ackbuf, ack_len, seqno,
                     &frame, &ack_ies, &ack_hdrlen) == 0) {
                   ack_len = 0;
                 }
-
 #if WITH_OST_DBG
                 TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),

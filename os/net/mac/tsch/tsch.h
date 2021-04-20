@@ -266,7 +266,7 @@ uint64_t tsch_get_network_uptime_ticks(void);
   */
 void tsch_disassociate(void);
 
-#if WITH_OST_07
+#if WITH_OST_DONE
 void post_process_rx_N(void);
 #endif
 #if WITH_OST_08

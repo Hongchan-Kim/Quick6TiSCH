@@ -576,7 +576,7 @@ tsch_rx_process_pending()
 {
   int16_t input_index;
 
-#if WITH_OST_07
+#if WITH_OST_DONE
   post_process_rx_N();
 #endif
 

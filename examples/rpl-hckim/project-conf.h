@@ -147,9 +147,6 @@
 
 #define WITH_OST_DONE                              1
 #define WITH_OST_DBG                               0
-#define WITH_OST_05                                0 /* select_t_offset */
-#define WITH_OST_06                                0 /* create EACK */
-#define WITH_OST_07                                0 /* post_process_rx_N */
 #define WITH_OST_08                                0 /* process_rx_t_offset, post_process_rx_t_offset */
 #define WITH_OST_09                                0 /* etc for periodic provisioning */
 #define WITH_OST_10                                0 /* on-demand provisioning */
