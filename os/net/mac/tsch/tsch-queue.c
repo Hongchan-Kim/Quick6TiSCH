@@ -346,7 +346,7 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
         TSCH_CALLBACK_NEW_TIME_SOURCE(old_time_src, new_time_src);
 #endif
       }
-#if WITH_OST_DONE
+#if WITH_OST_09
       else {
         /* for first association (first DIO reception) */
         ost_reset_nbr(new_addr, 1, 0);

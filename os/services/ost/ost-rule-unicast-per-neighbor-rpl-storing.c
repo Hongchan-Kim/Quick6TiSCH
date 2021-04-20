@@ -322,7 +322,7 @@ remove_uc_link(const linkaddr_t *linkaddr)
 static void
 child_added(const linkaddr_t *linkaddr)
 {
-#if WITH_OST_DONE
+#if WITH_OST_09
   ost_reset_nbr(linkaddr, 1, 0);
 #endif
   add_uc_link(linkaddr);
@@ -331,7 +331,7 @@ child_added(const linkaddr_t *linkaddr)
 static void
 child_removed(const linkaddr_t *linkaddr)
 {
-#if WITH_OST_DONE
+#if WITH_OST_09
   struct tsch_neighbor *nbr = tsch_queue_get_nbr(linkaddr);
 
   if(tsch_queue_is_empty(nbr) || nbr == NULL) {
@@ -368,7 +368,7 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
     && neighbor_has_uc_link(dest)) {
 
-#if WITH_OST_DONE
+#if WITH_OST_09
     uint16_t dest_id = ost_node_id_from_linkaddr(dest);
     uint16_t tx_sf_handle = ost_get_tx_sf_handle_from_id(dest_id);
     struct tsch_slotframe *tx_sf = tsch_schedule_get_slotframe_by_handle(tx_sf_handle);
@@ -426,7 +426,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
 
-#if WITH_OST_DONE
+#if WITH_OST_09
     if(old_addr != NULL) {
       if(tsch_queue_is_empty(old) || old == NULL) {
         remove_uc_link(old_addr); /* No-path DAO can be sent in shared slots */

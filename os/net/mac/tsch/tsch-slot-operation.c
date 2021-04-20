@@ -2126,7 +2126,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
 
-#if WITH_OST_DONE
+#if WITH_OST_09
       else if(current_packet == NULL && (current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         if(current_link->slotframe_handle > backup_link->slotframe_handle) {
           /* There could be Tx option in backup link */
@@ -2139,7 +2139,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
 
-#if WITH_OST_DONE
+#if WITH_OST_09
         uint16_t rx_id = 0;
 
         if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
@@ -2224,7 +2224,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         burst_link_scheduled = 0;
       }
 
-#if WITH_OST_DONE
+#if WITH_OST_09
 ost_donothing:
 #endif
 

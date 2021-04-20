@@ -36,7 +36,6 @@
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
 #define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (NODE_NUM * 3) //(70) //alice-implementation
 /*---------------------------------------------------------------------------*/
 
 
@@ -138,12 +137,15 @@
 #define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
 #define TSCH_CONF_BURST_MAX_LEN                    0
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (NODE_NUM * 3) //(70) //alice-implementation
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST //OST
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        41 //31 broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (100) //(70) //alice-implementation
 
 #define WITH_OST_DONE                              1
 #define WITH_OST_DBG                               0
