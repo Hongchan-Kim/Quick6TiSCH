@@ -43,7 +43,7 @@
 /*
  * Configure App
  */
-#define DOWNWARD_TRAFFIC                           0
+#define DOWNWARD_TRAFFIC                           1
 #define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 30 * CLOCK_SECOND)
@@ -142,14 +142,13 @@
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST //OST
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        41 //31 broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        41 //31 broadcast and default slotframe length, original: 31
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 #define TSCH_SCHEDULE_CONF_MAX_LINKS               (100) //(70) //alice-implementation
 
 #define WITH_OST_DONE                              1
 #define WITH_OST_DBG                               0
-#define WITH_OST_09                                0 /* etc for periodic provisioning */
 #define WITH_OST_10                                0 /* on-demand provisioning */
 
 #define WITH_OST_CHECK                             0

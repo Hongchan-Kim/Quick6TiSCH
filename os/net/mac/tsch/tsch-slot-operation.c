@@ -1095,7 +1095,12 @@ tsch_get_channel_offset(struct tsch_link *link, struct tsch_packet *p)
 {
 #if WITH_ALICE /* alice-implementation */
   return link->channel_offset;
-#else
+#endif
+
+#if WITH_OST_DONE
+  return link->channel_offset;
+#endif
+
 #if TSCH_WITH_LINK_SELECTOR
   if(p != NULL) {
     uint16_t packet_channel_offset = queuebuf_attr(p->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
@@ -1106,7 +1111,6 @@ tsch_get_channel_offset(struct tsch_link *link, struct tsch_packet *p)
   }
 #endif
   return link->channel_offset;
-#endif
 }
 
 /**
@@ -2126,7 +2130,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
 
-#if WITH_OST_09
+#if WITH_OST_DONE
       else if(current_packet == NULL && (current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         if(current_link->slotframe_handle > backup_link->slotframe_handle) {
           /* There could be Tx option in backup link */
@@ -2139,7 +2143,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
 
-#if WITH_OST_09
+#if WITH_OST_DONE
         uint16_t rx_id = 0;
 
         if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
@@ -2224,7 +2228,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         burst_link_scheduled = 0;
       }
 
-#if WITH_OST_09
+#if WITH_OST_DONE
 ost_donothing:
 #endif
 
