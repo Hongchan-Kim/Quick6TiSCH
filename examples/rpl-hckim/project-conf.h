@@ -149,9 +149,9 @@
 
 #define WITH_OST_DONE                              1
 #define WITH_OST_DBG                               0
-#define WITH_OST_10                                0 /* on-demand provisioning */
-
+#define WITH_OST_10                                1 /* on-demand provisioning */
 #define WITH_OST_CHECK                             0
+
 #define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1
 #define OST_ON_DEMAND_PROVISION                    1
 #define RESIDUAL_ALLOC                             1

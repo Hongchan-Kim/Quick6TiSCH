@@ -402,13 +402,15 @@ keepalive_send(void *ptr)
     struct tsch_neighbor *n = tsch_queue_get_time_source();
     if(n != NULL) {
         linkaddr_t *destination = tsch_queue_get_nbr_address(n);
+
+        LOG_INFO("HCK ka_send %u | sending KA to ", ++tsch_ka_send_count);
+        LOG_INFO_LLADDR(destination);
+        LOG_INFO_("\n");
+
         /* Simply send an empty packet */
         packetbuf_clear();
         packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, destination);
         NETSTACK_MAC.send(keepalive_packet_sent, NULL);
-        LOG_INFO("HCK ka_send %u | sending KA to ", ++tsch_ka_send_count);
-        LOG_INFO_LLADDR(destination);
-        LOG_INFO_("\n");
     } else {
         LOG_ERR("no timesource - KA not sent\n");
     }

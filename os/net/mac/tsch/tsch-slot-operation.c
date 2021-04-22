@@ -363,7 +363,7 @@ process_rx_schedule_info(frame802154_t* frame)
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)(&(frame->src_addr)));
   if(nbr != NULL
     && !frame802154_is_broadcast_addr((frame->fcf).dest_addr_mode, frame->dest_addr)
-    && is_routing_nbr(nbr) == 1) {
+    && ost_is_routing_nbr(nbr) == 1) {
     if((frame->fcf).frame_pending) {
       uint16_t time_to_matching_slot = select_matching_schedule(frame->pigg2);
 
@@ -385,7 +385,7 @@ process_rx_schedule_info(frame802154_t* frame)
     //PRINTF("Rx uc: ssq_schedule found %u (BC)\n", frame->pigg2);
   } else if(nbr == NULL) {
     //PRINTF("Rx uc: ssq_schedule found %u (No nbr)\n", frame->pigg2);
-  } else if(is_routing_nbr(nbr) == 0) {
+  } else if(ost_is_routing_nbr(nbr) == 0) {
     //PRINTF("Rx uc: ssq_schedule found %u (No r_nbr)\n",frame->pigg2);
   }
   return 65535;
@@ -399,7 +399,7 @@ process_rx_matching_slot(frame802154_t* frame)
   linkaddr_t *eack_src = tsch_queue_get_nbr_address(current_neighbor);
   uint16_t nbr_id = ost_node_id_from_linkaddr(eack_src);
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)eack_src);
-  if(nbr != NULL && is_routing_nbr(nbr) == 1) {
+  if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {
     add_matching_slot(frame->pigg2, 1, nbr_id);
   }
 }
@@ -1165,7 +1165,13 @@ tsch_schedule_slot_operation(struct rtimer *tm, rtimer_clock_t ref_time, rtimer_
   /* Subtract RTIMER_GUARD before checking for deadline miss
    * because we can not schedule rtimer less than RTIMER_GUARD in the future */
   int missed = check_timer_miss(ref_time, offset - RTIMER_GUARD, now);
-
+/*
+  TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+                  "khc2 %s %d %d",
+                      str, (int)(now-ref_time), (int)offset);
+  );
+*/
   if(missed) {
     TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
@@ -1646,7 +1652,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                   ack_len = 0;
                 }
 
-#endif 
+#endif
 
 #if LLSEC802154_ENABLED
                 if(ack_len != 0) {
@@ -1664,6 +1670,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 }
 #endif /* LLSEC802154_ENABLED */
               }
+
+#if 1 //WITH_OST_DBG
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                  "zzz rcvd_ack_len %u", ack_len));
+#endif
 
               if(ack_len != 0) {
                 if(is_time_source) {
@@ -1964,6 +1976,12 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack);
+#endif
+
+#if 1 //WITH_OST_DBG
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                  "zzz send_ack_len %u", ack_len));
 #endif
 
               if(ack_len > 0) {
