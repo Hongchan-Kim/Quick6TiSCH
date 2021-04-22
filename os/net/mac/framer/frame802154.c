@@ -89,7 +89,7 @@ typedef struct {
 
 #if WITH_OST_DONE
   uint8_t ost_pigg1_len; /* for N or t_offseet */
-#if WITH_OST_10 && RESIDUAL_ALLOC
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
   uint8_t ost_pigg2_len; /* for on-demand provisioning */
 #endif
 #endif
@@ -331,7 +331,7 @@ field_len(frame802154_t *p, field_length_t *flen)
 
 #if WITH_OST_DONE
   flen->ost_pigg1_len = 2; /* for N or t_offset */
-#if WITH_OST_10 && RESIDUAL_ALLOC
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
   flen->ost_pigg2_len = 2; /* for on-demand provisioning */
 #endif
 #endif  
@@ -375,7 +375,7 @@ frame802154_hdrlen(frame802154_t *p)
   field_len(p, &flen);
 
 #if WITH_OST_DONE
-#if WITH_OST_10 && RESIDUAL_ALLOC
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
   return 2 + flen.seqno_len + flen.dest_pid_len + flen.dest_addr_len + 
          flen.src_pid_len + flen.src_addr_len + flen.aux_sec_len + 
          flen.ost_pigg1_len + flen.ost_pigg2_len;
@@ -437,7 +437,7 @@ frame802154_create(frame802154_t *p, uint8_t *buf)
     buf[pos++] = p->ost_pigg1 & 0xff;
     buf[pos++] = (p->ost_pigg1 >> 8) & 0xff;
   }
-#if WITH_OST_10 && RESIDUAL_ALLOC
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
   if(flen.ost_pigg2_len == 2) { /* for on-demand provisioning */
     buf[pos++] = p->pigg2 & 0xff;
     buf[pos++] = (p->pigg2 >> 8) &0xff;
@@ -562,7 +562,7 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
 #if WITH_OST_DONE
   pf->ost_pigg1 = p[0] + (p[1] << 8);
   p +=2;
-#if WITH_OST_10 && RESIDUAL_ALLOC
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
   pf->pigg2 = p[0] + (p[1] << 8);
   p +=2;
 #endif   

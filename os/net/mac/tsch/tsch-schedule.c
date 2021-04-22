@@ -56,7 +56,7 @@
 #include "sys/rtimer.h"
 #include <string.h>
 
-#if WITH_OST_10 && RESIDUAL_ALLOC //hckim
+#if WITH_OST_DONE
 #include "orchestra.h"
 #endif
 
@@ -111,14 +111,14 @@ tsch_schedule_add_slotframe(uint16_t handle, uint16_t size)
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && RESIDUAL_ALLOC //hckim
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
 uint16_t
 tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)
 {
   uint16_t ssq_schedule = 0;
-  uint8_t used[16]; // 0 ~ 15th slot is used
+  uint8_t used[16]; /* 0 ~ 15th slot is used */
   
-  // check slotframe schedule 
+  /* Check slotframe schedule */
   if(!tsch_is_locked()) { 
    struct tsch_slotframe *sf = list_head(slotframe_list);
    while(sf != NULL) {
@@ -141,23 +141,23 @@ tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)
     }
   }
 
-  //check matching slot schedule, hckim why again???
+  /* Check matching slot schedule, hckim why again??? */
   uint64_t curr_ASN = (uint64_t)(asn->ls4b) + ((uint64_t)(asn->ms1b) << 32);
   uint64_t ssq_ASN;
 
   uint8_t i;
   for(i = 0; i < 16; i++) {
     if(ssq_schedule_list[i].asn.ls4b == 0 && ssq_schedule_list[i].asn.ms1b == 0) {
-      /* do nothing */
+      /* Do nothing */
     } else {
       ssq_ASN = (uint64_t)(ssq_schedule_list[i].asn.ls4b) + ((uint64_t)(ssq_schedule_list[i].asn.ms1b) << 32);
       uint64_t time_to_timeslot = ssq_ASN - curr_ASN;
       if(time_to_timeslot == 0) {
-        /* current asn */
+        /* Current asn */
       } else if(0 < time_to_timeslot && (time_to_timeslot - 1) < 16) {
         used[time_to_timeslot - 1] = 1;
       } else {
-        /* do nothing */
+        /* Do nothing */
       }
     }
   }
@@ -172,7 +172,7 @@ tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && RESIDUAL_ALLOC //hckim
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
 uint8_t
 earlier_ssq_schedule_list(uint16_t *time_to_orig_schedule, struct tsch_link **link)
 {
@@ -181,12 +181,12 @@ earlier_ssq_schedule_list(uint16_t *time_to_orig_schedule, struct tsch_link **li
   uint64_t ssq_ASN;
   uint64_t earliest_ASN = 0;
 
-  //First, choose the earliest ssq schedule
+  /* First, choose the earliest ssq schedule */
   uint8_t i;
   uint8_t earliest_i;
   for(i = 0; i < 16; i++) {
     if(ssq_schedule_list[i].asn.ls4b == 0 && ssq_schedule_list[i].asn.ms1b == 0) {
-      /* do nothing */
+      /* Do nothing */
     } else {
       ssq_ASN = (uint64_t)(ssq_schedule_list[i].asn.ls4b) + ((uint64_t)(ssq_schedule_list[i].asn.ms1b) << 32);
       if(earliest_ASN == 0 || ssq_ASN < earliest_ASN) {
@@ -810,13 +810,13 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
               new_best = TSCH_LINK_COMPARATOR(curr_best, l);
             }
 
-#if WITH_OST_10 //hckim
+#if WITH_OST_10
             if((curr_best->slotframe_handle == 1) 
               && (curr_best->link_options & LINK_OPTION_TX) 
               && (l->slotframe_handle == 2)) {
               /*
-              Prevent Autonomous unicast Tx from interfere
-              Autonomous broadcast Tx/Rx (They share the same c_offset in OST)
+              Prevent Autonomous unicast Tx from interfering autonomous broadcast Tx/Rx
+              They share the same c_offset in OST
               Prioritize Autonomous broadcast Tx/Rx to Autonomous unicast Tx
               */
               new_best = l;
@@ -856,12 +856,12 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
       *time_offset = time_to_curr_best;
     }
 
-#if WITH_OST_10 && RESIDUAL_ALLOC //hckim
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
     struct tsch_link *ssq_link = NULL;
-    uint16_t new_time_offset = *time_offset; //initialize
+    uint16_t new_time_offset = *time_offset; /* Initialize */
     if(earlier_ssq_schedule_list(&new_time_offset, &ssq_link)) {
       if(ssq_link != NULL) {
-        /* changed time_offset to the new_time_offset */
+        /* Changed time_offset to the new_time_offset */
         *time_offset = new_time_offset;
         *backup_link = NULL;
         return ssq_link;

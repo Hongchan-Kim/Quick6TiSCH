@@ -179,7 +179,7 @@ struct tsch_slotframe *tsch_schedule_slotframe_head(void);
  */
 struct tsch_slotframe *tsch_schedule_slotframe_next(struct tsch_slotframe *sf);
 
-#if WITH_OST_10 && RESIDUAL_ALLOC
+#if WITH_OST_DONE && OST_RESIDUAL_ALLOC
 struct ssq_schedule_t {
   struct tsch_link link;
   struct tsch_asn_t asn;
@@ -191,7 +191,7 @@ struct tsch_slotframe *ost_tsch_schedule_get_slotframe_head(void);
 void tsch_schedule_print_proposed(void);
 #endif
 
-#if WITH_OST_10
+#if WITH_OST_DONE
 uint16_t tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn);
 #endif
 

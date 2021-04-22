@@ -153,8 +153,8 @@
 #define WITH_OST_CHECK                             0
 
 #define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1
+#define OST_RESIDUAL_ALLOC                         1
 #define OST_ON_DEMAND_PROVISION                    1
-#define RESIDUAL_ALLOC                             1
 
 #undef QUEUEBUF_CONF_NUM
 #define QUEUEBUF_CONF_NUM                           16

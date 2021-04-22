@@ -598,7 +598,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
                                                                     make sure the backoff has expired */
 #if TSCH_WITH_LINK_SELECTOR
-#if WITH_OST_10 && RESIDUAL_ALLOC //hckim
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
         if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
           uint16_t target_nbr_id = (link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
           if(ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(n)) == target_nbr_id) {
@@ -724,7 +724,7 @@ tsch_queue_get_unicast_packet_for_any(struct tsch_neighbor **n, struct tsch_link
       curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
     }
 
-#if WITH_OST_10 && RESIDUAL_ALLOC //hckim??
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
     if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
       uint16_t target_nbr_id = (link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
       /* ERROR: No ssq Tx packet (nbr %u)\n", target_nbr_id); */
@@ -732,19 +732,19 @@ tsch_queue_get_unicast_packet_for_any(struct tsch_neighbor **n, struct tsch_link
 
       struct tsch_neighbor *target_nbr = tsch_queue_get_nbr_from_id(target_nbr_id);
       if(target_nbr == NULL) {
-        printf("ERROR: c1\n");
+        //printf("ERROR: c1\n");
       } else {
-        printf("ERROR: c2 %u %u\n", !target_nbr->is_broadcast, target_nbr->tx_links_count == 0);
+        //printf("ERROR: c2 %u %u\n", !target_nbr->is_broadcast, target_nbr->tx_links_count == 0);
         //both should be 1
-        int16_t get_index = ringbufindex_peek_get(&target_nbr->tx_ringbuf);
-        int is_shared_link = link != NULL && link->link_options & LINK_OPTION_SHARED;
-        printf("ERROR: c3 %u %u\n", get_index != -1, is_shared_link != 0);
+        //int16_t get_index = ringbufindex_peek_get(&target_nbr->tx_ringbuf);
+        //int is_shared_link = link != NULL && link->link_options & LINK_OPTION_SHARED;
+        //printf("ERROR: c3 %u %u\n", get_index != -1, is_shared_link != 0);
         //both should be 1
       }
     }
   } else {
     if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
-      printf("ERROR: Locked\n");
+      //printf("ERROR: Locked\n");
     }
 #endif
   }

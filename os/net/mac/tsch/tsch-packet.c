@@ -98,7 +98,7 @@ tsch_packet_eackbuf_attr(uint8_t type)
 }
 /*---------------------------------------------------------------------------*/
 /* Construct enhanced ACK packet and return ACK length */
-#if WITH_OST_10 && RESIDUAL_ALLOC
+#if WITH_OST_10 && OST_RESIDUAL_ALLOC
 int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
@@ -160,13 +160,11 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 
   }
   if(nbr == NULL) {
-    LOG_INFO("Tx EACK: t_offset make 65535 (No nbr)\n");
-    params.ost_pigg1 = 65535;
+    params.ost_pigg1 = 65535; /* Tx EACK: t_offset make 65535 (No nbr) */
   }
 
-#if WITH_OST_10 && RESIDUAL_ALLOC
-  LOG_INFO("Tx EACK: matching slot make %u\n", matching_slot);
-  params.pigg2 = matching_slot;
+#if WITH_OST_DONE && OST_RESIDUAL_ALLOC
+  params.pigg2 = matching_slot; /* Tx EACK: matching slot */
 #endif
 #endif
 
