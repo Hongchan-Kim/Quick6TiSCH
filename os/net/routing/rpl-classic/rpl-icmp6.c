@@ -56,7 +56,7 @@
 #include "net/ipv6/multicast/uip-mcast6.h"
 #include "lib/random.h"
 
-#if WITH_OST_DONE
+#if WITH_OST
 #include "node-info.h"
 #include "orchestra.h"
 #endif
@@ -819,7 +819,7 @@ dao_input_storing(void)
       RPL_ROUTE_SET_NOPATH_RECEIVED(rep);
       rep->state.lifetime = RPL_NOPATH_REMOVAL_DELAY;
 
-#if WITH_OST_DONE
+#if WITH_OST
       /* received No-path DAO */
       uint16_t prefix_id = ost_node_id_from_ipaddr(&prefix);
       uip_ds6_nbr_t *nbr = uip_ds6_nbr_lookup(&prefix);
@@ -861,7 +861,7 @@ dao_input_storing(void)
     return;
   }
 
-#if WITH_OST_DONE
+#if WITH_OST
   uip_ds6_nbr_t *sender_nbr = uip_ds6_nbr_lookup(&dao_sender_addr);
   if(sender_nbr != NULL) {
     if(sender_nbr->ost_rx_no_path == 1) {

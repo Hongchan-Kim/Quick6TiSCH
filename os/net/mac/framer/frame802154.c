@@ -87,9 +87,9 @@ typedef struct {
   uint8_t src_addr_len;    /**<  Length (in bytes) of source address field */
   uint8_t aux_sec_len;     /**<  Length (in bytes) of aux security header field */
 
-#if WITH_OST_DONE
+#if WITH_OST
   uint8_t ost_pigg1_len; /* for N or t_offseet */
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
+#if OST_ON_DEMAND_PROVISION
   uint8_t ost_pigg2_len; /* for on-demand provisioning */
 #endif
 #endif
@@ -329,9 +329,9 @@ field_len(frame802154_t *p, field_length_t *flen)
     flen->dest_pid_len = 2;
   }
 
-#if WITH_OST_DONE
+#if WITH_OST
   flen->ost_pigg1_len = 2; /* for N or t_offset */
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
+#if OST_ON_DEMAND_PROVISION
   flen->ost_pigg2_len = 2; /* for on-demand provisioning */
 #endif
 #endif  
@@ -374,8 +374,8 @@ frame802154_hdrlen(frame802154_t *p)
   field_length_t flen;
   field_len(p, &flen);
 
-#if WITH_OST_DONE
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
+#if WITH_OST
+#if OST_ON_DEMAND_PROVISION
   return 2 + flen.seqno_len + flen.dest_pid_len + flen.dest_addr_len + 
          flen.src_pid_len + flen.src_addr_len + flen.aux_sec_len + 
          flen.ost_pigg1_len + flen.ost_pigg2_len;
@@ -432,15 +432,15 @@ frame802154_create(frame802154_t *p, uint8_t *buf)
   frame802154_create_fcf(&p->fcf, buf);
   pos = 2; // hckim: pos 0 and 1 are for fcf
 
-#if WITH_OST_DONE
+#if WITH_OST
   if(flen.ost_pigg1_len == 2) { /* for N or t_offset */
     buf[pos++] = p->ost_pigg1 & 0xff;
     buf[pos++] = (p->ost_pigg1 >> 8) & 0xff;
   }
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
+#if OST_ON_DEMAND_PROVISION
   if(flen.ost_pigg2_len == 2) { /* for on-demand provisioning */
-    buf[pos++] = p->pigg2 & 0xff;
-    buf[pos++] = (p->pigg2 >> 8) &0xff;
+    buf[pos++] = p->ost_pigg2 & 0xff;
+    buf[pos++] = (p->ost_pigg2 >> 8) & 0xff;
   }
 #endif
 #endif
@@ -559,11 +559,11 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
   memcpy(&pf->fcf, &fcf, sizeof(frame802154_fcf_t));
   p += 2;                             /* Skip first two bytes */
 
-#if WITH_OST_DONE
+#if WITH_OST
   pf->ost_pigg1 = p[0] + (p[1] << 8);
   p +=2;
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
-  pf->pigg2 = p[0] + (p[1] << 8);
+#if OST_ON_DEMAND_PROVISION
+  pf->ost_pigg2 = p[0] + (p[1] << 8);
   p +=2;
 #endif   
 #endif      

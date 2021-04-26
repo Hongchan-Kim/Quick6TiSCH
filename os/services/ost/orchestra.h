@@ -41,8 +41,8 @@
 #include "net/mac/tsch/tsch.h"
 #include "orchestra-conf.h"
 
-#if WITH_OST_DONE
-#include "net/ipv6/uip-ds6-nbr.h" /* OST implementation */
+#if WITH_OST
+#include "net/ipv6/uip-ds6-nbr.h"
 #endif
 
 /* The structure of an Orchestra rule */
@@ -76,7 +76,7 @@ void orchestra_callback_child_added(const linkaddr_t *addr);
 /* Set with #define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK orchestra_callback_child_removed */
 void orchestra_callback_child_removed(const linkaddr_t *addr);
 
-#if WITH_OST_DONE /* OST implementation */
+#if WITH_OST
 /* OST functions */
 void ost_reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path);
 uint16_t ost_get_tx_sf_handle_from_id(const uint16_t id);
@@ -87,11 +87,9 @@ uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr);
 void ost_remove_tx(linkaddr_t *nbr_lladdr);
 void ost_remove_rx(uint16_t id);
 void ost_change_queue_select_packet(linkaddr_t *nbr_lladdr, uint16_t handle, uint16_t timeslot);
-//void ost_print_nbr(void);
 int neighbor_has_uc_link(const linkaddr_t *linkaddr);
 /* OST variables */
-extern uint8_t bootstrap_period;
-#if WITH_OST_DONE && OST_RESIDUAL_ALLOC
+#if OST_ON_DEMAND_PROVISION
 extern struct ssq_schedule_t ssq_schedule_list[16];
 #endif
 #endif

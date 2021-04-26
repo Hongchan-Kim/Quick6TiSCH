@@ -43,7 +43,7 @@
 #include "lib/random.h"
 #include <string.h>
 
-#if WITH_OST_DONE
+#if WITH_OST
 #include <stdio.h>
 #include "contiki.h"
 #include "orchestra.h"
@@ -110,7 +110,7 @@ create_frame(int do_create)
                   packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
   }
 
-#if WITH_OST_DONE
+#if WITH_OST
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&params.dest_addr);
   if(nbr != NULL) {
     if(nbr->ost_my_uninstallable == 1) {
@@ -122,10 +122,10 @@ create_frame(int do_create)
     }
   }
   if(frame802154_is_broadcast_addr(params.fcf.dest_addr_mode, params.dest_addr)) {
-    params.ost_pigg1 = 65535; /* broadcast */
+    params.ost_pigg1 = 0xffff; /* broadcast */
   } else if(nbr == NULL) {
     /* In bootstrap, TSCH-associated but not RPL-associated node sends KA */
-    params.ost_pigg1 = 65535;
+    params.ost_pigg1 = 0xffff;
   }
 #endif
 

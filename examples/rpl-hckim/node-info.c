@@ -184,7 +184,7 @@ non_root_index_from_addr(const uip_ipaddr_t *sender_addr)
   return NON_ROOT_NUM;
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_DONE
+#if WITH_OST
 uint16_t
 ost_node_id_from_ipaddr(const uip_ipaddr_t *addr)
 {

@@ -83,7 +83,7 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
     128, /* CCA */
    2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
-#if WITH_OST_DONE
+#if WITH_OST
    1300, /* RxAckDelay */
    1500, /* TxAckDelay */
 #else

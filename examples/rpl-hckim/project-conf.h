@@ -13,9 +13,9 @@
 #define IOT_LAB_LILLE_32                           5
 #define IOT_LAB_LILLE_46                           6
 
-#define TESTBED_SITE                               IOT_LAB_LYON_2
+//#define TESTBED_SITE                               IOT_LAB_LYON_2
 //#define TESTBED_SITE                               IOT_LAB_LYON_3
-//#define TESTBED_SITE                               IOT_LAB_LYON_17
+#define TESTBED_SITE                               IOT_LAB_LYON_17
 //#define TESTBED_SITE                               IOT_LAB_LILLE_24
 //#define TESTBED_SITE                               IOT_LAB_LILLE_32
 //#define TESTBED_SITE                               IOT_LAB_LILLE_46
@@ -44,10 +44,10 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 30 * CLOCK_SECOND)
-#define APP_MAX_TX                                 20
+#define APP_MAX_TX                                 50
 /*---------------------------------------------------------------------------*/
 
 
@@ -145,15 +145,12 @@
 #define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        41 //31 broadcast and default slotframe length, original: 31
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (100) //(70) //alice-implementation
 
-#define WITH_OST_DONE                              1
-#define WITH_OST_DBG                               0
-#define WITH_OST_10                                1 /* on-demand provisioning */
-#define WITH_OST_CHECK                             0
+#define WITH_OST                                   1
+#define WITH_OST_LOG                               0
+#define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 
 #define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1
-#define OST_RESIDUAL_ALLOC                         1
 #define OST_ON_DEMAND_PROVISION                    1
 
 #undef QUEUEBUF_CONF_NUM
@@ -177,6 +174,7 @@
 #define T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST        ((1 << N_MAX) + 2)
 #define THRES_CONSECUTIVE_NEW_TX_REQUEST           10
 #define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          2 * NBR_TABLE_CONF_MAX_NEIGHBORS
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (100) //(70) //alice-implementation
 #define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) //Under-provision uses up to 2*NODE_NUM+2
 #undef TSCH_CONF_RX_ACK_DELAY
 #define TSCH_CONF_RX_ACK_DELAY                     1300

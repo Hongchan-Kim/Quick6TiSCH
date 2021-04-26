@@ -51,7 +51,7 @@
 #include "lib/ringbufindex.h"
 #include "sys/log.h"
 
-#if WITH_OST_DONE
+#if WITH_OST
 #include "net/mac/tsch/tsch-log.h"
 #include "net/mac/tsch/tsch-queue.h"
 #include "net/mac/tsch/tsch-packet.h"
@@ -113,7 +113,7 @@ tsch_log_process_pending(void)
         }
         printf("\n");
 
-#if WITH_OST_DONE
+#if WITH_OST
         /* unicast packets only */
         if(!linkaddr_cmp(&log->tx.dest, &linkaddr_null)
           && !linkaddr_cmp(&log->tx.dest, &tsch_eb_address)
@@ -143,22 +143,12 @@ tsch_log_process_pending(void)
                 if(n != NULL) {
                   if(!tsch_queue_is_empty(n)) {
                     if(neighbor_has_uc_link(tsch_queue_get_nbr_address(n))) {
-#if WITH_OST_DBG
-                      printf("Csct Tx fail -> Use RB %u\n", ringbufindex_elements(&n->tx_ringbuf));
-#endif
-#if WITH_OST_DONE
                       /* use autonomous RB slotframe */
                       ost_change_queue_select_packet(&log->tx.dest, 1, 
                                           ORCHESTRA_LINKADDR_HASH(&log->tx.dest) % ORCHESTRA_UNICAST_PERIOD);
-#endif
                     } else {
-#if WITH_OST_DBG
-                      printf("Csct Tx fail -> Use shared slot %u\n", ringbufindex_elements(&n->tx_ringbuf));
-#endif
-#if WITH_OST_DONE
                       /* use shared slotframe */
                       ost_change_queue_select_packet(&log->tx.dest, 2, 0);
-#endif
                     }
                   }
                 }

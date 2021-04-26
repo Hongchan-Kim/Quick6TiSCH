@@ -578,7 +578,7 @@ tsch_rx_process_pending()
 {
   int16_t input_index;
 
-#if WITH_OST_DONE
+#if WITH_OST
   post_process_rx_N();
 #endif
 
@@ -664,7 +664,7 @@ tsch_tx_process_pending(void)
     ringbufindex_get(&dequeued_ringbuf);
   }
 
-#if WITH_OST_DONE
+#if WITH_OST
   post_process_rx_t_offset();
 #endif
 

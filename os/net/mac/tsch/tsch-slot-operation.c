@@ -54,14 +54,14 @@
 #include "net/mac/tsch/tsch.h"
 #include "sys/critical.h"
 
-#if WITH_OST_DONE /* checked */
+#if WITH_OST
 #include "node-info.h"
 #include "orchestra.h"
 #include "net/ipv6/uip-ds6-route.h"
 #include "net/ipv6/uip-ds6-nbr.h"
 #include "net/mac/tsch/tsch-schedule.h"
 #include "lib/random.h"
-#if OST_RESIDUAL_ALLOC
+#if OST_ON_DEMAND_PROVISION
 #include "net/mac/framer/frame802154.h"
 #endif
 #endif
@@ -175,8 +175,10 @@ static struct tsch_link *backup_link = NULL;
 static struct tsch_packet *current_packet = NULL;
 static struct tsch_neighbor *current_neighbor = NULL;
 
+#if !WITH_OST && !WITH_ALICE
 /* Indicates whether an extra link is needed to handle the current burst */
 static int burst_link_scheduled = 0;
+#endif
 /* Counts the length of the current burst */
 int tsch_current_burst_count = 0;
 
@@ -190,34 +192,27 @@ static struct pt slot_operation_pt;
 static PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t));
 static PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t));
 
-#if WITH_OST_DONE
+#if WITH_OST
 uint8_t ost_flag_failed_to_select_t_offset;
 uint8_t ost_todo_consecutive_new_tx_request;
-static uint8_t todo_rx_schedule_change;
-static uint16_t prN_new_N;
-#endif
 
-#if WITH_OST_DONE
+static uint8_t todo_rx_schedule_change;
+static uint8_t todo_tx_schedule_change;
+
+static uip_ds6_nbr_t *prN_nbr;
+static uint16_t prN_new_N;
+static uint16_t prN_new_t_offset;
+
 typedef struct ost_t_offset_candidate {
   uint8_t available;
 } ost_t_offset_candidate_t;
 
-static uint16_t prN_new_t_offset;
-static uip_ds6_nbr_t *prN_nbr;
-
-static uint8_t todo_tx_schedule_change;
 static uint8_t todo_N_update;
 static uint8_t todo_N_inc;
 
-static uint16_t prt_new_t_offset;
 static uip_ds6_nbr_t *prt_nbr;
+static uint16_t prt_new_t_offset;
 static uint8_t changed_t_offset_default;
-#endif
-
-#if WITH_OST_DONE
-#if WITH_OST_DONE && OST_RESIDUAL_ALLOC
-struct ssq_schedule_t ssq_schedule_list[16];
-#endif
 
 uint16_t
 hash_ftn(uint16_t value, uint16_t mod) {
@@ -232,10 +227,9 @@ hash_ftn(uint16_t value, uint16_t mod) {
 
   return (uint16_t)a % mod;
 }
-#endif
-
+#if OST_ON_DEMAND_PROVISION
+struct ssq_schedule_t ssq_schedule_list[16];
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
 uint16_t
 select_matching_schedule(uint16_t rx_schedule_info)
 {
@@ -250,9 +244,7 @@ select_matching_schedule(uint16_t rx_schedule_info)
   }
   return 0xffff; /* 0xffff */
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
 void
 print_ssq_schedule_list(void)
 {
@@ -274,9 +266,7 @@ print_ssq_schedule_list(void)
   }
 */
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
 uint8_t
 exist_matching_slot(struct tsch_asn_t *target_asn)
 {
@@ -289,9 +279,7 @@ exist_matching_slot(struct tsch_asn_t *target_asn)
   }
   return 0;
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
 void
 remove_matching_slot(void)
 {
@@ -304,14 +292,8 @@ remove_matching_slot(void)
       break;
     }
   }
-  if(i == 16) {
-//    printf("ERROR: Not found in remove_matching_slot\n");
-  }
-  // print_ssq_schedule_list();
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC //hckim
 void
 add_matching_slot(uint16_t matching_slot, uint8_t is_tx, uint16_t nbr_id)
 {  
@@ -323,11 +305,11 @@ add_matching_slot(uint16_t matching_slot, uint8_t is_tx, uint16_t nbr_id)
         ssq_schedule_list[i].asn.ms1b = tsch_current_asn.ms1b;
         TSCH_ASN_INC(ssq_schedule_list[i].asn, matching_slot);
 
-        ssq_schedule_list[i].link.next = NULL;                              //not used
-        ssq_schedule_list[i].link.handle = 65535;                           //not used
-        ssq_schedule_list[i].link.timeslot = 65535;                         //not used
+        ssq_schedule_list[i].link.next = NULL;        //not used
+        ssq_schedule_list[i].link.handle = 0xffff;    //not used
+        ssq_schedule_list[i].link.timeslot = 0xffff;  //not used
 
-        ssq_schedule_list[i].link.channel_offset = 3;                      //will be updated using hash before TX or RX
+        ssq_schedule_list[i].link.channel_offset = 3; //will be updated using hash before TX or RX
 
         ssq_schedule_list[i].link.link_type = LINK_TYPE_NORMAL;
         ssq_schedule_list[i].link.data = NULL;
@@ -337,25 +319,33 @@ add_matching_slot(uint16_t matching_slot, uint8_t is_tx, uint16_t nbr_id)
         if(is_tx) {
           ssq_schedule_list[i].link.slotframe_handle = SSQ_SCHEDULE_HANDLE_OFFSET + 2 * nbr_id + 1;
           ssq_schedule_list[i].link.link_options = LINK_OPTION_TX;
+
+#if WITH_OST_LOG
+          TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ost odp: add tx %u", ssq_schedule_list[i].link.slotframe_handle);
+        );
+#endif
+
         } else {
           ssq_schedule_list[i].link.slotframe_handle = SSQ_SCHEDULE_HANDLE_OFFSET + 2 * nbr_id + 2;
           ssq_schedule_list[i].link.link_options = LINK_OPTION_RX;
+
+#if WITH_OST_LOG
+          TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ost odp: add rx %u", ssq_schedule_list[i].link.slotframe_handle);
+        );
+#endif
+
         }
 
         break;        
       }
     }
-
-    if(i == 16) {
-      /* ERROR: ssq_schedule_list is full */
-    }
-
-    //print_ssq_schedule_list();
   }
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
 uint16_t 
 process_rx_schedule_info(frame802154_t* frame) 
 {
@@ -365,9 +355,9 @@ process_rx_schedule_info(frame802154_t* frame)
     && !frame802154_is_broadcast_addr((frame->fcf).dest_addr_mode, frame->dest_addr)
     && ost_is_routing_nbr(nbr) == 1) {
     if((frame->fcf).frame_pending) {
-      uint16_t time_to_matching_slot = select_matching_schedule(frame->pigg2);
+      uint16_t time_to_matching_slot = select_matching_schedule(frame->ost_pigg2);
 
-      if(time_to_matching_slot == 65535) { /* 0xffff */
+      if(time_to_matching_slot == 0xffff) { /* 0xffff */
         /* no matching slots */
       } else if(1 <= time_to_matching_slot && (time_to_matching_slot - 1) < 16) {
         /* matching slot at time_to_matching slot */
@@ -376,51 +366,39 @@ process_rx_schedule_info(frame802154_t* frame)
       } else {
         /* ERROR: time_to_matching_slot */
       }
-    } else if(!((frame->fcf).frame_pending) && frame->pigg2 != 0xffff) {
+    } else if(!((frame->fcf).frame_pending) && frame->ost_pigg2 != 0xffff) {
       /* ERROR: schedule info is updated only when pending bit is set */
     }
   }
-
-  if(frame802154_is_broadcast_addr((frame->fcf).dest_addr_mode, frame->dest_addr)) {
-    //PRINTF("Rx uc: ssq_schedule found %u (BC)\n", frame->pigg2);
-  } else if(nbr == NULL) {
-    //PRINTF("Rx uc: ssq_schedule found %u (No nbr)\n", frame->pigg2);
-  } else if(ost_is_routing_nbr(nbr) == 0) {
-    //PRINTF("Rx uc: ssq_schedule found %u (No r_nbr)\n",frame->pigg2);
-  }
-  return 65535;
+  return 0xffff;
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
 void
 process_rx_matching_slot(frame802154_t* frame)
 {
   linkaddr_t *eack_src = tsch_queue_get_nbr_address(current_neighbor);
-  uint16_t nbr_id = ost_node_id_from_linkaddr(eack_src);
+  uint16_t src_id = ost_node_id_from_linkaddr(eack_src);
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)eack_src);
   if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {
-    add_matching_slot(frame->pigg2, 1, nbr_id);
+    add_matching_slot(frame->ost_pigg2, 1, src_id);
   }
 }
-#endif
+#endif /* OST_ON_DEMAND_PROVISION */
 /*---------------------------------------------------------------------------*/
 /* Rx N from Data -> Change Rx schedule */
-#if WITH_OST_DONE
 void
 ost_add_rx(uint16_t id, uint16_t N, uint16_t t_offset)
 {
-  if(N != 65535 && t_offset != 65535) {
+  if(N != 0xffff && t_offset != 0xffff) {
     uint16_t handle = ost_get_rx_sf_handle_from_id(id);
     uint16_t size = (1 << N);
     uint16_t channel_offset = 3;
-
-    struct tsch_slotframe *sf;
 
     if(tsch_schedule_get_slotframe_by_handle(handle) != NULL) {
       return;
     }
 
+    struct tsch_slotframe *sf;
     sf = tsch_schedule_add_slotframe(handle, size);
 
     if(sf != NULL) {
@@ -429,9 +407,7 @@ ost_add_rx(uint16_t id, uint16_t N, uint16_t t_offset)
     }
   }
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_DONE
 void
 ost_remove_rx(uint16_t id)
 {
@@ -443,19 +419,10 @@ ost_remove_rx(uint16_t id)
     tsch_schedule_remove_slotframe(rm_sf);
   }
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_DONE
 void
 eliminate_overlap_toc(ost_t_offset_candidate_t *toc, uint16_t target_N, uint16_t used_N, uint16_t used_t_offset)
 {
-#if WITH_OST_DBG
-  TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-              "elim_toc (%u, %u)", used_N, used_t_offset);
-  );
-#endif
-
   if(target_N < used_N) { /* lower-tier used */
     uint16_t parent_N = used_N - 1;
     uint16_t parent_t_offset = used_t_offset % (1 << (used_N - 1)); 
@@ -472,22 +439,13 @@ eliminate_overlap_toc(ost_t_offset_candidate_t *toc, uint16_t target_N, uint16_t
 
   } else { /* target_N == used_N */
     if(used_t_offset >= (1 << target_N)) {
-
-#if WITH_OST_DBG
-    TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-                "ERR: too big used_t_off (%u, %u)", target_N, used_t_offset);
-    );
-#endif
-
+      /* ERR: too big used t_offset */
       return;
     }
     toc[used_t_offset].available = 0;
   }
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_DONE
 uint32_t 
 select_t_offset(uint16_t target_id, uint16_t N)  /* similar with tx_installable */
 {
@@ -500,13 +458,6 @@ select_t_offset(uint16_t target_id, uint16_t N)  /* similar with tx_installable 
   }
 
   /* Check resource overlap */
-#if WITH_OST_DBG
-  TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-              "select_t_offset (%u, %u)", target_id, N);
-  );
-#endif
-
   struct tsch_slotframe *sf = ost_tsch_schedule_get_slotframe_head();
   while(sf != NULL) {
     if(sf->handle > 2 && sf->handle != ost_get_rx_sf_handle_from_id(target_id)) {
@@ -517,67 +468,57 @@ select_t_offset(uint16_t target_id, uint16_t N)  /* similar with tx_installable 
           struct tsch_link *l = list_head(sf->links_list);
 
           if(l == NULL) {
-#if WITH_OST_DBG
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "ERR: link is null");
-            );
-#endif
+            /* ERR: link is null */
           } else {
             uint16_t used_t_offset = l->timeslot;
             if(used_t_offset >= (1 << used_N)) {
-#if WITH_OST_DBG
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "ERR: too big used_t_off %u %u %u %u", sf->handle, used_t_offset, used_N, target_id);
-              );
-#endif
+              /* ERR: too big used t_offsete */
             }
             eliminate_overlap_toc(toc, N, used_N, used_t_offset);
           }
 
           break;
+
         } else if (n == N_MAX) {
-#if WITH_OST_DBG
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "ERR: weird size of slotframe");
-            );
-#endif
+          /* ERR: weird size of slotframe */
         }
       }
     }
     sf = list_item_next(sf);
   }
 
-  uint32_t rand = random_rand() % (1 << 31); // OST check later
-  uint32_t i1 = 0;
+  uint32_t rand = random_rand() % (1 << 31); /* OST check later */
+  uint32_t j = 0;
 
   for(i = 0; i < (1 << N); i++) {
-    i1 = (i + rand) % (1 << N);
-    if(toc[i1].available == 1) {
-#if WITH_OST_DBG
-      TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-                  "select_t_offset: %lu chosen\n", i1);
-      );
-#endif
-
+    j = (i + rand) % (1 << N);
+    if(toc[j].available == 1) {
       break;
     }
   }
 
   if(i == (1 << N)) {
+#if WITH_OST_LOG
+    TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+                "ost select_t_offset: (%u, %u) -> failed", target_id, N);
+  );
+#endif
     return 0xffff + 1;
   } else {
-    return i1;
+#if WITH_OST_LOG
+    TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+                "ost select_t_offset: (%u, %u) -> %lu", target_id, N, j);
+  );
+#endif
+    return j;
   }
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_DONE
+ /* in short, prN */
 void
-process_rx_N(frame802154_t *frame) /* in short, prN */
+process_rx_N(frame802154_t *frame)
 {
   if(tsch_is_locked()) {
     TSCH_LOG_ADD(tsch_log_message,
@@ -593,18 +534,17 @@ process_rx_N(frame802154_t *frame) /* in short, prN */
     && ost_is_routing_nbr(nbr) == 1
     && nbr->ost_rx_no_path == 0) {
     /* No need to allocate rx for nbr who sent no-path dao */
-    
-#if WITH_OST_DBG
+
+    uint16_t nbr_id = ost_node_id_from_linkaddr((linkaddr_t *)(&(frame->src_addr)));
+
+#if WITH_OST_LOG
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "Rx uc: N found %u (r_nbr %u)", frame->pigg1, nbr_id);
+                "ost rcvd N: nbr %u, %u -> %u", nbr_id, nbr->ost_nbr_N, frame->ost_pigg1);
     );
 #endif
 
     if(nbr->ost_nbr_N != frame->ost_pigg1) {
-#if WITH_OST_DBG
-        uint16_t old_N = nbr->ost_nbr_N;
-#endif
       /* To be used in post_process_rx_N */
       if(frame->ost_pigg1 >= INC_N_NEW_TX_REQUEST) {
         prN_new_N = (frame->ost_pigg1) - INC_N_NEW_TX_REQUEST;
@@ -616,10 +556,11 @@ process_rx_N(frame802154_t *frame) /* in short, prN */
           return;
         }
 
-#if WITH_OST_DBG
+#if WITH_OST_LOG
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "process_rx_N: detect uninstallable or low PRR");
+                    "ost prN: uninstallable/low PRR (%u, %u)", 
+                    nbr->ost_consecutive_new_tx_request, ost_todo_consecutive_new_tx_request);
         );
 #endif
 
@@ -628,23 +569,14 @@ process_rx_N(frame802154_t *frame) /* in short, prN */
         nbr->ost_consecutive_new_tx_request = 0;
       }
 
-#if WITH_OST_DBG
-      TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-                  "Rx uc: New N (%u->%u)\n", old_N, prN_new_N);
-      );
-#endif
-
-      uint16_t nbr_index = ost_node_id_from_linkaddr((linkaddr_t *)&(frame->src_addr));
-      uint32_t result = select_t_offset(nbr_index, prN_new_N);
+      uint32_t result = select_t_offset(nbr_id, prN_new_N);
 
       if(result <= 0xffff) {
         todo_rx_schedule_change = 1;
         prN_new_t_offset = (uint16_t)result;
         prN_nbr = nbr;
         nbr->ost_nbr_N = prN_new_N; 
-        nbr->ost_nbr_t_offset = prN_new_t_offset;
-        
+        nbr->ost_nbr_t_offset = prN_new_t_offset;        
         return;  
       } else {
         ost_flag_failed_to_select_t_offset = 1;
@@ -654,20 +586,8 @@ process_rx_N(frame802154_t *frame) /* in short, prN */
       nbr->ost_consecutive_new_tx_request = 0;
     }
   }
-
-#if WITH_OST_DBG
-  if(frame802154_is_broadcast_addr((frame->fcf).dest_addr_mode, frame->dest_addr)) {
-    LOG_INFO("Rx uc: N found %u (BC)\n", frame->pigg1);
-  } else if(nbr == NULL) {
-    LOG_INFO("Rx uc: N found %u (No nbr)\n", frame->pigg1);
-  } else if(is_routing_nbr(nbr) == 0) {
-    LOG_INFO("Rx uc: N found %u (No r_nbr)\n",frame->pigg1);
-  }
-#endif
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_DONE
 /* called from tsch_rx_process_pending (after slot_operation finished) */
 void
 post_process_rx_N(void)
@@ -678,13 +598,12 @@ post_process_rx_N(void)
     if(prN_nbr != NULL) {
       uint16_t nbr_id = ost_node_id_from_ipaddr(&(prN_nbr->ipaddr));
       ost_remove_rx(nbr_id);
-
       ost_add_rx(nbr_id, prN_new_N, prN_new_t_offset);
 
-#if WITH_OST_DBG
+#if WITH_OST_LOG
       TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-                  "New Rx schedule: %u,%u (nbr %u)\n", prN_new_N, prN_new_t_offset, nbr_id);
+                  "ost post_prN: nbr %u, (%u, %u)", nbr_id, prN_new_N, prN_new_t_offset);
       );
 #endif
     }
@@ -735,15 +654,12 @@ void ost_change_queue_select_packet(linkaddr_t *nbr_lladdr, uint16_t handle, uin
     }
   }
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_DONE
 void 
 ost_add_tx(linkaddr_t *nbr_lladdr, uint16_t N, uint16_t t_offset)
 {
-  uint16_t id = ost_node_id_from_linkaddr(nbr_lladdr);
-  
-  if(N != 65535 && t_offset != 65535) {
+  if(N != 0xffff && t_offset != 0xffff) {
+    uint16_t id = ost_node_id_from_linkaddr(nbr_lladdr);
     uint16_t handle = ost_get_tx_sf_handle_from_id(id);
     uint16_t size = (1 << N);
     uint16_t channel_offset = 3;
@@ -784,7 +700,6 @@ void
 ost_remove_tx(linkaddr_t *nbr_lladdr)
 {
   uint16_t id = ost_node_id_from_linkaddr(nbr_lladdr);
-
   struct tsch_slotframe *rm_sf;
   uint16_t rm_sf_handle = ost_get_tx_sf_handle_from_id(id);
   rm_sf = tsch_schedule_get_slotframe_by_handle(rm_sf_handle);
@@ -841,7 +756,7 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)
 
   ost_t_offset_candidate_t toc[1 << N_MAX];
 
-  if(t_offset == 65535) {
+  if(t_offset == 0xffff) {
     return -2;
   }
 
@@ -862,7 +777,7 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)
 
           struct tsch_link *l = list_head(sf->links_list);
           if(l == NULL) {
-            printf("ERROR: link is null (tx_installable)\n");
+            /* ERROR: link is null (tx_installable) */
           } else {
             uint16_t used_t_offset = l->timeslot;
             eliminate_overlap_toc(toc, N, used_N, used_t_offset);
@@ -870,7 +785,7 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)
 
           break;
         } else if (n == N_MAX) {
-          printf("ERROR: weird size of slotframe");
+          /* ERROR: weird size of slotframe */
         }
       }
     }
@@ -883,20 +798,15 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)
   }
 }
 /*---------------------------------------------------------------------------*/
+/* In short, prt */
 void
-process_rx_t_offset(frame802154_t* frame) /* In short, prt */
+process_rx_t_offset(frame802154_t* frame)
 {
   linkaddr_t *eack_src = tsch_queue_get_nbr_address(current_neighbor);
   uint16_t nbr_id = ost_node_id_from_linkaddr(eack_src);
   
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)eack_src);
   if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {
-
-#if WITH_OST_DBG
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "Rx EACK: t_offset found %u (r_nbr %u)", frame->pigg1, nbr_id));
-#endif
 
     if(nbr->ost_my_t_offset != frame->ost_pigg1 || has_my_N_changed(nbr)) {
       /* To be used in post_process_rx_t_offset */
@@ -905,11 +815,27 @@ process_rx_t_offset(frame802154_t* frame) /* In short, prt */
 
       if(frame->ost_pigg1 == T_OFFSET_ALLOCATION_FAIL) {
         todo_N_inc = 1;
+
+#if WITH_OST_LOG
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "ost prT: t_offset alloc fail");
+        );
+#endif
+
         return;
       }
 
       if(frame->ost_pigg1 == T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST) {
         todo_N_inc = 1; 
+
+#if WITH_OST_LOG
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "ost prT: consecutive request");
+        );
+#endif
+
         return;          
       }
 
@@ -925,6 +851,15 @@ process_rx_t_offset(frame802154_t* frame) /* In short, prt */
         }
         changed_t_offset_default = 0;
         todo_tx_schedule_change = 1;
+
+#if WITH_OST_LOG
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "ost prT: installable (%u, %u, %u, %u)", 
+                    nbr->ost_my_uninstallable, todo_N_update, 
+                    changed_t_offset_default, todo_tx_schedule_change);
+        );
+#endif
         return;
       } else if(result == -1) { /* non-installable, request different t_offset */
         if(nbr->ost_my_uninstallable != 1) {
@@ -933,6 +868,15 @@ process_rx_t_offset(frame802154_t* frame) /* In short, prt */
         }
         changed_t_offset_default = 0;
         todo_tx_schedule_change = 1;  /* do not add, just remove */
+        
+#if WITH_OST_LOG
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "ost prT: non-installable (%u, %u, %u, %u)", 
+                    nbr->ost_my_uninstallable, todo_N_update, 
+                    changed_t_offset_default, todo_tx_schedule_change);
+        );
+#endif
         return;
       } else if(result == -2) { /* denial from nbr (when t_offset == 65535) */
         if(nbr->ost_my_uninstallable != 0) {
@@ -941,6 +885,16 @@ process_rx_t_offset(frame802154_t* frame) /* In short, prt */
         }
         changed_t_offset_default = 1;   
         todo_tx_schedule_change = 1;  /* do not add, just remove */
+
+#if WITH_OST_LOG
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "ost prT: denial (%u, %u, %u, %u)", 
+                    nbr->ost_my_uninstallable, todo_N_update, 
+                    changed_t_offset_default, todo_tx_schedule_change);
+        );
+#endif
+        return;
       }
     }
   }
@@ -951,67 +905,61 @@ void
 post_process_rx_t_offset(void)
 {
   linkaddr_t *nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(prt_nbr);
-#if WITH_OST_DBG
-  uint16_t nbr_id = ost_node_id_from_ipaddr(&(prt_nbr->ipaddr));
-#endif
 
   if(todo_N_inc == 1) {
     todo_N_inc = 0;
 
     if(prt_nbr->ost_my_N < N_MAX) {
 
-#if WITH_OST_DBG
+#if WITH_OST_LOG
       TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-                  "N inc %u->%u", prt_nbr->my_N, (prt_nbr->my_N) + 1);
+                  "ost post_prT: inc N %u -> %u", prt_nbr->ost_my_N, (prt_nbr->ost_my_N) + 1);
       );
 #endif
+
       (prt_nbr->ost_my_N)++;
       ost_change_queue_N_update(nbr_lladdr, prt_nbr->ost_my_N);
     } else {
 
-#if WITH_OST_DBG
+#if WITH_OST_LOG
       TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-                  "N inc MAX");
+                  "ost post_prT: inc N MAX");
       );
 #endif
     }
 
   } else if(todo_tx_schedule_change == 1) {
     todo_tx_schedule_change = 0;
+
     if(prt_nbr != NULL) {
       ost_remove_tx(nbr_lladdr);
 
       if(prt_nbr->ost_my_uninstallable == 0) {
         if(changed_t_offset_default == 1) {
-
-#if WITH_OST_DBG
-          TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                      "New t_offset 65535 (nbr %u)", nbr_id);
-          );
-#endif
-
+          /* New t_offset 65535 */
         } else {
           ost_add_tx(nbr_lladdr, prt_nbr->ost_my_N, prt_new_t_offset);
 
-#if WITH_OST_DBG
+#if WITH_OST_LOG
+          uint16_t nbr_id = ost_node_id_from_ipaddr(&(prt_nbr->ipaddr));
           TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),
-                      "New Tx schedule: %u,%u (nbr %u)", prt_nbr->my_N, prt_new_t_offset, nbr_id);
+                      "ost post_prT: nbr %u, (%u, %u)", nbr_id, prt_nbr->ost_my_N, prt_new_t_offset);
           );
 #endif
         }
-
       } else {
 
-#if WITH_OST_DBG
+#if WITH_OST_LOG
+        uint16_t nbr_id = ost_node_id_from_ipaddr(&(prt_nbr->ipaddr));
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "Uninstallable (nbr %u)", nbr_id);
+                    "ost post_prT: uninstallable nbr %u", nbr_id);
         );
 #endif
+
       }
 
       if(todo_N_update == 1) {
@@ -1097,7 +1045,7 @@ tsch_get_channel_offset(struct tsch_link *link, struct tsch_packet *p)
   return link->channel_offset;
 #endif
 
-#if WITH_OST_DONE
+#if WITH_OST
   return link->channel_offset;
 #endif
 
@@ -1181,16 +1129,6 @@ tsch_schedule_slot_operation(struct rtimer *tm, rtimer_clock_t ref_time, rtimer_
   } else {
     r = rtimer_set(tm, ref_time + offset, 1, (void (*)(struct rtimer *, void *))tsch_slot_operation, NULL);
     if(r == RTIMER_OK) {
-
-#if WITH_OST_CHECK /* ??? */
-      static uint8_t reset = 0;
-      if(reset == 0) {
-        if(tsch_current_asn.ls4b > (NO_DATA_PERIOD) * 1000 / 10) {
-          reset = 1;
-        }
-      }
-#endif
-
       return 1;
     }
   }
@@ -1336,7 +1274,7 @@ tsch_radio_off(enum tsch_radio_state_off_cmd command)
   }
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
+#if WITH_OST && OST_ON_DEMAND_PROVISION
 uint8_t
 reserved_ssq(uint16_t nbr_id)
 {
@@ -1425,8 +1363,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* wait for ack? */
       static uint8_t do_wait_for_ack;
       static rtimer_clock_t tx_start_time;
+#if !WITH_OST && !WITH_ALICE
       /* Did we set the frame pending bit to request an extra burst link? */
       static int burst_link_requested;
+#endif
 
 #if TSCH_CCA_ENABLED
       static uint8_t cca_status;
@@ -1437,6 +1377,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       packet_len = queuebuf_datalen(current_packet->qb);
       /* if is this a broadcast packet, don't wait for ack */
       do_wait_for_ack = !current_neighbor->is_broadcast;
+#if !WITH_OST && !WITH_ALICE
       /* Unicast. More packets in queue for the neighbor? */
       burst_link_requested = 0;
       if(do_wait_for_ack
@@ -1445,11 +1386,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         burst_link_requested = 1;
         tsch_packet_set_frame_pending(packet, packet_len);
       }
+#endif
       /* read seqno from payload */
       seqno = ((uint8_t *)(packet))[2];
 
-#if WITH_OST_DONE
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
+#if WITH_OST
+#if OST_ON_DEMAND_PROVISION
       frame802154_fcf_t fcf;
       frame802154_parse_fcf((uint8_t *)(packet), &fcf);
 
@@ -1457,7 +1399,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       uint16_t nbr_id = ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(current_neighbor));
 
       if(fcf.ack_required) {
-#if OST_ON_DEMAND_PROVISION
         if(queued_pkts > 1) {
           if(reserved_ssq(nbr_id) == 0) { /* if 1, there exists at least one reserved ssq for nbr_id */
             fcf.frame_pending = 1;
@@ -1466,7 +1407,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
             /* To disable ssq bit after periodic provision Tx */
             uint16_t tx_sf_handle = ost_get_tx_sf_handle_from_id(nbr_id);
-            struct tsch_slotframe *sf = tsch_schedule_get_slotframe_by_handle(tx_sf_handle); //Periodic provision
+            /* Periodic provision */
+            struct tsch_slotframe *sf = tsch_schedule_get_slotframe_by_handle(tx_sf_handle);
 
             if(sf != NULL) {
               uint16_t timeslot = TSCH_ASN_MOD(tsch_current_asn, sf->size);
@@ -1488,6 +1430,13 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               }
             }            
 
+#if WITH_OST_LOG
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "ost odp: ssq_sched %u", ssq_schedule)
+            );
+#endif
+
             /* put ssq_schedule into the position of pigg2 */
             ((uint8_t *)(packet))[4] = ssq_schedule & 0xff;
             ((uint8_t *)(packet))[5] = (ssq_schedule >> 8) & 0xff;
@@ -1499,16 +1448,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           }
         } else if(queued_pkts == 1) { /* only one packet is queued -> no need for ssq */
           fcf.frame_pending = 0;
-          ((uint8_t *)(packet))[4]=255; /* full of 1 bits */
-          ((uint8_t *)(packet))[5]=255; /* full of 1 bits */
+          ((uint8_t *)(packet))[4] = 255; /* full of 1 bits */
+          ((uint8_t *)(packet))[5] = 255; /* full of 1 bits */
         } else {
           /* ERROR: No packet in Tx queue */
         }
-#else /* OST_ON_DEMAND_PROVISION */
-        fcf.frame_pending = 0;
-        ((uint8_t *)(packet))[4] = 255; /* full of 1 bits */
-        ((uint8_t *)(packet))[5] = 255; /* full of 1 bits */
-#endif /* OST_ON_DEMAND_PROVISION */
         frame802154_create_fcf(&fcf, (uint8_t *)(packet)); /* why here ??? maybe due to fcf change??? */
       } else {
         ((uint8_t *)(packet))[4] = 255;
@@ -1516,9 +1460,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       }
 
       seqno = ((uint8_t *)(packet))[6];
-#else
+
+#else /* OST_ON_DEMAND_PROVISION */
+
       seqno = ((uint8_t *)(packet))[4];
-#endif
+
+#endif /* OST_ON_DEMAND_PROVISION */
 #endif /* WITH_OST */
 
       /* if this is an EB, then update its Sync-IE */
@@ -1625,33 +1572,30 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               if(ack_len > 0) {
                 is_time_source = current_neighbor != NULL && current_neighbor->is_time_source;
 
-#if WITH_OST_DONE
                 if(tsch_packet_parse_eack(ackbuf, ack_len, seqno,
                     &frame, &ack_ies, &ack_hdrlen) == 0) {
                   ack_len = 0;
                 }
-#if WITH_OST_DBG
+
+#if WITH_OST_LOG
+                uint16_t nbr_id = ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(current_neighbor));
                 TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                    "rcvd t_offsete %u", frame.pigg1));
+                    "ost rcvd t_offset: nbr %u, %u", nbr_id, frame.ost_pigg1)
+                );
 #endif
 
+#if WITH_OST
                 todo_tx_schedule_change = 0;
                 todo_N_update = 0;
                 todo_N_inc = 0;
 
                 if(ack_len != 0) {
                   process_rx_t_offset(&frame);
-#if WITH_OST_10
+#if OST_ON_DEMAND_PROVISION
                   process_rx_matching_slot(&frame);
 #endif
                 }
-#else
-                if(tsch_packet_parse_eack(ackbuf, ack_len, seqno,
-                    &frame, &ack_ies, &ack_hdrlen) == 0) {
-                  ack_len = 0;
-                }
-
 #endif
 
 #if LLSEC802154_ENABLED
@@ -1671,10 +1615,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* LLSEC802154_ENABLED */
               }
 
-#if 1 //WITH_OST_DBG
+#if 0//WITH_OST_LOG
               TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),
-                  "zzz rcvd_ack_len %u", ack_len));
+                  "ost rcvd_ack_len %u", ack_len));
 #endif
 
               if(ack_len != 0) {
@@ -1704,11 +1648,13 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 }
                 mac_tx_status = MAC_TX_OK;
 
+#if !WITH_OST && !WITH_ALICE
                 /* We requested an extra slot and got an ack. This means
                 the extra slot will be scheduled at the received */
                 if(burst_link_requested) {
                   burst_link_scheduled = 1;
                 }
+#endif
               } else {
                 mac_tx_status = MAC_TX_NOACK;
               }
@@ -1766,15 +1712,15 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     process_poll(&tsch_pending_events_process);
   }
 
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
+#if WITH_OST && OST_ON_DEMAND_PROVISION
   if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET) {
     remove_matching_slot();
   }
-  if(current_link->slotframe_handle == 1) { // RB
+  if(current_link->slotframe_handle == 1) { /* RB */
     int queued_pkts = ringbufindex_elements(&current_neighbor->tx_ringbuf);
     uint16_t nbr_id = ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(current_neighbor));
 
-    if(reserved_ssq(nbr_id) && queued_pkts == 0) { // Tx occurs by RB before reserved ssq Tx
+    if(reserved_ssq(nbr_id) && queued_pkts == 0) { /* Tx occurs by RB before reserved ssq Tx */
       /* Remove Tx ssq by RB */
       remove_reserved_ssq(nbr_id);
     } 
@@ -1957,19 +1903,27 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               static uint8_t ack_buf[TSCH_PACKET_MAX_LEN];
               static int ack_len;
 
-#if WITH_OST_DONE
+#if WITH_OST
               /* before generate EACK */
               todo_rx_schedule_change = 0;
               ost_flag_failed_to_select_t_offset = 0;
               ost_todo_consecutive_new_tx_request = 0;
 
               process_rx_N(&frame);
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC              
+#if OST_ON_DEMAND_PROVISION              
               uint16_t matching_slot = process_rx_schedule_info(&frame);
+
+#if WITH_OST_LOG
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                  "ost odp: matching_slot %u", matching_slot)
+              );
+#endif
 #endif
 #endif
 
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC //hckim
+#if WITH_OST && OST_ON_DEMAND_PROVISION
+              /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, matching_slot);
 #else
@@ -1978,10 +1932,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack);
 #endif
 
-#if 1 //WITH_OST_DBG
+#if 0//WITH_OST_LOG
               TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),
-                  "zzz send_ack_len %u", ack_len));
+                  "ost send_ack_len %u", ack_len));
 #endif
 
               if(ack_len > 0) {
@@ -2001,9 +1955,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 TSCH_DEBUG_RX_EVENT();
                 NETSTACK_RADIO.transmit(ack_len);
                 tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
-
+#if !WITH_OST && !WITH_ALICE
                 /* Schedule a burst link iff the frame pending bit was set */
                 burst_link_scheduled = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
+#endif
               }
             }
 
@@ -2071,11 +2026,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     }
   }
 
-  #if WITH_OST_10 && OST_RESIDUAL_ALLOC //hckim
-    if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET) {
-      remove_matching_slot();
-    }
-  #endif  
+#if WITH_OST && OST_ON_DEMAND_PROVISION
+  if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET) {
+    remove_matching_slot();
+  }
+#endif  
 
   TSCH_DEBUG_RX_EVENT();
 
@@ -2104,7 +2059,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                             current_link == NULL);
       );
 
-#if WITH_OST_10 & OST_RESIDUAL_ALLOC //hckim
+#if WITH_OST && OST_ON_DEMAND_PROVISION
       if(exist_matching_slot(&tsch_current_asn)) {
         remove_matching_slot();
       }
@@ -2124,15 +2079,11 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       /* Get a packet ready to be sent */
       current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
 
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC //hckim
+#if WITH_OST && OST_ON_DEMAND_PROVISION
       if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET 
         && current_link->link_options == LINK_OPTION_TX) {
         if(current_packet == NULL) {
           if(tsch_is_locked()) { /* tsch-schedule is being changing, so locked - skip this slot */
-            TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "skip slot: locked 1");
-            );
             remove_matching_slot();
           } else {
             /* ERROR: ssq Tx schedule, but no packets to Tx */
@@ -2148,7 +2099,8 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
 
-#if WITH_OST_DONE
+#if WITH_OST
+      /* Seungbeom Jeong added this else if block */
       else if(current_packet == NULL && (current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         if(current_link->slotframe_handle > backup_link->slotframe_handle) {
           /* There could be Tx option in backup link */
@@ -2161,7 +2113,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
 
-#if WITH_OST_DONE
+#if WITH_OST
         uint16_t rx_id = 0;
 
         if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
@@ -2183,7 +2135,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
             goto ost_donothing;
           }
         }
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC 
+#if OST_ON_DEMAND_PROVISION 
         else if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET) {
           if(current_link->link_options & LINK_OPTION_TX) {
             rx_id = (current_link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
@@ -2206,20 +2158,30 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           uint16_t minus_c_offset = hash_ftn(hash_input, 2) ; // 0 or 1
           current_link->channel_offset = 3; // default
           current_link->channel_offset = current_link->channel_offset - minus_c_offset; // 3-0 or 3-1
+
+          TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                        "ost odp: operation");
+          );
+
         }
 #endif
 #endif
 
+#if !WITH_OST && !WITH_ALICE
         /* If we are in a burst, we stick to current channel instead of
          * doing channel hopping, as per IEEE 802.15.4-2015 */
         if(burst_link_scheduled) {
           /* Reset burst_link_scheduled flag. Will be set again if burst continue. */
           burst_link_scheduled = 0;
-        } else {
+        } else 
+#else        
+        {
           /* Hop channel */
           tsch_current_channel_offset = tsch_get_channel_offset(current_link, current_packet);
           tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
         }
+#endif
         NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
         /* Turn the radio on already here if configured so; necessary for radios with slow startup */
         tsch_radio_on(TSCH_RADIO_CMD_ON_START_OF_TIMESLOT);
@@ -2240,13 +2202,14 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         }
       } else {
         ++tsch_unlocked_scheduled_idle_cell_count; //hckim
-
+#if !WITH_OST && !WITH_ALICE
         /* Make sure to end the burst in cast, for some reason, we were
          * in a burst but now without any more packet to send. */
         burst_link_scheduled = 0;
+#endif
       }
 
-#if WITH_OST_DONE
+#if WITH_OST
 ost_donothing:
 #endif
 
@@ -2288,6 +2251,7 @@ ost_donothing:
           tsch_queue_update_all_backoff_windows(&current_link->addr);
         }
 
+#if !WITH_OST && !WITH_ALICE
         /* A burst link was scheduled. Replay the current link at the
         next time offset */
         if(burst_link_scheduled && current_link != NULL) {
@@ -2308,17 +2272,26 @@ ost_donothing:
             tsch_current_burst_count = 0;
           }
         }
+#else
+        /* Get next active link */
+        current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);
+        if(current_link == NULL) {
+          /* There is no next link. Fall back to default
+           * behavior: wake up at the next slot. */
+          timeslot_diff = 1;
+        } else {
+          /* Reset burst index now that the link was scheduled from
+            normal schedule (as opposed to from ongoing burst) */
+          tsch_current_burst_count = 0;
+        }
+#endif
 
         /* Update ASN */
         TSCH_ASN_INC(tsch_current_asn, timeslot_diff);
 
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC //hckim
+#if WITH_OST && OST_ON_DEMAND_PROVISION
         if(current_link == NULL && tsch_is_locked() 
-          && exist_matching_slot(&tsch_current_asn)) { // tsch-schedule is being changing, so locked
-          TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-              "skip slot: locked 2");
-          );
+          && exist_matching_slot(&tsch_current_asn)) { /* tsch-schedule is being changing, so locked */
           remove_matching_slot();
         }
 #endif        

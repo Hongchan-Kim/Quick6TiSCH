@@ -56,7 +56,7 @@
 #include "sys/rtimer.h"
 #include <string.h>
 
-#if WITH_OST_DONE
+#if WITH_OST
 #include "orchestra.h"
 #endif
 
@@ -111,7 +111,7 @@ tsch_schedule_add_slotframe(uint16_t handle, uint16_t size)
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
+#if WITH_OST && OST_ON_DEMAND_PROVISION
 uint16_t
 tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)
 {
@@ -120,8 +120,8 @@ tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)
   
   /* Check slotframe schedule */
   if(!tsch_is_locked()) { 
-   struct tsch_slotframe *sf = list_head(slotframe_list);
-   while(sf != NULL) {
+    struct tsch_slotframe *sf = list_head(slotframe_list);
+    while(sf != NULL) {
       uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
       struct tsch_link *l = list_head(sf->links_list);
 
@@ -170,9 +170,7 @@ tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)
 
   return ssq_schedule;
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
 uint8_t
 earlier_ssq_schedule_list(uint16_t *time_to_orig_schedule, struct tsch_link **link)
 {
@@ -810,7 +808,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
               new_best = TSCH_LINK_COMPARATOR(curr_best, l);
             }
 
-#if WITH_OST_10
+#if WITH_OST
             if((curr_best->slotframe_handle == 1) 
               && (curr_best->link_options & LINK_OPTION_TX) 
               && (l->slotframe_handle == 2)) {
@@ -856,7 +854,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
       *time_offset = time_to_curr_best;
     }
 
-#if WITH_OST_10 && OST_RESIDUAL_ALLOC
+#if WITH_OST && OST_ON_DEMAND_PROVISION
     struct tsch_link *ssq_link = NULL;
     uint16_t new_time_offset = *time_offset; /* Initialize */
     if(earlier_ssq_schedule_list(&new_time_offset, &ssq_link)) {
@@ -953,9 +951,9 @@ tsch_schedule_print(void)
 }
 /*---------------------------------------------------------------------------*/
 /* Prints out the current schedule (all slotframes and links) */
-#if WITH_OST_DONE
+#if WITH_OST
 void
-tsch_schedule_print_proposed(void)
+tsch_schedule_print_ost(void)
 {
   if(!tsch_is_locked()) {
     struct tsch_slotframe *sf = list_head(slotframe_list);
@@ -985,9 +983,7 @@ tsch_schedule_print_proposed(void)
     printf("\n");
   }
 }
-#endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_DONE
 struct tsch_slotframe *
 ost_tsch_schedule_get_slotframe_head(void)
 {
