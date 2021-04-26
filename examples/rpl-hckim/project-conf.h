@@ -13,9 +13,9 @@
 #define IOT_LAB_LILLE_32                           5
 #define IOT_LAB_LILLE_46                           6
 
-//#define TESTBED_SITE                               IOT_LAB_LYON_2
+#define TESTBED_SITE                               IOT_LAB_LYON_2
 //#define TESTBED_SITE                               IOT_LAB_LYON_3
-#define TESTBED_SITE                               IOT_LAB_LYON_17
+//#define TESTBED_SITE                               IOT_LAB_LYON_17
 //#define TESTBED_SITE                               IOT_LAB_LILLE_24
 //#define TESTBED_SITE                               IOT_LAB_LILLE_32
 //#define TESTBED_SITE                               IOT_LAB_LILLE_46
@@ -44,7 +44,7 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 30 * CLOCK_SECOND)
 #define APP_MAX_TX                                 50

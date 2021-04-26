@@ -2159,10 +2159,12 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           current_link->channel_offset = 3; // default
           current_link->channel_offset = current_link->channel_offset - minus_c_offset; // 3-0 or 3-1
 
+#if WITH_OST_LOG
           TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
                         "ost odp: operation");
           );
+#endif
 
         }
 #endif
