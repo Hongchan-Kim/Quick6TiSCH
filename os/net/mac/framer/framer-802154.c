@@ -43,6 +43,16 @@
 #include "lib/random.h"
 #include <string.h>
 
+#if WITH_OST
+#include <stdio.h>
+#include "contiki.h"
+#include "orchestra.h"
+#include "net/ipv6/uip-ds6-route.h"
+#include "net/ipv6/uip-ds6-nbr.h"
+#include "net/mac/tsch/tsch-schedule.h"
+#endif
+
+
 #include "sys/log.h"
 #define LOG_MODULE "Frame 15.4"
 #define LOG_LEVEL LOG_LEVEL_FRAMER
@@ -99,6 +109,25 @@ create_frame(int do_create)
     linkaddr_copy((linkaddr_t *)&params.dest_addr,
                   packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
   }
+
+#if WITH_OST
+  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&params.dest_addr);
+  if(nbr != NULL) {
+    if(nbr->ost_my_uninstallable == 1) {
+      params.ost_pigg1 = nbr->ost_my_N + INC_N_NEW_TX_REQUEST;
+    } else if(nbr->ost_my_low_prr == 1) {
+      params.ost_pigg1 = nbr->ost_my_N + INC_N_NEW_TX_REQUEST;
+    } else {
+      params.ost_pigg1 = nbr->ost_my_N;
+    }
+  }
+  if(frame802154_is_broadcast_addr(params.fcf.dest_addr_mode, params.dest_addr)) {
+    params.ost_pigg1 = 0xffff; /* broadcast */
+  } else if(nbr == NULL) {
+    /* In bootstrap, TSCH-associated but not RPL-associated node sends KA */
+    params.ost_pigg1 = 0xffff;
+  }
+#endif
 
   linkaddr_copy((linkaddr_t *)&params.src_addr,
                 packetbuf_addr(PACKETBUF_ADDR_SENDER));

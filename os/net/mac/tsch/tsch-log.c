@@ -51,6 +51,17 @@
 #include "lib/ringbufindex.h"
 #include "sys/log.h"
 
+#if WITH_OST
+#include "net/mac/tsch/tsch-log.h"
+#include "net/mac/tsch/tsch-queue.h"
+#include "net/mac/tsch/tsch-packet.h"
+#include "net/mac/tsch/tsch-schedule.h"
+#include "net/mac/tsch/tsch-slot-operation.h"
+#include "lib/ringbufindex.h"
+#include "orchestra.h"
+#include "node-info.h"
+#endif
+
 #if TSCH_LOG_PER_SLOT
 
 PROCESS_NAME(tsch_pending_events_process);
@@ -101,6 +112,51 @@ tsch_log_process_pending(void)
           printf(", dr %3d", log->tx.drift);
         }
         printf("\n");
+
+#if WITH_OST
+        /* unicast packets only */
+        if(!linkaddr_cmp(&log->tx.dest, &linkaddr_null)
+          && !linkaddr_cmp(&log->tx.dest, &tsch_eb_address)
+          && !linkaddr_cmp(&log->tx.dest, &tsch_broadcast_address)) {
+          /* periodic provisioning tx slotframe only */
+          if(log->link->slotframe_handle >= 3 
+            && log->link->slotframe_handle < SSQ_SCHEDULE_HANDLE_OFFSET) {
+            
+            uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&log->tx.dest);
+            if(nbr != NULL) {
+              nbr->ost_num_tx_mac++;
+              if(log->tx.mac_tx_status == MAC_TX_OK) {
+                nbr->ost_num_tx_succ_mac++;
+                nbr->ost_num_consecutive_tx_fail_mac = 0;
+              } else {
+                nbr->ost_num_consecutive_tx_fail_mac++;
+              }
+              
+              uint16_t prr = 100 * nbr->ost_num_tx_succ_mac / nbr->ost_num_tx_mac;
+              if(prr <= PRR_THRES_TX_CHANGE && nbr->ost_num_tx_mac >= NUM_TX_MAC_THRES_TX_CHANGE) {
+                nbr->ost_my_low_prr = 1;
+                ost_change_queue_N_update(&log->tx.dest, nbr->ost_my_N + INC_N_NEW_TX_REQUEST);
+              }
+
+              if(nbr->ost_num_consecutive_tx_fail_mac >= NUM_TX_FAIL_THRES) {
+                struct tsch_neighbor *n = tsch_queue_get_nbr(&log->tx.dest);
+                if(n != NULL) {
+                  if(!tsch_queue_is_empty(n)) {
+                    if(neighbor_has_uc_link(tsch_queue_get_nbr_address(n))) {
+                      /* use autonomous RB slotframe */
+                      ost_change_queue_select_packet(&log->tx.dest, 1, 
+                                          ORCHESTRA_LINKADDR_HASH(&log->tx.dest) % ORCHESTRA_UNICAST_PERIOD);
+                    } else {
+                      /* use shared slotframe */
+                      ost_change_queue_select_packet(&log->tx.dest, 2, 0);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+#endif
         break;
       case tsch_log_rx:
         printf("%s-%u-%u rx ",

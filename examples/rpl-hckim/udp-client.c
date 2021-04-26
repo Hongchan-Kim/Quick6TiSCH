@@ -89,6 +89,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO("HCK tx_up %u | Sending message %u to ", count, count);
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
+
         snprintf(str, sizeof(str), "hello %d", count);
         simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
         count++;

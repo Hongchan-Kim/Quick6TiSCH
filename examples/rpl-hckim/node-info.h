@@ -14,4 +14,7 @@ extern uint16_t non_root_info[NON_ROOT_NUM][3];
 void print_node_info();
 uint16_t non_root_index_from_addr(const uip_ipaddr_t *);
 
+uint16_t ost_node_id_from_ipaddr(const uip_ipaddr_t *addr);
+uint16_t ost_node_id_from_linkaddr(const linkaddr_t *addr);
+
 #endif /* NODE_INFO_H_ */

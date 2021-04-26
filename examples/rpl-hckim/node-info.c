@@ -7,8 +7,8 @@
 #if TESTBED_SITE == IOT_LAB_LYON_2
 uint16_t root_info[3] = {7, 0xa371, 0};
 uint16_t non_root_info[NON_ROOT_NUM][3] = {
-    {2, 0x8867, 0}
-    //{3, 0x8676, 0}
+    //{2, 0x8867, 0}
+    {3, 0x8676, 0}
 };
 
 #elif TESTBED_SITE == IOT_LAB_LYON_3
@@ -183,3 +183,41 @@ non_root_index_from_addr(const uip_ipaddr_t *sender_addr)
   }
   return NON_ROOT_NUM;
 }
+/*---------------------------------------------------------------------------*/
+#if WITH_OST
+uint16_t
+ost_node_id_from_ipaddr(const uip_ipaddr_t *addr)
+{
+  uint16_t uid = (addr->u8[14] << 8) + addr->u8[15];
+
+  if(root_info[1] == uid) {
+    return 1;
+  }
+
+  uint16_t i = 0;
+  for(i = 0; i < NON_ROOT_NUM; i++) {
+    if(non_root_info[i][1] == uid) {
+      return i + 2;
+    }
+  }
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
+uint16_t
+ost_node_id_from_linkaddr(const linkaddr_t *linkaddr)
+{
+  uint16_t lluid = UIP_HTONS(linkaddr->u16[LINKADDR_SIZE/2-1]);
+
+  if(root_info[1] == lluid) {
+    return 1;
+  }
+
+  uint16_t i = 0;
+  for(i = 0; i < NON_ROOT_NUM; i++) {
+    if(non_root_info[i][1] == lluid) {
+      return i + 2;
+    }
+  }
+  return 0;
+}
+#endif

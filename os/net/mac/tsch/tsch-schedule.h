@@ -179,5 +179,19 @@ struct tsch_slotframe *tsch_schedule_slotframe_head(void);
  */
 struct tsch_slotframe *tsch_schedule_slotframe_next(struct tsch_slotframe *sf);
 
+#if WITH_OST && OST_ON_DEMAND_PROVISION
+struct ssq_schedule_t {
+  struct tsch_link link;
+  struct tsch_asn_t asn;
+};
+#endif
+
+#if WITH_OST
+struct tsch_slotframe *ost_tsch_schedule_get_slotframe_head(void);
+uint16_t tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn);
+void tsch_schedule_print_proposed(void);
+#endif
+
+
 #endif /* __TSCH_SCHEDULE_H__ */
 /** @} */

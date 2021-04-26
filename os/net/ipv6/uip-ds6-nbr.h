@@ -119,6 +119,26 @@ typedef struct uip_ds6_nbr {
   struct uip_packetqueue_handle packethandle;
 #define UIP_DS6_NBR_PACKET_LIFETIME CLOCK_SECOND * 4
 #endif                          /*UIP_CONF_QUEUE_PKT */
+
+#if WITH_OST
+  /* OST for Tx */
+  uint16_t ost_my_N;             // 1. determined by me
+  uint16_t ost_my_t_offset;      // 2. determined by nbr
+  uint8_t ost_my_uninstallable;
+  /* OST for Rx */
+  uint16_t ost_nbr_N;            // 1. determined by nbr
+  uint16_t ost_nbr_t_offset;     // 2. determined by me
+  uint16_t ost_num_tx;           // network-layer
+  uint8_t ost_newly_added;       // newly added
+  uint8_t ost_rx_no_path;        // will be delete soon. When it is set, r_nbr and slotframe could not be matched.
+  uint8_t ost_my_low_prr;
+  uint16_t ost_num_tx_mac;
+  uint16_t ost_num_tx_succ_mac;
+  uint16_t ost_num_consecutive_tx_fail_mac;
+  uint16_t ost_consecutive_my_N_inc;
+  uint8_t ost_consecutive_new_tx_request;
+#endif  
+
 } uip_ds6_nbr_t;
 
 void uip_ds6_neighbors_init(void);

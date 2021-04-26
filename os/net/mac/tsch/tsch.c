@@ -402,13 +402,15 @@ keepalive_send(void *ptr)
     struct tsch_neighbor *n = tsch_queue_get_time_source();
     if(n != NULL) {
         linkaddr_t *destination = tsch_queue_get_nbr_address(n);
+
+        LOG_INFO("HCK ka_send %u | sending KA to ", ++tsch_ka_send_count);
+        LOG_INFO_LLADDR(destination);
+        LOG_INFO_("\n");
+
         /* Simply send an empty packet */
         packetbuf_clear();
         packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, destination);
         NETSTACK_MAC.send(keepalive_packet_sent, NULL);
-        LOG_INFO("HCK ka_send %u | sending KA to ", ++tsch_ka_send_count);
-        LOG_INFO_LLADDR(destination);
-        LOG_INFO_("\n");
     } else {
         LOG_ERR("no timesource - KA not sent\n");
     }
@@ -575,6 +577,11 @@ static void
 tsch_rx_process_pending()
 {
   int16_t input_index;
+
+#if WITH_OST
+  post_process_rx_N();
+#endif
+
   /* Loop on accessing (without removing) a pending input packet */
   while((input_index = ringbufindex_peek_get(&input_ringbuf)) != -1) {
     struct input_packet *current_input = &input_array[input_index];
@@ -656,6 +663,11 @@ tsch_tx_process_pending(void)
     /* Remove dequeued packet from ringbuf */
     ringbufindex_get(&dequeued_ringbuf);
   }
+
+#if WITH_OST
+  post_process_rx_t_offset();
+#endif
+
 }
 /*---------------------------------------------------------------------------*/
 /* Setup TSCH as a coordinator */

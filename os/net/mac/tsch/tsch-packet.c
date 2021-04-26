@@ -52,6 +52,15 @@
 #include "lib/ccm-star.h"
 #include "lib/aes-128.h"
 
+#if WITH_OST
+#include "node-info.h"
+#include "net/ipv6/uip-ds6-route.h"
+#include "net/ipv6/uip-ds6-nbr.h"
+#include "net/mac/tsch/tsch-slot-operation.h"
+#include "orchestra.h"
+#endif
+
+
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "TSCH Pkt"
@@ -89,10 +98,17 @@ tsch_packet_eackbuf_attr(uint8_t type)
 }
 /*---------------------------------------------------------------------------*/
 /* Construct enhanced ACK packet and return ACK length */
+#if WITH_OST && OST_ON_DEMAND_PROVISION
+int
+tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
+                        const linkaddr_t *dest_addr, uint8_t seqno,
+                        int16_t drift, int nack, uint16_t matching_slot)
+#else
 int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
                         int16_t drift, int nack)
+#endif
 {
   frame802154_t params;
   struct ieee802154_ies ies;
@@ -128,6 +144,30 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 #endif /* LLSEC802154_ENABLED */
 
   framer_802154_setup_params(tsch_packet_eackbuf_attr, 0, &params);
+
+#if WITH_OST
+  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
+  if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {
+    params.ost_pigg1 = nbr->ost_nbr_t_offset;
+
+    if(ost_get_ost_flag_failed_to_select_t_offset() == 1) {
+      params.ost_pigg1 = T_OFFSET_ALLOCATION_FAIL;
+    }
+
+    if(ost_get_todo_consecutive_new_tx_request() == 1) {
+      params.ost_pigg1= T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST;
+    }
+
+  }
+  if(nbr == NULL) {
+    params.ost_pigg1 = 0xffff; /* Tx EACK: t_offset make 65535 (No nbr) */
+  }
+
+#if OST_ON_DEMAND_PROVISION
+  params.ost_pigg2 = matching_slot; /* Tx EACK: matching slot */
+#endif
+#endif
+
   hdr_len = frame802154_hdrlen(&params);
 
   memset(buf, 0, buf_len);
@@ -228,6 +268,10 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
 
   /* Prepare Information Elements for inclusion in the EB */
   memset(&ies, 0, sizeof(ies));
+
+#if WITH_OST_TODO
+  p.ost_pigg1 = 0xffff;
+#endif
 
   /* Add TSCH timeslot timing IE. */
 #if TSCH_PACKET_EB_WITH_TIMESLOT_TIMING
