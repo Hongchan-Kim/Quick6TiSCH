@@ -55,6 +55,10 @@
 #include "net/ipv6/uip-nd6.h"
 #include "net/routing/routing.h"
 
+#if WITH_OST_OID
+#include "node-info.h"
+#endif
+
 #if UIP_DS6_NBR_MULTI_IPV6_ADDRS
 #include "lib/memb.h"
 #endif /* UIP_DS6_NBR_MULTI_IPV6_ADDRS */
@@ -182,6 +186,12 @@ uip_ds6_nbr_add(const uip_ipaddr_t *ipaddr, const uip_lladdr_t *lladdr,
 
   if(nbr) {
     uip_ipaddr_copy(&nbr->ipaddr, ipaddr);
+
+#if WITH_OST_OID
+    nbr->ds6_ost_id = ost_node_id_from_ipaddr(&nbr->ipaddr);
+    LOG_INFO("ds6_ost_id %u\n", nbr->ds6_ost_id);
+#endif
+
 #if UIP_ND6_SEND_RA || !UIP_CONF_ROUTER
     nbr->isrouter = isrouter;
 #endif /* UIP_ND6_SEND_RA || !UIP_CONF_ROUTER */

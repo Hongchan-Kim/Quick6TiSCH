@@ -71,6 +71,11 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+#if WITH_OST_OID
+#include "node-info.h"
+uint16_t my_tsch_ost_id;
+#endif
+
 static uint16_t tsch_leaving_count;
 
 static uint16_t tsch_eb_send_count;
@@ -1203,6 +1208,10 @@ tsch_init(void)
 
   tsch_packet_seqno = random_rand();
   tsch_is_initialized = 1;
+
+#if WITH_OST_OID
+  my_tsch_ost_id = ost_node_id_from_linkaddr(&linkaddr_node_addr);
+#endif
 
 #if TSCH_AUTOSTART
   /* Start TSCH operation.

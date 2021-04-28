@@ -8,14 +8,16 @@
  */
 #define IOT_LAB_LYON_2                             1
 #define IOT_LAB_LYON_3                             2
-#define IOT_LAB_LYON_17                            3
-#define IOT_LAB_LILLE_24                           4
-#define IOT_LAB_LILLE_32                           5
-#define IOT_LAB_LILLE_46                           6
+#define IOT_LAB_LYON_10                            3
+#define IOT_LAB_LYON_17                            4
+#define IOT_LAB_LILLE_24                           5
+#define IOT_LAB_LILLE_32                           6
+#define IOT_LAB_LILLE_46                           7
 
-#define TESTBED_SITE                               IOT_LAB_LYON_2
+//#define TESTBED_SITE                               IOT_LAB_LYON_2
 //#define TESTBED_SITE                               IOT_LAB_LYON_3
-//#define TESTBED_SITE                               IOT_LAB_LYON_17
+//#define TESTBED_SITE                               IOT_LAB_LYON_10
+#define TESTBED_SITE                               IOT_LAB_LYON_17
 //#define TESTBED_SITE                               IOT_LAB_LILLE_24
 //#define TESTBED_SITE                               IOT_LAB_LILLE_32
 //#define TESTBED_SITE                               IOT_LAB_LILLE_46
@@ -24,6 +26,8 @@
 #define NODE_NUM                                   2
 #elif TESTBED_SITE == IOT_LAB_LYON_3
 #define NODE_NUM                                   3
+#elif TESTBED_SITE == IOT_LAB_LYON_10
+#define NODE_NUM                                   10
 #elif TESTBED_SITE == IOT_LAB_LYON_17
 #define NODE_NUM                                   17
 #elif TESTBED_SITE == IOT_LAB_LILLE_24
@@ -44,10 +48,10 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 #define APP_SEND_INTERVAL                          (1 * 30 * CLOCK_SECOND)
-#define APP_MAX_TX                                 50
+#define APP_MAX_TX                                 120
 /*---------------------------------------------------------------------------*/
 
 
@@ -149,6 +153,7 @@
 #define WITH_OST                                   1
 #define WITH_OST_LOG                               0
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
+#define WITH_OST_OID                               1 /* implement ost_id to the ds6_nbr and tsch_nbr */
 
 #define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1
 #define OST_ON_DEMAND_PROVISION                    1
@@ -215,7 +220,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_LOG             1
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
 /*---------------------------------------------------------------------------*/
 
 

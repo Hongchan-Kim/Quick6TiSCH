@@ -222,7 +222,11 @@ tsch_queue_get_nbr_from_id(const uint16_t id)
 {
     struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
     while(n != NULL) {
-      if(ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(n)) == id) {
+#if !WITH_OST_OID
+      if(ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(n)) == id) { // chk
+#else
+      if(n->tsch_ost_id == id) {
+#endif
         return n;
       }
       n = list_item_next(n);
@@ -252,6 +256,11 @@ tsch_queue_add_nbr(const linkaddr_t *addr)
         /* Initialize neighbor entry */
         memset(n, 0, sizeof(struct tsch_neighbor));
         ringbufindex_init(&n->tx_ringbuf, TSCH_QUEUE_NUM_PER_NEIGHBOR);
+
+#if WITH_OST_OID
+        n->tsch_ost_id = ost_node_id_from_linkaddr(addr);
+        LOG_INFO("tsch_ost_id %u\n", n->tsch_ost_id);
+#endif
         n->is_broadcast = linkaddr_cmp(addr, &tsch_eb_address)
           || linkaddr_cmp(addr, &tsch_broadcast_address);
         tsch_queue_backoff_reset(n);
@@ -593,7 +602,11 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
 #if WITH_OST && OST_ON_DEMAND_PROVISION
         if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
           uint16_t target_nbr_id = (link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
-          if(ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(n)) == target_nbr_id) {
+#if !WITH_OST_OID
+          if(ost_node_id_from_linkaddr(tsch_queue_get_nbr_address(n)) == target_nbr_id) { // chk
+#else
+          if(n->tsch_ost_id == target_nbr_id) {
+#endif
             return n->tx_array[get_index];
           } else {
             return NULL;

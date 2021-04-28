@@ -160,6 +160,10 @@ uint16_t alice_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf);
 #endif
 #endif
 
+#if WITH_OST_OID
+extern uint16_t my_tsch_ost_id;
+#endif
+
 /* Are we coordinator of the TSCH network? */
 extern int tsch_is_coordinator;
 /* Are we associated to a TSCH network? */
