@@ -2041,14 +2041,15 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           process_poll(&tsch_pending_events_process);
         }
       }
+#if ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG
+      else {
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "!no pending packet"));
+      }
+#endif
 
       tsch_radio_off(TSCH_RADIO_CMD_OFF_END_OF_TIMESLOT);
-
-#if ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "!no pending packet"));
-#endif
 
     }
 

@@ -17,9 +17,9 @@
 //#define TESTBED_SITE                               IOT_LAB_LYON_2
 //#define TESTBED_SITE                               IOT_LAB_LYON_3
 //#define TESTBED_SITE                               IOT_LAB_LYON_10
-#define TESTBED_SITE                               IOT_LAB_LYON_17
+//#define TESTBED_SITE                               IOT_LAB_LYON_17
 //#define TESTBED_SITE                               IOT_LAB_LILLE_24
-//#define TESTBED_SITE                               IOT_LAB_LILLE_32
+#define TESTBED_SITE                               IOT_LAB_LILLE_32
 //#define TESTBED_SITE                               IOT_LAB_LILLE_46
 
 #if TESTBED_SITE == IOT_LAB_LYON_2
@@ -48,10 +48,10 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
-#define APP_SEND_INTERVAL                          (1 * 30 * CLOCK_SECOND)
-#define APP_MAX_TX                                 120
+#define APP_SEND_INTERVAL                          (1 * 5 * CLOCK_SECOND)
+#define APP_MAX_TX                                 720
 /*---------------------------------------------------------------------------*/
 
 
@@ -220,7 +220,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
 /*---------------------------------------------------------------------------*/
 
 
