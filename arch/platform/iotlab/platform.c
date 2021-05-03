@@ -46,6 +46,10 @@
 
 #include "pwr.h"
 
+#if WITH_IOTLAB
+#include "node-info.h"
+#endif
+
 #if SLIP_ARCH_CONF_ENABLED
 #include "dev/slip.h"
 #endif
@@ -75,6 +79,16 @@ set_linkaddr(void)
     linkaddr_node_addr.u8[1] = 0xff & (short_uid);
 #else
 
+#if WITH_IOTLAB
+    memset(&linkaddr_node_addr, 0, sizeof(linkaddr_node_addr));
+    uint16_t short_uid = platform_uid();
+    uint16_t id = iotlab_node_id_from_uid(short_uid);
+
+    linkaddr_node_addr.u8[0] = 0x02;
+    linkaddr_node_addr.u8[6] = 0xff & (id >> 8);
+    linkaddr_node_addr.u8[7] = 0xff & (id);
+#else
+
 #define IOTLAB_UID_ADDR 1
 #if !(IOTLAB_UID_ADDR)
     /* Company 3 Bytes */
@@ -99,6 +113,8 @@ set_linkaddr(void)
     linkaddr_node_addr.u8[7] = 0xff & (short_uid);
 
 #endif
+#endif
+
 #endif
 }
 /*---------------------------------------------------------------------------*/

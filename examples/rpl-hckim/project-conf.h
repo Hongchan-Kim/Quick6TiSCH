@@ -6,35 +6,37 @@
 /*
  * Configure testbed site, node num, topology
  */
-#define IOT_LAB_LYON_2                             1
-#define IOT_LAB_LYON_3                             2
-#define IOT_LAB_LYON_10                            3
-#define IOT_LAB_LYON_17                            4
-#define IOT_LAB_LILLE_24                           5
-#define IOT_LAB_LILLE_32                           6
-#define IOT_LAB_LILLE_46                           7
+#define WITH_IOTLAB                               1
 
-//#define TESTBED_SITE                               IOT_LAB_LYON_2
-//#define TESTBED_SITE                               IOT_LAB_LYON_3
-//#define TESTBED_SITE                               IOT_LAB_LYON_10
-//#define TESTBED_SITE                               IOT_LAB_LYON_17
-//#define TESTBED_SITE                               IOT_LAB_LILLE_24
-#define TESTBED_SITE                               IOT_LAB_LILLE_32
-//#define TESTBED_SITE                               IOT_LAB_LILLE_46
+#define IOTLAB_LYON_2                             1
+#define IOTLAB_LYON_3                             2
+#define IOTLAB_LYON_10                            3
+#define IOTLAB_LYON_17                            4
+#define IOTLAB_LILLE_24                           5
+#define IOTLAB_LILLE_32                           6
+#define IOTLAB_LILLE_46                           7
 
-#if TESTBED_SITE == IOT_LAB_LYON_2
+//#define TESTBED_SITE                               IOTLAB_LYON_2
+#define TESTBED_SITE                               IOTLAB_LYON_3
+//#define TESTBED_SITE                               IOTLAB_LYON_10
+//#define TESTBED_SITE                               IOTLAB_LYON_17
+//#define TESTBED_SITE                               IOTLAB_LILLE_24
+//#define TESTBED_SITE                               IOTLAB_LILLE_32
+//#define TESTBED_SITE                               IOTLAB_LILLE_46
+
+#if TESTBED_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
-#elif TESTBED_SITE == IOT_LAB_LYON_3
+#elif TESTBED_SITE == IOTLAB_LYON_3
 #define NODE_NUM                                   3
-#elif TESTBED_SITE == IOT_LAB_LYON_10
+#elif TESTBED_SITE == IOTLAB_LYON_10
 #define NODE_NUM                                   10
-#elif TESTBED_SITE == IOT_LAB_LYON_17
+#elif TESTBED_SITE == IOTLAB_LYON_17
 #define NODE_NUM                                   17
-#elif TESTBED_SITE == IOT_LAB_LILLE_24
+#elif TESTBED_SITE == IOTLAB_LILLE_24
 #define NODE_NUM                                   24
-#elif TESTBED_SITE == IOT_LAB_LILLE_32
+#elif TESTBED_SITE == IOTLAB_LILLE_32
 #define NODE_NUM                                   32
-#elif TESTBED_SITE == IOT_LAB_LILLE_46
+#elif TESTBED_SITE == IOTLAB_LILLE_46
 #define NODE_NUM                                   46
 #endif
 
@@ -48,10 +50,10 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
-#define APP_SEND_INTERVAL                          (1 * 5 * CLOCK_SECOND)
-#define APP_MAX_TX                                 720
+#define APP_SEND_INTERVAL                          (1 * 30 * CLOCK_SECOND)
+#define APP_MAX_TX                                 20
 /*---------------------------------------------------------------------------*/
 
 
@@ -96,10 +98,10 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -152,6 +154,7 @@
 
 #define WITH_OST                                   1
 #define WITH_OST_LOG                               0
+#define WITH_OST_TEST                              1
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 #define WITH_OST_OID                               1 /* implement ost_id to the ds6_nbr and tsch_nbr */
 

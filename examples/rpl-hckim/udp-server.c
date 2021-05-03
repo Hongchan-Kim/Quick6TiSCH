@@ -76,6 +76,7 @@ udp_rx_callback(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {  
+#if !WITH_IOTLAB
   uint16_t sender_index = non_root_index_from_addr(sender_addr);
   if(sender_index == NON_ROOT_NUM) {
     LOG_INFO("Fail to receive: out of index\n");
@@ -87,6 +88,19 @@ udp_rx_callback(struct simple_udp_connection *c,
             datalen, (char *) data);
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");
+#else
+  uint16_t sender_index = ((sender_addr->u8[14]) << 8) + sender_addr->u8[15] - 1;
+  if(sender_index == NODE_NUM) {
+    LOG_INFO("Fail to receive: out of index\n");
+    return;
+  }
+  LOG_INFO("HCK rx_up %u from %u %u %x | Received message '%.*s' from ", 
+            ++iotlab_nodes[sender_index][2],
+            sender_index + 1, iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1],
+            datalen, (char *) data);
+  LOG_INFO_6ADDR(sender_addr);
+  LOG_INFO_("\n");
+#endif
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_server_process, ev, data)
@@ -96,7 +110,11 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #if DOWNWARD_TRAFFIC
   static struct etimer periodic_timer;
   static unsigned count = 1;
+#if !WITH_IOTLAB
   static unsigned curr = 0;
+#else
+  static unsigned curr = 1;
+#endif
   static char str[32];
   uip_ipaddr_t dest_ipaddr;
 #endif
@@ -124,8 +142,8 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #if DOWNWARD_TRAFFIC
     else if(data == &periodic_timer) {
       if(count <= APP_MAX_TX) {
+#if !WITH_IOTLAB
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, non_root_info[curr][1]);
-
         /* Send to clients */
         LOG_INFO("HCK tx_down %u to %u %x | Sending message %u to ", 
                   count, non_root_info[curr][0], non_root_info[curr][1], count);
@@ -139,6 +157,22 @@ PROCESS_THREAD(udp_server_process, ev, data)
           curr = 0;
           count++;
         }
+#else
+        uip_ip6addr((&dest_ipaddr), 0xfe80, 0, 0, 0, 0, 0, 0, curr + 1);
+        /* Send to clients */
+        LOG_INFO("HCK tx_down %u to %u %u %x | Sending message %u to ", 
+                  count, curr + 1, iotlab_nodes[curr][0], iotlab_nodes[curr][1], count);
+        LOG_INFO_6ADDR(&dest_ipaddr);
+        LOG_INFO_("\n");
+        snprintf(str, sizeof(str), "hello %d", count);
+        simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+
+        curr++;
+        if(curr >= NODE_NUM) {
+          curr = 1;
+          count++;
+        }
+#endif
       }
       etimer_set(&periodic_timer, APP_DOWN_INTERVAL);
     }
