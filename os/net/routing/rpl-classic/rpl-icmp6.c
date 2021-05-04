@@ -821,12 +821,10 @@ dao_input_storing(void)
 
 #if WITH_OST
       /* received No-path DAO */
-      uip_ds6_nbr_t *nbr = uip_ds6_nbr_lookup(&prefix);
-#if !WITH_OST_OID
-      uint16_t prefix_id = ost_node_id_from_ipaddr(&prefix); // chk
-#else
-      uint16_t prefix_id = nbr->ds6_ost_id;
+#if WITH_OST_OID
+      uint16_t prefix_id = OST_NODE_ID_FROM_IPADDR(&prefix);
 #endif
+      uip_ds6_nbr_t *nbr = uip_ds6_nbr_lookup(&prefix);
 
       if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {
         linkaddr_t *nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(nbr);

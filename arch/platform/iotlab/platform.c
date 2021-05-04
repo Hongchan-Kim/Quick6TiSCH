@@ -47,6 +47,7 @@
 #include "pwr.h"
 
 #if WITH_IOTLAB
+#include "sys/node-id.h"
 #include "node-info.h"
 #endif
 
@@ -82,11 +83,13 @@ set_linkaddr(void)
 #if WITH_IOTLAB
     memset(&linkaddr_node_addr, 0, sizeof(linkaddr_node_addr));
     uint16_t short_uid = platform_uid();
-    uint16_t id = iotlab_node_id_from_uid(short_uid);
+    uint16_t iotlab_node_id = iotlab_node_id_from_uid(short_uid);
 
     linkaddr_node_addr.u8[0] = 0x02;
-    linkaddr_node_addr.u8[6] = 0xff & (id >> 8);
-    linkaddr_node_addr.u8[7] = 0xff & (id);
+    linkaddr_node_addr.u8[6] = 0xff & (iotlab_node_id >> 8);
+    linkaddr_node_addr.u8[7] = 0xff & (iotlab_node_id);
+
+    node_id = iotlab_node_id;
 #else
 
 #define IOTLAB_UID_ADDR 1

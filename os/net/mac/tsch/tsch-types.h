@@ -119,9 +119,6 @@ struct tsch_neighbor {
   struct tsch_packet *tx_array[TSCH_QUEUE_NUM_PER_NEIGHBOR];
   /* Circular buffer of pointers to packet. */
   struct ringbufindex tx_ringbuf;
-#if WITH_OST_OID
-  uint16_t tsch_ost_id;
-#endif
 };
 
 /** \brief TSCH timeslot timing elements. Used to index timeslot timing

@@ -72,6 +72,21 @@ extern uint32_t tsch_unlocked_scheduled_idle_cell_count; //hckim
 extern uint32_t tsch_unlocked_scheduled_tx_operation_count; //hckim
 extern uint32_t tsch_unlocked_scheduled_rx_operation_count; //hckim
 
+#if WITH_OST
+extern uint32_t ost_unlocked_scheduled_periodic_cell_count; // chk
+extern uint32_t ost_unlocked_scheduled_periodic_tx_cell_count; // chk
+extern uint32_t ost_unlocked_scheduled_periodic_rx_cell_count; // chk
+extern uint32_t ost_unlocked_scheduled_periodic_idle_cell_count; // chk
+extern uint32_t ost_unlocked_scheduled_periodic_tx_operation_count; // chk
+extern uint32_t ost_unlocked_scheduled_periodic_rx_operation_count; // chk
+extern uint32_t ost_unlocked_scheduled_ondemand_cell_count; // chk
+extern uint32_t ost_unlocked_scheduled_ondemand_tx_cell_count; // chk
+extern uint32_t ost_unlocked_scheduled_ondemand_rx_cell_count; // chk
+extern uint32_t ost_unlocked_scheduled_ondemand_idle_cell_count; // chk
+extern uint32_t ost_unlocked_scheduled_ondemand_tx_operation_count; // chk
+extern uint32_t ost_unlocked_scheduled_ondemand_rx_operation_count; // chk
+#endif
+
 /* Include Arch-Specific conf */
 #ifdef TSCH_CONF_ARCH_HDR_PATH
 #include TSCH_CONF_ARCH_HDR_PATH
@@ -158,10 +173,6 @@ extern uint16_t alice_next_asfn;
 extern uint16_t alice_asfn_upper_bound;
 uint16_t alice_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf);
 #endif
-#endif
-
-#if WITH_OST_OID
-extern uint16_t my_tsch_ost_id;
 #endif
 
 /* Are we coordinator of the TSCH network? */

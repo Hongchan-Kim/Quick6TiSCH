@@ -16,27 +16,27 @@
 #define IOTLAB_LILLE_32                           6
 #define IOTLAB_LILLE_46                           7
 
-//#define TESTBED_SITE                               IOTLAB_LYON_2
-#define TESTBED_SITE                               IOTLAB_LYON_3
-//#define TESTBED_SITE                               IOTLAB_LYON_10
-//#define TESTBED_SITE                               IOTLAB_LYON_17
-//#define TESTBED_SITE                               IOTLAB_LILLE_24
-//#define TESTBED_SITE                               IOTLAB_LILLE_32
-//#define TESTBED_SITE                               IOTLAB_LILLE_46
+#define IOTLAB_SITE                               IOTLAB_LYON_2
+//#define IOTLAB_SITE                               IOTLAB_LYON_3
+//#define IOTLAB_SITE                               IOTLAB_LYON_10
+//#define IOTLAB_SITE                               IOTLAB_LYON_17
+//#define IOTLAB_SITE                               IOTLAB_LILLE_24
+//#define IOTLAB_SITE                               IOTLAB_LILLE_32
+//#define IOTLAB_SITE                               IOTLAB_LILLE_46
 
-#if TESTBED_SITE == IOTLAB_LYON_2
+#if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
-#elif TESTBED_SITE == IOTLAB_LYON_3
+#elif IOTLAB_SITE == IOTLAB_LYON_3
 #define NODE_NUM                                   3
-#elif TESTBED_SITE == IOTLAB_LYON_10
+#elif IOTLAB_SITE == IOTLAB_LYON_10
 #define NODE_NUM                                   10
-#elif TESTBED_SITE == IOTLAB_LYON_17
+#elif IOTLAB_SITE == IOTLAB_LYON_17
 #define NODE_NUM                                   17
-#elif TESTBED_SITE == IOTLAB_LILLE_24
+#elif IOTLAB_SITE == IOTLAB_LILLE_24
 #define NODE_NUM                                   24
-#elif TESTBED_SITE == IOTLAB_LILLE_32
+#elif IOTLAB_SITE == IOTLAB_LILLE_32
 #define NODE_NUM                                   32
-#elif TESTBED_SITE == IOTLAB_LILLE_46
+#elif IOTLAB_SITE == IOTLAB_LILLE_46
 #define NODE_NUM                                   46
 #endif
 
@@ -50,10 +50,13 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) //(10 * 60 * CLOCK_SECOND)
-#define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
+#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
+#define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
+//#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 30
+//#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) // 30
 #define APP_SEND_INTERVAL                          (1 * 30 * CLOCK_SECOND)
-#define APP_MAX_TX                                 20
+#define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
+#define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
 
 
@@ -98,10 +101,10 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -154,11 +157,12 @@
 
 #define WITH_OST                                   1
 #define WITH_OST_LOG                               0
-#define WITH_OST_TEST                              1
-#define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 #define WITH_OST_OID                               1 /* implement ost_id to the ds6_nbr and tsch_nbr */
+#define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 
-#define OST_DEFAULT_COMMON_CHANNEL_OFFSET          1
+#define OST_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
+#define OST_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
+
 #define OST_ON_DEMAND_PROVISION                    1
 
 #undef QUEUEBUF_CONF_NUM
@@ -182,12 +186,8 @@
 #define T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST        ((1 << N_MAX) + 2)
 #define THRES_CONSECUTIVE_NEW_TX_REQUEST           10
 #define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          2 * NBR_TABLE_CONF_MAX_NEIGHBORS
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (100) //(70) //alice-implementation
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (NODE_NUM * 5) //(70) //alice-implementation
 #define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) //Under-provision uses up to 2*NODE_NUM+2
-#undef TSCH_CONF_RX_ACK_DELAY
-#define TSCH_CONF_RX_ACK_DELAY                     1300
-#undef TSCH_CONF_TX_ACK_DELAY
-#define TSCH_CONF_TX_ACK_DELAY                     1500
 
 
 

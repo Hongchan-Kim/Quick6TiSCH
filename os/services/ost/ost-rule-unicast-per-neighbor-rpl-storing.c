@@ -90,10 +90,8 @@ print_nbr(void)
 
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_head();
   while(nbr != NULL) {
-#if !WITH_OST_OID
-    uint16_t nbr_id = ost_node_id_from_ipaddr(&(nbr->ipaddr)); // chk
-#else
-    uint16_t nbr_id = nbr->ds6_ost_id;
+#if WITH_OST_OID
+    uint16_t nbr_id = OST_NODE_ID_FROM_IPADDR(&(nbr->ipaddr));
 #endif
 
     printf("[ID:%u]", nbr_id);
@@ -369,11 +367,8 @@ child_removed(const linkaddr_t *linkaddr)
       /* it was deleted possibly already when no-path DAO rx */
       if(linkaddr != NULL) {
         ost_remove_tx((linkaddr_t *)linkaddr);
-#if !WITH_OST_OID
-        ost_remove_rx(ost_node_id_from_linkaddr(linkaddr)); // chk
-#else
-        uint16_t nbr_id = ds6_nbr->ds6_ost_id;
-        ost_remove_rx(nbr_id);
+#if WITH_OST_OID
+        ost_remove_rx(OST_NODE_ID_FROM_LINKADDR(linkaddr));
 #endif
       }
     } else {
@@ -394,11 +389,8 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
     && neighbor_has_uc_link(dest)) {
 
 #if WITH_OST
-#if !WITH_OST_OID
-    uint16_t dest_id = ost_node_id_from_linkaddr(dest); // chk
-#else
-    uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t*)dest);  
-    uint16_t dest_id = ds6_nbr->ds6_ost_id;
+#if WITH_OST_OID
+    uint16_t dest_id = OST_NODE_ID_FROM_LINKADDR(dest);
 #endif
     uint16_t tx_sf_handle = ost_get_tx_sf_handle_from_id(dest_id);
     struct tsch_slotframe *tx_sf = tsch_schedule_get_slotframe_by_handle(tx_sf_handle);
@@ -472,11 +464,8 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
 
     if(old_addr != NULL) {
       ost_remove_tx((linkaddr_t *)old_addr);
-#if !WITH_OST_OID
-      ost_remove_rx(ost_node_id_from_linkaddr(old_addr)); // chk
-#else
-      uint16_t old_id = old->tsch_ost_id;
-      ost_remove_rx(old_id);
+#if WITH_OST_OID
+      ost_remove_rx(OST_NODE_ID_FROM_LINKADDR(old_addr));
 #endif
     }
 #else

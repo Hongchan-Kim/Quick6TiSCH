@@ -137,9 +137,6 @@ typedef struct uip_ds6_nbr {
   uint16_t ost_num_consecutive_tx_fail_mac;
   uint16_t ost_consecutive_my_N_inc;
   uint8_t ost_consecutive_new_tx_request;
-#if WITH_OST_OID
-  uint16_t ds6_ost_id;
-#endif
 #endif  
 
 } uip_ds6_nbr_t;
