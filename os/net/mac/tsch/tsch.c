@@ -71,11 +71,6 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
-#if WITH_OST_OID
-#include "node-info.h"
-uint16_t my_tsch_ost_id;
-#endif
-
 static uint16_t tsch_leaving_count;
 
 static uint16_t tsch_eb_send_count;
@@ -111,6 +106,22 @@ static uint32_t tsch_timeslots_until_last_session;
 static struct tsch_asn_t tsch_last_asn_associated;
 static struct ctimer utilization_timer;
 
+#if WITH_OST
+uint32_t ost_unlocked_scheduled_periodic_cell_count;
+uint32_t ost_unlocked_scheduled_periodic_tx_cell_count;
+uint32_t ost_unlocked_scheduled_periodic_rx_cell_count;
+uint32_t ost_unlocked_scheduled_periodic_idle_cell_count;
+uint32_t ost_unlocked_scheduled_periodic_tx_operation_count;
+uint32_t ost_unlocked_scheduled_periodic_rx_operation_count;
+
+uint32_t ost_unlocked_scheduled_ondemand_cell_count;
+uint32_t ost_unlocked_scheduled_ondemand_tx_cell_count;
+uint32_t ost_unlocked_scheduled_ondemand_rx_cell_count;
+uint32_t ost_unlocked_scheduled_ondemand_idle_cell_count;
+uint32_t ost_unlocked_scheduled_ondemand_tx_operation_count;
+uint32_t ost_unlocked_scheduled_ondemand_rx_operation_count;
+#endif
+
 static void
 print_utilization()
 {
@@ -127,6 +138,26 @@ print_utilization()
           tsch_unlocked_scheduled_tx_cell_count + tsch_unlocked_scheduled_rx_cell_count + tsch_unlocked_scheduled_idle_cell_count,
           tsch_unlocked_scheduled_tx_cell_count, tsch_unlocked_scheduled_rx_cell_count, tsch_unlocked_scheduled_idle_cell_count);
   LOG_INFO("HCK ass_ts %lu\n", tsch_total_associated_timeslots);
+
+#if WITH_OST
+  LOG_INFO("HCK ostP_act_ts %lu | tx %lu rx %lu\n", 
+          ost_unlocked_scheduled_periodic_tx_operation_count + ost_unlocked_scheduled_periodic_rx_operation_count,
+          ost_unlocked_scheduled_periodic_tx_operation_count, ost_unlocked_scheduled_periodic_rx_operation_count);
+  LOG_INFO("HCK ostP_sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
+          ost_unlocked_scheduled_periodic_cell_count,
+          ost_unlocked_scheduled_periodic_tx_cell_count + ost_unlocked_scheduled_periodic_rx_cell_count + ost_unlocked_scheduled_periodic_idle_cell_count,
+          ost_unlocked_scheduled_periodic_tx_cell_count, ost_unlocked_scheduled_periodic_rx_cell_count, ost_unlocked_scheduled_periodic_idle_cell_count);
+#if OST_ON_DEMAND_PROVISION
+  LOG_INFO("HCK ostO_act_ts %lu | tx %lu rx %lu\n", 
+          ost_unlocked_scheduled_ondemand_tx_operation_count + ost_unlocked_scheduled_ondemand_rx_operation_count,
+          ost_unlocked_scheduled_ondemand_tx_operation_count, ost_unlocked_scheduled_ondemand_rx_operation_count);
+  LOG_INFO("HCK ostO_sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
+          ost_unlocked_scheduled_ondemand_cell_count,
+          ost_unlocked_scheduled_ondemand_tx_cell_count + ost_unlocked_scheduled_ondemand_rx_cell_count + ost_unlocked_scheduled_ondemand_idle_cell_count,
+          ost_unlocked_scheduled_ondemand_tx_cell_count, ost_unlocked_scheduled_ondemand_rx_cell_count, ost_unlocked_scheduled_ondemand_idle_cell_count);
+#endif
+#endif
+
 
   ctimer_reset(&utilization_timer);
 }
@@ -1208,10 +1239,6 @@ tsch_init(void)
 
   tsch_packet_seqno = random_rand();
   tsch_is_initialized = 1;
-
-#if WITH_OST_OID
-  my_tsch_ost_id = ost_node_id_from_linkaddr(&linkaddr_node_addr);
-#endif
 
 #if TSCH_AUTOSTART
   /* Start TSCH operation.
