@@ -222,9 +222,7 @@ tsch_queue_get_nbr_from_id(const uint16_t id)
 {
     struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
     while(n != NULL) {
-#if WITH_OST_OID
       if(OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(n)) == id) {
-#endif
         return n;
       }
       n = list_item_next(n);
@@ -595,9 +593,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
 #if WITH_OST && OST_ON_DEMAND_PROVISION
         if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
           uint16_t target_nbr_id = (link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
-#if WITH_OST_OID
           if(OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(n)) == target_nbr_id) {
-#endif
             return n->tx_array[get_index];
           } else {
             return NULL;

@@ -821,9 +821,7 @@ dao_input_storing(void)
 
 #if WITH_OST
       /* received No-path DAO */
-#if WITH_OST_OID
       uint16_t prefix_id = OST_NODE_ID_FROM_IPADDR(&prefix);
-#endif
       uip_ds6_nbr_t *nbr = uip_ds6_nbr_lookup(&prefix);
 
       if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {

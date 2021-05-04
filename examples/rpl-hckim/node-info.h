@@ -13,9 +13,4 @@ extern uint16_t iotlab_nodes[NODE_NUM][3];
 uint16_t iotlab_node_id_from_uid(uint16_t uid);
 void print_node_info();
 
-#if WITH_OST_OID
-uint16_t ost_node_id_from_ipaddr(const uip_ipaddr_t *addr);
-uint16_t ost_node_id_from_linkaddr(const linkaddr_t *addr);
-#endif
-
 #endif /* NODE_INFO_H_ */

@@ -191,18 +191,3 @@ print_node_info()
   LOG_INFO("HCK-NODE end\n");
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_OID
-uint16_t
-ost_node_id_from_ipaddr(const uip_ipaddr_t *addr)
-{
-  uint16_t id = ((addr->u8[14]) << 8) + addr->u8[15];
-  return id;
-}
-/*---------------------------------------------------------------------------*/
-uint16_t
-ost_node_id_from_linkaddr(const linkaddr_t *addr)
-{
-  uint16_t id = ((addr->u8[6]) << 8) + addr->u8[7];
-  return id;
-}
-#endif

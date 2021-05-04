@@ -157,7 +157,6 @@
 
 #define WITH_OST                                   1
 #define WITH_OST_LOG                               0
-#define WITH_OST_OID                               1 /* implement ost_id to the ds6_nbr and tsch_nbr */
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 
 #define OST_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
