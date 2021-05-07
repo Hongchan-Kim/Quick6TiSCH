@@ -119,6 +119,10 @@ static int rf2xx_wr_channel_clear(void);
 static int rf2xx_wr_receiving_packet(void);
 static int rf2xx_wr_pending_packet(void);
 
+#if WITH_IOTLAB
+static int last_rssi_dbm;
+#endif
+
 /*---------------------------------------------------------------------------*/
 
 static int
@@ -526,6 +530,13 @@ get_value(radio_param_t param, radio_value_t *value)
   case RADIO_CONST_MAX_PAYLOAD_LEN:
     *value = RF2XX_MAX_PAYLOAD;
     return RADIO_RESULT_OK;
+
+#if WITH_IOTLAB
+  case RADIO_PARAM_LAST_RSSI:
+    *value = last_rssi_dbm;
+    return RADIO_RESULT_OK;
+#endif
+
   default:
     return RADIO_RESULT_NOT_SUPPORTED;
   }
@@ -899,6 +910,15 @@ static int read(uint8_t *buf, uint8_t buf_len)
         log_warning("radio-rf2xx: Received packet with bad crc");
         return 0;
     }
+
+#if WITH_IOTLAB
+    uint8_t rssi = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_ED_LEVEL); //See datasheet p.91
+    if(rssi == 0) {
+        last_rssi_dbm = -90;
+    } else {
+        last_rssi_dbm = -90 + rssi;
+    }
+#endif
 
 #ifdef RF2XX_LEDS_ON
         leds_on(LEDS_GREEN);
