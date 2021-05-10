@@ -65,6 +65,8 @@ frequency hopping for enhanced reliability.
 #include "net/mac/tsch/tsch-rpl.h"
 #endif /* UIP_CONF_IPV6_RPL */
 
+extern uint16_t tsch_input_qloss_count;
+
 extern uint32_t tsch_unlocked_scheduled_cell_count; //hckim
 extern uint32_t tsch_unlocked_scheduled_tx_cell_count; //hckim
 extern uint32_t tsch_unlocked_scheduled_rx_cell_count; //hckim

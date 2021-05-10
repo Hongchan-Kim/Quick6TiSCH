@@ -95,6 +95,8 @@ static uint16_t tsch_ip_noack_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_ok_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_error_count; // tsch_tx_process_pending
 
+uint16_t tsch_input_qloss_count;
+
 /* hckim for measure cell utilization during association */
 uint32_t tsch_unlocked_scheduled_cell_count;
 uint32_t tsch_unlocked_scheduled_tx_cell_count;
@@ -125,6 +127,7 @@ uint32_t ost_unlocked_scheduled_ondemand_rx_operation_count;
 static void
 print_utilization()
 {
+  LOG_INFO("HCK input_qloss %u\n", tsch_input_qloss_count);
   //timeslots in current session
   int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
   //timeslots until last session + timeslots in current session

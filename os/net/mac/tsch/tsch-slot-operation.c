@@ -1758,6 +1758,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
   input_index = ringbufindex_peek_put(&input_ringbuf);
   if(input_index == -1) {
+    /* hckim log */
+    ++tsch_input_qloss_count;
+
     input_queue_drop++;
   } else {
     static struct input_packet *current_input;
