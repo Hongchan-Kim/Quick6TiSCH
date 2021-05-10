@@ -54,9 +54,11 @@ metric_list = ['id', 'addr',
             'ka_send', 'ka_qloss', 'ka_enqueue', 'ka_tx', 'ka_ok', 'ka_noack', 'ka_err',
             'eb_send', 'eb_qloss', 'eb_enqueue', 'eb_ok', 'eb_noack', 'eb_err',
             'ip_qloss', 'ip_enqueue', 'ip_ok', 'ip_noack', 'ip_err', 
+            'input_qloss',
             'asso', 'leaving', 'leave_time',
             'act_ts', 'sch_ts', 'ass_ts',
-            'dis_send', 'dioU_send', 'dioM_send', 'daoP_send', 'daoN_send', 'daoA_send',
+            'dis_send', 'dioU_send', 'dioM_send',
+            'daoP_send', 'daoN_send', 'daoP_fwd', 'daoN_fwd', 'daoA_send',
             'ps', 'lastP', 'local_repair',
             'hopD_sum', 'hopD_cnt', 'rdt',
             'subtree_sum', 'subtree_cnt',
@@ -151,7 +153,7 @@ for i in range(NODE_NUM):
 
 # STEP-3-1: result list and array
 result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 
-               'lastP', 'ps', 'hopD', 'subTN', 'QLR', 'LLR', 'linkE', 'leave', 'SATR', 'ASTR', 'AATR', 'dc']
+               'lastP', 'ps', 'hopD', 'subTN', 'QLR', 'LLR', 'IQL', 'linkE', 'leave', 'SATR', 'ASTR', 'AATR', 'dc']
 RESULT_NUM = len(result_list)
 result = [[0 for i in range(RESULT_NUM)] for j in range(NODE_NUM)]
 
@@ -212,6 +214,8 @@ for i in range(NODE_NUM):
                 result[i][j] = 'INF'
             else:
                 result[i][j] = round(float(tot_uc_noack) / (float(tot_uc_noack) + float(tot_uc_ok)) * 100, 2)
+        elif result_list[j] == 'IQL':
+            result[i][j] = parsed[i][metric_list.index('input_qloss')]
         elif result_list[j] == 'linkE':
             tot_uc_tx = float(parsed[i][metric_list.index('ka_tx')]) + float(parsed[i][metric_list.index('ip_uc_tx')])
             tot_uc_ok = float(parsed[i][metric_list.index('ka_ok')]) + float(parsed[i][metric_list.index('ip_uc_ok')])
