@@ -81,9 +81,10 @@ static uint16_t rpl_dio_ucast_send_count;
 static uint16_t rpl_dao_recv_count;
 static uint16_t rpl_dao_path_send_count;
 static uint16_t rpl_dao_nopath_send_count;
+static uint16_t rpl_dao_path_fwd_count;
+static uint16_t rpl_dao_nopath_fwd_count;
 static uint16_t rpl_dao_ack_recv_count;
 static uint16_t rpl_dao_ack_send_count;
-
 
 /*---------------------------------------------------------------------------*/
 #define RPL_DIO_GROUNDED                 0x80
@@ -862,6 +863,8 @@ dao_input_storing(void)
         uint8_t out_seq;
         out_seq = prepare_for_dao_fwd(sequence, rep);
 
+        LOG_INFO("HCK daoN_fwd %u\n", ++rpl_dao_nopath_fwd_count);
+
         LOG_DBG("Forwarding No-path DAO to parent - out_seq:%d",
                out_seq);
         LOG_DBG_6ADDR(rpl_parent_get_ipaddr(dag->preferred_parent));
@@ -964,6 +967,7 @@ fwd_dao:
         }
       }
 
+      LOG_INFO("HCK daoP_fwd %u\n", ++rpl_dao_path_fwd_count);
       LOG_DBG("Forwarding DAO to parent ");
       LOG_DBG_6ADDR(rpl_parent_get_ipaddr(dag->preferred_parent));
       LOG_DBG_(" in seq: %d out seq: %d\n", sequence, out_seq);
