@@ -128,29 +128,6 @@ rpl_purge_routes(void)
   uip_mcast6_route_t *mcast_route;
 #endif
 
-  if(first_subtree_measure < RPL_FIRST_MEASURE_PERIOD) {
-    first_subtree_measure++;
-  } else {
-    if((tsch_is_associated == 1) && rpl_has_joined()) {
-      int my_subtree_node_size = uip_ds6_route_num_routes();
-
-      subtree_measure_sum += (uint32_t)my_subtree_node_size;
-      subtree_measure_count++;
-/*
-      subtree_measure_avg = 
-        (subtree_measure_avg * subtree_measure_count + ((uint32_t)my_subtree_node_size) * 100) / (subtree_measure_count + 1);
-      subtree_measure_count++;
-*/
-    }
-    next_subtree_print++;
-    if(next_subtree_print >= RPL_NEXT_PRINT_PERIOD) {
-      next_subtree_print = 0;
-      LOG_INFO("HCK subtree_sum %lu\n", subtree_measure_sum);
-      LOG_INFO("HCK subtree_cnt %lu\n", subtree_measure_count);
-      LOG_INFO("HCK subtree_avg %lu / 100\n", 100 * subtree_measure_sum / subtree_measure_count);
-    }
-  } 
-
   /* First pass, decrement lifetime */
   r = uip_ds6_route_head();
 
@@ -205,6 +182,24 @@ rpl_purge_routes(void)
     }
   }
 #endif
+
+  if(first_subtree_measure < RPL_FIRST_MEASURE_PERIOD) {
+    first_subtree_measure++;
+  } else {
+    if((tsch_is_associated == 1) && rpl_has_joined()) {
+      int my_subtree_node_size = uip_ds6_route_num_routes();
+
+      subtree_measure_sum += (uint32_t)my_subtree_node_size;
+      subtree_measure_count++;
+    }
+    next_subtree_print++;
+    if(next_subtree_print >= RPL_NEXT_PRINT_PERIOD) {
+      next_subtree_print = 0;
+      LOG_INFO("HCK subtree_sum %lu\n", subtree_measure_sum);
+      LOG_INFO("HCK subtree_cnt %lu\n", subtree_measure_count);
+      LOG_INFO("HCK subtree_avg %lu / 100\n", 100 * subtree_measure_sum / subtree_measure_count);
+    }
+  } 
 }
 /*---------------------------------------------------------------------------*/
 void
