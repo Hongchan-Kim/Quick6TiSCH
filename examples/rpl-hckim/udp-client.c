@@ -71,14 +71,14 @@ PROCESS_THREAD(udp_client_process, ev, data)
   simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL,
                       UDP_SERVER_PORT, udp_rx_callback);
 
-  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_SEND_INTERVAL / 2)));
+  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_SEND_INTERVAL)));
   etimer_set(&print_timer, APP_PRINT_DELAY);
 
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_TIMER);
     if(data == &print_timer) {
       print_node_info();
-    } else if(data == &start_timer) {
+    } else if(data == &start_timer || data == &periodic_timer) {
       etimer_set(&send_timer, random_rand() % (APP_SEND_INTERVAL / 2));
       etimer_set(&periodic_timer, APP_SEND_INTERVAL);
     } else if(data == &send_timer) {
@@ -93,9 +93,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
         simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
         count++;
       }
-    } else if(data == &periodic_timer) {
-      etimer_set(&send_timer, random_rand() % (APP_SEND_INTERVAL / 2));
-      etimer_reset(&periodic_timer);
     }
   }
 

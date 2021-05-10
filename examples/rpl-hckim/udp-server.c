@@ -61,7 +61,7 @@
 static struct simple_udp_connection udp_conn;
 
 #if DOWNWARD_TRAFFIC
-#define APP_DOWN_INTERVAL   (APP_SEND_INTERVAL / NON_ROOT_NUM)
+#define APP_DOWN_INTERVAL   (APP_SEND_INTERVAL / (NON_ROOT_NUM + 1))
 #endif
 
 PROCESS(udp_server_process, "UDP server");
@@ -95,7 +95,9 @@ PROCESS_THREAD(udp_server_process, ev, data)
   static struct etimer print_timer;
 
 #if DOWNWARD_TRAFFIC
+  static struct etimer start_timer;
   static struct etimer periodic_timer;
+  static struct etimer send_timer;
   static unsigned count = 1;
   static unsigned dest_id = IOTLAB_ROOT_ID + 1;
   static char str[32];
@@ -112,7 +114,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
                       UDP_CLIENT_PORT, udp_rx_callback);
 
 #if DOWNWARD_TRAFFIC
-  etimer_set(&periodic_timer, (APP_START_DELAY + random_rand() % APP_SEND_INTERVAL));
+  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_SEND_INTERVAL / 2)));
 #endif
 
   etimer_set(&print_timer, APP_PRINT_DELAY);
@@ -123,7 +125,11 @@ PROCESS_THREAD(udp_server_process, ev, data)
       print_node_info();
     }
 #if DOWNWARD_TRAFFIC
-    else if(data == &periodic_timer) {
+    else if(data == &start_timer || data == &periodic_timer) {
+      etimer_set(&send_timer, APP_DOWN_INTERVAL);
+      etimer_set(&periodic_timer, APP_SEND_INTERVAL);
+    }
+    else if(data == &send_timer) {
       if(count <= APP_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
         /* Send to clients */
@@ -138,12 +144,13 @@ PROCESS_THREAD(udp_server_process, ev, data)
         simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
 
         dest_id++;
-        if(dest_id > NODE_NUM) {
+        if(dest_id > NODE_NUM) { /* the last non-root node */
           dest_id = 2;
           count++;
+        } else { /* not the last non-root node yet */
+          etimer_reset(&send_timer);
         }
       }
-      etimer_set(&periodic_timer, APP_DOWN_INTERVAL);
     }
 #endif
   }
