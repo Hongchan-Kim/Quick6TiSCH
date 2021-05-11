@@ -53,7 +53,7 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 6 * CLOCK_SECOND)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
 //#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
 //#define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 30
@@ -71,6 +71,8 @@
 #define RPL_CONF_WITH_PROBING                      1
 #define RPL_FIRST_MEASURE_PERIOD                   (5 * 60)
 #define RPL_NEXT_PRINT_PERIOD                      (1 * 60)
+#define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         0
+#define RELAXED_ETX_NOACK_PENALTY                 1
 #define RPL_DIO_FILTER                             1
 #define RPL_DIO_FILTER_EWMA                        0
 #define RPL_DIO_FILTER_THRESHOLD                   (-85)
