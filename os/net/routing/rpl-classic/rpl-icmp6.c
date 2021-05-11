@@ -865,7 +865,7 @@ dao_input_storing(void)
 
         LOG_INFO("HCK daoN_fwd %u\n", ++rpl_dao_nopath_fwd_count);
 
-        LOG_DBG("Forwarding No-path DAO to parent - out_seq:%d",
+        LOG_DBG("Forwarding No-path DAO to parent - out_seq:%d ",
                out_seq);
         LOG_DBG_6ADDR(rpl_parent_get_ipaddr(dag->preferred_parent));
         LOG_DBG_("\n");
