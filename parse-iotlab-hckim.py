@@ -19,7 +19,7 @@ print('iter: ' + iter)
 print('any_id: ' + any_id)
 
 file_name = 'log-' + iter + '-' + any_id + '.txt'
-f = open(file_name, 'r')
+f = open(file_name, 'r', errors='ignore')
 
 line = f.readline()
 while line:
@@ -83,7 +83,7 @@ for node_id in non_root_id_list:
     parsed[node_index][metric_list.index('addr')] = non_root_address_list[non_root_id_list.index(node_id)]
 
     file_name = 'log-' + iter + '-' + str(node_id) + '.txt'
-    f = open(file_name, 'r')
+    f = open(file_name, 'r', errors='ignore')
 
     line = f.readline()
     while line:
@@ -115,7 +115,7 @@ parsed[ROOT_INDEX][metric_list.index('id')] = ROOT_ID
 parsed[ROOT_INDEX][metric_list.index('addr')] = ROOT_ADDR
 
 file_name = 'log-' + iter + '-' + str(ROOT_ID) + '.txt'
-f = open(file_name, 'r')
+f = open(file_name, 'r', errors='ignore')
 
 line = f.readline()
 while line:
