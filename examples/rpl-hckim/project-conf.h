@@ -16,15 +16,6 @@
 #define IOTLAB_LILLE_32                           6
 #define IOTLAB_LILLE_46                           7
 
-//#define IOTLAB_SITE                                IOTLAB_LYON_2
-//#define IOTLAB_SITE                                IOTLAB_LYON_3
-//#define IOTLAB_SITE                                IOTLAB_LYON_10
-//#define IOTLAB_SITE                                IOTLAB_LYON_17
-//#define IOTLAB_SITE                                IOTLAB_LILLE_24
-//#define IOTLAB_SITE                                IOTLAB_LILLE_32
-//#define IOTLAB_SITE                                IOTLAB_LILLE_46
-#define IOTLAB_SITE                                IOTLAB_LILLE_79
-
 #if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
 #elif IOTLAB_SITE == IOTLAB_LYON_3
@@ -45,6 +36,15 @@
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
 #define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
+
+//#define IOTLAB_SITE                                IOTLAB_LYON_2
+//#define IOTLAB_SITE                                IOTLAB_LYON_3
+//#define IOTLAB_SITE                                IOTLAB_LYON_10
+//#define IOTLAB_SITE                                IOTLAB_LYON_17
+//#define IOTLAB_SITE                                IOTLAB_LILLE_24
+//#define IOTLAB_SITE                                IOTLAB_LILLE_32
+//#define IOTLAB_SITE                                IOTLAB_LILLE_46
+#define IOTLAB_SITE                                IOTLAB_LILLE_79
 /*---------------------------------------------------------------------------*/
 
 
@@ -71,8 +71,8 @@
 #define RPL_CONF_WITH_PROBING                      1
 #define RPL_FIRST_MEASURE_PERIOD                   (5 * 60)
 #define RPL_NEXT_PRINT_PERIOD                      (1 * 60)
-#define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         0
-#define RELAXED_ETX_NOACK_PENALTY                 1
+#define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1
+#define RELAXED_ETX_NOACK_PENALTY                  0
 #define RPL_DIO_FILTER                             1
 #define RPL_DIO_FILTER_EWMA                        0
 #define RPL_DIO_FILTER_THRESHOLD                   (-85)
@@ -148,8 +148,9 @@
 
 #define WITH_ALICE                                 1
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
-#define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY    alice_packet_cell_matching_on_the_fly
-#define ALICE_TIME_VARYING_SCHEDULING            alice_time_varying_scheduling
+#define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
+#define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
+#define ALICE_EARLY_PACKET_DROP                    1
 #define ALICE_BROADCAST_SF_ID                      1 //slotframe handle of broadcast/default slotframe
 #define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
 #define TSCH_CONF_BURST_MAX_LEN                    0
@@ -164,6 +165,7 @@
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 
 #define WITH_OST                                   1
+#define WITH_OST_SBJ                               0
 #define WITH_OST_LOG                               0
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 #define OST_ON_DEMAND_PROVISION                    1
@@ -218,7 +220,7 @@
  * Configure log
  */
 #define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_DBG //LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG //LOG_LEVEL_INFO

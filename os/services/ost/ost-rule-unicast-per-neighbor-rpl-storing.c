@@ -171,6 +171,7 @@ ost_get_id_from_rx_sf_handle(const uint16_t handle)
 /*---------------------------------------------------------------------------*/
 /* Seungbeom Jeong added change_attr_in_tx_queue */
 /* use shared slotframe instead of RB or ost slotframes */
+#if WITH_OST_SBJ
 void 
 change_attr_in_tx_queue(const linkaddr_t * dest)
 {
@@ -207,6 +208,7 @@ change_attr_in_tx_queue(const linkaddr_t * dest)
     }
   }
 }
+#endif
 #endif
 /*---------------------------------------------------------------------------*/
 
@@ -347,6 +349,7 @@ static void
 child_removed(const linkaddr_t *linkaddr)
 {
 #if WITH_OST
+#if WITH_OST_SBJ
   struct tsch_neighbor *nbr = tsch_queue_get_nbr(linkaddr);
 
   /* Seungbeom Jeong added this if and else code block */
@@ -356,6 +359,7 @@ child_removed(const linkaddr_t *linkaddr)
     change_attr_in_tx_queue(linkaddr); /* use shared slotframe for queued packets */
     remove_uc_link(linkaddr);
   }
+#endif
 
   uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t*)linkaddr);  
   if(ds6_nbr != NULL) {
@@ -443,6 +447,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     }
 
 #if WITH_OST
+#if WITH_OST_SBJ
     /* Seungbeom Jeong added this if block */
     if(old_addr != NULL) {
       if(tsch_queue_is_empty(old) || old == NULL) {
@@ -452,6 +457,9 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
         remove_uc_link(old_addr);
       }
     }
+#else
+    remove_uc_link(old_addr);
+#endif
 
     ost_reset_nbr(old_addr, 0, 0);
     ost_reset_nbr(new_addr, 1, 0);

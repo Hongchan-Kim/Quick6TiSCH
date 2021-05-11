@@ -2120,7 +2120,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
 
-#if WITH_OST
+#if WITH_OST_SBJ
       /* Seungbeom Jeong added this else if block */
       else if(current_packet == NULL && (current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         if(current_link->slotframe_handle > backup_link->slotframe_handle) {

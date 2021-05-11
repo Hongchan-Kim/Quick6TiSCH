@@ -628,10 +628,13 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
                   link->timeslot, link->channel_offset));
 #endif
 
+#if ALICE_EARLY_PACKET_DROP
           if(r == 0) { //no RPL neighbor --> ALICE EARLY PACKET DROP
 		        tsch_queue_free_packet(n->tx_array[get_index]);
             return NULL;
-          } else { //RPL neighbor
+          } else
+#endif
+          { //RPL neighbor
             if(packet_attr_slotframe != 0xffff && link->slotframe_handle != ALICE_UNICAST_SF_ID) {
               return NULL;
             }
