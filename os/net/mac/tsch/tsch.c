@@ -1063,6 +1063,25 @@ PROCESS_THREAD(tsch_process, ev, data)
           tsch_unlocked_scheduled_tx_cell_count, tsch_unlocked_scheduled_rx_cell_count, tsch_unlocked_scheduled_idle_cell_count);
     LOG_INFO("HCK ass_ts %lu\n", tsch_total_associated_timeslots);
 
+#if WITH_OST
+  LOG_INFO("HCK ostP_act_ts %lu | tx %lu rx %lu\n", 
+          ost_unlocked_scheduled_periodic_tx_operation_count + ost_unlocked_scheduled_periodic_rx_operation_count,
+          ost_unlocked_scheduled_periodic_tx_operation_count, ost_unlocked_scheduled_periodic_rx_operation_count);
+  LOG_INFO("HCK ostP_sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
+          ost_unlocked_scheduled_periodic_cell_count,
+          ost_unlocked_scheduled_periodic_tx_cell_count + ost_unlocked_scheduled_periodic_rx_cell_count + ost_unlocked_scheduled_periodic_idle_cell_count,
+          ost_unlocked_scheduled_periodic_tx_cell_count, ost_unlocked_scheduled_periodic_rx_cell_count, ost_unlocked_scheduled_periodic_idle_cell_count);
+#if OST_ON_DEMAND_PROVISION
+  LOG_INFO("HCK ostO_act_ts %lu | tx %lu rx %lu\n", 
+          ost_unlocked_scheduled_ondemand_tx_operation_count + ost_unlocked_scheduled_ondemand_rx_operation_count,
+          ost_unlocked_scheduled_ondemand_tx_operation_count, ost_unlocked_scheduled_ondemand_rx_operation_count);
+  LOG_INFO("HCK ostO_sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
+          ost_unlocked_scheduled_ondemand_cell_count,
+          ost_unlocked_scheduled_ondemand_tx_cell_count + ost_unlocked_scheduled_ondemand_rx_cell_count + ost_unlocked_scheduled_ondemand_idle_cell_count,
+          ost_unlocked_scheduled_ondemand_tx_cell_count, ost_unlocked_scheduled_ondemand_rx_cell_count, ost_unlocked_scheduled_ondemand_idle_cell_count);
+#endif
+#endif
+
     tsch_timeslots_until_last_session = tsch_total_associated_timeslots;
 
     clock_last_leaving = clock_time();

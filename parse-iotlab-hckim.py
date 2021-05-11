@@ -62,7 +62,9 @@ metric_list = ['id', 'addr',
             'ps', 'lastP', 'local_repair',
             'hopD_sum', 'hopD_cnt', 'rdt',
             'subtree_sum', 'subtree_cnt',
-            'dc']
+            'dc',
+            'ostP_act_ts', 'ostP_sch_ts',
+            'ostO_act_ts', 'ostO_sch_ts']
 
 # STEP-2-2: location of metric indicator and value
 HCK = 0
