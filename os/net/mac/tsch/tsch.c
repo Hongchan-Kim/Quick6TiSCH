@@ -98,6 +98,7 @@ static uint16_t tsch_ip_error_count; // tsch_tx_process_pending
 uint16_t tsch_input_qloss_count;
 
 /* hckim for measure cell utilization during association */
+static uint16_t tsch_log_association_count;
 uint32_t tsch_unlocked_scheduled_cell_count;
 uint32_t tsch_unlocked_scheduled_tx_cell_count;
 uint32_t tsch_unlocked_scheduled_rx_cell_count;
@@ -107,6 +108,10 @@ uint32_t tsch_unlocked_scheduled_rx_operation_count;
 static uint32_t tsch_timeslots_until_last_session;
 static struct tsch_asn_t tsch_last_asn_associated;
 static struct ctimer utilization_timer;
+
+static clock_time_t clock_last_leaving;
+static clock_time_t clock_inst_leaving_time;
+static clock_time_t clock_avg_leaving_time;
 
 #if WITH_OST
 uint32_t ost_unlocked_scheduled_periodic_cell_count;
@@ -123,6 +128,62 @@ uint32_t ost_unlocked_scheduled_ondemand_idle_cell_count;
 uint32_t ost_unlocked_scheduled_ondemand_tx_operation_count;
 uint32_t ost_unlocked_scheduled_ondemand_rx_operation_count;
 #endif
+
+void reset_log_tsch()
+{
+  tsch_leaving_count = 0;
+  tsch_eb_send_count = 0;
+  tsch_ka_send_count = 0;
+  tsch_eb_qloss_count = 0; // tsch_send_eb_process
+  tsch_eb_enqueue_count = 0; // tsch_send_eb_process
+  tsch_eb_noack_count = 0; // tsch_tx_process_pending
+  tsch_eb_ok_count = 0; // tsch_tx_process_pending
+  tsch_eb_error_count = 0; // tsch_tx_process_pending
+  tsch_ka_qloss_count = 0; // send_packet
+  tsch_ka_enqueue_count = 0; // send_packet
+  tsch_ka_noack_count = 0; // tsch_tx_process_pending
+  tsch_ka_ok_count = 0; // tsch_tx_process_pending
+  tsch_ka_error_count = 0; // tsch_tx_process_pending
+  tsch_ka_transmission_count = 0; // keepalive_packet_sent
+  tsch_ip_qloss_count = 0; // send_packet
+  tsch_ip_enqueue_count = 0; // send_packet
+  tsch_ip_noack_count = 0; // tsch_tx_process_pending
+  tsch_ip_ok_count = 0; // tsch_tx_process_pending
+  tsch_ip_error_count = 0; // tsch_tx_process_pending
+  tsch_input_qloss_count = 0;
+
+  /* hckim for measure cell utilization during association */
+  tsch_unlocked_scheduled_cell_count = 0;;
+  tsch_unlocked_scheduled_tx_cell_count = 0;;
+  tsch_unlocked_scheduled_rx_cell_count = 0;;
+  tsch_unlocked_scheduled_idle_cell_count = 0;;
+  tsch_unlocked_scheduled_tx_operation_count = 0;;
+  tsch_unlocked_scheduled_rx_operation_count = 0;;
+
+  tsch_timeslots_until_last_session = 0;
+  TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
+
+  tsch_log_association_count = 1; /* assume that this node is associated when bootstrap period ends */
+  LOG_INFO("HCK asso %u\n", tsch_log_association_count);
+  /* do not initialize clock_last_leaving and clock_inst_leaving_time */
+  clock_avg_leaving_time = 0;
+
+#if WITH_OST
+  ost_unlocked_scheduled_periodic_cell_count = 0;
+  ost_unlocked_scheduled_periodic_tx_cell_count = 0;
+  ost_unlocked_scheduled_periodic_rx_cell_count = 0;
+  ost_unlocked_scheduled_periodic_idle_cell_count = 0;
+  ost_unlocked_scheduled_periodic_tx_operation_count = 0;
+  ost_unlocked_scheduled_periodic_rx_operation_count = 0;
+
+  ost_unlocked_scheduled_ondemand_cell_count = 0;
+  ost_unlocked_scheduled_ondemand_tx_cell_count = 0;
+  ost_unlocked_scheduled_ondemand_rx_cell_count = 0;
+  ost_unlocked_scheduled_ondemand_idle_cell_count = 0;
+  ost_unlocked_scheduled_ondemand_tx_operation_count = 0;
+  ost_unlocked_scheduled_ondemand_rx_operation_count = 0;
+#endif
+}
 
 static void
 print_utilization()
@@ -164,10 +225,6 @@ print_utilization()
 
   ctimer_reset(&utilization_timer);
 }
-
-static clock_time_t clock_last_leaving;
-static clock_time_t clock_inst_leaving_time;
-static clock_time_t clock_avg_leaving_time;
 
 /* The address of the last node we received an EB from (other than our time source).
  * Used for recovery */
@@ -897,9 +954,10 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
       TSCH_CALLBACK_JOINING_NETWORK();
 #endif
 
+      tsch_log_association_count++;
       tsch_association_count++;
       LOG_INFO("HCK asso %u | association done (%u), sec %u, PAN ID %x, asn-%x.%lx, jp %u, timeslot id %u, hopping id %u, slotframe len %u with %u links, from ",
-             tsch_association_count,
+             tsch_log_association_count,
              tsch_association_count,
              tsch_is_pan_secured,
              frame.src_pid,
@@ -911,9 +969,9 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
       LOG_INFO_LLADDR((const linkaddr_t *)&frame.src_addr);
       LOG_INFO_("\n");
 
-      if(tsch_association_count > 1) {
+      if(tsch_log_association_count > 1) {
         clock_inst_leaving_time = clock_time() - clock_last_leaving;
-        clock_avg_leaving_time = (clock_avg_leaving_time * (tsch_association_count - 2) + clock_inst_leaving_time) / (tsch_association_count - 1);
+        clock_avg_leaving_time = (clock_avg_leaving_time * (tsch_log_association_count - 2) + clock_inst_leaving_time) / (tsch_log_association_count - 1);
       }
       LOG_INFO("HCK leave_time %lu inst %lu\n", clock_avg_leaving_time, clock_inst_leaving_time);
 
@@ -1053,7 +1111,6 @@ PROCESS_THREAD(tsch_process, ev, data)
     int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
     uint32_t tsch_total_associated_timeslots = 
             tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
-
     LOG_INFO("HCK act_ts %lu | tx %lu rx %lu\n", 
             tsch_unlocked_scheduled_tx_operation_count + tsch_unlocked_scheduled_rx_operation_count,
             tsch_unlocked_scheduled_tx_operation_count, tsch_unlocked_scheduled_rx_operation_count);

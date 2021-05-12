@@ -45,6 +45,11 @@
 #include "net/ipv6/uip-ds6.h"
 #include "sys/ctimer.h"
 
+void reset_log_rpl_icmp6();
+void reset_log_rpl_dag();
+void reset_log_rpl_timers();
+void reset_log_rpl();
+
 /*---------------------------------------------------------------------------*/
 typedef uint16_t rpl_rank_t;
 typedef uint16_t rpl_ocp_t;

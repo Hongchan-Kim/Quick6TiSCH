@@ -67,6 +67,12 @@
 static uint16_t rpl_parent_switch_count;
 static uint16_t rpl_local_repair_count;
 
+void reset_log_rpl_dag()
+{
+  rpl_parent_switch_count = 0;
+  rpl_local_repair_count = 0;
+}
+
 /* A configurable function called after every RPL parent switch */
 #ifdef RPL_CALLBACK_PARENT_SWITCH
 void RPL_CALLBACK_PARENT_SWITCH(rpl_parent_t *old, rpl_parent_t *new);

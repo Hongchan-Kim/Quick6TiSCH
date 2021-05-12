@@ -85,6 +85,13 @@ static uint32_t ip_ucast_transmission_count; // packet_sent
 static uint16_t ip_ucast_ok_count;
 static uint16_t ip_ucast_noack_count;
 static uint16_t ip_ucast_error_count;
+void reset_log_sicslowpan()
+{
+  ip_ucast_transmission_count = 0;
+  ip_ucast_ok_count = 0;
+  ip_ucast_noack_count = 0;
+  ip_ucast_error_count = 0;
+}
 
 #define GET16(ptr,index) (((uint16_t)((ptr)[index] << 8)) | ((ptr)[(index) + 1]))
 #define SET16(ptr,index,value) do {     \

@@ -89,6 +89,8 @@ extern uint32_t ost_unlocked_scheduled_ondemand_tx_operation_count; // chk
 extern uint32_t ost_unlocked_scheduled_ondemand_rx_operation_count; // chk
 #endif
 
+void reset_log_tsch();
+
 /* Include Arch-Specific conf */
 #ifdef TSCH_CONF_ARCH_HDR_PATH
 #include TSCH_CONF_ARCH_HDR_PATH

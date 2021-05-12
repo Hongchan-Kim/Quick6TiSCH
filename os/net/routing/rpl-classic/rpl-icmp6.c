@@ -86,6 +86,22 @@ static uint16_t rpl_dao_nopath_fwd_count;
 static uint16_t rpl_dao_ack_recv_count;
 static uint16_t rpl_dao_ack_send_count;
 
+void reset_log_rpl_icmp6()
+{
+  rpl_dis_recv_count = 0;
+  rpl_dis_send_count = 0;
+  rpl_dio_recv_count = 0;
+  rpl_dio_mcast_send_count = 0;
+  rpl_dio_ucast_send_count = 0;
+  rpl_dao_recv_count = 0;
+  rpl_dao_path_send_count = 0;
+  rpl_dao_nopath_send_count = 0;
+  rpl_dao_path_fwd_count = 0;
+  rpl_dao_nopath_fwd_count = 0;
+  rpl_dao_ack_recv_count = 0;
+  rpl_dao_ack_send_count = 0;
+}
+
 /*---------------------------------------------------------------------------*/
 #define RPL_DIO_GROUNDED                 0x80
 #define RPL_DIO_MOP_SHIFT                3

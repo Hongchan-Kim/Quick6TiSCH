@@ -52,6 +52,8 @@
 #include "net/ipv6/uip.h"
 #include "net/mac/mac.h"
 
+void reset_log_sicslowpan();
+
 /**
  * \name General sicslowpan defines
  * @{

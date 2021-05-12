@@ -33,6 +33,13 @@
 #include "net/netstack.h"
 #include "net/ipv6/simple-udp.h"
 
+/* to reset log */
+#include "net/ipv6/tcpip.h"
+#include "net/ipv6/sicslowpan.h"
+#include "net/mac/tsch/tsch.h"
+#include "net/routing/rpl-classic/rpl.h"
+#include "services/simple-energest/simple-energest.h"
+
 #include "sys/log.h"
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_INFO
@@ -68,6 +75,20 @@ PROCESS(udp_server_process, "UDP server");
 AUTOSTART_PROCESSES(&udp_server_process);
 /*---------------------------------------------------------------------------*/
 static void
+reset_log()
+{
+  LOG_INFO("HCK reset_log\n");
+  reset_log_tcpip();              /* tcpip.c */
+  reset_log_sicslowpan();         /* sicslowpan.c */
+  reset_log_tsch();               /* tsch.c */
+  reset_log_rpl_icmp6();          /* rpl-icmp6.c */
+  reset_log_rpl_dag();            /* rpl-dag.c */
+  reset_log_rpl_timers();         /* rpl-timers.c */
+  reset_log_rpl();                /* rpl.c */
+  simple_energest_init();         /* simple-energest.c */
+}
+/*---------------------------------------------------------------------------*/
+static void
 udp_rx_callback(struct simple_udp_connection *c,
          const uip_ipaddr_t *sender_addr,
          uint16_t sender_port,
@@ -93,6 +114,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 PROCESS_THREAD(udp_server_process, ev, data)
 {
   static struct etimer print_timer;
+  static struct etimer reset_log_timer;
 
 #if DOWNWARD_TRAFFIC
   static struct etimer start_timer;
@@ -118,11 +140,14 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #endif
 
   etimer_set(&print_timer, APP_PRINT_DELAY);
+  etimer_set(&reset_log_timer, APP_START_DELAY);
 
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_TIMER);
     if(data == &print_timer) {
       print_node_info();
+    } else if(data == &reset_log_timer) {
+      reset_log();
     }
 #if DOWNWARD_TRAFFIC
     else if(data == &start_timer || data == &periodic_timer) {

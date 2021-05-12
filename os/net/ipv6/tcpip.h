@@ -69,6 +69,8 @@
 
 #include "contiki.h"
 
+void reset_log_tcpip();
+
 struct uip_conn;
 
 struct tcpip_uipstate {

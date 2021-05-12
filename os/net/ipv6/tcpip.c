@@ -56,6 +56,10 @@
 #define LOG_LEVEL LOG_LEVEL_TCPIP
 
 static uint16_t tcpip_fw_ok_count;
+void reset_log_tcpip()
+{
+  tcpip_fw_ok_count = 0;
+}
 
 #ifdef UIP_FALLBACK_INTERFACE
 extern struct uip_fallback_interface UIP_FALLBACK_INTERFACE;

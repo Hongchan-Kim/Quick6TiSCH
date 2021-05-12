@@ -16,6 +16,15 @@
 #define IOTLAB_LILLE_32                           6
 #define IOTLAB_LILLE_46                           7
 
+//#define IOTLAB_SITE                                IOTLAB_LYON_2
+#define IOTLAB_SITE                                IOTLAB_LYON_3
+//#define IOTLAB_SITE                                IOTLAB_LYON_10
+//#define IOTLAB_SITE                                IOTLAB_LYON_17
+//#define IOTLAB_SITE                                IOTLAB_LILLE_24
+//#define IOTLAB_SITE                                IOTLAB_LILLE_32
+//#define IOTLAB_SITE                                IOTLAB_LILLE_46
+//#define IOTLAB_SITE                                IOTLAB_LILLE_79
+
 #if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
 #elif IOTLAB_SITE == IOTLAB_LYON_3
@@ -36,15 +45,6 @@
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
 #define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
-
-//#define IOTLAB_SITE                                IOTLAB_LYON_2
-//#define IOTLAB_SITE                                IOTLAB_LYON_3
-//#define IOTLAB_SITE                                IOTLAB_LYON_10
-//#define IOTLAB_SITE                                IOTLAB_LYON_17
-//#define IOTLAB_SITE                                IOTLAB_LILLE_24
-//#define IOTLAB_SITE                                IOTLAB_LILLE_32
-//#define IOTLAB_SITE                                IOTLAB_LILLE_46
-#define IOTLAB_SITE                                IOTLAB_LILLE_79
 /*---------------------------------------------------------------------------*/
 
 
@@ -54,12 +54,12 @@
  */
 #define DOWNWARD_TRAFFIC                           1
 #define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
-//#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
-//#define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
-#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 30
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) // 30
+#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
+#define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
+//#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 30
+//#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) // 30
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
-#define APP_PRINT_DELAY                            (1 * 30 * CLOCK_SECOND)
+#define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
 
 
@@ -69,8 +69,9 @@
 #define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST  //ksh..
 #define RPL_CONF_WITH_DAO_ACK                      1 //ksh..
 #define RPL_CONF_WITH_PROBING                      1
-#define RPL_FIRST_MEASURE_PERIOD                   (5 * 60)
-#define RPL_NEXT_PRINT_PERIOD                      (1 * 60)
+#define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND)
+#define RPL_FIRST_MEASURE_PERIOD                   (1 * 60)
+#define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1
 #define RELAXED_ETX_NOACK_PENALTY                  0
 #define RPL_DIO_FILTER                             1

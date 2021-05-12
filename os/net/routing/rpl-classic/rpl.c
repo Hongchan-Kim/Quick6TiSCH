@@ -66,9 +66,17 @@ rpl_stats_t rpl_stats;
 #endif
 
 static uint16_t first_subtree_measure;
-static uint16_t next_subtree_print;
+static uint16_t next_subtree_measure;
 static uint32_t subtree_measure_count;
 static uint32_t subtree_measure_sum;
+
+void reset_log_rpl()
+{
+  first_subtree_measure = 0;
+  next_subtree_measure = 0;
+  subtree_measure_count = 0;
+  subtree_measure_sum = 0;
+}
 
 static enum rpl_mode mode = RPL_MODE_MESH;
 /*---------------------------------------------------------------------------*/
@@ -186,15 +194,17 @@ rpl_purge_routes(void)
   if(first_subtree_measure < RPL_FIRST_MEASURE_PERIOD) {
     first_subtree_measure++;
   } else {
-    if((tsch_is_associated == 1) && rpl_has_joined()) {
-      int my_subtree_node_size = uip_ds6_route_num_routes();
+    next_subtree_measure++;
+    if(next_subtree_measure >= RPL_NEXT_MEASURE_PERIOD) {
 
-      subtree_measure_sum += (uint32_t)my_subtree_node_size;
-      subtree_measure_count++;
-    }
-    next_subtree_print++;
-    if(next_subtree_print >= RPL_NEXT_PRINT_PERIOD) {
-      next_subtree_print = 0;
+      if((tsch_is_associated == 1) && rpl_has_joined()) {
+        int my_subtree_node_size = uip_ds6_route_num_routes();
+
+        subtree_measure_sum += (uint32_t)my_subtree_node_size;
+        subtree_measure_count++;
+      }
+
+      next_subtree_measure = 0;
       LOG_INFO("HCK subtree_sum %lu\n", subtree_measure_sum);
       LOG_INFO("HCK subtree_cnt %lu\n", subtree_measure_count);
       LOG_INFO("HCK subtree_avg %lu / 100\n", 100 * subtree_measure_sum / subtree_measure_count);
