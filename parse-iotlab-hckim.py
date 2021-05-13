@@ -80,7 +80,7 @@ metric_list = ['id', 'addr',
             'ps', 'lastP', 'local_repair',
             'hopD_sum', 'hopD_cnt', 'rdt',
             'subtree_sum', 'subtree_cnt',
-            'dc',
+            'dc_count', 'dc_tx_sum', 'dc_rx_sum', 'dc_total_sum',
             'ostP_act_ts', 'ostP_sch_ts', 'ostO_act_ts', 'ostO_sch_ts']
 METRIC_NUM = len(metric_list)
 
@@ -185,7 +185,7 @@ for i in range(NODE_NUM):
             bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('rx_up')]
         elif result_list[j] == 'uPdr':
             if i == ROOT_INDEX or int(bootstrap_period_parsed[i][metric_list.index('tx_up')]) == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('rx_up')]) / float(bootstrap_period_parsed[i][metric_list.index('tx_up')]) * 100, 2)
         elif result_list[j] == 'tx_dw':
@@ -194,12 +194,12 @@ for i in range(NODE_NUM):
             bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('rx_down')]
         elif result_list[j] == 'dPdr':
             if i == ROOT_INDEX or int(bootstrap_period_parsed[i][metric_list.index('tx_down')]) == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('rx_down')]) / float(bootstrap_period_parsed[i][metric_list.index('tx_down')]) * 100, 2)
         elif result_list[j] == 'pdr':
             if i == ROOT_INDEX or int(bootstrap_period_parsed[i][metric_list.index('tx_up')]) + int(bootstrap_period_parsed[i][metric_list.index('tx_down')]) == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round((float(bootstrap_period_parsed[i][metric_list.index('rx_up')]) + float(bootstrap_period_parsed[i][metric_list.index('rx_down')])) / (float(bootstrap_period_parsed[i][metric_list.index('tx_up')]) + float(bootstrap_period_parsed[i][metric_list.index('tx_down')])) * 100, 2)
         elif result_list[j] == 'lastP':
@@ -208,26 +208,26 @@ for i in range(NODE_NUM):
             bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('ps')]
         elif result_list[j] == 'hopD':
             if int(bootstrap_period_parsed[i][metric_list.index('hopD_cnt')]) == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('hopD_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('hopD_cnt')]), 2)
         elif result_list[j] == 'subTN':
             if int(bootstrap_period_parsed[i][metric_list.index('subtree_cnt')]) == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('subtree_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('subtree_cnt')]), 2)
         elif result_list[j] == 'QLR':
             tot_qloss = float(bootstrap_period_parsed[i][metric_list.index('ip_qloss')]) + float(bootstrap_period_parsed[i][metric_list.index('ka_qloss')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_qloss')])
             tot_enqueue = float(bootstrap_period_parsed[i][metric_list.index('ip_enqueue')]) + float(bootstrap_period_parsed[i][metric_list.index('ka_enqueue')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_enqueue')])
             if tot_qloss + tot_enqueue == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(tot_qloss) / (float(tot_qloss) + float(tot_enqueue)) * 100, 2)
         elif result_list[j] == 'LLR':
             tot_uc_noack = float(bootstrap_period_parsed[i][metric_list.index('ip_uc_noack')]) + float(bootstrap_period_parsed[i][metric_list.index('ka_noack')])
             tot_uc_ok = float(bootstrap_period_parsed[i][metric_list.index('ip_uc_ok')]) + float(bootstrap_period_parsed[i][metric_list.index('ka_ok')])
             if tot_uc_noack + tot_uc_ok == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(tot_uc_noack) / (float(tot_uc_noack) + float(tot_uc_ok)) * 100, 2)
         elif result_list[j] == 'IQL':
@@ -236,7 +236,7 @@ for i in range(NODE_NUM):
             tot_uc_tx = float(bootstrap_period_parsed[i][metric_list.index('ka_tx')]) + float(bootstrap_period_parsed[i][metric_list.index('ip_uc_tx')])
             tot_uc_ok = float(bootstrap_period_parsed[i][metric_list.index('ka_ok')]) + float(bootstrap_period_parsed[i][metric_list.index('ip_uc_ok')])
             if tot_uc_ok == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(tot_uc_tx) / float(tot_uc_ok), 2)
         elif result_list[j] == 'leave':
@@ -249,21 +249,24 @@ for i in range(NODE_NUM):
             bootstrap_period_result[i][j] = int(bootstrap_period_parsed[i][metric_list.index('ass_ts')])
         elif result_list[j] == 'SATR':
             if float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('sch_ts')]) / float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
         elif result_list[j] == 'ASTR':
             if float(bootstrap_period_parsed[i][metric_list.index('sch_ts')]) == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('act_ts')]) / float(bootstrap_period_parsed[i][metric_list.index('sch_ts')]) * 100, 2)
         elif result_list[j] == 'AATR':
             if float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) == 0:
-                bootstrap_period_result[i][j] = 'INF'
+                bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('act_ts')]) / float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
         elif result_list[j] == 'dc':
-            bootstrap_period_result[i][j] = float(bootstrap_period_parsed[i][metric_list.index('dc')]) / 10
+            if float(bootstrap_period_parsed[i][metric_list.index('dc_count')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('dc_total_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('dc_count')]) / 100, 2)
         
 # STEP-3-5: [bootstrap period] print bootstrap_period_result
 print('----- bootstrap period -----')
@@ -375,7 +378,7 @@ for i in range(NODE_NUM):
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('rx_up')]
         elif result_list[j] == 'uPdr':
             if i == ROOT_INDEX or int(data_period_parsed[i][metric_list.index('tx_up')]) == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('rx_up')]) / float(data_period_parsed[i][metric_list.index('tx_up')]) * 100, 2)
         elif result_list[j] == 'tx_dw':
@@ -384,12 +387,12 @@ for i in range(NODE_NUM):
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('rx_down')]
         elif result_list[j] == 'dPdr':
             if i == ROOT_INDEX or int(data_period_parsed[i][metric_list.index('tx_down')]) == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('rx_down')]) / float(data_period_parsed[i][metric_list.index('tx_down')]) * 100, 2)
         elif result_list[j] == 'pdr':
             if i == ROOT_INDEX or int(data_period_parsed[i][metric_list.index('tx_up')]) + int(data_period_parsed[i][metric_list.index('tx_down')]) == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round((float(data_period_parsed[i][metric_list.index('rx_up')]) + float(data_period_parsed[i][metric_list.index('rx_down')])) / (float(data_period_parsed[i][metric_list.index('tx_up')]) + float(data_period_parsed[i][metric_list.index('tx_down')])) * 100, 2)
         elif result_list[j] == 'lastP':
@@ -398,26 +401,26 @@ for i in range(NODE_NUM):
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('ps')]
         elif result_list[j] == 'hopD':
             if int(data_period_parsed[i][metric_list.index('hopD_cnt')]) == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('hopD_sum')]) / float(data_period_parsed[i][metric_list.index('hopD_cnt')]), 2)
         elif result_list[j] == 'subTN':
             if int(data_period_parsed[i][metric_list.index('subtree_cnt')]) == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('subtree_sum')]) / float(data_period_parsed[i][metric_list.index('subtree_cnt')]), 2)
         elif result_list[j] == 'QLR':
             tot_qloss = float(data_period_parsed[i][metric_list.index('ip_qloss')]) + float(data_period_parsed[i][metric_list.index('ka_qloss')]) + float(data_period_parsed[i][metric_list.index('eb_qloss')])
             tot_enqueue = float(data_period_parsed[i][metric_list.index('ip_enqueue')]) + float(data_period_parsed[i][metric_list.index('ka_enqueue')]) + float(data_period_parsed[i][metric_list.index('eb_enqueue')])
             if tot_qloss + tot_enqueue == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(tot_qloss) / (float(tot_qloss) + float(tot_enqueue)) * 100, 2)
         elif result_list[j] == 'LLR':
             tot_uc_noack = float(data_period_parsed[i][metric_list.index('ip_uc_noack')]) + float(data_period_parsed[i][metric_list.index('ka_noack')])
             tot_uc_ok = float(data_period_parsed[i][metric_list.index('ip_uc_ok')]) + float(data_period_parsed[i][metric_list.index('ka_ok')])
             if tot_uc_noack + tot_uc_ok == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(tot_uc_noack) / (float(tot_uc_noack) + float(tot_uc_ok)) * 100, 2)
         elif result_list[j] == 'IQL':
@@ -426,7 +429,7 @@ for i in range(NODE_NUM):
             tot_uc_tx = float(data_period_parsed[i][metric_list.index('ka_tx')]) + float(data_period_parsed[i][metric_list.index('ip_uc_tx')])
             tot_uc_ok = float(data_period_parsed[i][metric_list.index('ka_ok')]) + float(data_period_parsed[i][metric_list.index('ip_uc_ok')])
             if tot_uc_ok == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(tot_uc_tx) / float(tot_uc_ok), 2)
         elif result_list[j] == 'leave':
@@ -439,22 +442,26 @@ for i in range(NODE_NUM):
             data_period_result[i][j] = int(data_period_parsed[i][metric_list.index('ass_ts')])
         elif result_list[j] == 'SATR':
             if float(data_period_parsed[i][metric_list.index('ass_ts')]) == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('sch_ts')]) / float(data_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
         elif result_list[j] == 'ASTR':
             if float(data_period_parsed[i][metric_list.index('sch_ts')]) == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('act_ts')]) / float(data_period_parsed[i][metric_list.index('sch_ts')]) * 100, 2)
         elif result_list[j] == 'AATR':
             if float(data_period_parsed[i][metric_list.index('ass_ts')]) == 0:
-                data_period_result[i][j] = 'INF'
+                data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('act_ts')]) / float(data_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
         elif result_list[j] == 'dc':
-            data_period_result[i][j] = float(data_period_parsed[i][metric_list.index('dc')]) / 10
-        
+            if float(data_period_parsed[i][metric_list.index('dc_count')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('dc_total_sum')]) / float(data_period_parsed[i][metric_list.index('dc_count')]) / 100, 2)
+
+
 # STEP-4-6: [data period] print data_period_result
 print('----- data period -----')
 for i in range(RESULT_NUM - 1):

@@ -59,6 +59,8 @@
  */
 void simple_energest_init(void);
 
+void reset_log_simple_energest();
+
 #endif /* SIMPLE_ENERGEST_H_ */
 /**
  * @}

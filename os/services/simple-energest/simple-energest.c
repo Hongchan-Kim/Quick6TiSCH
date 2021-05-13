@@ -52,11 +52,29 @@
 #define LOG_MODULE "Energest"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
+uint32_t dc_count;
+uint32_t dc_tx_sum;
+uint32_t dc_rx_sum;
+uint32_t dc_total_sum;
+void reset_log_simple_energest()
+{
+  dc_count = 0;
+  dc_tx_sum = 0;
+  dc_rx_sum = 0;
+  dc_total_sum = 0;
+}
+
 static unsigned long last_tx, last_rx, last_time, last_cpu, last_lpm, last_deep_lpm;
 static unsigned long delta_tx, delta_rx, delta_time, delta_cpu, delta_lpm, delta_deep_lpm;
 static unsigned long curr_tx, curr_rx, curr_time, curr_cpu, curr_lpm, curr_deep_lpm;
 
 PROCESS(simple_energest_process, "Simple Energest");
+/*---------------------------------------------------------------------------*/
+static unsigned long
+to_per_ten_thousand(unsigned long delta_metric, unsigned long delta_time)
+{
+  return (10000ul * (delta_metric)) / delta_time;
+}
 /*---------------------------------------------------------------------------*/
 static unsigned long
 to_permil(unsigned long delta_metric, unsigned long delta_time)
@@ -100,7 +118,17 @@ simple_energest_step(void)
   LOG_INFO("Radio Tx    : %10lu/%10lu (%lu permil)\n", delta_tx, delta_time, to_permil(delta_tx, delta_time));
   LOG_INFO("Radio Rx    : %10lu/%10lu (%lu permil)\n", delta_rx, delta_time, to_permil(delta_rx, delta_time));
   LOG_INFO("Radio total : %10lu/%10lu (%lu permil)\n", delta_tx+delta_rx, delta_time, to_permil(delta_tx+delta_rx, delta_time));
-  LOG_INFO("HCK dc %lu permil\n", to_permil(curr_tx+curr_rx, curr_time));
+
+  dc_count++;
+  dc_tx_sum += to_per_ten_thousand(delta_tx, delta_time);
+  dc_rx_sum += to_per_ten_thousand(delta_rx, delta_time);
+  dc_total_sum += to_per_ten_thousand(delta_tx+delta_rx, delta_time);
+
+  LOG_INFO("HCK dc_count %lu\n", dc_count);
+  LOG_INFO("HCK dc_tx_sum %lu (%lu.%02lu percent)\n", dc_tx_sum, (dc_tx_sum / dc_count) / 100, (dc_tx_sum / dc_count) % 100);
+  LOG_INFO("HCK dc_rx_sum %lu (%lu.%02lu percent)\n", dc_rx_sum, (dc_rx_sum / dc_count) / 100, (dc_rx_sum / dc_count) % 100);
+  LOG_INFO("HCK dc_total_sum %lu (%lu.%02lu percent)\n", 
+          dc_total_sum, (dc_total_sum / dc_count) / 100, (dc_total_sum / dc_count) % 100);
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(simple_energest_process, ev, data)
