@@ -17,13 +17,13 @@
 #define IOTLAB_LILLE_46                           7
 
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
-#define IOTLAB_SITE                                IOTLAB_LYON_3
+//#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_10
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
 //#define IOTLAB_SITE                                IOTLAB_LILLE_24
 //#define IOTLAB_SITE                                IOTLAB_LILLE_32
 //#define IOTLAB_SITE                                IOTLAB_LILLE_46
-//#define IOTLAB_SITE                                IOTLAB_LILLE_79
+#define IOTLAB_SITE                                IOTLAB_LILLE_79
 
 #if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
@@ -53,11 +53,11 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND)
-#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
-#define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
-//#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 30
-//#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) // 30
+#define APP_SEND_INTERVAL                          (1 * 6 * CLOCK_SECOND)
+//#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
+//#define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
+#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 30
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) // 30
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
@@ -166,10 +166,10 @@
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 
 #define WITH_OST                                   1
-#define WITH_OST_SBJ                               0
 #define WITH_OST_LOG                               0
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 #define OST_ON_DEMAND_PROVISION                    1
+#define OST_HANDLE_QUEUED_PACKETS                  1
 
 #define N_SELECTION_PERIOD                         15 // related to N_MAX: Min. traffic load = 1 / (N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
 #define N_MAX                                      8 // max t_offset 65535-1, 65535 is used for no-allocation
@@ -187,9 +187,6 @@
 #define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) // Under-provision uses up to 2*NODE_NUM+2
 
 /* OST only */
-#undef QUEUEBUF_CONF_NUM
-#define QUEUEBUF_CONF_NUM                           16
-#define TSCH_CONF_MAX_INCOMING_PACKETS              8
 #define OST_TSCH_TS_RX_ACK_DELAY                    1300
 #define OST_TSCH_TS_TX_ACK_DELAY                    1500
 #define TSCH_CONF_RX_WAIT                           800 /* ignore too late packets */

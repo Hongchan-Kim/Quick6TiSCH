@@ -71,6 +71,10 @@ static struct simple_udp_connection udp_conn;
 #define APP_DOWN_INTERVAL   (APP_SEND_INTERVAL / (NON_ROOT_NUM + 1))
 #endif
 
+#if WITH_OST && OST_HANDLE_QUEUED_PACKETS
+extern uint8_t bootstrap_period;
+#endif
+
 PROCESS(udp_server_process, "UDP server");
 AUTOSTART_PROCESSES(&udp_server_process);
 /*---------------------------------------------------------------------------*/
@@ -141,12 +145,18 @@ PROCESS_THREAD(udp_server_process, ev, data)
 
   etimer_set(&print_timer, APP_PRINT_DELAY);
   etimer_set(&reset_log_timer, APP_START_DELAY);
+#if WITH_OST && OST_HANDLE_QUEUED_PACKETS
+  bootstrap_period = 1;
+#endif
 
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_TIMER);
     if(data == &print_timer) {
       print_node_info();
     } else if(data == &reset_log_timer) {
+#if WITH_OST && OST_HANDLE_QUEUED_PACKETS
+      bootstrap_period = 0;
+#endif
       reset_log();
     }
 #if DOWNWARD_TRAFFIC

@@ -65,6 +65,12 @@
 #include "orchestra.h"
 #endif
 
+#if WITH_ALICE && ALICE_EARLY_PACKET_DROP
+/* EB never experiences early_packet_drop
+   early_packet_drop only targets unicast slotframes (ex. RB) */
+uint16_t alice_early_packet_drop_count;
+#endif
+
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "TSCH Queue"
@@ -352,8 +358,13 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
 }
 /*---------------------------------------------------------------------------*/
 /* Flush a neighbor queue */
+#if WITH_OST && OST_HANDLE_QUEUED_PACKETS
+void
+tsch_queue_flush_nbr_queue(struct tsch_neighbor *n)
+#else
 static void
 tsch_queue_flush_nbr_queue(struct tsch_neighbor *n)
+#endif
 {
   while(!tsch_queue_is_empty(n)) {
     struct tsch_packet *p = tsch_queue_remove_packet_from_queue(n);
@@ -630,6 +641,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
 
 #if ALICE_EARLY_PACKET_DROP
           if(r == 0) { //no RPL neighbor --> ALICE EARLY PACKET DROP
+            alice_early_packet_drop_count++;
 		        tsch_queue_free_packet(n->tx_array[get_index]);
             return NULL;
           } else

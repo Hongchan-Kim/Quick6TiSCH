@@ -82,6 +82,10 @@ static struct tsch_slotframe *sf_unicast;
 /* OST implementation */
 /*---------------------------------------------------------------------------*/
 #if WITH_OST
+#if  OST_HANDLE_QUEUED_PACKETS
+uint8_t bootstrap_period;
+#endif
+/*---------------------------------------------------------------------------*/
 void
 print_nbr(void)
 {
@@ -171,7 +175,7 @@ ost_get_id_from_rx_sf_handle(const uint16_t handle)
 /*---------------------------------------------------------------------------*/
 /* Seungbeom Jeong added change_attr_in_tx_queue */
 /* use shared slotframe instead of RB or ost slotframes */
-#if WITH_OST_SBJ
+#if OST_HANDLE_QUEUED_PACKETS
 void 
 change_attr_in_tx_queue(const linkaddr_t * dest)
 {
@@ -349,16 +353,22 @@ static void
 child_removed(const linkaddr_t *linkaddr)
 {
 #if WITH_OST
-#if WITH_OST_SBJ
+#if OST_HANDLE_QUEUED_PACKETS
   struct tsch_neighbor *nbr = tsch_queue_get_nbr(linkaddr);
 
   /* Seungbeom Jeong added this if and else code block */
   if(tsch_queue_is_empty(nbr) || nbr == NULL) {
     remove_uc_link(linkaddr); /* remove child immediately */
   } else {
-    change_attr_in_tx_queue(linkaddr); /* use shared slotframe for queued packets */
+    if(bootstrap_period == 1) {
+      tsch_queue_flush_nbr_queue(nbr);
+    } else {
+      change_attr_in_tx_queue(linkaddr); /* use shared slotframe for queued packets */
+    }
     remove_uc_link(linkaddr);
   }
+#else
+  remove_uc_link(linkaddr);
 #endif
 
   uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t*)linkaddr);  
@@ -447,13 +457,17 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     }
 
 #if WITH_OST
-#if WITH_OST_SBJ
+#if OST_HANDLE_QUEUED_PACKETS
     /* Seungbeom Jeong added this if block */
     if(old_addr != NULL) {
       if(tsch_queue_is_empty(old) || old == NULL) {
         remove_uc_link(old_addr); /* No-path DAO can be sent in shared slots */
       } else {
-        change_attr_in_tx_queue(old_addr);
+        if(bootstrap_period == 1) {
+          tsch_queue_flush_nbr_queue((struct tsch_neighbor *)old);
+        } else {
+          change_attr_in_tx_queue(old_addr);
+        }
         remove_uc_link(old_addr);
       }
     }

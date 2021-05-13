@@ -188,6 +188,10 @@ void reset_log_tsch()
 static void
 print_utilization()
 {
+#if WITH_ALICE && ALICE_EARLY_PACKET_DROP
+  LOG_INFO("HCK e_drop %u\n", alice_early_packet_drop_count);
+#endif
+
   LOG_INFO("HCK input_qloss %u\n", tsch_input_qloss_count);
   //timeslots in current session
   int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
