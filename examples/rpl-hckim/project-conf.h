@@ -14,7 +14,11 @@
 #define IOTLAB_LYON_17                            4
 #define IOTLAB_LILLE_24                           5
 #define IOTLAB_LILLE_32                           6
-#define IOTLAB_LILLE_46                           7
+#define IOTLAB_LILLE_40                           7
+#define IOTLAB_LILLE_46                           8
+#define IOTLAB_LILLE_63                           9
+#define IOTLAB_LILLE_79                           10
+#define IOTLAB_LILLE_80                           11
 
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
@@ -22,8 +26,11 @@
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
 //#define IOTLAB_SITE                                IOTLAB_LILLE_24
 //#define IOTLAB_SITE                                IOTLAB_LILLE_32
+#define IOTLAB_SITE                                IOTLAB_LILLE_40
 //#define IOTLAB_SITE                                IOTLAB_LILLE_46
-#define IOTLAB_SITE                                IOTLAB_LILLE_79
+//#define IOTLAB_SITE                                IOTLAB_LILLE_63
+//#define IOTLAB_SITE                                IOTLAB_LILLE_79
+//#define IOTLAB_SITE                                IOTLAB_LILLE_80
 
 #if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
@@ -37,10 +44,16 @@
 #define NODE_NUM                                   24
 #elif IOTLAB_SITE == IOTLAB_LILLE_32
 #define NODE_NUM                                   32
+#elif IOTLAB_SITE == IOTLAB_LILLE_40
+#define NODE_NUM                                   40
 #elif IOTLAB_SITE == IOTLAB_LILLE_46
 #define NODE_NUM                                   46
+#elif IOTLAB_SITE == IOTLAB_LILLE_63
+#define NODE_NUM                                   63
 #elif IOTLAB_SITE == IOTLAB_LILLE_79
 #define NODE_NUM                                   79
+#elif IOTLAB_SITE == IOTLAB_LILLE_80
+#define NODE_NUM                                   80
 #endif
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
@@ -53,9 +66,9 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 6 * CLOCK_SECOND)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 10)
 //#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
-//#define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
+//define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 30
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) // 30
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
@@ -110,10 +123,10 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -130,7 +143,7 @@
 
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        31 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
@@ -170,6 +183,7 @@
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 #define OST_ON_DEMAND_PROVISION                    1
 #define OST_HANDLE_QUEUED_PACKETS                  1
+#define OST_JSB_ADD                                1
 
 #define N_SELECTION_PERIOD                         15 // related to N_MAX: Min. traffic load = 1 / (N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
 #define N_MAX                                      8 // max t_offset 65535-1, 65535 is used for no-allocation
@@ -187,6 +201,11 @@
 #define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) // Under-provision uses up to 2*NODE_NUM+2
 
 /* OST only */
+#if OST_HANDLE_QUEUED_PACKETS
+#undef QUEUEBUF_CONF_NUM
+#define QUEUEBUF_CONF_NUM                           16
+#define TSCH_CONF_MAX_INCOMING_PACKETS              8
+#endif
 #define OST_TSCH_TS_RX_ACK_DELAY                    1300
 #define OST_TSCH_TS_TX_ACK_DELAY                    1500
 #define TSCH_CONF_RX_WAIT                           800 /* ignore too late packets */
@@ -221,12 +240,12 @@
 #define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG //LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_INFO //LOG_LEVEL_DBG
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
 /*---------------------------------------------------------------------------*/
 
 

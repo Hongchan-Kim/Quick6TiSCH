@@ -168,6 +168,10 @@ void reset_log_tsch()
   /* do not initialize clock_last_leaving and clock_inst_leaving_time */
   clock_avg_leaving_time = 0;
 
+#if WITH_ALICE && ALICE_EARLY_PACKET_DROP
+  alice_early_packet_drop_count = 0;
+#endif
+
 #if WITH_OST
   ost_unlocked_scheduled_periodic_cell_count = 0;
   ost_unlocked_scheduled_periodic_tx_cell_count = 0;
