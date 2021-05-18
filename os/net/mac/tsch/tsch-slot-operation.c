@@ -709,7 +709,8 @@ ost_remove_tx(linkaddr_t *nbr_lladdr)
     if(n != NULL) {
       if(!tsch_queue_is_empty(n)) {
         if(neighbor_has_uc_link(tsch_queue_get_nbr_address(n))) {
-          ost_change_queue_select_packet(nbr_lladdr, 1, id % ORCHESTRA_CONF_UNICAST_PERIOD); //Use RB
+          ost_change_queue_select_packet(nbr_lladdr, 1, ORCHESTRA_LINKADDR_HASH(nbr_lladdr) % ORCHESTRA_UNICAST_PERIOD); //Use RB
+
         } else {
           ost_change_queue_select_packet(nbr_lladdr, 2, 0); //Use shared slot
         }
@@ -2120,7 +2121,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
 
-#if WITH_OST
+#if OST_JSB_ADD
       /* Seungbeom Jeong added this else if block */
       else if(current_packet == NULL && (current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         if(current_link->slotframe_handle > backup_link->slotframe_handle) {

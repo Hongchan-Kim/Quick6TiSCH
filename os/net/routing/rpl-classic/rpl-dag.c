@@ -267,6 +267,20 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
 
 #ifdef RPL_CALLBACK_PARENT_SWITCH
     RPL_CALLBACK_PARENT_SWITCH(dag->preferred_parent, p);
+
+#if OST_JSB_ADD //JSB add
+    rpl_parent_t *old_p = dag->preferred_parent;
+    if(old_p != NULL) {
+      if(old_p->dag != NULL) {
+        if(old_p->dag->instance != NULL) {
+          if(!ctimer_expired(&old_p->dag->instance->dao_retransmit_timer)) {
+            ctimer_stop(&old_p->dag->instance->dao_retransmit_timer);
+            LOG_INFO("OST stop dao retx timer\n");
+          }
+        }
+      }
+    }
+#endif
 #endif /* RPL_CALLBACK_PARENT_SWITCH */
 
     /* Always keep the preferred parent locked, so it remains in the
@@ -986,10 +1000,17 @@ rpl_nullify_parent(rpl_parent_t *parent)
       }
       /* Send No-Path DAO only when nullifying preferred parent */
       if(parent == dag->preferred_parent) {
+#if OST_JSB_ADD
+        rpl_set_preferred_parent(dag, NULL);
+        if(RPL_IS_STORING(dag->instance)) {
+          dao_output(parent, RPL_ZERO_LIFETIME);
+        }
+#else
         if(RPL_IS_STORING(dag->instance)) {
           dao_output(parent, RPL_ZERO_LIFETIME);
         }
         rpl_set_preferred_parent(dag, NULL);
+#endif
       }
     }
   }

@@ -106,13 +106,6 @@ uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr)
   }
 
   /* 1-hop child? i.e., existing next-hop */
-/*
-  nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)uip_ds6_nbr_get_ll(nbr));
-  if(item != NULL) {
-    return 1;
-  }
-*/
-  /* 1-hop child? i.e., existing next-hop */
   if(uip_ds6_route_is_nexthop(uip_ds6_nbr_get_ipaddr(nbr)) == 1) {
     return 1;
   }

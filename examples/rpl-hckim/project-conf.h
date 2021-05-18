@@ -63,6 +63,23 @@
 
 /*---------------------------------------------------------------------------*/
 /*
+ * Configure log
+ */
+#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_INFO //LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
+
+#define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
+#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
+/*---------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------*/
+/*
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
@@ -76,6 +93,7 @@
 /*---------------------------------------------------------------------------*/
 
 
+/*---------------------------------------------------------------------------*/
 /*
  * Configure RPL
  */
@@ -93,6 +111,7 @@
 /*---------------------------------------------------------------------------*/
 
 
+/*---------------------------------------------------------------------------*/
 /*
  * Configure IP and 6LOWPAN
  */
@@ -101,6 +120,7 @@
 /*---------------------------------------------------------------------------*/
 
 
+/*---------------------------------------------------------------------------*/
 /*
  * Configure TSCH
  */
@@ -123,9 +143,9 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
@@ -143,7 +163,7 @@
 
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        31 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
@@ -170,6 +190,8 @@
 #define TSCH_CONF_BURST_MAX_LEN                    0
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 * NODE_NUM)
+#undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
+#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST //OST
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
@@ -203,12 +225,15 @@
 /* OST only */
 #if OST_HANDLE_QUEUED_PACKETS
 #undef QUEUEBUF_CONF_NUM
-#define QUEUEBUF_CONF_NUM                           16
-#define TSCH_CONF_MAX_INCOMING_PACKETS              8
+#define QUEUEBUF_CONF_NUM                          16
+#define TSCH_CONF_MAX_INCOMING_PACKETS             8
 #endif
-#define OST_TSCH_TS_RX_ACK_DELAY                    1300
-#define OST_TSCH_TS_TX_ACK_DELAY                    1500
-#define TSCH_CONF_RX_WAIT                           800 /* ignore too late packets */
+#define OST_TSCH_TS_RX_ACK_DELAY                   1300
+#define OST_TSCH_TS_TX_ACK_DELAY                   1500
+#define TSCH_CONF_RX_WAIT                          800 /* ignore too late packets */
+#undef RPL_DIO_FILTER_THRESHOLD
+#define RPL_DIO_FILTER_THRESHOLD                   (-80)
+#define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND)
 
 #define OST_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define OST_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
@@ -230,24 +255,6 @@
    m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
 #define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
 /*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * Configure log
- */
-#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_INFO //LOG_LEVEL_DBG
-#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
-
-#define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
-#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
-/*---------------------------------------------------------------------------*/
-
 
 
 #endif /* PROJECT_CONF_H_ */ 
