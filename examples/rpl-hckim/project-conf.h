@@ -26,9 +26,9 @@
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
 //#define IOTLAB_SITE                                IOTLAB_LILLE_24
 //#define IOTLAB_SITE                                IOTLAB_LILLE_32
-#define IOTLAB_SITE                                IOTLAB_LILLE_40
+//#define IOTLAB_SITE                                IOTLAB_LILLE_40
 //#define IOTLAB_SITE                                IOTLAB_LILLE_46
-//#define IOTLAB_SITE                                IOTLAB_LILLE_63
+#define IOTLAB_SITE                                IOTLAB_LILLE_63
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79
 //#define IOTLAB_SITE                                IOTLAB_LILLE_80
 
@@ -66,10 +66,10 @@
  * Configure log
  */
 #define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_DBG
 #define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_INFO //LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
@@ -83,7 +83,7 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 10)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 1)
 //#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
 //define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 30
@@ -97,17 +97,21 @@
 /*
  * Configure RPL
  */
-#define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST  //ksh..
-#define RPL_CONF_WITH_DAO_ACK                      1 //ksh..
+#define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST
+#define RPL_CONF_WITH_DAO_ACK                      1
 #define RPL_CONF_WITH_PROBING                      1
-#define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND)
+#define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
+#define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND) /* originally 5 seconds */
 #define RPL_FIRST_MEASURE_PERIOD                   (1 * 60)
 #define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
-#define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1
-#define RELAXED_ETX_NOACK_PENALTY                  0
+#define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
+#define RPL_RELAXED_ETX_NOACK_PENALTY              1
 #define RPL_DIO_FILTER                             1
 #define RPL_DIO_FILTER_EWMA                        0
 #define RPL_DIO_FILTER_THRESHOLD                   (-85)
+#define RPL_MODIFIED_DAO_OPERATION_1               1 /* stop dao retransmission when preferred parent changed */
+#define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
+#define RPL_MODIFIED_DAO_OPERATION_3               0 /* only dao or no-path dao with latest sequence number can change downward route */
 /*---------------------------------------------------------------------------*/
 
 
@@ -115,7 +119,7 @@
 /*
  * Configure IP and 6LOWPAN
  */
-#define UIP_CONF_BUFFER_SIZE                       160 //ksh
+#define UIP_CONF_BUFFER_SIZE                       160 /* ksh */
 #define SICSLOWPAN_CONF_FRAG                       0
 /*---------------------------------------------------------------------------*/
 
@@ -143,9 +147,9 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
@@ -163,15 +167,15 @@
 
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        31 //broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_LB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_LB //link-based Orchestra
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        31 //broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
@@ -207,16 +211,16 @@
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define OST_JSB_ADD                                1
 
-#define N_SELECTION_PERIOD                         15 // related to N_MAX: Min. traffic load = 1 / (N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
-#define N_MAX                                      8 // max t_offset 65535-1, 65535 is used for no-allocation
-#define MORE_UNDER_PROVISION                       1 // more allocation 2^MORE_UNDER_PROVISION times than under-provision
+#define OST_N_SELECTION_PERIOD                         15 // related to OST_N_MAX: Min. traffic load = 1 / (OST_N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
+#define OST_N_MAX                                      8 // max t_offset 65535-1, 65535 is used for no-allocation
+#define OST_MORE_UNDER_PROVISION                       1 // more allocation 2^OST_MORE_UNDER_PROVISION times than under-provision
 #define INC_N_NEW_TX_REQUEST                       100 // Maybe used for denial message
 #define PRR_THRES_TX_CHANGE                        70
 #define NUM_TX_MAC_THRES_TX_CHANGE                 20
 #define NUM_TX_FAIL_THRES                          5
-#define THRES_CONSEQUTIVE_N_INC                    3
-#define T_OFFSET_ALLOCATION_FAIL                   ((1 << N_MAX) + 1)
-#define T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST        ((1 << N_MAX) + 2)
+#define OST_THRES_CONSEQUTIVE_N_INC                3
+#define T_OFFSET_ALLOCATION_FAIL                   ((1 << OST_N_MAX) + 1)
+#define T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST        ((1 << OST_N_MAX) + 2)
 #define THRES_CONSECUTIVE_NEW_TX_REQUEST           10
 #define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          (2 * NBR_TABLE_CONF_MAX_NEIGHBORS)
 #define TSCH_SCHEDULE_CONF_MAX_LINKS               (5 * NODE_NUM)
@@ -231,9 +235,8 @@
 #define OST_TSCH_TS_RX_ACK_DELAY                   1300
 #define OST_TSCH_TS_TX_ACK_DELAY                   1500
 #define TSCH_CONF_RX_WAIT                          800 /* ignore too late packets */
-#undef RPL_DIO_FILTER_THRESHOLD
-#define RPL_DIO_FILTER_THRESHOLD                   (-80)
-#define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND)
+//#undef RPL_DIO_FILTER_THRESHOLD
+//#define RPL_DIO_FILTER_THRESHOLD                   (-80)
 
 #define OST_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define OST_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 

@@ -62,7 +62,7 @@
 /* ETX fixed point divisor. 128 is the value used by RPL (RFC 6551 and RFC 6719) */
 #define ETX_DIVISOR                     LINK_STATS_ETX_DIVISOR
 /* In case of no-ACK, add ETX_NOACK_PENALTY to the real Tx count, as a penalty */
-#if RELAXED_ETX_NOACK_PENALTY
+#if RPL_RELAXED_ETX_NOACK_PENALTY
 #define ETX_NOACK_PENALTY               10
 #else
 #define ETX_NOACK_PENALTY               12
@@ -180,7 +180,7 @@ link_stats_packet_sent(const linkaddr_t *lladdr, int status, int numtx)
 
   /* Add penalty in case of no-ACK */
   if(status == MAC_TX_NOACK) {
-#if RELAXED_ETX_NOACK_PENALTY
+#if RPL_RELAXED_ETX_NOACK_PENALTY
     numtx = ETX_NOACK_PENALTY;
 #else
     numtx += ETX_NOACK_PENALTY;
