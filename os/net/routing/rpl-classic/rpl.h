@@ -49,6 +49,7 @@ void reset_log_rpl_icmp6();
 void reset_log_rpl_dag();
 void reset_log_rpl_timers();
 void reset_log_rpl();
+void reset_log_rpl_ext_header();
 
 /*---------------------------------------------------------------------------*/
 typedef uint16_t rpl_rank_t;

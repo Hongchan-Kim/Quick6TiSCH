@@ -55,10 +55,12 @@
 #define LOG_MODULE "TCP/IP"
 #define LOG_LEVEL LOG_LEVEL_TCPIP
 
-static uint16_t tcpip_fw_ok_count;
+static uint16_t tcpip_fwd_ok_count;
+static uint16_t tcpip_fwd_no_nexthop_count;
 void reset_log_tcpip()
 {
-  tcpip_fw_ok_count = 0;
+  tcpip_fwd_ok_count = 0;
+  tcpip_fwd_no_nexthop_count = 0;
 }
 
 #ifdef UIP_FALLBACK_INTERFACE
@@ -678,6 +680,7 @@ tcpip_ipv6_output(void)
 
   /* Look for a next hop */
   if((nexthop = get_nexthop(&ipaddr)) == NULL) {
+    LOG_INFO("HCK fwd_no_nexthop %u\n", ++tcpip_fwd_no_nexthop_count);
     goto exit;
   }
   annotate_transmission(nexthop);
@@ -737,7 +740,7 @@ send_packet:
     linkaddr = NULL;
   }
 
-  LOG_INFO("HCK fwd %u | output: sending to ", ++tcpip_fw_ok_count);
+  LOG_INFO("HCK fwd_ok %u | output: sending to ", ++tcpip_fwd_ok_count);
   LOG_INFO_LLADDR((linkaddr_t *)linkaddr);
   LOG_INFO_("\n");
 

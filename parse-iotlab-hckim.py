@@ -68,7 +68,8 @@ ADDR = 5
 # STEP-2-2: define metric indicators
 metric_list = ['id', 'addr', 
             'tx_up', 'rx_up', 'tx_down', 'rx_down', 
-            'fwd', 'ip_uc_tx', 'ip_uc_ok', 'ip_uc_noack', 'ip_uc_err',
+            'fwd_ok', 'fwd_no_nexthop', 'fwd_err',
+            'ip_uc_tx', 'ip_uc_ok', 'ip_uc_noack', 'ip_uc_err',
             'ka_send', 'ka_qloss', 'ka_enqueue', 'ka_tx', 'ka_ok', 'ka_noack', 'ka_err',
             'eb_send', 'eb_qloss', 'eb_enqueue', 'eb_ok', 'eb_noack', 'eb_err',
             'ip_qloss', 'ip_enqueue', 'ip_ok', 'ip_noack', 'ip_err', 
@@ -92,7 +93,7 @@ PRESERVE_METRIC_NUM = len(preserve_metric_list)
 
 # STEP-2-4: define result list
 result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 
-               'lastP', 'ps', 'hopD', 'subTN', 'QLR', 'LLR', 'IQL', 'linkE', 'leave', 'SATR', 'ASTR', 'AATR', 'dc']
+               'lastP', 'ps', 'hopD', 'subTN', 'IPQL', 'IPQR', 'IPLL', 'IPLR', 'InQL', 'linkE', 'leave', 'SATR', 'ASTR', 'AATR', 'dc']
 RESULT_NUM = len(result_list)
 
 
@@ -216,21 +217,27 @@ for i in range(NODE_NUM):
                 bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('subtree_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('subtree_cnt')]), 2)
-        elif result_list[j] == 'QLR':
-            tot_qloss = float(bootstrap_period_parsed[i][metric_list.index('ip_qloss')]) + float(bootstrap_period_parsed[i][metric_list.index('ka_qloss')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_qloss')])
-            tot_enqueue = float(bootstrap_period_parsed[i][metric_list.index('ip_enqueue')]) + float(bootstrap_period_parsed[i][metric_list.index('ka_enqueue')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_enqueue')])
+        elif result_list[j] == 'IPQL':
+            tot_qloss = int(bootstrap_period_parsed[i][metric_list.index('ip_qloss')])# + int(bootstrap_period_parsed[i][metric_list.index('ka_qloss')]) + int(bootstrap_period_parsed[i][metric_list.index('eb_qloss')])
+            bootstrap_period_result[i][j] = tot_qloss
+        elif result_list[j] == 'IPQR':
+            tot_qloss = float(bootstrap_period_parsed[i][metric_list.index('ip_qloss')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_qloss')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_qloss')])
+            tot_enqueue = float(bootstrap_period_parsed[i][metric_list.index('ip_enqueue')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_enqueue')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_enqueue')])
             if tot_qloss + tot_enqueue == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(tot_qloss) / (float(tot_qloss) + float(tot_enqueue)) * 100, 2)
-        elif result_list[j] == 'LLR':
-            tot_uc_noack = float(bootstrap_period_parsed[i][metric_list.index('ip_uc_noack')]) + float(bootstrap_period_parsed[i][metric_list.index('ka_noack')])
-            tot_uc_ok = float(bootstrap_period_parsed[i][metric_list.index('ip_uc_ok')]) + float(bootstrap_period_parsed[i][metric_list.index('ka_ok')])
+        elif result_list[j] == 'IPLL':
+            tot_uc_noack = int(bootstrap_period_parsed[i][metric_list.index('ip_uc_noack')])# + int(bootstrap_period_parsed[i][metric_list.index('ka_noack')])
+            bootstrap_period_result[i][j] = tot_uc_noack
+        elif result_list[j] == 'IPLR':
+            tot_uc_noack = float(bootstrap_period_parsed[i][metric_list.index('ip_uc_noack')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_noack')])
+            tot_uc_ok = float(bootstrap_period_parsed[i][metric_list.index('ip_uc_ok')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_ok')])
             if tot_uc_noack + tot_uc_ok == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(tot_uc_noack) / (float(tot_uc_noack) + float(tot_uc_ok)) * 100, 2)
-        elif result_list[j] == 'IQL':
+        elif result_list[j] == 'InQL':
             bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('input_qloss')]
         elif result_list[j] == 'linkE':
             tot_uc_tx = float(bootstrap_period_parsed[i][metric_list.index('ka_tx')]) + float(bootstrap_period_parsed[i][metric_list.index('ip_uc_tx')])
@@ -409,21 +416,27 @@ for i in range(NODE_NUM):
                 data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('subtree_sum')]) / float(data_period_parsed[i][metric_list.index('subtree_cnt')]), 2)
-        elif result_list[j] == 'QLR':
-            tot_qloss = float(data_period_parsed[i][metric_list.index('ip_qloss')]) + float(data_period_parsed[i][metric_list.index('ka_qloss')]) + float(data_period_parsed[i][metric_list.index('eb_qloss')])
-            tot_enqueue = float(data_period_parsed[i][metric_list.index('ip_enqueue')]) + float(data_period_parsed[i][metric_list.index('ka_enqueue')]) + float(data_period_parsed[i][metric_list.index('eb_enqueue')])
+        elif result_list[j] == 'IPQL':
+            tot_qloss = int(data_period_parsed[i][metric_list.index('ip_qloss')])# + int(data_period_parsed[i][metric_list.index('ka_qloss')]) + int(data_period_parsed[i][metric_list.index('eb_qloss')])
+            data_period_result[i][j] = tot_qloss
+        elif result_list[j] == 'IPQR':
+            tot_qloss = float(data_period_parsed[i][metric_list.index('ip_qloss')])# + float(data_period_parsed[i][metric_list.index('ka_qloss')]) + float(data_period_parsed[i][metric_list.index('eb_qloss')])
+            tot_enqueue = float(data_period_parsed[i][metric_list.index('ip_enqueue')])# + float(data_period_parsed[i][metric_list.index('ka_enqueue')]) + float(data_period_parsed[i][metric_list.index('eb_enqueue')])
             if tot_qloss + tot_enqueue == 0:
                 data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(tot_qloss) / (float(tot_qloss) + float(tot_enqueue)) * 100, 2)
-        elif result_list[j] == 'LLR':
-            tot_uc_noack = float(data_period_parsed[i][metric_list.index('ip_uc_noack')]) + float(data_period_parsed[i][metric_list.index('ka_noack')])
-            tot_uc_ok = float(data_period_parsed[i][metric_list.index('ip_uc_ok')]) + float(data_period_parsed[i][metric_list.index('ka_ok')])
+        elif result_list[j] == 'IPLL':
+            tot_uc_noack = int(data_period_parsed[i][metric_list.index('ip_uc_noack')])# + int(data_period_parsed[i][metric_list.index('ka_noack')])
+            data_period_result[i][j] = tot_uc_noack
+        elif result_list[j] == 'IPLR':
+            tot_uc_noack = float(data_period_parsed[i][metric_list.index('ip_uc_noack')])# + float(data_period_parsed[i][metric_list.index('ka_noack')])
+            tot_uc_ok = float(data_period_parsed[i][metric_list.index('ip_uc_ok')])# + float(data_period_parsed[i][metric_list.index('ka_ok')])
             if tot_uc_noack + tot_uc_ok == 0:
                 data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(tot_uc_noack) / (float(tot_uc_noack) + float(tot_uc_ok)) * 100, 2)
-        elif result_list[j] == 'IQL':
+        elif result_list[j] == 'InQL':
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('input_qloss')]
         elif result_list[j] == 'linkE':
             tot_uc_tx = float(data_period_parsed[i][metric_list.index('ka_tx')]) + float(data_period_parsed[i][metric_list.index('ip_uc_tx')])

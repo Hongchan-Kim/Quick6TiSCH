@@ -59,6 +59,7 @@ reset_log()
   reset_log_rpl_dag();            /* rpl-dag.c */
   reset_log_rpl_timers();         /* rpl-timers.c */
   reset_log_rpl();                /* rpl.c */
+  reset_log_rpl_ext_header();     /* rpl-ext-header.c */
   reset_log_simple_energest();    /* simple-energest.c */
 }
 /*---------------------------------------------------------------------------*/

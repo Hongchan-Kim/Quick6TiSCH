@@ -177,5 +177,9 @@ orchestra_init(void)
       all_rules[i]->init(i);
     }
   }
-  LOG_INFO("Orchestra: initialization done\n");
+#if ORCHESTRA_CONF_UNICAST_SENDER_BASED
+  LOG_INFO("Orchestra-SB: initialization done\n");
+#else
+  LOG_INFO("Orchestra-RB: initialization done\n");
+#endif
 }

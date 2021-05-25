@@ -60,6 +60,13 @@
 #include <limits.h>
 #include <string.h>
 
+static uint16_t rpl_fwd_err_count;
+void reset_log_rpl_ext_header()
+{
+  rpl_fwd_err_count = 0;
+}
+
+
 /*---------------------------------------------------------------------------*/
 int
 rpl_ext_header_hbh_update(uint8_t *ext_buf, int opt_offset)
@@ -452,6 +459,7 @@ update_hbh_header(void)
       if((rpl_opt->flags & RPL_HDR_OPT_DOWN)) {
         if(uip_ds6_route_lookup(&UIP_IP_BUF->destipaddr) == NULL) {
           rpl_opt->flags |= RPL_HDR_OPT_FWD_ERR;
+          LOG_INFO("HCK fwd_err %u\n", ++rpl_fwd_err_count);
           LOG_WARN("RPL forwarding error\n");
           /* We should send back the packet to the originating parent,
                 but it is not feasible yet, so we send a No-Path DAO instead */
