@@ -13,24 +13,28 @@
 #define IOTLAB_LYON_10                            3
 #define IOTLAB_LYON_17                            4
 #define IOTLAB_LILLE_24                           5
-#define IOTLAB_LILLE_32                           6
-#define IOTLAB_LILLE_40                           7
-#define IOTLAB_LILLE_46                           8
-#define IOTLAB_LILLE_63                           9
-#define IOTLAB_LILLE_79                           10
-#define IOTLAB_LILLE_80                           11
+#define IOTLAB_LILLE_40                           6
+#define IOTLAB_LILLE_46                           7
+#define IOTLAB_LILLE_50                           8
+#define IOTLAB_LILLE_79                           9
+#define IOTLAB_GRENOBLE_64                        10
+#define IOTLAB_GRENOBLE_43                        11
+#define IOTLAB_GRENOBLE_63                        12
+#define IOTLAB_GRENOBLE_83                        13
 
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_10
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
-//#define IOTLAB_SITE                                IOTLAB_LILLE_24
-//#define IOTLAB_SITE                                IOTLAB_LILLE_32
-//#define IOTLAB_SITE                                IOTLAB_LILLE_40
-//#define IOTLAB_SITE                                IOTLAB_LILLE_46
-#define IOTLAB_SITE                                IOTLAB_LILLE_63
-//#define IOTLAB_SITE                                IOTLAB_LILLE_79
-//#define IOTLAB_SITE                                IOTLAB_LILLE_80
+//#define IOTLAB_SITE                                IOTLAB_LILLE_24 /* z = 9.6 */
+//#define IOTLAB_SITE                                IOTLAB_LILLE_40 /* z = 6.1 */
+//#define IOTLAB_SITE                                IOTLAB_LILLE_46 /* z = 9.6 */
+//#define IOTLAB_SITE                                IOTLAB_LILLE_50 /* z = 6.1 */
+//#define IOTLAB_SITE                                IOTLAB_LILLE_79 /* z = 9.6 or 9.4 */
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_64
+#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_43 /* 4~5 hop */
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_63
+//#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_83 /* 9~10 hop */
 
 #if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
@@ -42,18 +46,22 @@
 #define NODE_NUM                                   17
 #elif IOTLAB_SITE == IOTLAB_LILLE_24
 #define NODE_NUM                                   24
-#elif IOTLAB_SITE == IOTLAB_LILLE_32
-#define NODE_NUM                                   32
 #elif IOTLAB_SITE == IOTLAB_LILLE_40
 #define NODE_NUM                                   40
 #elif IOTLAB_SITE == IOTLAB_LILLE_46
 #define NODE_NUM                                   46
-#elif IOTLAB_SITE == IOTLAB_LILLE_63
-#define NODE_NUM                                   63
+#elif IOTLAB_SITE == IOTLAB_LILLE_50
+#define NODE_NUM                                   50
 #elif IOTLAB_SITE == IOTLAB_LILLE_79
 #define NODE_NUM                                   79
-#elif IOTLAB_SITE == IOTLAB_LILLE_80
-#define NODE_NUM                                   80
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_64
+#define NODE_NUM                                   64
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_43
+#define NODE_NUM                                   43
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_63
+#define NODE_NUM                                   63
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_83
+#define NODE_NUM                                   83
 #endif
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
@@ -86,8 +94,8 @@
 #define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 1)
 //#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
 //define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
-#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 30
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) // 30
+#define APP_START_DELAY                            (26 * 60 * CLOCK_SECOND) // 30
+#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND) // 30
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
@@ -106,12 +114,13 @@
 #define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
 #define RPL_RELAXED_ETX_NOACK_PENALTY              1
-#define RPL_DIO_FILTER                             1
+#define RPL_DIO_FILTER                             0
 #define RPL_DIO_FILTER_EWMA                        0
-#define RPL_DIO_FILTER_THRESHOLD                   (-85)
+#define RPL_DIO_FILTER_THRESHOLD                   (-80)
 #define RPL_MODIFIED_DAO_OPERATION_1               1 /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 #define RPL_MODIFIED_DAO_OPERATION_3               0 /* only dao or no-path dao with latest sequence number can change downward route */
+#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /* ALICE: 1 */
 /*---------------------------------------------------------------------------*/
 
 
@@ -128,6 +137,8 @@
 /*
  * Configure TSCH
  */
+#define QUEUEBUF_CONF_NUM                          16 /* original: 8, 16 in Orchestra, ALICE, and OST */
+#define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* original: 4, 8 in OST */
 //#define IEEE802154_CONF_PANID                      0x81a5 //ksh
 //#define TSCH_CONF_AUTOSTART                        0 //ksh
 //#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH          3 //ksh 6TiSCH minimal schedule length.
@@ -170,19 +181,19 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_LB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_LB //link-based Orchestra
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //31 broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              17 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define ORCHESTRA_CONF_UNICAST_PERIOD              11 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 
 #define WITH_ALICE                                 1
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
@@ -192,8 +203,8 @@
 #define ALICE_BROADCAST_SF_ID                      1 //slotframe handle of broadcast/default slotframe
 #define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
 #define TSCH_CONF_BURST_MAX_LEN                    0
-#define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 * NODE_NUM)
+#define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
 

@@ -79,8 +79,8 @@ metric_list = ['id', 'addr',
             'dis_send', 'dioU_send', 'dioM_send',
             'daoP_send', 'daoN_send', 'daoP_fwd', 'daoN_fwd', 'daoA_send',
             'ps', 'lastP', 'local_repair',
-            'hopD_sum', 'hopD_cnt', 'rdt',
-            'subtree_sum', 'subtree_cnt',
+            'hopD_now', 'hopD_sum', 'hopD_cnt', 'rdt',
+            'subtree_now', 'subtree_sum', 'subtree_cnt',
             'dc_count', 'dc_tx_sum', 'dc_rx_sum', 'dc_total_sum',
             'ostP_act_ts', 'ostP_sch_ts', 'ostO_act_ts', 'ostO_sch_ts']
 METRIC_NUM = len(metric_list)
@@ -93,7 +93,7 @@ PRESERVE_METRIC_NUM = len(preserve_metric_list)
 
 # STEP-2-4: define result list
 result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 
-               'lastP', 'ps', 'hopD', 'subTN', 'IPQL', 'IPQR', 'IPLL', 'IPLR', 'InQL', 'linkE', 'leave', 'SATR', 'ASTR', 'AATR', 'dc']
+               'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 'IPQL', 'IPQR', 'IPLL', 'IPLR', 'InQL', 'linkE', 'leave', 'SATR', 'ASTR', 'AATR', 'dc']
 RESULT_NUM = len(result_list)
 
 
@@ -103,6 +103,7 @@ RESULT_NUM = len(result_list)
 
 # STEP-3-1: [bootstrap period] declare bootstrap_period_parsed array
 bootstrap_period_parsed = [[0 for i in range(METRIC_NUM)] for j in range(NODE_NUM)]
+bootstrap_period_finished_any = 0
 
 # STEP-3-2: [bootstrap period] parse non-root nodes first
 for node_id in non_root_id_list:
@@ -123,6 +124,7 @@ for node_id in non_root_id_list:
                 if message[HCK] == 'HCK':
                     current_metric = message[IND]
                     if current_metric == 'reset_log':
+                        bootstrap_period_finished_any = 1
                         break
                     elif current_metric in metric_list:
                         current_metric_index = metric_list.index(current_metric)
@@ -157,6 +159,7 @@ while line:
             if message[HCK] == 'HCK':
                 current_metric = message[IND]
                 if current_metric == 'reset_log':
+                    bootstrap_period_finished_any = 1
                     break
                 elif current_metric in metric_list:
                     current_metric_index = metric_list.index(current_metric)
@@ -208,11 +211,15 @@ for i in range(NODE_NUM):
         elif result_list[j] == 'ps':
             bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('ps')]
         elif result_list[j] == 'hopD':
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('hopD_now')]
+        elif result_list[j] == 'aHopD':
             if int(bootstrap_period_parsed[i][metric_list.index('hopD_cnt')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('hopD_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('hopD_cnt')]), 2)
-        elif result_list[j] == 'subTN':
+        elif result_list[j] == 'STN':
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('subtree_now')]
+        elif result_list[j] == 'aSTN':
             if int(bootstrap_period_parsed[i][metric_list.index('subtree_cnt')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
@@ -286,8 +293,9 @@ for i in range(NODE_NUM):
     print(bootstrap_period_result[i][-1])
 print()
 
-
-
+if bootstrap_period_finished_any == 0:
+    print('----- in bootstrap period -----')
+    exit()
 
 # STEP-4-1: [data period] declare data_period_parsed array
 data_period_parsed = [[0 for i in range(METRIC_NUM)] for j in range(NODE_NUM)]
@@ -407,11 +415,15 @@ for i in range(NODE_NUM):
         elif result_list[j] == 'ps':
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('ps')]
         elif result_list[j] == 'hopD':
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('hopD_now')]
+        elif result_list[j] == 'aHopD':
             if int(data_period_parsed[i][metric_list.index('hopD_cnt')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('hopD_sum')]) / float(data_period_parsed[i][metric_list.index('hopD_cnt')]), 2)
-        elif result_list[j] == 'subTN':
+        elif result_list[j] == 'STN':
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('subtree_now')]
+        elif result_list[j] == 'aSTN':
             if int(data_period_parsed[i][metric_list.index('subtree_cnt')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
