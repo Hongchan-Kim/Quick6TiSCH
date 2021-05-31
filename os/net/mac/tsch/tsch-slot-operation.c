@@ -54,7 +54,7 @@
 #include "net/mac/tsch/tsch.h"
 #include "sys/critical.h"
 
-#if WITH_OST
+#if WITH_OST /* OST: Include header files */
 #include "node-info.h"
 #include "orchestra.h"
 #include "net/ipv6/uip-ds6-route.h"
@@ -201,7 +201,7 @@ static uint8_t todo_rx_schedule_change;
 static uint8_t todo_tx_schedule_change;
 
 static uip_ds6_nbr_t *prN_nbr;
-static uint16_t prN_new_N;
+static uint16_t ost_prN_new_N;
 static uint16_t prN_new_t_offset;
 
 typedef struct ost_t_offset_candidate {
@@ -420,9 +420,12 @@ ost_remove_rx(uint16_t id)
     tsch_schedule_remove_slotframe(rm_sf);
   }
 }
+#endif
 /*---------------------------------------------------------------------------*/
+#if WITH_OST /* Select t_offset */
 void
-eliminate_overlap_toc(ost_t_offset_candidate_t *toc, uint16_t target_N, uint16_t used_N, uint16_t used_t_offset)
+eliminate_overlap_toc(ost_t_offset_candidate_t *toc, uint16_t target_N, 
+                      uint16_t used_N, uint16_t used_t_offset)
 {
   if(target_N < used_N) { /* lower-tier used */
     uint16_t parent_N = used_N - 1;
@@ -446,42 +449,38 @@ eliminate_overlap_toc(ost_t_offset_candidate_t *toc, uint16_t target_N, uint16_t
     toc[used_t_offset].available = 0;
   }
 }
+#endif
 /*---------------------------------------------------------------------------*/
+#if WITH_OST /* Select t_offset */
 uint32_t 
-select_t_offset(uint16_t target_id, uint16_t N)  /* similar with tx_installable */
+select_t_offset(uint16_t target_id, uint16_t target_N)  /* similar with tx_installable */
 {
-  ost_t_offset_candidate_t toc[1 << N_MAX];
+  ost_t_offset_candidate_t toc[1 << OST_N_MAX];
 
   /* initialize 2^N toc */
   uint16_t i;
-  for(i = 0; i < (1 << N); i++) {
+  for(i = 0; i < (1 << target_N); i++) {
     toc[i].available = 1;
   }
 
   /* Check resource overlap */
   struct tsch_slotframe *sf = ost_tsch_schedule_get_slotframe_head();
   while(sf != NULL) {
+    /* periodic provisioning slotframes, except for rx slotframe for target_id 
+       do not need to check rx slotframe for target_id (will be re-installed, if overlapped) */
     if(sf->handle > 2 && sf->handle != ost_get_rx_sf_handle_from_id(target_id)) {
       uint16_t n;
-      for(n = 1; n <= N_MAX; n++) {
+      for(n = 1; n <= OST_N_MAX; n++) {
         if((sf->size.val >> n) == 1) {
           uint16_t used_N = n;
           struct tsch_link *l = list_head(sf->links_list);
 
-          if(l == NULL) {
-            /* ERR: link is null */
-          } else {
+          if(l != NULL) {
             uint16_t used_t_offset = l->timeslot;
-            if(used_t_offset >= (1 << used_N)) {
-              /* ERR: too big used t_offsete */
-            }
-            eliminate_overlap_toc(toc, N, used_N, used_t_offset);
+            eliminate_overlap_toc(toc, target_N, used_N, used_t_offset);
           }
 
           break;
-
-        } else if (n == N_MAX) {
-          /* ERR: weird size of slotframe */
         }
       }
     }
@@ -491,18 +490,18 @@ select_t_offset(uint16_t target_id, uint16_t N)  /* similar with tx_installable 
   uint32_t rand = random_rand() % (1 << 31); /* OST check later */
   uint32_t j = 0;
 
-  for(i = 0; i < (1 << N); i++) {
-    j = (i + rand) % (1 << N);
+  for(i = 0; i < (1 << target_N); i++) {
+    j = (i + rand) % (1 << target_N);
     if(toc[j].available == 1) {
       break;
     }
   }
 
-  if(i == (1 << N)) {
+  if(i == (1 << target_N)) { /* failed to select t_offset */
 #if WITH_OST_LOG
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "ost select_t_offset: (%u, %u) -> failed", target_id, N);
+                "ost select_t_offset: (%u, %u) -> failed", target_id, target_N);
   );
 #endif
     return 0xffff + 1;
@@ -510,13 +509,15 @@ select_t_offset(uint16_t target_id, uint16_t N)  /* similar with tx_installable 
 #if WITH_OST_LOG
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "ost select_t_offset: (%u, %u) -> %lu", target_id, N, j);
+                "ost select_t_offset: (%u, %u) -> %lu", target_id, target_N, j);
   );
 #endif
     return j;
   }
 }
+#endif
 /*---------------------------------------------------------------------------*/
+#if WITH_OST /* OST: Process received N */
  /* in short, prN */
 void
 process_rx_N(frame802154_t *frame)
@@ -529,61 +530,63 @@ process_rx_N(frame802154_t *frame)
     return;
   }
 
-  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)(&(frame->src_addr)));
-  if(nbr != NULL
+  uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)(&(frame->src_addr)));
+  if(ds6_nbr != NULL
     && !frame802154_is_broadcast_addr((frame->fcf).dest_addr_mode, frame->dest_addr)
-    && ost_is_routing_nbr(nbr) == 1
-    && nbr->ost_rx_no_path == 0) {
-    /* No need to allocate rx for nbr who sent no-path dao */
-    uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR((linkaddr_t *)(&(frame->src_addr)));
+    && ost_is_routing_nbr(ds6_nbr) == 1
+    && ds6_nbr->ost_rx_no_path == 0) {
+    /* No need to allocate rx for ds6_nbr who sent no-path dao */
+    uint16_t ds6_nbr_id = OST_NODE_ID_FROM_LINKADDR((linkaddr_t *)(&(frame->src_addr)));
 
 #if WITH_OST_LOG
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "ost rcvd N: nbr %u, %u -> %u", nbr_id, nbr->ost_nbr_N, frame->ost_pigg1);
+                "ost rcvd N: nbr %u, %u -> %u", ds6_nbr_id, ds6_nbr->ost_nbr_N, frame->ost_pigg1);
     );
 #endif
 
-    if(nbr->ost_nbr_N != frame->ost_pigg1) {
-      /* To be used in post_process_rx_N */
+    if(ds6_nbr->ost_nbr_N != frame->ost_pigg1) {
+      /* Set variables to be used in post_process_rx_N func */
       if(frame->ost_pigg1 >= INC_N_NEW_TX_REQUEST) {
-        prN_new_N = (frame->ost_pigg1) - INC_N_NEW_TX_REQUEST;
-        nbr->ost_consecutive_new_tx_request++;
-
-        if(nbr->ost_consecutive_new_tx_request >= THRES_CONSECUTIVE_NEW_TX_REQUEST) {
-          nbr->ost_consecutive_new_tx_request = 0;
-          ost_todo_consecutive_new_tx_request = 1;
-          return;
-        }
+        ost_prN_new_N = (frame->ost_pigg1) - INC_N_NEW_TX_REQUEST;
+        ds6_nbr->ost_consecutive_new_tx_request++;
 
 #if WITH_OST_LOG
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
                     "ost prN: uninstallable/low PRR (%u, %u)", 
-                    nbr->ost_consecutive_new_tx_request, ost_todo_consecutive_new_tx_request);
+                    ds6_nbr->ost_consecutive_new_tx_request, 
+                    ost_todo_consecutive_new_tx_request);
         );
 #endif
 
+        if(ds6_nbr->ost_consecutive_new_tx_request >= THRES_CONSECUTIVE_NEW_TX_REQUEST) {
+          ds6_nbr->ost_consecutive_new_tx_request = 0;
+          ost_todo_consecutive_new_tx_request = 1;
+          return;
+        }
       } else {
-        prN_new_N = frame->ost_pigg1;
-        nbr->ost_consecutive_new_tx_request = 0;
+        ost_prN_new_N = frame->ost_pigg1;
+        ds6_nbr->ost_consecutive_new_tx_request = 0;
       }
 
-      uint32_t result = select_t_offset(nbr_id, prN_new_N);
+      uint32_t selected_t_offset = select_t_offset(ds6_nbr_id, ost_prN_new_N);
 
-      if(result <= 0xffff) {
+      if(selected_t_offset <= 0xffff) {
         todo_rx_schedule_change = 1;
-        prN_new_t_offset = (uint16_t)result;
-        prN_nbr = nbr;
-        nbr->ost_nbr_N = prN_new_N; 
-        nbr->ost_nbr_t_offset = prN_new_t_offset;        
+        prN_new_t_offset = (uint16_t)selected_t_offset;
+        prN_nbr = ds6_nbr;
+        ds6_nbr->ost_nbr_N = ost_prN_new_N; 
+        ds6_nbr->ost_nbr_t_offset = prN_new_t_offset;        
         return;  
       } else {
+        /* do not update ds6_nbr or prN_nbr */
         ost_flag_failed_to_select_t_offset = 1;
         return;
       }
     } else {
-      nbr->ost_consecutive_new_tx_request = 0;
+      /* received same N */
+      ds6_nbr->ost_consecutive_new_tx_request = 0;
     }
   }
 }
@@ -598,12 +601,12 @@ post_process_rx_N(void)
     if(prN_nbr != NULL) {
       uint16_t nbr_id = OST_NODE_ID_FROM_IPADDR(&(prN_nbr->ipaddr));
       ost_remove_rx(nbr_id);
-      ost_add_rx(nbr_id, prN_new_N, prN_new_t_offset);
+      ost_add_rx(nbr_id, ost_prN_new_N, prN_new_t_offset);
 
 #if WITH_OST_LOG
       TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-                  "ost post_prN: nbr %u, (%u, %u)", nbr_id, prN_new_N, prN_new_t_offset);
+                  "ost post_prN: nbr %u, (%u, %u)", nbr_id, ost_prN_new_N, prN_new_t_offset);
       );
 #endif
     }
@@ -682,7 +685,7 @@ ost_add_tx(linkaddr_t *nbr_lladdr, uint16_t N, uint16_t t_offset)
       uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)nbr_lladdr);
       if(nbr != NULL) {
         if(nbr->ost_my_low_prr == 1) {
-          ost_change_queue_N_update(nbr_lladdr, nbr->ost_my_N);
+          ost_change_N_of_packets_in_queue(nbr_lladdr, nbr->ost_my_N);
         }
 
         nbr->ost_my_low_prr = 0;
@@ -720,7 +723,7 @@ ost_remove_tx(linkaddr_t *nbr_lladdr)
 }
 /*---------------------------------------------------------------------------*/
 uint8_t
-has_my_N_changed(uip_ds6_nbr_t * nbr)
+ost_has_my_N_changed(uip_ds6_nbr_t * nbr)
 {
   /* check whether to match nbr->my_N and installed tx_sf */
   uint16_t nbr_id = OST_NODE_ID_FROM_IPADDR(&(nbr->ipaddr));
@@ -740,7 +743,9 @@ has_my_N_changed(uip_ds6_nbr_t * nbr)
     return 0;
   }
 }
+#endif
 /*---------------------------------------------------------------------------*/
+#if WITH_OST /* Process received t_offset */
 int8_t
 tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)
 {
@@ -753,64 +758,65 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)
     return -1;
   }
 
-  ost_t_offset_candidate_t toc[1 << N_MAX];
+  ost_t_offset_candidate_t toc[1 << OST_N_MAX];
 
-  if(t_offset == 0xffff) {
+  if(t_offset == 0xffff) { /* denial from eack_src */
     return -2;
   }
 
   if(t_offset < (1 << N) ) {
     toc[t_offset].available = 1;
-  } else {
+  } else { /* non-installable (too big t_offset) */
     return -1;
   }
 
   /* check resource overlap */
   struct tsch_slotframe *sf = ost_tsch_schedule_get_slotframe_head();
   while(sf != NULL) {
+    /* periodic provisioning slotframes, except for tx slotframe for target_id 
+       do not need to check tx slotframe for target_id (will be re-installed, if overlapped) */
     if(sf->handle > 2 && sf->handle != ost_get_tx_sf_handle_from_id(target_id)) {
       uint16_t n;
-      for(n = 1; n <= N_MAX; n++) {
+      for(n = 1; n <= OST_N_MAX; n++) {
         if((sf->size.val >> n) == 1) {
           uint16_t used_N = n;
-
           struct tsch_link *l = list_head(sf->links_list);
-          if(l == NULL) {
-            /* ERROR: link is null (tx_installable) */
-          } else {
+
+          if(l != NULL) {
             uint16_t used_t_offset = l->timeslot;
             eliminate_overlap_toc(toc, N, used_N, used_t_offset);
           }
 
           break;
-        } else if (n == N_MAX) {
-          /* ERROR: weird size of slotframe */
         }
       }
     }
     sf = list_item_next(sf);
   }
+
   if(toc[t_offset].available == 1) {
-    return 1;
+    return 1; /* available t_offset */
   } else {
-    return -1;
+    return -1; /* non-installable (overlapped) */
   }
 }
+#endif
 /*---------------------------------------------------------------------------*/
+#if WITH_OST /* Process received t_offset */
 /* In short, prt */
 void
 process_rx_t_offset(frame802154_t* frame)
 {
   linkaddr_t *eack_src = tsch_queue_get_nbr_address(current_neighbor);
-  uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(eack_src);
+  uint16_t eack_src_id = OST_NODE_ID_FROM_LINKADDR(eack_src);
   
-  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)eack_src);
-  if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {
+  uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)eack_src);
 
-    if(nbr->ost_my_t_offset != frame->ost_pigg1 || has_my_N_changed(nbr)) {
+  if(ds6_nbr != NULL && ost_is_routing_nbr(ds6_nbr) == 1) {
+    if(ds6_nbr->ost_my_t_offset != frame->ost_pigg1 || ost_has_my_N_changed(ds6_nbr)) {
       /* To be used in post_process_rx_t_offset */
       prt_new_t_offset = frame->ost_pigg1;
-      prt_nbr = nbr;
+      prt_nbr = ds6_nbr;
 
       if(frame->ost_pigg1 == T_OFFSET_ALLOCATION_FAIL) {
         todo_N_inc = 1;
@@ -838,14 +844,14 @@ process_rx_t_offset(frame802154_t* frame)
         return;          
       }
 
-      nbr->ost_my_t_offset = prt_new_t_offset;
+      ds6_nbr->ost_my_t_offset = prt_new_t_offset;
 
       /* 1: installable, -1: non-installable */
-      int8_t result = tx_installable(nbr_id, nbr->ost_my_N, nbr->ost_my_t_offset);
+      int8_t result = tx_installable(eack_src_id, ds6_nbr->ost_my_N, ds6_nbr->ost_my_t_offset);
 
       if(result == 1) { /* installable */
-        if(nbr->ost_my_uninstallable != 0) {
-          nbr->ost_my_uninstallable = 0;
+        if(ds6_nbr->ost_my_uninstallable != 0) {
+          ds6_nbr->ost_my_uninstallable = 0;
           todo_N_update = 1;
         }
         changed_t_offset_default = 0;
@@ -855,14 +861,14 @@ process_rx_t_offset(frame802154_t* frame)
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
                     "ost prT: installable (%u, %u, %u, %u)", 
-                    nbr->ost_my_uninstallable, todo_N_update, 
+                    ds6_nbr->ost_my_uninstallable, todo_N_update, 
                     changed_t_offset_default, todo_tx_schedule_change);
         );
 #endif
         return;
       } else if(result == -1) { /* non-installable, request different t_offset */
-        if(nbr->ost_my_uninstallable != 1) {
-          nbr->ost_my_uninstallable = 1;
+        if(ds6_nbr->ost_my_uninstallable != 1) {
+          ds6_nbr->ost_my_uninstallable = 1;
           todo_N_update = 1;
         }
         changed_t_offset_default = 0;
@@ -872,14 +878,14 @@ process_rx_t_offset(frame802154_t* frame)
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
                     "ost prT: non-installable (%u, %u, %u, %u)", 
-                    nbr->ost_my_uninstallable, todo_N_update, 
+                    ds6_nbr->ost_my_uninstallable, todo_N_update, 
                     changed_t_offset_default, todo_tx_schedule_change);
         );
 #endif
         return;
-      } else if(result == -2) { /* denial from nbr (when t_offset == 65535) */
-        if(nbr->ost_my_uninstallable != 0) {
-          nbr->ost_my_uninstallable = 0;
+      } else if(result == -2) { /* denial from ds6_nbr (when t_offset == 65535) */
+        if(ds6_nbr->ost_my_uninstallable != 0) {
+          ds6_nbr->ost_my_uninstallable = 0;
           todo_N_update = 1;
         }
         changed_t_offset_default = 1;   
@@ -889,7 +895,7 @@ process_rx_t_offset(frame802154_t* frame)
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
                     "ost prT: denial (%u, %u, %u, %u)", 
-                    nbr->ost_my_uninstallable, todo_N_update, 
+                    ds6_nbr->ost_my_uninstallable, todo_N_update, 
                     changed_t_offset_default, todo_tx_schedule_change);
         );
 #endif
@@ -908,7 +914,7 @@ post_process_rx_t_offset(void)
   if(todo_N_inc == 1) {
     todo_N_inc = 0;
 
-    if(prt_nbr->ost_my_N < N_MAX) {
+    if(prt_nbr->ost_my_N < OST_N_MAX) {
 
 #if WITH_OST_LOG
       TSCH_LOG_ADD(tsch_log_message,
@@ -918,7 +924,7 @@ post_process_rx_t_offset(void)
 #endif
 
       (prt_nbr->ost_my_N)++;
-      ost_change_queue_N_update(nbr_lladdr, prt_nbr->ost_my_N);
+      ost_change_N_of_packets_in_queue(nbr_lladdr, prt_nbr->ost_my_N);
     } else {
 
 #if WITH_OST_LOG
@@ -965,9 +971,9 @@ post_process_rx_t_offset(void)
         todo_N_update = 0;
 
         if(prt_nbr->ost_my_uninstallable == 0) {
-          ost_change_queue_N_update(nbr_lladdr, prt_nbr->ost_my_N);
+          ost_change_N_of_packets_in_queue(nbr_lladdr, prt_nbr->ost_my_N);
         } else {
-          ost_change_queue_N_update(nbr_lladdr, prt_nbr->ost_my_N + INC_N_NEW_TX_REQUEST);
+          ost_change_N_of_packets_in_queue(nbr_lladdr, prt_nbr->ost_my_N + INC_N_NEW_TX_REQUEST);
         }
       }
     }
@@ -1382,7 +1388,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* read seqno from payload */
       seqno = ((uint8_t *)(packet))[2];
 
-#if WITH_OST
+#if WITH_OST /* Piggyback N */
 #if OST_ON_DEMAND_PROVISION
       frame802154_fcf_t fcf;
       frame802154_parse_fcf((uint8_t *)(packet), &fcf);
@@ -1581,7 +1587,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 );
 #endif
 
-#if WITH_OST
+#if WITH_OST /* Process received t_offset */
                 todo_tx_schedule_change = 0;
                 todo_N_update = 0;
                 todo_N_inc = 0;
@@ -1696,7 +1702,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     );
 
     ++tsch_unlocked_scheduled_tx_operation_count; //hckim
-#if WITH_OST
+#if WITH_OST /* Log messages */
     if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
       ++ost_unlocked_scheduled_periodic_tx_operation_count;
     }
@@ -1836,7 +1842,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &rx_start_time, sizeof(rtimer_clock_t));
 #endif
 
-#if !WITH_OST
+#if !WITH_OST /* OST: Extend packet duration */
         packet_duration = TSCH_PACKET_DURATION(current_input->len);
         /* limit packet_duration to its max value */
         packet_duration = MIN(packet_duration, tsch_timing[tsch_ts_max_tx]);
@@ -1910,7 +1916,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               static uint8_t ack_buf[TSCH_PACKET_MAX_LEN];
               static int ack_len;
 
-#if WITH_OST
+#if WITH_OST /* OST: Process received N */
               /* before generate EACK */
               todo_rx_schedule_change = 0;
               ost_flag_failed_to_select_t_offset = 0;
@@ -1919,7 +1925,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               process_rx_N(&frame);
 #if OST_ON_DEMAND_PROVISION              
               uint16_t matching_slot = process_rx_schedule_info(&frame);
-
 #if WITH_OST_LOG
               TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),

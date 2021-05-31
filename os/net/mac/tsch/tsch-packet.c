@@ -145,10 +145,10 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 
   framer_802154_setup_params(tsch_packet_eackbuf_attr, 0, &params);
 
-#if WITH_OST
-  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
-  if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {
-    params.ost_pigg1 = nbr->ost_nbr_t_offset;
+#if WITH_OST /* Piggyback t_offset */
+  uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
+  if(ds6_nbr != NULL && ost_is_routing_nbr(ds6_nbr) == 1) {
+    params.ost_pigg1 = ds6_nbr->ost_nbr_t_offset;
 
     if(ost_get_ost_flag_failed_to_select_t_offset() == 1) {
       params.ost_pigg1 = T_OFFSET_ALLOCATION_FAIL;
@@ -159,8 +159,8 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
     }
 
   }
-  if(nbr == NULL) {
-    params.ost_pigg1 = 0xffff; /* Tx EACK: t_offset make 65535 (No nbr) */
+  if(ds6_nbr == NULL) {
+    params.ost_pigg1 = 0xffff; /* Tx EACK: t_offset make 65535 (No ds6_nbr) */
   }
 
 #if OST_ON_DEMAND_PROVISION

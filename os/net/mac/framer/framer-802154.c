@@ -43,7 +43,7 @@
 #include "lib/random.h"
 #include <string.h>
 
-#if WITH_OST
+#if WITH_OST /* OST: Include header files */
 #include <stdio.h>
 #include "contiki.h"
 #include "orchestra.h"
@@ -110,20 +110,20 @@ create_frame(int do_create)
                   packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
   }
 
-#if WITH_OST
-  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&params.dest_addr);
-  if(nbr != NULL) {
-    if(nbr->ost_my_uninstallable == 1) {
-      params.ost_pigg1 = nbr->ost_my_N + INC_N_NEW_TX_REQUEST;
-    } else if(nbr->ost_my_low_prr == 1) {
-      params.ost_pigg1 = nbr->ost_my_N + INC_N_NEW_TX_REQUEST;
+#if WITH_OST /* OST: Piggyback N */
+  uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&params.dest_addr);
+  if(ds6_nbr != NULL) {
+    if(ds6_nbr->ost_my_uninstallable == 1) {
+      params.ost_pigg1 = ds6_nbr->ost_my_N + INC_N_NEW_TX_REQUEST;
+    } else if(ds6_nbr->ost_my_low_prr == 1) {
+      params.ost_pigg1 = ds6_nbr->ost_my_N + INC_N_NEW_TX_REQUEST;
     } else {
-      params.ost_pigg1 = nbr->ost_my_N;
+      params.ost_pigg1 = ds6_nbr->ost_my_N;
     }
   }
   if(frame802154_is_broadcast_addr(params.fcf.dest_addr_mode, params.dest_addr)) {
     params.ost_pigg1 = 0xffff; /* broadcast */
-  } else if(nbr == NULL) {
+  } else if(ds6_nbr == NULL) {
     /* In bootstrap, TSCH-associated but not RPL-associated node sends KA */
     params.ost_pigg1 = 0xffff;
   }

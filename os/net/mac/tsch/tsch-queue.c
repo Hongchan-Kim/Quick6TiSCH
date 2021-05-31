@@ -57,7 +57,7 @@
 #include "net/nbr-table.h"
 #include <string.h>
 
-#if WITH_OST
+#if WITH_OST /* OST: Include header files */
 #include "node-info.h"
 #include "net/ipv6/uip-ds6-route.h"
 #include "net/ipv6/uip-ds6-nbr.h"
@@ -95,9 +95,12 @@ NBR_TABLE(struct tsch_neighbor, tsch_neighbors);
 struct tsch_neighbor *n_broadcast;
 struct tsch_neighbor *n_eb;
 
-#if WITH_OST
+#if WITH_OST /* OST: Measure traffic load */
 static struct ctimer ost_select_N_timer;
+#endif
+
 /*---------------------------------------------------------------------------*/
+#if WITH_OST
 uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr)
 {
   /* parent? */
@@ -112,9 +115,11 @@ uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr)
 
   return 0;    
 }
+#endif
 /*---------------------------------------------------------------------------*/
+#if WITH_OST /* OST: Piggyback N */
 void
-ost_change_queue_N_update(const linkaddr_t *lladdr, uint16_t updated_N)
+ost_change_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N)
 {
   struct tsch_neighbor *n = tsch_queue_get_nbr(lladdr);
   if(n != NULL) {
@@ -138,77 +143,81 @@ ost_change_queue_N_update(const linkaddr_t *lladdr, uint16_t updated_N)
     }
   }
 }
+#endif
 /*---------------------------------------------------------------------------*/
+#if WITH_OST /* OST: Determine N */
 /* OST select appropriate N according to the traffic load */
 void ost_select_N(void* ptr)
 {
-  uip_ds6_nbr_t *nbr;
-  uint16_t ost_traffic_load;
+  uip_ds6_nbr_t *ds6_nbr;
+  uint16_t traffic_load;
   int i;
 
   /* select N */
-  nbr = uip_ds6_nbr_head();
+  ds6_nbr = uip_ds6_nbr_head();
   if(tsch_get_lock()) {
-    while(nbr != NULL) {
-      if(ost_is_routing_nbr(nbr) && nbr->ost_newly_added == 0) {
-        uint16_t ost_num_slots = N_SELECTION_PERIOD * 1000 / 10;
-        /* unit: packet/slot multiplied by 2^N_MAX */
-        ost_traffic_load = (nbr->ost_num_tx) / ost_num_slots * (1 << N_MAX);
+    while(ds6_nbr != NULL) {
+      if(ost_is_routing_nbr(ds6_nbr) && ds6_nbr->ost_newly_added == 0) {
+        /* OST assumes that timeslot length is 10 ms */
+        uint16_t num_slots = OST_N_SELECTION_PERIOD * 1000 / 10;
+        /* unit: packet/slot multiplied by 2^OST_N_MAX */
+        traffic_load = (1 << OST_N_MAX) * (ds6_nbr->ost_num_tx) / num_slots;
 
-        for(i = 1; i <= N_MAX; i++) {
-          if((ost_traffic_load >> i) < 1) {
-            uint16_t ost_old_N = nbr->ost_my_N;
-            uint16_t ost_new_N = (N_MAX - i) + 1 - MORE_UNDER_PROVISION;
+        for(i = 1; i <= OST_N_MAX; i++) {
+          if((traffic_load >> i) < 1) {
+            uint16_t old_N = ds6_nbr->ost_my_N;
+            uint16_t new_N = (OST_N_MAX - i + 1) - OST_MORE_UNDER_PROVISION;
 
-            if(ost_old_N != ost_new_N) {
-              uint8_t ost_change_N = 0;
-              if(ost_new_N > ost_old_N) { /* increase my_N */
-                nbr->ost_consecutive_my_N_inc++;
-                if(nbr->ost_consecutive_my_N_inc >= THRES_CONSEQUTIVE_N_INC) {
-                  nbr->ost_consecutive_my_N_inc = 0;
-                  ost_change_N = 1;
+            if(old_N != new_N) {
+              uint8_t change_N = 0;
+              if(new_N > old_N) { /* increase my_N */
+                ds6_nbr->ost_consecutive_my_N_inc++;
+                if(ds6_nbr->ost_consecutive_my_N_inc >= OST_THRES_CONSEQUTIVE_N_INC) {
+                  ds6_nbr->ost_consecutive_my_N_inc = 0;
+                  change_N = 1;
                 } else {
-                  ost_change_N = 0;
+                  change_N = 0;
                 }
               } else { /* decrease my_N */
-                nbr->ost_consecutive_my_N_inc = 0;
-                ost_change_N = 1;
+                ds6_nbr->ost_consecutive_my_N_inc = 0;
+                change_N = 1;
               }
-              if(ost_change_N) {
-                ost_change_queue_N_update((linkaddr_t *)uip_ds6_nbr_get_ll(nbr), ost_new_N);
-                nbr->ost_my_N = ost_new_N;
+              
+              if(change_N) {
+                ost_change_N_of_packets_in_queue((linkaddr_t *)uip_ds6_nbr_get_ll(ds6_nbr), new_N);
+                ds6_nbr->ost_my_N = new_N;
               }
             } else { /* No change */
-              nbr->ost_consecutive_my_N_inc = 0;
+              ds6_nbr->ost_consecutive_my_N_inc = 0;
             }
 #if WITH_OST_LOG
             LOG_INFO("ost select_N: ");
-            LOG_INFO_LLADDR((linkaddr_t *)uip_ds6_nbr_get_ll(nbr));
-            LOG_INFO_(" %u -> %u (%u, %u)\n", ost_old_N, nbr->ost_my_N,
-                    ost_new_N, nbr->ost_consecutive_my_N_inc);
+            LOG_INFO_LLADDR((linkaddr_t *)uip_ds6_nbr_get_ll(ds6_nbr));
+            LOG_INFO_(" %u -> %u (%u, %u)\n", old_N, ds6_nbr->ost_my_N,
+                    new_N, ds6_nbr->ost_consecutive_my_N_inc);
 #endif
             break;
           }
         }
       } else {
-        nbr->ost_my_N = 5;
-        if(nbr->ost_newly_added == 1) { 
-          nbr->ost_newly_added = 0;
+        ds6_nbr->ost_my_N = 5;
+        if(ds6_nbr->ost_newly_added == 1) { 
+          ds6_nbr->ost_newly_added = 0;
         }
 #if WITH_OST_LOG
         LOG_INFO("ost select_N: ");
-        LOG_INFO_LLADDR((linkaddr_t *)uip_ds6_nbr_get_ll(nbr));
-        LOG_INFO_(" (newly_added) %u\n", nbr->ost_my_N);
+        LOG_INFO_LLADDR((linkaddr_t *)uip_ds6_nbr_get_ll(ds6_nbr));
+        LOG_INFO_(" (newly_added) %u\n", ds6_nbr->ost_my_N);
 #endif
       }
-      nbr = uip_ds6_nbr_next(nbr);
+      ds6_nbr = uip_ds6_nbr_next(ds6_nbr);
     }
 
     /* Reset all num_tx */
-    nbr = uip_ds6_nbr_head();
-    while(nbr != NULL) {
-      nbr->ost_num_tx = 0;
-      nbr = uip_ds6_nbr_next(nbr);
+    ds6_nbr = uip_ds6_nbr_head();
+    while(ds6_nbr != NULL) {
+      ds6_nbr->ost_num_tx = 0;
+      ds6_nbr = uip_ds6_nbr_next(ds6_nbr);
     }
 
     tsch_release_lock();
@@ -409,7 +418,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
 #endif
 
-#if WITH_OST /* Measure traffic load */
+#if WITH_OST /* OST: Measure traffic load */
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
   if(nbr != NULL) {
     /* OST count the number of tx even if queue loss occurs */
@@ -785,13 +794,13 @@ tsch_queue_init(void)
   n_eb = tsch_queue_add_nbr(&tsch_eb_address);
   n_broadcast = tsch_queue_add_nbr(&tsch_broadcast_address);
 
-#if WITH_OST
+#if WITH_OST /* OST: Measure traffic load */
   /* 
    * start ost_select_N_timer
    * this timer will call ost_select_N func periodically
    * ost_select_N func calculates N for OST operation
   */
-  ctimer_set(&ost_select_N_timer, N_SELECTION_PERIOD * CLOCK_SECOND, ost_select_N, NULL);
+  ctimer_set(&ost_select_N_timer, OST_N_SELECTION_PERIOD * CLOCK_SECOND, ost_select_N, NULL);
 #endif
 }
 /*---------------------------------------------------------------------------*/

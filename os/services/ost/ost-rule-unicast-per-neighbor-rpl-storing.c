@@ -116,7 +116,7 @@ ost_reset_nbr(const linkaddr_t *addr, uint8_t newly_added, uint8_t rx_no_path)
     if(nbr != NULL) {
 
       nbr->ost_my_N = 5;
-      ost_change_queue_N_update(addr, nbr->ost_my_N);
+      ost_change_N_of_packets_in_queue(addr, nbr->ost_my_N);
 
       nbr->ost_my_t_offset = 0xffff;
 

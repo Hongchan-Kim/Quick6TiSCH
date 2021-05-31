@@ -206,7 +206,7 @@ typedef struct {
   uint16_t dest_pid;              /**< Destination PAN ID */
   uint16_t src_pid;               /**< Source PAN ID */
 
-#if WITH_OST
+#if WITH_OST /* OST: Add ost_pigg1 */
   uint16_t ost_pigg1; /* for N or t_offset */
 #if OST_ON_DEMAND_PROVISION
   uint16_t ost_pigg2; /* for on-demand provisioning (subsequent schedule or matching slot) */

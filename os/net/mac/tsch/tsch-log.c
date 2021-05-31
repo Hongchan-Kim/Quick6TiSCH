@@ -135,7 +135,7 @@ tsch_log_process_pending(void)
               uint16_t prr = 100 * nbr->ost_num_tx_succ_mac / nbr->ost_num_tx_mac;
               if(prr <= PRR_THRES_TX_CHANGE && nbr->ost_num_tx_mac >= NUM_TX_MAC_THRES_TX_CHANGE) {
                 nbr->ost_my_low_prr = 1;
-                ost_change_queue_N_update(&log->tx.dest, nbr->ost_my_N + INC_N_NEW_TX_REQUEST);
+                ost_change_N_of_packets_in_queue(&log->tx.dest, nbr->ost_my_N + INC_N_NEW_TX_REQUEST);
               }
 
               if(nbr->ost_num_consecutive_tx_fail_mac >= NUM_TX_FAIL_THRES) {
