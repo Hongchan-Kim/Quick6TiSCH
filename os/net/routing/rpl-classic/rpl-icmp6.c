@@ -885,13 +885,13 @@ dao_input_storing(void)
 #if WITH_OST
       /* received No-path DAO */
       uint16_t prefix_id = OST_NODE_ID_FROM_IPADDR(&prefix);
-      uip_ds6_nbr_t *nbr = uip_ds6_nbr_lookup(&prefix);
+      uip_ds6_nbr_t *prefix_nbr = uip_ds6_nbr_lookup(&prefix);
 
-      if(nbr != NULL && ost_is_routing_nbr(nbr) == 1) {
-        linkaddr_t *nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(nbr);
-        ost_reset_nbr(nbr_lladdr, 0, 1);
+      if(prefix_nbr != NULL && ost_is_routing_nbr(prefix_nbr) == 1) {
+        linkaddr_t *prefix_nbr_lladdr = (linkaddr_t *)uip_ds6_nbr_get_ll(prefix_nbr);
+        ost_reset_nbr(prefix_nbr_lladdr, 0, 1);
 
-        ost_remove_tx(nbr_lladdr);
+        ost_remove_tx(prefix_nbr_lladdr);
         ost_remove_rx(prefix_id);
       }
 #endif

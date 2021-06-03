@@ -21,6 +21,8 @@
 #define IOTLAB_GRENOBLE_43                        11
 #define IOTLAB_GRENOBLE_63                        12
 #define IOTLAB_GRENOBLE_83                        13
+#define IOTLAB_GRENOBLE_2                         14
+#define IOTLAB_GRENOBLE_3                         15
 
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
@@ -32,9 +34,11 @@
 //#define IOTLAB_SITE                                IOTLAB_LILLE_50 /* z = 6.1 */
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79 /* z = 9.6 or 9.4 */
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_64
-#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_43 /* 4~5 hop */
+//#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_43 /* 4~5 hop */
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_63
 //#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_83 /* 9~10 hop */
+#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_2
+//#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_3
 
 #if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
@@ -62,6 +66,10 @@
 #define NODE_NUM                                   63
 #elif IOTLAB_SITE == IOTLAB_GRENOBLE_83
 #define NODE_NUM                                   83
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_2
+#define NODE_NUM                                   2
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_3
+#define NODE_NUM                                   3
 #endif
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
@@ -91,11 +99,11 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 1)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 2)
 //#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
 //define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
-#define APP_START_DELAY                            (26 * 60 * CLOCK_SECOND) // 30
-#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND) // 30
+#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 26
+#define APP_DATA_PERIOD                            (5 * 60 * CLOCK_SECOND) // 30
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
@@ -158,10 +166,10 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -216,23 +224,24 @@
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 
 #define WITH_OST                                   1
-#define WITH_OST_LOG                               0
+#define WITH_OST_REV                               1 /* packet-by-packet operation */
+#define WITH_OST_LOG                               1
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
-#define OST_ON_DEMAND_PROVISION                    1
+#define OST_ON_DEMAND_PROVISION                    0
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define OST_JSB_ADD                                1
 
 #define OST_N_SELECTION_PERIOD                         15 // related to OST_N_MAX: Min. traffic load = 1 / (OST_N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
 #define OST_N_MAX                                      8 // max t_offset 65535-1, 65535 is used for no-allocation
 #define OST_MORE_UNDER_PROVISION                       1 // more allocation 2^OST_MORE_UNDER_PROVISION times than under-provision
-#define INC_N_NEW_TX_REQUEST                       100 // Maybe used for denial message
+#define OST_N_OFFSET_NEW_TX_REQUEST                       100 // Maybe used for denial message
 #define PRR_THRES_TX_CHANGE                        70
 #define NUM_TX_MAC_THRES_TX_CHANGE                 20
 #define NUM_TX_FAIL_THRES                          5
 #define OST_THRES_CONSEQUTIVE_N_INC                3
-#define T_OFFSET_ALLOCATION_FAIL                   ((1 << OST_N_MAX) + 1)
-#define T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST        ((1 << OST_N_MAX) + 2)
-#define THRES_CONSECUTIVE_NEW_TX_REQUEST           10
+#define OST_T_OFFSET_ALLOCATION_FAILURE            ((1 << OST_N_MAX) + 1)
+#define OST_T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST    ((1 << OST_N_MAX) + 2)
+#define OST_THRES_CONSECUTIVE_NEW_TX_SCHEDULE_REQUEST           10
 #define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          (2 * NBR_TABLE_CONF_MAX_NEIGHBORS)
 #define TSCH_SCHEDULE_CONF_MAX_LINKS               (5 * NODE_NUM)
 #define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) // Under-provision uses up to 2*NODE_NUM+2

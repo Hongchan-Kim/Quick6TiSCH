@@ -124,7 +124,7 @@ typedef struct uip_ds6_nbr {
   /* OST for Tx */
   uint16_t ost_my_N;             // 1. determined by me
   uint16_t ost_my_t_offset;      // 2. determined by nbr
-  uint8_t ost_my_uninstallable;
+  uint8_t ost_my_installable;
   /* OST for Rx */
   uint16_t ost_nbr_N;            // 1. determined by nbr
   uint16_t ost_nbr_t_offset;     // 2. determined by me
@@ -136,7 +136,7 @@ typedef struct uip_ds6_nbr {
   uint16_t ost_num_tx_succ_mac;
   uint16_t ost_num_consecutive_tx_fail_mac;
   uint16_t ost_consecutive_my_N_inc;
-  uint8_t ost_consecutive_new_tx_request;
+  uint8_t ost_consecutive_new_tx_schedule_request;
 #endif  
 
 } uip_ds6_nbr_t;

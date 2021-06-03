@@ -682,13 +682,14 @@ tsch_rx_process_pending()
 {
   int16_t input_index;
 
-#if WITH_OST
-  post_process_rx_N();
-#endif
-
   /* Loop on accessing (without removing) a pending input packet */
   while((input_index = ringbufindex_peek_get(&input_ringbuf)) != -1) {
     struct input_packet *current_input = &input_array[input_index];
+
+#if WITH_OST_REV /* OST-09: Post process received N */
+    post_process_rx_N(current_input);
+#endif
+
     frame802154_t frame;
     uint8_t ret = frame802154_parse(current_input->payload, current_input->len, &frame);
     int is_data = ret && frame.fcf.frame_type == FRAME802154_DATAFRAME;
@@ -724,6 +725,11 @@ tsch_tx_process_pending(void)
   /* Loop on accessing (without removing) a pending input packet */
   while((dequeued_index = ringbufindex_peek_get(&dequeued_ringbuf)) != -1) {
     struct tsch_packet *p = dequeued_array[dequeued_index];
+
+#if WITH_OST_REV
+    post_process_rx_t_offset(p);
+#endif
+
     /* Put packet into packetbuf for packet_sent callback */
     queuebuf_to_packetbuf(p->qb);
 
@@ -757,7 +763,7 @@ tsch_tx_process_pending(void)
         LOG_INFO("HCK ip_err %u\n", ++tsch_ip_error_count);
       }
     }
-    
+
     /* Call packet_sent callback */
     mac_call_sent_callback(p->sent, p->ptr, p->ret, p->transmissions);
     /* Free packet queuebuf */
@@ -767,11 +773,6 @@ tsch_tx_process_pending(void)
     /* Remove dequeued packet from ringbuf */
     ringbufindex_get(&dequeued_ringbuf);
   }
-
-#if WITH_OST
-  post_process_rx_t_offset();
-#endif
-
 }
 /*---------------------------------------------------------------------------*/
 /* Setup TSCH as a coordinator */

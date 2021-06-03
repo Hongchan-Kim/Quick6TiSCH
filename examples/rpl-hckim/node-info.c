@@ -580,6 +580,19 @@ uint16_t iotlab_nodes[NODE_NUM][3] = {
   {205, 0x8967, 0},
   {204, 0xb877, 0}
 };
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_2
+uint16_t iotlab_nodes[NODE_NUM][3] = {
+  /* {host name, uid, rx count} */
+  {289, 0xc370, 0}, /* root node */
+  {288, 0x1162, 0}
+};
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_3
+uint16_t iotlab_nodes[NODE_NUM][3] = {
+  /* {host name, uid, rx count} */
+  {289, 0xc370, 0}, /* root node */
+  {288, 0x1162, 0},
+  {287, 0xb982, 0}
+};
 #endif
 
 uint16_t

@@ -95,7 +95,7 @@ NBR_TABLE(struct tsch_neighbor, tsch_neighbors);
 struct tsch_neighbor *n_broadcast;
 struct tsch_neighbor *n_eb;
 
-#if WITH_OST /* OST: Measure traffic load */
+#if WITH_OST /* OST-01: Measure traffic load */
 static struct ctimer ost_select_N_timer;
 #endif
 
@@ -117,9 +117,9 @@ uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST /* OST: Piggyback N */
+#if WITH_OST /* OST-03: Piggyback N */
 void
-ost_change_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N)
+ost_update_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N)
 {
   struct tsch_neighbor *n = tsch_queue_get_nbr(lladdr);
   if(n != NULL) {
@@ -145,7 +145,7 @@ ost_change_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST /* OST: Determine N */
+#if WITH_OST /* OST-02: Determine N */
 /* OST select appropriate N according to the traffic load */
 void ost_select_N(void* ptr)
 {
@@ -184,7 +184,7 @@ void ost_select_N(void* ptr)
               }
               
               if(change_N) {
-                ost_change_N_of_packets_in_queue((linkaddr_t *)uip_ds6_nbr_get_ll(ds6_nbr), new_N);
+                ost_update_N_of_packets_in_queue((linkaddr_t *)uip_ds6_nbr_get_ll(ds6_nbr), new_N);
                 ds6_nbr->ost_my_N = new_N;
               }
             } else { /* No change */
@@ -418,7 +418,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
 #endif
 
-#if WITH_OST /* OST: Measure traffic load */
+#if WITH_OST /* OST-01: Measure traffic load */
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
   if(nbr != NULL) {
     /* OST count the number of tx even if queue loss occurs */
@@ -794,7 +794,7 @@ tsch_queue_init(void)
   n_eb = tsch_queue_add_nbr(&tsch_eb_address);
   n_broadcast = tsch_queue_add_nbr(&tsch_broadcast_address);
 
-#if WITH_OST /* OST: Measure traffic load */
+#if WITH_OST /* OST-01: Measure traffic load */
   /* 
    * start ost_select_N_timer
    * this timer will call ost_select_N func periodically

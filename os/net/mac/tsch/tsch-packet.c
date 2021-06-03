@@ -98,11 +98,20 @@ tsch_packet_eackbuf_attr(uint8_t type)
 }
 /*---------------------------------------------------------------------------*/
 /* Construct enhanced ACK packet and return ACK length */
-#if WITH_OST && OST_ON_DEMAND_PROVISION
+#if WITH_OST_REV
+#if OST_ON_DEMAND_PROVISION
 int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
-                        int16_t drift, int nack, uint16_t matching_slot)
+                        int16_t drift, int nack, 
+                        struct input_packet *current_input, uint16_t matching_slot)
+#else
+int
+tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
+                        const linkaddr_t *dest_addr, uint8_t seqno,
+                        int16_t drift, int nack, 
+                        struct input_packet *current_input)
+#endif
 #else
 int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
@@ -145,22 +154,24 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 
   framer_802154_setup_params(tsch_packet_eackbuf_attr, 0, &params);
 
-#if WITH_OST /* Piggyback t_offset */
+#if WITH_OST_REV /* Piggyback t_offset */
   uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
-  if(ds6_nbr != NULL && ost_is_routing_nbr(ds6_nbr) == 1) {
-    params.ost_pigg1 = ds6_nbr->ost_nbr_t_offset;
+  if(ds6_nbr != NULL
+     && ost_is_routing_nbr(ds6_nbr) == 1
+     && ds6_nbr->ost_rx_no_path == 0) {
+    params.ost_pigg1 = current_input->ost_prN_new_t_offset;
 
-    if(ost_get_ost_flag_failed_to_select_t_offset() == 1) {
-      params.ost_pigg1 = T_OFFSET_ALLOCATION_FAIL;
+    if(current_input->ost_flag_failed_to_select_t_offset == 1) {
+      params.ost_pigg1 = OST_T_OFFSET_ALLOCATION_FAILURE;
     }
 
-    if(ost_get_todo_consecutive_new_tx_request() == 1) {
-      params.ost_pigg1= T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST;
+    if(current_input->ost_flag_respond_to_consec_new_tx_sched_req == 1) {
+      params.ost_pigg1= OST_T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST;
     }
 
-  }
-  if(ds6_nbr == NULL) {
-    params.ost_pigg1 = 0xffff; /* Tx EACK: t_offset make 65535 (No ds6_nbr) */
+  } else {
+     /* Tx EACK: t_offset make 65535 (No ds6_nbr) */
+    params.ost_pigg1 = 0xffff;
   }
 
 #if OST_ON_DEMAND_PROVISION

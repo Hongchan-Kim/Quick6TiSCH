@@ -58,10 +58,18 @@
  * \param nack Value of the NACK bit
  * \return The length of the packet that was created. -1 if failure.
  */
-#if WITH_OST && OST_ON_DEMAND_PROVISION
+#if WITH_OST_REV
+#if OST_ON_DEMAND_PROVISION
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,
-                            int16_t drift, int nack, uint16_t matching_slot);
+                            int16_t drift, int nack, 
+                            struct input_packet *current_input, uint16_t matching_slot);
+#else
+int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
+                            const linkaddr_t *dest_addr, uint8_t seqno,
+                            int16_t drift, int nack,
+                            struct input_packet *current_input);
+#endif
 #else
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,

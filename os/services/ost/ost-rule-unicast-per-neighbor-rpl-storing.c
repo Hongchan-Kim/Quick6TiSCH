@@ -90,7 +90,7 @@ void
 print_nbr(void)
 {
   printf("[Neighbors]");
-  printf(" r_nbr / my / nbr / num_tx / new_add / my_uninstallable / rx_no_path / my_low_prr\n");
+  printf(" r_nbr / my / nbr / num_tx / new_add / my_installable / rx_no_path / my_low_prr\n");
 
   uip_ds6_nbr_t *nbr = uip_ds6_nbr_head();
   while(nbr != NULL) {
@@ -100,9 +100,9 @@ print_nbr(void)
     printf(" %u / ", ost_is_routing_nbr(nbr));
     printf("Tx %u,%u / Rx %u,%u / %u / %u / %u / %u / %u (%u, %u, %u, %u, %u)\n",
       nbr->ost_my_N, nbr->ost_my_t_offset, nbr->ost_nbr_N, nbr->ost_nbr_t_offset, nbr->ost_num_tx,
-      nbr->ost_newly_added, nbr->ost_my_uninstallable, nbr->ost_rx_no_path, nbr->ost_my_low_prr, 
+      nbr->ost_newly_added, nbr->ost_my_installable, nbr->ost_rx_no_path, nbr->ost_my_low_prr, 
       nbr->ost_num_tx_mac, nbr->ost_num_tx_succ_mac, nbr->ost_num_consecutive_tx_fail_mac, 
-      nbr->ost_consecutive_my_N_inc, nbr->ost_consecutive_new_tx_request);
+      nbr->ost_consecutive_my_N_inc, nbr->ost_consecutive_new_tx_schedule_request);
 
     nbr = uip_ds6_nbr_next(nbr);
   }
@@ -112,12 +112,12 @@ void
 ost_reset_nbr(const linkaddr_t *addr, uint8_t newly_added, uint8_t rx_no_path)
 {
   if(addr != NULL) {
+    LOG_INFO("ost reset_nbr %u\n", OST_NODE_ID_FROM_LINKADDR((uip_lladdr_t *)addr));
     uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
     if(nbr != NULL) {
 
       nbr->ost_my_N = 5;
-      ost_change_N_of_packets_in_queue(addr, nbr->ost_my_N);
-
+      ost_update_N_of_packets_in_queue(addr, nbr->ost_my_N);
       nbr->ost_my_t_offset = 0xffff;
 
       nbr->ost_nbr_N = 0xffff;
@@ -131,7 +131,7 @@ ost_reset_nbr(const linkaddr_t *addr, uint8_t newly_added, uint8_t rx_no_path)
         nbr->ost_newly_added = 0;
       }
 
-      nbr->ost_my_uninstallable = 0;
+      nbr->ost_my_installable = 1;
 
       if(rx_no_path == 1 ) {
         nbr->ost_rx_no_path = 1;
@@ -144,7 +144,7 @@ ost_reset_nbr(const linkaddr_t *addr, uint8_t newly_added, uint8_t rx_no_path)
       nbr->ost_num_tx_succ_mac = 0;
       nbr->ost_num_consecutive_tx_fail_mac = 0;
       nbr->ost_consecutive_my_N_inc = 0;
-      nbr->ost_consecutive_new_tx_request = 0;      
+      nbr->ost_consecutive_new_tx_schedule_request = 0;      
     }
   }
 }

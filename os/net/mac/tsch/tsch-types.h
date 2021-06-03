@@ -48,6 +48,10 @@
 #include "lib/list.h"
 #include "lib/ringbufindex.h"
 
+#if WITH_OST_REV
+#include "net/ipv6/uip-ds6-nbr.h"
+#endif
+
 /********** Data types **********/
 
 /** \brief 802.15.4e link types. LINK_TYPE_ADVERTISING_ONLY is an extra one: for EB-only links. */
@@ -103,6 +107,15 @@ struct tsch_packet {
   uint8_t ret; /* status -- MAC return code */
   uint8_t header_len; /* length of header and header IEs (needed for link-layer security) */
   uint8_t tsch_sync_ie_offset; /* Offset within the frame used for quick update of EB ASN and join priority */
+
+#if WITH_OST_REV
+  uip_ds6_nbr_t *ost_prt_nbr;
+  uint16_t ost_prt_new_t_offset;
+  uint8_t ost_flag_increase_N; /* increase N due to allocation failure of low prr */
+  uint8_t ost_flag_change_tx_schedule; /* do not have to increase N and do change tx schedule */
+  uint8_t ost_flag_update_N_of_pkts_in_queue; /* N of pkts in queue should be updated */
+  uint8_t ost_flag_rejected_by_nbr;
+#endif
 };
 
 /** \brief TSCH neighbor information */
@@ -152,6 +165,15 @@ struct input_packet {
   int len; /* Packet len */
   int16_t rssi; /* RSSI for this packet */
   uint8_t channel; /* Channel we received the packet on */
+
+#if WITH_OST_REV /* OST-09: Post process received N */
+  uip_ds6_nbr_t *ost_prN_nbr;
+  uint16_t ost_prN_new_N;
+  uint16_t ost_prN_new_t_offset;
+  uint8_t ost_flag_change_rx_schedule;
+  uint8_t ost_flag_failed_to_select_t_offset;
+  uint8_t ost_flag_respond_to_consec_new_tx_sched_req;
+#endif
 };
 
 #endif /* __TSCH_CONF_H__ */
