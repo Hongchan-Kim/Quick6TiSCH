@@ -447,7 +447,7 @@ select_t_offset(uint16_t target_id, uint16_t target_N)  /* similar with tx_insta
     toc[i].available = 1;
   }
 
-  /* Check resource overlap */
+  /* Check resource overlap with ongoing schedule */
   struct tsch_slotframe *sf = ost_tsch_schedule_get_slotframe_head();
   while(sf != NULL) {
     /* periodic provisioning slotframes, except for rx slotframe for target_id 
@@ -469,6 +469,60 @@ select_t_offset(uint16_t target_id, uint16_t target_N)  /* similar with tx_insta
       }
     }
     sf = list_item_next(sf);
+  }
+
+  /* Check resource overlap with schedule of rx pending queue */
+  int16_t input_index = ringbufindex_peek_get(&input_ringbuf);
+  if(input_index != -1) {
+    uint8_t num_input_elements = ringbufindex_elements(&input_ringbuf);  
+
+    uint8_t i;
+    for(i = input_index; i <input_index + num_input_elements; i++) {
+      int16_t actual_input_index;
+
+      if(i >= ringbufindex_size(&input_ringbuf)) { /* default size: 16 */
+        actual_input_index = i - ringbufindex_size(&input_ringbuf);
+      } else {
+        actual_input_index = i;  
+      }
+
+      struct input_packet *input_p = &input_array[actual_input_index];
+      if(input_p->ost_flag_change_rx_schedule == 1
+         && input_p->ost_prN_nbr != NULL) {
+        uint16_t pending_N = (input_p->ost_prN_nbr)->ost_nbr_N;
+        uint16_t pending_t_offset = (input_p->ost_prN_nbr)->ost_nbr_t_offset;
+        
+        eliminate_overlap_toc(toc, target_N, pending_N, pending_t_offset);
+      }
+    }
+  }
+
+  /* Check resource overlap with schedule of tx pending queue */
+  int16_t dequeued_index = ringbufindex_peek_get(&dequeued_ringbuf);
+  if(dequeued_index != -1) {
+    uint8_t num_dequeued_elements = ringbufindex_elements(&dequeued_ringbuf);  
+
+    uint8_t i;
+    for(i = dequeued_index; i < dequeued_index + num_dequeued_elements; i++) {
+      int16_t actual_dequeued_index;
+
+      if(i >= ringbufindex_size(&dequeued_ringbuf)) { /* default size: 16 */
+        actual_dequeued_index = i - ringbufindex_size(&dequeued_ringbuf);
+      } else {
+        actual_dequeued_index = i;  
+      }
+
+      struct tsch_packet *dequeued_p = dequeued_array[actual_dequeued_index];
+      if(dequeued_p->ost_flag_change_tx_schedule == 1
+         && dequeued_p->ost_prt_nbr != NULL
+         && (dequeued_p->ost_prt_nbr)->ost_my_installable == 1 
+         && dequeued_p->ost_flag_rejected_by_nbr == 0) {
+        uint16_t pending_N = (dequeued_p->ost_prt_nbr)->ost_my_N;
+        uint16_t pending_t_offset = (dequeued_p->ost_prt_nbr)->ost_my_t_offset;
+
+        eliminate_overlap_toc(toc, target_N, pending_N, pending_t_offset);
+      }
+    }
   }
 
   uint32_t rand = random_rand() % (1 << 31); /* OST check later */
@@ -762,7 +816,7 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)
     return -1;
   }
 
-  /* check resource overlap */
+  /* check resource overlap with ongoing schedule */
   struct tsch_slotframe *sf = ost_tsch_schedule_get_slotframe_head();
   while(sf != NULL) {
     /* periodic provisioning slotframes, except for tx slotframe for target_id 
@@ -784,6 +838,60 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)
       }
     }
     sf = list_item_next(sf);
+  }
+
+  /* Check resource overlap with schedule of rx pending queue */
+  int16_t input_index = ringbufindex_peek_get(&input_ringbuf);
+  if(input_index != -1) {
+    uint8_t num_input_elements = ringbufindex_elements(&input_ringbuf);  
+
+    uint8_t i;
+    for(i = input_index; i <input_index + num_input_elements; i++) {
+      int16_t actual_input_index;
+
+      if(i >= ringbufindex_size(&input_ringbuf)) { /* default size: 16 */
+        actual_input_index = i - ringbufindex_size(&input_ringbuf);
+      } else {
+        actual_input_index = i;  
+      }
+
+      struct input_packet *input_p = &input_array[actual_input_index];
+      if(input_p->ost_flag_change_rx_schedule == 1
+         && input_p->ost_prN_nbr != NULL) {
+        uint16_t pending_N = (input_p->ost_prN_nbr)->ost_nbr_N;
+        uint16_t pending_t_offset = (input_p->ost_prN_nbr)->ost_nbr_t_offset;
+        
+        eliminate_overlap_toc(toc, N, pending_N, pending_t_offset);
+      }
+    }
+  }
+
+  /* Check resource overlap with schedule of tx pending queue */
+  int16_t dequeued_index = ringbufindex_peek_get(&dequeued_ringbuf);
+  if(dequeued_index != -1) {
+    uint8_t num_dequeued_elements = ringbufindex_elements(&dequeued_ringbuf);  
+
+    uint8_t i;
+    for(i = dequeued_index; i < dequeued_index + num_dequeued_elements; i++) {
+      int16_t actual_dequeued_index;
+
+      if(i >= ringbufindex_size(&dequeued_ringbuf)) { /* default size: 16 */
+        actual_dequeued_index = i - ringbufindex_size(&dequeued_ringbuf);
+      } else {
+        actual_dequeued_index = i;  
+      }
+
+      struct tsch_packet *dequeued_p = dequeued_array[actual_dequeued_index];
+      if(dequeued_p->ost_flag_change_tx_schedule == 1
+         && dequeued_p->ost_prt_nbr != NULL
+         && (dequeued_p->ost_prt_nbr)->ost_my_installable == 1 
+         && dequeued_p->ost_flag_rejected_by_nbr == 0) {
+        uint16_t pending_N = (dequeued_p->ost_prt_nbr)->ost_my_N;
+        uint16_t pending_t_offset = (dequeued_p->ost_prt_nbr)->ost_my_t_offset;
+
+        eliminate_overlap_toc(toc, N, pending_N, pending_t_offset);
+      }
+    }
   }
 
   if(toc[t_offset].available == 1) {

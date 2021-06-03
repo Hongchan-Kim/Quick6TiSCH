@@ -35,9 +35,9 @@
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79 /* z = 9.6 or 9.4 */
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_64
 //#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_43 /* 4~5 hop */
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_63
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_63
 //#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_83 /* 9~10 hop */
-#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_2
+//#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_2
 //#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_3
 
 #if IOTLAB_SITE == IOTLAB_LYON_2
@@ -99,11 +99,11 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 2)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 10)
 //#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
 //define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
-#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 26
-#define APP_DATA_PERIOD                            (5 * 60 * CLOCK_SECOND) // 30
+#define APP_START_DELAY                            (26 * 60 * CLOCK_SECOND) // 26
+#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND) // 30
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
@@ -227,7 +227,7 @@
 #define WITH_OST_REV                               1 /* packet-by-packet operation */
 #define WITH_OST_LOG                               1
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
-#define OST_ON_DEMAND_PROVISION                    0
+#define OST_ON_DEMAND_PROVISION                    1
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define OST_JSB_ADD                                1
 

@@ -112,7 +112,7 @@ void
 ost_reset_nbr(const linkaddr_t *addr, uint8_t newly_added, uint8_t rx_no_path)
 {
   if(addr != NULL) {
-    LOG_INFO("ost reset_nbr %u\n", OST_NODE_ID_FROM_LINKADDR((uip_lladdr_t *)addr));
+    LOG_INFO("ost reset_nbr %u\n", OST_NODE_ID_FROM_LINKADDR((linkaddr_t *)addr));
     uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
     if(nbr != NULL) {
 
