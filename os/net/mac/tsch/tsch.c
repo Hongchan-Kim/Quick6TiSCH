@@ -686,7 +686,7 @@ tsch_rx_process_pending()
   while((input_index = ringbufindex_peek_get(&input_ringbuf)) != -1) {
     struct input_packet *current_input = &input_array[input_index];
 
-#if WITH_OST_REV /* OST-09: Post process received N */
+#if WITH_OST /* OST-09: Post process received N */
     post_process_rx_N(current_input);
 #endif
 
@@ -726,7 +726,7 @@ tsch_tx_process_pending(void)
   while((dequeued_index = ringbufindex_peek_get(&dequeued_ringbuf)) != -1) {
     struct tsch_packet *p = dequeued_array[dequeued_index];
 
-#if WITH_OST_REV
+#if WITH_OST
     post_process_rx_t_offset(p);
 #endif
 

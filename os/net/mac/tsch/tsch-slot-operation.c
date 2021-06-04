@@ -555,7 +555,7 @@ select_t_offset(uint16_t target_id, uint16_t target_N)  /* similar with tx_insta
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_REV /* OST-05: Process received N */
+#if WITH_OST /* OST-05: Process received N */
  /* in short, prN */
 void
 process_rx_N(frame802154_t *frame, struct input_packet *current_input)
@@ -642,7 +642,7 @@ process_rx_N(frame802154_t *frame, struct input_packet *current_input)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_REV /* OST-09: Post process received N */
+#if WITH_OST /* OST-09: Post process received N */
 /* called from tsch_rx_process_pending (after slot_operation finished) */
 void
 post_process_rx_N(struct input_packet *current_input)
@@ -902,7 +902,7 @@ tx_installable(uint16_t target_id, uint16_t N, uint16_t t_offset)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_REV /* Process received t_offset */
+#if WITH_OST /* Process received t_offset */
 /* In short, prt */
 void
 process_rx_t_offset(frame802154_t* frame)
@@ -1001,7 +1001,7 @@ process_rx_t_offset(frame802154_t* frame)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST_REV
+#if WITH_OST
 /* called from tsch_rx_process_pending (after slot_operation) */
 void
 post_process_rx_t_offset(struct tsch_packet *p)
@@ -2002,7 +2002,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               static uint8_t ack_buf[TSCH_PACKET_MAX_LEN];
               static int ack_len;
 
-#if WITH_OST_REV /* OST-05: Process received N */
+#if WITH_OST /* OST-05: Process received N */
               /* process received N before generate EACK */
               process_rx_N(&frame, current_input);
 #if OST_ON_DEMAND_PROVISION              
@@ -2016,7 +2016,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 #endif
 
-#if WITH_OST_REV
+#if WITH_OST
 #if OST_ON_DEMAND_PROVISION
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),

@@ -35,8 +35,8 @@
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79 /* z = 9.6 or 9.4 */
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_64
 //#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_43 /* 4~5 hop */
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_63
-//#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_83 /* 9~10 hop */
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_63
+#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_83 /* 9~10 hop */
 //#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_2
 //#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_3
 
@@ -224,7 +224,6 @@
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 
 #define WITH_OST                                   1
-#define WITH_OST_REV                               1 /* packet-by-packet operation */
 #define WITH_OST_LOG                               1
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 #define OST_ON_DEMAND_PROVISION                    1

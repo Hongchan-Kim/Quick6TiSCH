@@ -48,7 +48,7 @@
 #include "lib/list.h"
 #include "lib/ringbufindex.h"
 
-#if WITH_OST_REV
+#if WITH_OST
 #include "net/ipv6/uip-ds6-nbr.h"
 #endif
 
@@ -108,7 +108,7 @@ struct tsch_packet {
   uint8_t header_len; /* length of header and header IEs (needed for link-layer security) */
   uint8_t tsch_sync_ie_offset; /* Offset within the frame used for quick update of EB ASN and join priority */
 
-#if WITH_OST_REV
+#if WITH_OST
   uip_ds6_nbr_t *ost_prt_nbr;
   uint16_t ost_prt_new_t_offset;
   uint8_t ost_flag_increase_N; /* increase N due to allocation failure of low prr */
@@ -166,7 +166,7 @@ struct input_packet {
   int16_t rssi; /* RSSI for this packet */
   uint8_t channel; /* Channel we received the packet on */
 
-#if WITH_OST_REV /* OST-09: Post process received N */
+#if WITH_OST /* OST-09: Post process received N */
   uip_ds6_nbr_t *ost_prN_nbr;
   uint16_t ost_prN_new_N;
   uint16_t ost_prN_new_t_offset;

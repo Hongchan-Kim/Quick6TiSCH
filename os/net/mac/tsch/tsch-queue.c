@@ -95,7 +95,7 @@ NBR_TABLE(struct tsch_neighbor, tsch_neighbors);
 struct tsch_neighbor *n_broadcast;
 struct tsch_neighbor *n_eb;
 
-#if WITH_OST /* OST-01: Measure traffic load */
+#if WITH_OST /* OST-01-01: Measure traffic load */
 static struct ctimer ost_select_N_timer;
 #endif
 
@@ -418,8 +418,8 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
 #endif
 
-#if WITH_OST /* OST-01: Measure traffic load */
-  uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
+#if WITH_OST /* OST-01-03: Measure traffic load */
+  uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
   if(nbr != NULL) {
     /* OST count the number of tx even if queue loss occurs */
     nbr->ost_num_tx++;
@@ -794,7 +794,7 @@ tsch_queue_init(void)
   n_eb = tsch_queue_add_nbr(&tsch_eb_address);
   n_broadcast = tsch_queue_add_nbr(&tsch_broadcast_address);
 
-#if WITH_OST /* OST-01: Measure traffic load */
+#if WITH_OST /* OST-01-02: Measure traffic load */
   /* 
    * start ost_select_N_timer
    * this timer will call ost_select_N func periodically
