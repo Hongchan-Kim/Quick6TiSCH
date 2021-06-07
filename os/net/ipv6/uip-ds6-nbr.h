@@ -125,7 +125,6 @@ typedef struct uip_ds6_nbr {
   uint16_t ost_my_N;             // 1. determined by me
   uint16_t ost_my_t_offset;      // 2. determined by nbr
   uint8_t ost_my_installable;
-  /* OST for Rx */
   uint16_t ost_nbr_N;            // 1. determined by nbr
   uint16_t ost_nbr_t_offset;     // 2. determined by me
   uint16_t ost_num_tx;           // network-layer

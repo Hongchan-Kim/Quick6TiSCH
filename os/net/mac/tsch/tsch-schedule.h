@@ -180,7 +180,7 @@ struct tsch_slotframe *tsch_schedule_slotframe_head(void);
 struct tsch_slotframe *tsch_schedule_slotframe_next(struct tsch_slotframe *sf);
 
 #if WITH_OST && OST_ON_DEMAND_PROVISION
-struct ssq_schedule_t {
+struct ost_ssq_schedule_t {
   struct tsch_link link;
   struct tsch_asn_t asn;
 };

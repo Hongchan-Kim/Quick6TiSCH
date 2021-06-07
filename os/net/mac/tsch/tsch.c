@@ -687,7 +687,7 @@ tsch_rx_process_pending()
     struct input_packet *current_input = &input_array[input_index];
 
 #if WITH_OST /* OST-09: Post process received N */
-    post_process_rx_N(current_input);
+    ost_post_process_rx_N(current_input);
 #endif
 
     frame802154_t frame;
@@ -727,7 +727,7 @@ tsch_tx_process_pending(void)
     struct tsch_packet *p = dequeued_array[dequeued_index];
 
 #if WITH_OST
-    post_process_rx_t_offset(p);
+    ost_post_process_rx_t_offset(p);
 #endif
 
     /* Put packet into packetbuf for packet_sent callback */
@@ -1404,6 +1404,7 @@ send_packet(mac_callback_t sent, void *ptr)
     max_transmissions = TSCH_MAC_MAX_FRAME_RETRIES + 1;
   }
 
+  /* OST-03-01: Piggybacks N */
   if((hdr_len = NETSTACK_FRAMER.create()) < 0) {
     LOG_ERR("! can't send packet due to framer error\n");
     ret = MAC_TX_ERR;

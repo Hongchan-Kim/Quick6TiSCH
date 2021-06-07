@@ -118,7 +118,7 @@ void queuebuf_debug_print(void);
 int queuebuf_numfree(void);
 
 #if WITH_OST
-void set_queuebuf_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val);
+void ost_set_queuebuf_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val);
 #endif
 
 #endif /* __QUEUEBUF_H__ */

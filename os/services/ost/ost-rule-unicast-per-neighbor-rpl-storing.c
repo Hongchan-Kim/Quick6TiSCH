@@ -207,8 +207,8 @@ change_attr_in_tx_queue(const linkaddr_t * dest)
         index = i;  
       }
 
-      set_queuebuf_attr(dest_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME, sf_handle);
-      set_queuebuf_attr(dest_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
+      ost_set_queuebuf_attr(dest_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME, sf_handle);
+      ost_set_queuebuf_attr(dest_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
     }
   }
 }

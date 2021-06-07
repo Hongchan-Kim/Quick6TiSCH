@@ -110,7 +110,7 @@ create_frame(int do_create)
                   packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
   }
 
-#if WITH_OST /* OST-03: Piggyback N */
+#if WITH_OST /* OST-03-02: Piggyback N */
   uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&params.dest_addr);
   if(ds6_nbr != NULL) {
     if(ds6_nbr->ost_my_installable == 0) {

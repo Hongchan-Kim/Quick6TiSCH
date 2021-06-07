@@ -90,7 +90,7 @@ void ost_change_queue_select_packet(linkaddr_t *nbr_lladdr, uint16_t handle, uin
 int neighbor_has_uc_link(const linkaddr_t *linkaddr);
 /* OST variables */
 #if OST_ON_DEMAND_PROVISION
-extern struct ssq_schedule_t ssq_schedule_list[16];
+extern struct ost_ssq_schedule_t ost_ssq_schedule_list[16];
 #endif
 #endif
 

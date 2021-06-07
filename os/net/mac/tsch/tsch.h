@@ -291,8 +291,8 @@ uint64_t tsch_get_network_uptime_ticks(void);
 void tsch_disassociate(void);
 
 #if WITH_OST
-void post_process_rx_N(struct input_packet *);
-void post_process_rx_t_offset(struct tsch_packet *);
+void ost_post_process_rx_N(struct input_packet *);
+void ost_post_process_rx_t_offset(struct tsch_packet *);
 #endif
 
 #endif /* __TSCH_H__ */

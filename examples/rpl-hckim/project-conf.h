@@ -35,8 +35,8 @@
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79 /* z = 9.6 or 9.4 */
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_64
 //#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_43 /* 4~5 hop */
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_63
-#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_83 /* 9~10 hop */
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_63
+//#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_83 /* 9~10 hop */
 //#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_2
 //#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_3
 
@@ -154,6 +154,7 @@
 #define WITH_SECURITY                              0
 #endif /* WITH_SECURITY */
 #define TSCH_NEXT_PRINT_PERIOD                     (1 * 60 * CLOCK_SECOND)
+#define TSCH_LOG_CONF_QUEUE_LEN                    16
 /*---------------------------------------------------------------------------*/
 
 

@@ -87,7 +87,7 @@ typedef struct {
   uint8_t src_addr_len;    /**<  Length (in bytes) of source address field */
   uint8_t aux_sec_len;     /**<  Length (in bytes) of aux security header field */
 
-#if WITH_OST /* OST: Add ost_pigg1_len */
+#if WITH_OST /* OST-00-02: Add ost_pigg1_len */
   uint8_t ost_pigg1_len; /* for N or t_offseet */
 #if OST_ON_DEMAND_PROVISION
   uint8_t ost_pigg2_len; /* for on-demand provisioning */
@@ -329,7 +329,7 @@ field_len(frame802154_t *p, field_length_t *flen)
     flen->dest_pid_len = 2;
   }
 
-#if WITH_OST /* OST-03: Piggyback N */
+#if WITH_OST /* OST-03-04: Piggyback N */
   flen->ost_pigg1_len = 2; /* for N or t_offset */
 #if OST_ON_DEMAND_PROVISION
   flen->ost_pigg2_len = 2; /* for on-demand provisioning */
@@ -374,7 +374,7 @@ frame802154_hdrlen(frame802154_t *p)
   field_length_t flen;
   field_len(p, &flen);
 
-#if WITH_OST /* OST-03: Piggyback N */
+#if WITH_OST /* OST-03-03: Piggyback N */
 #if OST_ON_DEMAND_PROVISION
   return 2 + flen.seqno_len + flen.dest_pid_len + flen.dest_addr_len + 
          flen.src_pid_len + flen.src_addr_len + flen.aux_sec_len + 
@@ -432,7 +432,7 @@ frame802154_create(frame802154_t *p, uint8_t *buf)
   frame802154_create_fcf(&p->fcf, buf);
   pos = 2; // hckim: pos 0 and 1 are for fcf
 
-#if WITH_OST /* OST-03: Piggyback N */
+#if WITH_OST /* OST-03-05: Piggyback N */
   if(flen.ost_pigg1_len == 2) { /* for N or t_offset */
     buf[pos++] = p->ost_pigg1 & 0xff;
     buf[pos++] = (p->ost_pigg1 >> 8) & 0xff;
@@ -559,7 +559,7 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
   memcpy(&pf->fcf, &fcf, sizeof(frame802154_fcf_t));
   p += 2;                             /* Skip first two bytes */
 
-#if WITH_OST /* OST-04: Parse received N */
+#if WITH_OST /* OST-04-02: Parse received N */
   pf->ost_pigg1 = p[0] + (p[1] << 8);
   p +=2;
 #if OST_ON_DEMAND_PROVISION

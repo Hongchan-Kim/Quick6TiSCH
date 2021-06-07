@@ -147,10 +147,10 @@ tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)
 
   uint8_t i;
   for(i = 0; i < 16; i++) {
-    if(ssq_schedule_list[i].asn.ls4b == 0 && ssq_schedule_list[i].asn.ms1b == 0) {
+    if(ost_ssq_schedule_list[i].asn.ls4b == 0 && ost_ssq_schedule_list[i].asn.ms1b == 0) {
       /* Do nothing */
     } else {
-      ssq_ASN = (uint64_t)(ssq_schedule_list[i].asn.ls4b) + ((uint64_t)(ssq_schedule_list[i].asn.ms1b) << 32);
+      ssq_ASN = (uint64_t)(ost_ssq_schedule_list[i].asn.ls4b) + ((uint64_t)(ost_ssq_schedule_list[i].asn.ms1b) << 32);
       uint64_t time_to_timeslot = ssq_ASN - curr_ASN;
       if(time_to_timeslot == 0) {
         /* Current asn */
@@ -172,7 +172,7 @@ tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)
 }
 /*---------------------------------------------------------------------------*/
 uint8_t
-earlier_ssq_schedule_list(uint16_t *time_to_orig_schedule, struct tsch_link **link)
+ost_earlier_ssq_schedule_list(uint16_t *time_to_orig_schedule, struct tsch_link **link)
 {
   struct tsch_link *earliest_link;
   uint64_t curr_ASN = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
@@ -183,13 +183,13 @@ earlier_ssq_schedule_list(uint16_t *time_to_orig_schedule, struct tsch_link **li
   uint8_t i;
   uint8_t earliest_i;
   for(i = 0; i < 16; i++) {
-    if(ssq_schedule_list[i].asn.ls4b == 0 && ssq_schedule_list[i].asn.ms1b == 0) {
+    if(ost_ssq_schedule_list[i].asn.ls4b == 0 && ost_ssq_schedule_list[i].asn.ms1b == 0) {
       /* Do nothing */
     } else {
-      ssq_ASN = (uint64_t)(ssq_schedule_list[i].asn.ls4b) + ((uint64_t)(ssq_schedule_list[i].asn.ms1b) << 32);
+      ssq_ASN = (uint64_t)(ost_ssq_schedule_list[i].asn.ls4b) + ((uint64_t)(ost_ssq_schedule_list[i].asn.ms1b) << 32);
       if(earliest_ASN == 0 || ssq_ASN < earliest_ASN) {
         earliest_ASN = ssq_ASN;
-        earliest_link = &(ssq_schedule_list[i].link);
+        earliest_link = &(ost_ssq_schedule_list[i].link);
         earliest_i = i;
         if(earliest_link == NULL) {
           /* ERROR: Null temp earliest_link */
@@ -198,8 +198,8 @@ earlier_ssq_schedule_list(uint16_t *time_to_orig_schedule, struct tsch_link **li
 
       if(ssq_ASN <= curr_ASN) {
         /* ERROR: ssq_ASN <= curr_ASN */
-        ssq_schedule_list[i].asn.ls4b = 0;
-        ssq_schedule_list[i].asn.ms1b = 0; 
+        ost_ssq_schedule_list[i].asn.ls4b = 0;
+        ost_ssq_schedule_list[i].asn.ms1b = 0; 
         return 0; 
       }
     }
@@ -221,8 +221,8 @@ earlier_ssq_schedule_list(uint16_t *time_to_orig_schedule, struct tsch_link **li
       return 1;
     } else if(time_to_earliest == *time_to_orig_schedule) {
       /* ERROR: ssq overlap with orig schedule */
-      ssq_schedule_list[earliest_i].asn.ms1b = 0;
-      ssq_schedule_list[earliest_i].asn.ls4b = 0;
+      ost_ssq_schedule_list[earliest_i].asn.ms1b = 0;
+      ost_ssq_schedule_list[earliest_i].asn.ls4b = 0;
 
       return 0;
     } else {
@@ -856,7 +856,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if WITH_OST && OST_ON_DEMAND_PROVISION
     struct tsch_link *ssq_link = NULL;
     uint16_t new_time_offset = *time_offset; /* Initialize */
-    if(earlier_ssq_schedule_list(&new_time_offset, &ssq_link)) {
+    if(ost_earlier_ssq_schedule_list(&new_time_offset, &ssq_link)) {
       if(ssq_link != NULL) {
         /* Changed time_offset to the new_time_offset */
         *time_offset = new_time_offset;

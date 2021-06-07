@@ -117,7 +117,7 @@ uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST /* OST-03: Piggyback N */
+#if WITH_OST /* OST-03-06: Piggyback N */
 void
 ost_update_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N)
 {
@@ -145,7 +145,7 @@ ost_update_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_OST /* OST-02: Determine N */
+#if WITH_OST /* OST-02-01: Select N */
 /* OST select appropriate N according to the traffic load */
 void ost_select_N(void* ptr)
 {
@@ -200,6 +200,7 @@ void ost_select_N(void* ptr)
           }
         }
       } else {
+        /* initialize ost_my_N of newly added nbr */
         ds6_nbr->ost_my_N = 5;
         if(ds6_nbr->ost_newly_added == 1) { 
           ds6_nbr->ost_newly_added = 0;
@@ -210,6 +211,7 @@ void ost_select_N(void* ptr)
         LOG_INFO_(" (newly_added) %u\n", ds6_nbr->ost_my_N);
 #endif
       }
+
       ds6_nbr = uip_ds6_nbr_next(ds6_nbr);
     }
 
@@ -420,9 +422,9 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 
 #if WITH_OST /* OST-01-03: Measure traffic load */
   uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
-  if(nbr != NULL) {
+  if(ds6_nbr != NULL) {
     /* OST count the number of tx even if queue loss occurs */
-    nbr->ost_num_tx++;
+    ds6_nbr->ost_num_tx++;
   }
 #endif
 

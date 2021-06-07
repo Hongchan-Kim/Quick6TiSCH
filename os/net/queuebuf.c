@@ -459,7 +459,7 @@ queuebuf_attr(struct queuebuf *b, uint8_t type)
 /*---------------------------------------------------------------------------*/
 #if WITH_OST
 void
-set_queuebuf_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val)
+ost_set_queuebuf_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val)
 {
   struct queuebuf_data *buframptr = queuebuf_load_to_ram(b);
   buframptr->attrs[type].val = val;
