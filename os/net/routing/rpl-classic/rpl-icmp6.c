@@ -357,15 +357,6 @@ dio_input(void)
   }
   LOG_INFO("Accept DIO with RSSI %d\n", dio_rssi);
 #endif
-#if RPL_DIO_FILTER_EWMA
-  const struct link_stats *stats = link_stats_from_lladdr(packetbuf_addr(PACKETBUF_ADDR_SENDER));
-  int16_t dio_ewma_rssi = stats->rssi;
-  if(dio_ewma_rssi < RPL_DIO_FILTER_THRESHOLD) {
-    LOG_INFO("Discard DIO with low RSSI %d\n", dio_ewma_rssi);
-    goto discard;
-  }
-  LOG_INFO("Accept DIO with RSSI %d\n", dio_ewma_rssi);
-#endif
 
   buffer_length = uip_len - uip_l3_icmp_hdr_len;
 
