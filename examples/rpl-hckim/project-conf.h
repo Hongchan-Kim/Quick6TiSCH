@@ -72,7 +72,7 @@
 #define NODE_NUM                                   3
 #endif
 
-#define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2)
+#define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
 #define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
 /*---------------------------------------------------------------------------*/
 
@@ -99,11 +99,11 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 10)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 4)
 //#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
 //define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
-#define APP_START_DELAY                            (26 * 60 * CLOCK_SECOND) // 26
-#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND) // 30
+#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 26
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) // 30
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
@@ -123,12 +123,11 @@
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
 #define RPL_RELAXED_ETX_NOACK_PENALTY              1
 #define RPL_DIO_FILTER                             0
-#define RPL_DIO_FILTER_EWMA                        0
 #define RPL_DIO_FILTER_THRESHOLD                   (-80)
 #define RPL_MODIFIED_DAO_OPERATION_1               1 /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 #define RPL_MODIFIED_DAO_OPERATION_3               0 /* only dao or no-path dao with latest sequence number can change downward route */
-#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /* ALICE: 1 */
+#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /* in ALICE: 1 */
 /*---------------------------------------------------------------------------*/
 
 
@@ -169,8 +168,8 @@
 
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -201,8 +200,8 @@
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //31 broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              11 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_UNICAST_PERIOD              23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
 
 #define WITH_ALICE                                 1
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
@@ -212,10 +211,12 @@
 #define ALICE_BROADCAST_SF_ID                      1 //slotframe handle of broadcast/default slotframe
 #define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
 #define TSCH_CONF_BURST_MAX_LEN                    0
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 * NODE_NUM)
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (2 * NODE_NUM + 3 + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
+#undef RPL_CONF_RPL_REPAIR_ON_DAO_NACK
+#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            1
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST //OST
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
@@ -231,10 +232,10 @@
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define OST_JSB_ADD                                1
 
-#define OST_N_SELECTION_PERIOD                         15 // related to OST_N_MAX: Min. traffic load = 1 / (OST_N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
-#define OST_N_MAX                                      8 // max t_offset 65535-1, 65535 is used for no-allocation
-#define OST_MORE_UNDER_PROVISION                       1 // more allocation 2^OST_MORE_UNDER_PROVISION times than under-provision
-#define OST_N_OFFSET_NEW_TX_REQUEST                       100 // Maybe used for denial message
+#define OST_N_SELECTION_PERIOD                     15 // related to OST_N_MAX: Min. traffic load = 1 / (OST_N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
+#define OST_N_MAX                                  8 // max t_offset 65535-1, 65535 is used for no-allocation
+#define OST_MORE_UNDER_PROVISION                   1 // more allocation 2^OST_MORE_UNDER_PROVISION times than under-provision
+#define OST_N_OFFSET_NEW_TX_REQUEST                100 // Maybe used for denial message
 #define PRR_THRES_TX_CHANGE                        70
 #define NUM_TX_MAC_THRES_TX_CHANGE                 20
 #define NUM_TX_FAIL_THRES                          5
@@ -242,22 +243,14 @@
 #define OST_T_OFFSET_ALLOCATION_FAILURE            ((1 << OST_N_MAX) + 1)
 #define OST_T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST    ((1 << OST_N_MAX) + 2)
 #define OST_THRES_CONSECUTIVE_NEW_TX_SCHEDULE_REQUEST           10
-#define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          (2 * NBR_TABLE_CONF_MAX_NEIGHBORS)
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (5 * NODE_NUM)
+#define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          (2 * NODE_NUM + 3 + 2) /* EB SF, CS SF, RBUC SF, Tx/Rx SF for each node + 2 for spare*/
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (2 * NODE_NUM + 4 + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
 #define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) // Under-provision uses up to 2*NODE_NUM+2
 
 /* OST only */
-#if OST_HANDLE_QUEUED_PACKETS
-#undef QUEUEBUF_CONF_NUM
-#define QUEUEBUF_CONF_NUM                          16
-#define TSCH_CONF_MAX_INCOMING_PACKETS             8
-#endif
 #define OST_TSCH_TS_RX_ACK_DELAY                   1300
 #define OST_TSCH_TS_TX_ACK_DELAY                   1500
 #define TSCH_CONF_RX_WAIT                          800 /* ignore too late packets */
-//#undef RPL_DIO_FILTER_THRESHOLD
-//#define RPL_DIO_FILTER_THRESHOLD                   (-80)
-
 #define OST_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define OST_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 
