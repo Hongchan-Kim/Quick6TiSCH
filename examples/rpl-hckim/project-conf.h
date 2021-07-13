@@ -126,7 +126,7 @@
 #define RPL_DIO_FILTER_THRESHOLD                   (-80)
 #define RPL_MODIFIED_DAO_OPERATION_1               1 /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
-#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /* in ALICE: 1 */
+#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            1 /* set 1 in ALICE to enable local repair. quickly find another parent. original: 0 */
 /*---------------------------------------------------------------------------*/
 
 
@@ -214,8 +214,6 @@
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
-#undef RPL_CONF_RPL_REPAIR_ON_DAO_NACK
-#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            1
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST //OST
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
