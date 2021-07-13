@@ -95,6 +95,18 @@ static uint16_t tsch_ip_noack_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_ok_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_error_count; // tsch_tx_process_pending
 
+static uint16_t tsch_ip_icmp6_qloss_count; // send_packet
+static uint16_t tsch_ip_icmp6_enqueue_count; // send_packet
+static uint16_t tsch_ip_icmp6_noack_count; // tsch_tx_process_pending
+static uint16_t tsch_ip_icmp6_ok_count; // tsch_tx_process_pending
+static uint16_t tsch_ip_icmp6_error_count; // tsch_tx_process_pending
+
+static uint16_t tsch_ip_udp_qloss_count; // send_packet
+static uint16_t tsch_ip_udp_enqueue_count; // send_packet
+static uint16_t tsch_ip_udp_noack_count; // tsch_tx_process_pending
+static uint16_t tsch_ip_udp_ok_count; // tsch_tx_process_pending
+static uint16_t tsch_ip_udp_error_count; // tsch_tx_process_pending
+
 uint16_t tsch_input_qloss_count;
 
 /* hckim for measure cell utilization during association */
@@ -150,6 +162,17 @@ void reset_log_tsch()
   tsch_ip_noack_count = 0; // tsch_tx_process_pending
   tsch_ip_ok_count = 0; // tsch_tx_process_pending
   tsch_ip_error_count = 0; // tsch_tx_process_pending
+  tsch_ip_icmp6_qloss_count = 0; // send_packet
+  tsch_ip_icmp6_enqueue_count = 0; // send_packet
+  tsch_ip_icmp6_noack_count = 0; // tsch_tx_process_pending
+  tsch_ip_icmp6_ok_count = 0; // tsch_tx_process_pending
+  tsch_ip_icmp6_error_count = 0; // tsch_tx_process_pending
+  tsch_ip_udp_qloss_count = 0; // send_packet
+  tsch_ip_udp_enqueue_count = 0; // send_packet
+  tsch_ip_udp_noack_count = 0; // tsch_tx_process_pending
+  tsch_ip_udp_ok_count = 0; // tsch_tx_process_pending
+  tsch_ip_udp_error_count = 0; // tsch_tx_process_pending
+
   tsch_input_qloss_count = 0;
 
   /* hckim for measure cell utilization during association */
@@ -757,10 +780,26 @@ tsch_tx_process_pending(void)
     } else {
       if(p->ret == MAC_TX_NOACK) { // IP layer packet
         LOG_INFO("HCK ip_noack %u\n", ++tsch_ip_noack_count);
+        if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+          LOG_ERR("HCK ip_icmp6_noack %u\n", ++tsch_ip_icmp6_noack_count);
+        } else {
+          LOG_ERR("HCK ip_udp_noack %u\n", ++tsch_ip_udp_noack_count);
+        }
+
       } else if(p->ret == MAC_TX_OK) {
         LOG_INFO("HCK ip_ok %u\n", ++tsch_ip_ok_count);
+        if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+          LOG_ERR("HCK ip_icmp6_ok %u\n", ++tsch_ip_icmp6_ok_count);
+        } else {
+          LOG_ERR("HCK ip_udp_ok %u\n", ++tsch_ip_udp_ok_count);
+        }
       } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
         LOG_INFO("HCK ip_err %u\n", ++tsch_ip_error_count);
+        if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+          LOG_ERR("HCK ip_icmp6_err %u\n", ++tsch_ip_icmp6_error_count);
+        } else {
+          LOG_ERR("HCK ip_udp_err %u\n", ++tsch_ip_udp_error_count);
+        }
       }
     }
 
@@ -1426,6 +1465,11 @@ send_packet(mac_callback_t sent, void *ptr)
         LOG_ERR("HCK ka_qloss %u\n", ++tsch_ka_qloss_count);
       } else {
         LOG_ERR("HCK ip_qloss %u\n", ++tsch_ip_qloss_count);
+        if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+          LOG_ERR("HCK ip_icmp6_qloss %u\n", ++tsch_ip_icmp6_qloss_count);
+        } else {
+          LOG_ERR("HCK ip_udp_qloss %u\n", ++tsch_ip_udp_qloss_count);
+        }
       }
     } else {
       p->header_len = hdr_len;
@@ -1439,6 +1483,11 @@ send_packet(mac_callback_t sent, void *ptr)
         LOG_INFO("HCK ka_enqueue %u\n", ++tsch_ka_enqueue_count);
       } else {
         LOG_INFO("HCK ip_enqueue %u\n", ++tsch_ip_enqueue_count);
+        if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+          LOG_ERR("HCK ip_icmp6_enqueue %u\n", ++tsch_ip_icmp6_enqueue_count);
+        } else {
+          LOG_ERR("HCK ip_udp_enqueue %u\n", ++tsch_ip_udp_enqueue_count);
+        }
       }
 
     }

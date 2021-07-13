@@ -85,12 +85,31 @@ static uint32_t ip_ucast_transmission_count; // packet_sent
 static uint16_t ip_ucast_ok_count;
 static uint16_t ip_ucast_noack_count;
 static uint16_t ip_ucast_error_count;
+
+static uint32_t ip_ucast_icmp6_transmission_count; // packet_sent
+static uint16_t ip_ucast_icmp6_ok_count;
+static uint16_t ip_ucast_icmp6_noack_count;
+static uint16_t ip_ucast_icmp6_error_count;
+
+static uint32_t ip_ucast_udp_transmission_count; // packet_sent
+static uint16_t ip_ucast_udp_ok_count;
+static uint16_t ip_ucast_udp_noack_count;
+static uint16_t ip_ucast_udp_error_count;
+
 void reset_log_sicslowpan()
 {
   ip_ucast_transmission_count = 0;
   ip_ucast_ok_count = 0;
   ip_ucast_noack_count = 0;
   ip_ucast_error_count = 0;
+  ip_ucast_icmp6_transmission_count = 0;
+  ip_ucast_icmp6_ok_count = 0;
+  ip_ucast_icmp6_noack_count = 0;
+  ip_ucast_icmp6_error_count = 0;
+  ip_ucast_udp_transmission_count = 0;
+  ip_ucast_udp_ok_count = 0;
+  ip_ucast_udp_noack_count = 0;
+  ip_ucast_udp_error_count = 0;
 }
 
 #define GET16(ptr,index) (((uint16_t)((ptr)[index] << 8)) | ((ptr)[(index) + 1]))
@@ -1487,14 +1506,37 @@ packet_sent(void *ptr, int status, int transmissions)
   /* unicast only */
   if(status == MAC_TX_NOACK || status == MAC_TX_OK) {
     ip_ucast_transmission_count += transmissions;
+    if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+      ip_ucast_icmp6_transmission_count += transmissions;
+    } else {
+      ip_ucast_udp_transmission_count += transmissions;
+    }
   }
   LOG_INFO("HCK ip_uc_tx %lu\n", ip_ucast_transmission_count);
+  LOG_INFO("HCK ip_uc_icmp6_tx %lu\n", ip_ucast_icmp6_transmission_count);
+  LOG_INFO("HCK ip_uc_udp_tx %lu\n", ip_ucast_udp_transmission_count);
+
   if(status == MAC_TX_OK) {
     LOG_INFO("HCK ip_uc_ok %u\n", ++ip_ucast_ok_count);
+    if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+      LOG_INFO("HCK ip_uc_icmp6_ok %u\n", ++ip_ucast_icmp6_ok_count);
+    } else {
+      LOG_INFO("HCK ip_uc_udp_ok %u\n", ++ip_ucast_udp_ok_count);
+    }
   } else if(status == MAC_TX_NOACK) {
     LOG_INFO("HCK ip_uc_noack %u\n", ++ip_ucast_noack_count);
+    if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+      LOG_INFO("HCK ip_uc_icmp6_noack %u\n", ++ip_ucast_icmp6_noack_count);
+    } else {
+      LOG_INFO("HCK ip_uc_udp_noack %u\n", ++ip_ucast_udp_noack_count);
+    }
   } else if(status == MAC_TX_ERR || status == MAC_TX_ERR_FATAL) {
     LOG_INFO("HCK ip_uc_err %u\n", ++ip_ucast_error_count);
+    if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+      LOG_INFO("HCK ip_uc_icmp6_err %u\n", ++ip_ucast_icmp6_error_count);
+    } else {
+      LOG_INFO("HCK ip_uc_udp_err %u\n", ++ip_ucast_udp_error_count);
+    }
   }
 
   /* Update neighbor link statistics */

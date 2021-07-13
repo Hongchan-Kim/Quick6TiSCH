@@ -70,9 +70,13 @@ metric_list = ['id', 'addr',
             'tx_up', 'rx_up', 'tx_down', 'rx_down', 
             'fwd_ok', 'fwd_no_nexthop', 'fwd_err',
             'ip_uc_tx', 'ip_uc_ok', 'ip_uc_noack', 'ip_uc_err',
+            'ip_uc_icmp6_tx', 'ip_uc_icmp6_ok', 'ip_uc_icmp6_noack', 'ip_uc_icmp6_err',
+            'ip_uc_udp_tx', 'ip_uc_udp_ok', 'ip_uc_udp_noack', 'ip_uc_udp_err',
             'ka_send', 'ka_qloss', 'ka_enqueue', 'ka_tx', 'ka_ok', 'ka_noack', 'ka_err',
             'eb_send', 'eb_qloss', 'eb_enqueue', 'eb_ok', 'eb_noack', 'eb_err',
             'ip_qloss', 'ip_enqueue', 'ip_ok', 'ip_noack', 'ip_err', 
+            'ip_icmp6_qloss', 'ip_icmp6_enqueue', 'ip_icmp6_ok', 'ip_icmp6_noack', 'ip_icmp6_err', 
+            'ip_udp_qloss', 'ip_udp_enqueue', 'ip_udp_ok', 'ip_udp_noack', 'ip_udp_err', 
             'input_qloss',
             'asso', 'leaving', 'leave_time',
             'act_ts', 'sch_ts', 'ass_ts',
@@ -93,7 +97,9 @@ PRESERVE_METRIC_NUM = len(preserve_metric_list)
 
 # STEP-2-4: define result list
 result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 
-               'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 'IPQL', 'IPQR', 'IPLL', 'IPLR', 'InQL', 'linkE', 'leave', 'SATR', 'ASTR', 'AATR', 'dc']
+               'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
+               'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
+               'leave', 'SATR', 'ASTR', 'AATR', 'dc']
 RESULT_NUM = len(result_list)
 
 
@@ -240,6 +246,26 @@ for i in range(NODE_NUM):
         elif result_list[j] == 'IPLR':
             tot_uc_noack = float(bootstrap_period_parsed[i][metric_list.index('ip_uc_noack')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_noack')])
             tot_uc_ok = float(bootstrap_period_parsed[i][metric_list.index('ip_uc_ok')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_ok')])
+            if tot_uc_noack + tot_uc_ok == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(tot_uc_noack) / (float(tot_uc_noack) + float(tot_uc_ok)) * 100, 2)
+        elif result_list[j] == 'IUQL':
+            tot_qloss = int(bootstrap_period_parsed[i][metric_list.index('ip_udp_qloss')])# + int(bootstrap_period_parsed[i][metric_list.index('ka_qloss')]) + int(bootstrap_period_parsed[i][metric_list.index('eb_qloss')])
+            bootstrap_period_result[i][j] = tot_qloss
+        elif result_list[j] == 'IUQR':
+            tot_qloss = float(bootstrap_period_parsed[i][metric_list.index('ip_udp_qloss')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_qloss')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_qloss')])
+            tot_enqueue = float(bootstrap_period_parsed[i][metric_list.index('ip_udp_enqueue')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_enqueue')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_enqueue')])
+            if tot_qloss + tot_enqueue == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(tot_qloss) / (float(tot_qloss) + float(tot_enqueue)) * 100, 2)
+        elif result_list[j] == 'IULL':
+            tot_uc_noack = int(bootstrap_period_parsed[i][metric_list.index('ip_uc_udp_noack')])# + int(bootstrap_period_parsed[i][metric_list.index('ka_noack')])
+            bootstrap_period_result[i][j] = tot_uc_noack
+        elif result_list[j] == 'IULR':
+            tot_uc_noack = float(bootstrap_period_parsed[i][metric_list.index('ip_uc_udp_noack')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_noack')])
+            tot_uc_ok = float(bootstrap_period_parsed[i][metric_list.index('ip_uc_udp_ok')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_ok')])
             if tot_uc_noack + tot_uc_ok == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
@@ -444,6 +470,26 @@ for i in range(NODE_NUM):
         elif result_list[j] == 'IPLR':
             tot_uc_noack = float(data_period_parsed[i][metric_list.index('ip_uc_noack')])# + float(data_period_parsed[i][metric_list.index('ka_noack')])
             tot_uc_ok = float(data_period_parsed[i][metric_list.index('ip_uc_ok')])# + float(data_period_parsed[i][metric_list.index('ka_ok')])
+            if tot_uc_noack + tot_uc_ok == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(tot_uc_noack) / (float(tot_uc_noack) + float(tot_uc_ok)) * 100, 2)
+        elif result_list[j] == 'IUQL':
+            tot_qloss = int(data_period_parsed[i][metric_list.index('ip_udp_qloss')])# + int(data_period_parsed[i][metric_list.index('ka_qloss')]) + int(data_period_parsed[i][metric_list.index('eb_qloss')])
+            data_period_result[i][j] = tot_qloss
+        elif result_list[j] == 'IUQR':
+            tot_qloss = float(data_period_parsed[i][metric_list.index('ip_udp_qloss')])# + float(data_period_parsed[i][metric_list.index('ka_qloss')]) + float(data_period_parsed[i][metric_list.index('eb_qloss')])
+            tot_enqueue = float(data_period_parsed[i][metric_list.index('ip_udp_enqueue')])# + float(data_period_parsed[i][metric_list.index('ka_enqueue')]) + float(data_period_parsed[i][metric_list.index('eb_enqueue')])
+            if tot_qloss + tot_enqueue == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(tot_qloss) / (float(tot_qloss) + float(tot_enqueue)) * 100, 2)
+        elif result_list[j] == 'IULL':
+            tot_uc_noack = int(data_period_parsed[i][metric_list.index('ip_uc_udp_noack')])# + int(data_period_parsed[i][metric_list.index('ka_noack')])
+            data_period_result[i][j] = tot_uc_noack
+        elif result_list[j] == 'IULR':
+            tot_uc_noack = float(data_period_parsed[i][metric_list.index('ip_uc_udp_noack')])# + float(data_period_parsed[i][metric_list.index('ka_noack')])
+            tot_uc_ok = float(data_period_parsed[i][metric_list.index('ip_uc_udp_ok')])# + float(data_period_parsed[i][metric_list.index('ka_ok')])
             if tot_uc_noack + tot_uc_ok == 0:
                 data_period_result[i][j] = 'NaN'
             else:
