@@ -835,30 +835,8 @@ dao_input_storing(void)
 
   rep = uip_ds6_route_lookup(&prefix);
 
-#if RPL_MODIFIED_DAO_OPERATION_3
-  uint8_t latest_dao_seqno_in = RPL_LOLLIPOP_INIT;
-  if(is_root == 1 && rep != NULL) {
-    latest_dao_seqno_in = rep->state.dao_seqno_in;
-  }
-#endif
-
   if(lifetime == RPL_ZERO_LIFETIME) {
     LOG_INFO("No-Path DAO received\n");
-
-#if RPL_MODIFIED_DAO_OPERATION_3
-    /* No-Path DAO */
-    if(is_root == 1 && rep != NULL) {
-      if(sequence > latest_dao_seqno_in) { /* new sequence dao */
-        rep->state.dao_seqno_in = sequence;
-      } else if((sequence + RPL_LOLLIPOP_MAX_VALUE - latest_dao_seqno_in) /* new sequence dao */
-                < RPL_LOLLIPOP_SEQUENCE_WINDOWS) {
-        rep->state.dao_seqno_in = sequence;
-      } else { /* outdated sequence dao */
-        LOG_INFO("Discard outdated No-Path DAO\n");
-        goto discard_nopath_dao;
-      }
-    }
-#endif
 
     /* No-Path DAO received; invoke the route purging routine. */
     if(rep != NULL &&
@@ -915,29 +893,10 @@ dao_input_storing(void)
                      RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
     }
 
-#if RPL_MODIFIED_DAO_OPERATION_3
-discard_nopath_dao:
-#endif
-
     return;
   }
 
   /* Normal DAO */
-#if RPL_MODIFIED_DAO_OPERATION_3
-  /* Normal DAO */
-  if(is_root == 1 && rep != NULL) {
-    if(sequence > latest_dao_seqno_in) { /* new sequence dao */
-      rep->state.dao_seqno_in = sequence;
-    } else if((sequence + RPL_LOLLIPOP_MAX_VALUE - latest_dao_seqno_in) /* new sequence dao */
-              < RPL_LOLLIPOP_SEQUENCE_WINDOWS) {
-      rep->state.dao_seqno_in = sequence;
-    } else { /* outdated sequence dao */
-      LOG_INFO("Discard outdated DAO\n");
-      goto discard_dao;
-    }
-  }
-#endif
-
 #if WITH_OST
   uip_ds6_nbr_t *sender_nbr = uip_ds6_nbr_lookup(&dao_sender_addr);
   if(sender_nbr != NULL) {
@@ -977,12 +936,6 @@ discard_nopath_dao:
     }
     return;
   }
-
-#if RPL_MODIFIED_DAO_OPERATION_3
-  if(is_root) { /* rep is newly added */
-    rep->state.dao_seqno_in = sequence;
-  }
-#endif
 
   /* set lifetime and clear NOPATH bit */
   rep->state.lifetime = RPL_LIFETIME(instance, lifetime);
@@ -1042,15 +995,6 @@ fwd_dao:
                      RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
     }
   }
-
-#if RPL_MODIFIED_DAO_OPERATION_3
-discard_dao:
-  if(is_root == 1 && flags & RPL_DAO_K_FLAG) {
-    /* signal the failure to add the node */
-    dao_ack_output(instance, &dao_sender_addr, sequence,
-                   RPL_DAO_ACK_UNABLE_TO_ADD_ROUTE_AT_ROOT);
-  }
-#endif
 
 #endif /* RPL_WITH_STORING */
 }
