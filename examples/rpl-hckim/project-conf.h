@@ -99,7 +99,7 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 4)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 6)
 //#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
 //define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 26
@@ -167,8 +167,8 @@
 
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -188,32 +188,45 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
+/* for log messages */
+#define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
+#define ORCHESTRA_UNICAST_SF_ID                    1 //slotframe handle of unicast slotframe
+#define ORCHESTRA_BROADCAST_SF_ID                  2 //slotframe handle of broadcast/default slotframe
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_LB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_LB //link-based Orchestra
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+/* for log messages */
+#define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
+#define ORCHESTRA_UNICAST_SF_ID                    1 //slotframe handle of unicast slotframe
+#define ORCHESTRA_BROADCAST_SF_ID                  2 //slotframe handle of broadcast/default slotframe
+
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
+#define TSCH_CONF_BURST_MAX_LEN                    0
 
 #define WITH_ALICE                                 1
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
 #define ALICE_EARLY_PACKET_DROP                    1
-#define ALICE_BROADCAST_SF_ID                      1 //slotframe handle of broadcast/default slotframe
-#define ALICE_UNICAST_SF_ID                        2 //slotframe handle of unicast slotframe
-#define TSCH_CONF_BURST_MAX_LEN                    0
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (2 * NODE_NUM + 3 + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
+/* for log messages */
+#define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
+#define ORCHESTRA_BROADCAST_SF_ID                  1 //slotframe handle of broadcast/default slotframe
+#define ORCHESTRA_UNICAST_SF_ID                    2 //slotframe handle of unicast slotframe
+#define ALICE_BROADCAST_SF_ID                      1
+#define ALICE_UNICAST_SF_ID                        2
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST //OST
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
@@ -223,11 +236,11 @@
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 
 #define WITH_OST                                   1
-#define WITH_OST_LOG                               1
-#define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 #define OST_ON_DEMAND_PROVISION                    1
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define OST_JSB_ADD                                1
+#define WITH_OST_LOG                               1
+#define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 
 #define OST_N_SELECTION_PERIOD                     15 // related to OST_N_MAX: Min. traffic load = 1 / (OST_N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
 #define OST_N_MAX                                  8 // max t_offset 65535-1, 65535 is used for no-allocation
@@ -240,9 +253,17 @@
 #define OST_T_OFFSET_ALLOCATION_FAILURE            ((1 << OST_N_MAX) + 1)
 #define OST_T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST    ((1 << OST_N_MAX) + 2)
 #define OST_THRES_CONSECUTIVE_NEW_TX_SCHEDULE_REQUEST           10
-#define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          (2 * NODE_NUM + 3 + 2) /* EB SF, CS SF, RBUC SF, Tx/Rx SF for each node + 2 for spare*/
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (2 * NODE_NUM + 4 + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
-#define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) // Under-provision uses up to 2*NODE_NUM+2
+#define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          (3 + 4 * NODE_NUM + 2) /* EB, CS, RBUC, Periodic, Ondemand, 2 for spare */
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 1 + NODE_NUM + 4 * NODE_NUM + 2) /* EB (2), CS (1), RBUC (1 + NODE_NUM), Periodic, Ondemand, 2 for spare */
+#define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) /* End of the periodic slotframe (Under-provision uses up to 2*NODE_NUM+2) */
+
+/* for log messages */
+#define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
+#define ORCHESTRA_UNICAST_SF_ID                    1 //slotframe handle of unicast slotframe
+#define ORCHESTRA_BROADCAST_SF_ID                  2 //slotframe handle of broadcast/default slotframe
+#define OST_PERIODIC_SF_ID_OFFSET                  2
+#define OST_ONDEMAND_SF_ID_OFFSET                  SSQ_SCHEDULE_HANDLE_OFFSET
+
 
 /* OST only */
 #define OST_TSCH_TS_RX_ACK_DELAY                   1300

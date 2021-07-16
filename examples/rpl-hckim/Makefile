@@ -9,8 +9,8 @@ MAKE_MAC = MAKE_MAC_TSCH
 MODULES += os/services/simple-energest
 
 #MODULES += os/services/orchestra
-MODULES += os/services/alice
-#MODULES += os/services/ost
+#MODULES += os/services/alice
+MODULES += os/services/ost
 
 PROJECT_SOURCEFILES += node-info.c
 
