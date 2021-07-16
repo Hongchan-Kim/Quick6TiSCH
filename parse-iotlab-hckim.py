@@ -77,16 +77,18 @@ metric_list = ['id', 'addr',
             'ip_qloss', 'ip_enqueue', 'ip_ok', 'ip_noack', 'ip_err', 
             'ip_icmp6_qloss', 'ip_icmp6_enqueue', 'ip_icmp6_ok', 'ip_icmp6_noack', 'ip_icmp6_err', 
             'ip_udp_qloss', 'ip_udp_enqueue', 'ip_udp_ok', 'ip_udp_noack', 'ip_udp_err', 
-            'input_qloss',
-            'asso', 'leaving', 'leave_time',
-            'act_ts', 'sch_ts', 'ass_ts',
+            'input_full', 'input_available', 'dequeued_full', 'dequeued_available'
+            'asso', 'ass_ts', 'leaving', 'leave_time', 
             'dis_send', 'dioU_send', 'dioM_send',
             'daoP_send', 'daoN_send', 'daoP_fwd', 'daoN_fwd', 'daoA_send',
             'ps', 'lastP', 'local_repair',
             'hopD_now', 'hopD_sum', 'hopD_cnt', 'rdt',
             'subtree_now', 'subtree_sum', 'subtree_cnt',
             'dc_count', 'dc_tx_sum', 'dc_rx_sum', 'dc_total_sum',
-            'ostP_act_ts', 'ostP_sch_ts', 'ostO_act_ts', 'ostO_sch_ts']
+            'sched_any', 'sched_eb_tx', 'sched_eb_rx', 'sched_bc', 'sched_uc_tx', 'sched_uc_rx', 
+            'sched_op_tx', 'sched_op_rx', 'sched_oo_tx', 'sched_oo_rx',
+            'any_tx_op', 'any_rx_op', 'eb_tx_op', 'eb_rx_op', 'bc_tx_op', 'bc_rx_op', 'uc_tx_op', 'uc_rx_op',
+            'op_tx_op', 'op_rx_op', 'oo_tx_op', 'oo_rx_op']
 METRIC_NUM = len(metric_list)
 
 # STEP-2-3: define metric indicators to preserve
@@ -99,7 +101,12 @@ PRESERVE_METRIC_NUM = len(preserve_metric_list)
 result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 
                'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
                'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
-               'leave', 'SATR', 'ASTR', 'AATR', 'dc']
+               'leave', 'dc',
+               'SCR', 'UTOR', 'UROR', 'PTOR', 'PROR']
+               # 'SATR', 'ASTR', 'AATR'
+               # scheduled cell ratio,
+               # unicast tx operation ratio, unicast rx operation ratio
+               # periodic tx operation ratio, periodic rx operation ratio, 
 RESULT_NUM = len(result_list)
 
 
@@ -271,7 +278,7 @@ for i in range(NODE_NUM):
             else:
                 bootstrap_period_result[i][j] = round(float(tot_uc_noack) / (float(tot_uc_noack) + float(tot_uc_ok)) * 100, 2)
         elif result_list[j] == 'InQL':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('input_qloss')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('input_full')]
         elif result_list[j] == 'linkE':
             tot_uc_tx = float(bootstrap_period_parsed[i][metric_list.index('ka_tx')]) + float(bootstrap_period_parsed[i][metric_list.index('ip_uc_tx')])
             tot_uc_ok = float(bootstrap_period_parsed[i][metric_list.index('ka_ok')]) + float(bootstrap_period_parsed[i][metric_list.index('ip_uc_ok')])
@@ -281,32 +288,36 @@ for i in range(NODE_NUM):
                 bootstrap_period_result[i][j] = round(float(tot_uc_tx) / float(tot_uc_ok), 2)
         elif result_list[j] == 'leave':
             bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('leaving')]
-        elif result_list[j] == 'actTS':
-            bootstrap_period_result[i][j] = int(bootstrap_period_parsed[i][metric_list.index('act_ts')])
-        elif result_list[j] == 'schTS':
-            bootstrap_period_result[i][j] = int(bootstrap_period_parsed[i][metric_list.index('sch_ts')])
-        elif result_list[j] == 'assTS':
-            bootstrap_period_result[i][j] = int(bootstrap_period_parsed[i][metric_list.index('ass_ts')])
-        elif result_list[j] == 'SATR':
-            if float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) == 0:
-                bootstrap_period_result[i][j] = 'NaN'
-            else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('sch_ts')]) / float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
-        elif result_list[j] == 'ASTR':
-            if float(bootstrap_period_parsed[i][metric_list.index('sch_ts')]) == 0:
-                bootstrap_period_result[i][j] = 'NaN'
-            else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('act_ts')]) / float(bootstrap_period_parsed[i][metric_list.index('sch_ts')]) * 100, 2)
-        elif result_list[j] == 'AATR':
-            if float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) == 0:
-                bootstrap_period_result[i][j] = 'NaN'
-            else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('act_ts')]) / float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
         elif result_list[j] == 'dc':
             if float(bootstrap_period_parsed[i][metric_list.index('dc_count')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('dc_total_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('dc_count')]) / 100, 2)
+        elif result_list[j] == 'SCR':
+            if float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('sched_any')]) / float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
+        elif result_list[j] == 'UTOR':
+            if float(bootstrap_period_parsed[i][metric_list.index('sched_uc_tx')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('uc_tx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sched_uc_tx')]) * 100, 2)
+        elif result_list[j] == 'UROR':
+            if float(bootstrap_period_parsed[i][metric_list.index('sched_uc_rx')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('uc_rx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sched_uc_rx')]) * 100, 2)
+        elif result_list[j] == 'PTOR':
+            if float(bootstrap_period_parsed[i][metric_list.index('sched_op_tx')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('op_tx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sched_op_tx')]) * 100, 2)
+        elif result_list[j] == 'PROR':
+            if float(bootstrap_period_parsed[i][metric_list.index('sched_op_rx')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('op_rx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sched_op_rx')]) * 100, 2)
         
 # STEP-3-5: [bootstrap period] print bootstrap_period_result
 print('----- bootstrap period -----')
@@ -495,7 +506,7 @@ for i in range(NODE_NUM):
             else:
                 data_period_result[i][j] = round(float(tot_uc_noack) / (float(tot_uc_noack) + float(tot_uc_ok)) * 100, 2)
         elif result_list[j] == 'InQL':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('input_qloss')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('input_full')]
         elif result_list[j] == 'linkE':
             tot_uc_tx = float(data_period_parsed[i][metric_list.index('ka_tx')]) + float(data_period_parsed[i][metric_list.index('ip_uc_tx')])
             tot_uc_ok = float(data_period_parsed[i][metric_list.index('ka_ok')]) + float(data_period_parsed[i][metric_list.index('ip_uc_ok')])
@@ -505,33 +516,36 @@ for i in range(NODE_NUM):
                 data_period_result[i][j] = round(float(tot_uc_tx) / float(tot_uc_ok), 2)
         elif result_list[j] == 'leave':
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('leaving')]
-        elif result_list[j] == 'actTS':
-            data_period_result[i][j] = int(data_period_parsed[i][metric_list.index('act_ts')])
-        elif result_list[j] == 'schTS':
-            data_period_result[i][j] = int(data_period_parsed[i][metric_list.index('sch_ts')])
-        elif result_list[j] == 'assTS':
-            data_period_result[i][j] = int(data_period_parsed[i][metric_list.index('ass_ts')])
-        elif result_list[j] == 'SATR':
-            if float(data_period_parsed[i][metric_list.index('ass_ts')]) == 0:
-                data_period_result[i][j] = 'NaN'
-            else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('sch_ts')]) / float(data_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
-        elif result_list[j] == 'ASTR':
-            if float(data_period_parsed[i][metric_list.index('sch_ts')]) == 0:
-                data_period_result[i][j] = 'NaN'
-            else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('act_ts')]) / float(data_period_parsed[i][metric_list.index('sch_ts')]) * 100, 2)
-        elif result_list[j] == 'AATR':
-            if float(data_period_parsed[i][metric_list.index('ass_ts')]) == 0:
-                data_period_result[i][j] = 'NaN'
-            else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('act_ts')]) / float(data_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
         elif result_list[j] == 'dc':
             if float(data_period_parsed[i][metric_list.index('dc_count')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('dc_total_sum')]) / float(data_period_parsed[i][metric_list.index('dc_count')]) / 100, 2)
-
+        elif result_list[j] == 'SCR':
+            if float(data_period_parsed[i][metric_list.index('ass_ts')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('sched_any')]) / float(data_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
+        elif result_list[j] == 'UTOR':
+            if float(data_period_parsed[i][metric_list.index('sched_uc_tx')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('uc_tx_op')]) / float(data_period_parsed[i][metric_list.index('sched_uc_tx')]) * 100, 2)
+        elif result_list[j] == 'UROR':
+            if float(data_period_parsed[i][metric_list.index('sched_uc_rx')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('uc_rx_op')]) / float(data_period_parsed[i][metric_list.index('sched_uc_rx')]) * 100, 2)
+        elif result_list[j] == 'PTOR':
+            if float(data_period_parsed[i][metric_list.index('sched_op_tx')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('op_tx_op')]) / float(data_period_parsed[i][metric_list.index('sched_op_tx')]) * 100, 2)
+        elif result_list[j] == 'PROR':
+            if float(data_period_parsed[i][metric_list.index('sched_op_rx')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('op_rx_op')]) / float(data_period_parsed[i][metric_list.index('sched_op_rx')]) * 100, 2)
 
 # STEP-4-6: [data period] print data_period_result
 print('----- data period -----')

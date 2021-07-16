@@ -69,28 +69,39 @@ frequency hopping for enhanced reliability.
 extern uint16_t alice_early_packet_drop_count;
 #endif
 
-extern uint16_t tsch_input_qloss_count;
+extern uint16_t tsch_input_ringbuf_full_count;
+extern uint16_t tsch_input_ringbuf_available_count;
+extern uint16_t tsch_dequeued_ringbuf_full_count;
+extern uint16_t tsch_dequeued_ringbuf_available_count;
 
-extern uint32_t tsch_unlocked_scheduled_cell_count; //hckim
-extern uint32_t tsch_unlocked_scheduled_tx_cell_count; //hckim
-extern uint32_t tsch_unlocked_scheduled_rx_cell_count; //hckim
-extern uint32_t tsch_unlocked_scheduled_idle_cell_count; //hckim
-extern uint32_t tsch_unlocked_scheduled_tx_operation_count; //hckim
-extern uint32_t tsch_unlocked_scheduled_rx_operation_count; //hckim
-
+/* hckim measure cell utilization during association */
+extern uint32_t tsch_unlocked_scheduled_any_cell_count;
+extern uint32_t tsch_unlocked_scheduled_eb_tx_cell_count;
+extern uint32_t tsch_unlocked_scheduled_eb_rx_cell_count;
+extern uint32_t tsch_unlocked_scheduled_broadcast_cell_count;
+extern uint32_t tsch_unlocked_scheduled_unicast_tx_cell_count;
+extern uint32_t tsch_unlocked_scheduled_unicast_rx_cell_count;
 #if WITH_OST
-extern uint32_t ost_unlocked_scheduled_periodic_cell_count; // chk
-extern uint32_t ost_unlocked_scheduled_periodic_tx_cell_count; // chk
-extern uint32_t ost_unlocked_scheduled_periodic_rx_cell_count; // chk
-extern uint32_t ost_unlocked_scheduled_periodic_idle_cell_count; // chk
-extern uint32_t ost_unlocked_scheduled_periodic_tx_operation_count; // chk
-extern uint32_t ost_unlocked_scheduled_periodic_rx_operation_count; // chk
-extern uint32_t ost_unlocked_scheduled_ondemand_cell_count; // chk
-extern uint32_t ost_unlocked_scheduled_ondemand_tx_cell_count; // chk
-extern uint32_t ost_unlocked_scheduled_ondemand_rx_cell_count; // chk
-extern uint32_t ost_unlocked_scheduled_ondemand_idle_cell_count; // chk
-extern uint32_t ost_unlocked_scheduled_ondemand_tx_operation_count; // chk
-extern uint32_t ost_unlocked_scheduled_ondemand_rx_operation_count; // chk
+extern uint32_t tsch_ost_unlocked_scheduled_periodic_tx_cell_count;
+extern uint32_t tsch_ost_unlocked_scheduled_periodic_rx_cell_count;
+extern uint32_t tsch_ost_unlocked_scheduled_ondemand_tx_cell_count;
+extern uint32_t tsch_ost_unlocked_scheduled_ondemand_rx_cell_count;
+#endif
+
+/* hckim measure tx/rx operation counts */
+extern uint32_t tsch_any_slotframe_tx_operation_count;
+extern uint32_t tsch_any_slotframe_rx_operation_count;
+extern uint32_t tsch_eb_slotframe_tx_operation_count;
+extern uint32_t tsch_eb_slotframe_rx_operation_count;
+extern uint32_t tsch_broadcast_slotframe_tx_operation_count;
+extern uint32_t tsch_broadcast_slotframe_rx_operation_count;
+extern uint32_t tsch_unicast_slotframe_tx_operation_count;
+extern uint32_t tsch_unicast_slotframe_rx_operation_count;
+#if WITH_OST
+extern uint32_t tsch_ost_periodic_provisioning_tx_operation_count;
+extern uint32_t tsch_ost_periodic_provisioning_rx_operation_count;
+extern uint32_t tsch_ost_ondemand_provisioning_tx_operation_count;
+extern uint32_t tsch_ost_ondemand_provisioning_rx_operation_count;
 #endif
 
 void reset_log_tsch();

@@ -1588,12 +1588,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
   TSCH_DEBUG_TX_EVENT();
 
-  ++tsch_unlocked_scheduled_tx_cell_count; //hckim
-
   /* First check if we have space to store a newly dequeued packet (in case of
    * successful Tx or Drop) */
   dequeued_index = ringbufindex_peek_put(&dequeued_ringbuf);
   if(dequeued_index != -1) {
+    ++tsch_dequeued_ringbuf_available_count;
+
     if(current_packet == NULL || current_packet->qb == NULL) {
       mac_tx_status = MAC_TX_ERR_FATAL;
     } else {
@@ -1946,21 +1946,31 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         log->tx.seqno = queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_MAC_SEQNO);
     );
 
-    ++tsch_unlocked_scheduled_tx_operation_count; //hckim
-#if WITH_OST /* Log messages */
-    if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
-      ++ost_unlocked_scheduled_periodic_tx_operation_count;
-    }
-#if OST_ON_DEMAND_PROVISION
-    else if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET) {
-      ++ost_unlocked_scheduled_ondemand_tx_operation_count;
-    }
-#endif
-#endif
+    /* hckim measure tx operation counts */
+    ++tsch_any_slotframe_tx_operation_count;
 
+    if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+      ++tsch_eb_slotframe_tx_operation_count;
+    } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+      ++tsch_broadcast_slotframe_tx_operation_count;
+    } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+      ++tsch_unicast_slotframe_tx_operation_count;
+    } 
+#if WITH_OST
+    else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+          && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+      ++tsch_ost_periodic_provisioning_tx_operation_count;
+    } else if(current_link->slotframe_handle > OST_ONDEMAND_SF_ID_OFFSET) {
+      ++tsch_ost_ondemand_provisioning_tx_operation_count;
+    }
+#endif
 
     /* Poll process for later processing of packet sent events and logs */
     process_poll(&tsch_pending_events_process);
+  }
+  /* hckim */
+  else {
+    ++tsch_dequeued_ringbuf_full_count;
   }
 
 #if WITH_OST && OST_ON_DEMAND_PROVISION
@@ -2006,15 +2016,15 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
   TSCH_DEBUG_RX_EVENT();
 
-  ++tsch_unlocked_scheduled_rx_cell_count; //hckim
-
   input_index = ringbufindex_peek_put(&input_ringbuf);
   if(input_index == -1) {
     /* hckim log */
-    ++tsch_input_qloss_count;
+    ++tsch_input_ringbuf_full_count;
 
     input_queue_drop++;
   } else {
+    ++tsch_input_ringbuf_available_count;
+
     static struct input_packet *current_input;
     /* Estimated drift based on RX time */
     static int32_t estimated_drift;
@@ -2256,17 +2266,25 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             );
           }
 
-          ++tsch_unlocked_scheduled_rx_operation_count; //hckim
+          /* hckim measure tx operation counts */
+          ++tsch_any_slotframe_rx_operation_count;
+
+          if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+            ++tsch_eb_slotframe_rx_operation_count;
+          } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+            ++tsch_broadcast_slotframe_rx_operation_count;
+          } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+            ++tsch_unicast_slotframe_rx_operation_count;
+          } 
 #if WITH_OST
-    if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
-      ++ost_unlocked_scheduled_periodic_rx_operation_count;
-    }
-#if OST_ON_DEMAND_PROVISION
-    else if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET) {
-      ++ost_unlocked_scheduled_ondemand_rx_operation_count;
-    }
+          else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+            && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+            ++tsch_ost_periodic_provisioning_rx_operation_count;
+          } else if(current_link->slotframe_handle > OST_ONDEMAND_SF_ID_OFFSET) {
+            ++tsch_ost_ondemand_provisioning_rx_operation_count;
+          }
 #endif
-#endif
+
 
           /* Poll process for processing of pending input and logs */
           process_poll(&tsch_pending_events_process);
@@ -2333,17 +2351,39 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif 
 
     } else {
-      ++tsch_unlocked_scheduled_cell_count; //hckim
+      /* hckim measure cell utilization from current_link */
+      ++tsch_unlocked_scheduled_any_cell_count; //hckim
 
+      if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+        if(current_link->link_options & LINK_OPTION_TX) {
+          ++tsch_unlocked_scheduled_eb_tx_cell_count;
+        } else if(current_link->link_options & LINK_OPTION_RX) {
+          ++tsch_unlocked_scheduled_eb_rx_cell_count;
+        }
+      } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+        ++tsch_unlocked_scheduled_broadcast_cell_count;
+      } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+        if(current_link->link_options & LINK_OPTION_TX) {
+          ++tsch_unlocked_scheduled_unicast_tx_cell_count;
+        } else if(current_link->link_options & LINK_OPTION_RX) {
+          ++tsch_unlocked_scheduled_unicast_rx_cell_count;
+        }
+      } 
 #if WITH_OST
-        if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
-          ++ost_unlocked_scheduled_periodic_cell_count;
+      else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+            && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+        if(current_link->link_options & LINK_OPTION_TX) {
+          ++tsch_ost_unlocked_scheduled_periodic_tx_cell_count;
+        } else if(current_link->link_options & LINK_OPTION_RX) {
+          ++tsch_ost_unlocked_scheduled_periodic_rx_cell_count;
         }
-#if OST_ON_DEMAND_PROVISION 
-        else if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET) {
-          ++ost_unlocked_scheduled_ondemand_cell_count;
+      } else if(current_link->slotframe_handle > OST_ONDEMAND_SF_ID_OFFSET) {
+        if(current_link->link_options & LINK_OPTION_TX) {
+          ++tsch_ost_unlocked_scheduled_ondemand_tx_cell_count;
+        } else if(current_link->link_options & LINK_OPTION_RX) {
+          ++tsch_ost_unlocked_scheduled_ondemand_rx_cell_count;
         }
-#endif
+      }
 #endif
 
       int is_active_slot;
@@ -2388,20 +2428,52 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
 #endif
 
+      /* hckim measure cell utilization from backup_link, if used */
+      if((backup_link != NULL) && (current_link == backup_link)) {
+        if(backup_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+          if(backup_link->link_options & LINK_OPTION_TX) {
+            ++tsch_unlocked_scheduled_eb_tx_cell_count;
+          } else if(backup_link->link_options & LINK_OPTION_RX) {
+            ++tsch_unlocked_scheduled_eb_rx_cell_count;
+          }
+        } else if(backup_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+          ++tsch_unlocked_scheduled_broadcast_cell_count;
+        } else if(backup_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+          if(backup_link->link_options & LINK_OPTION_TX) {
+            ++tsch_unlocked_scheduled_unicast_tx_cell_count;
+          } else if(backup_link->link_options & LINK_OPTION_RX) {
+            ++tsch_unlocked_scheduled_unicast_rx_cell_count;
+          }
+        } 
+#if WITH_OST
+        else if(backup_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+              && backup_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+          if(backup_link->link_options & LINK_OPTION_TX) {
+            ++tsch_ost_unlocked_scheduled_periodic_tx_cell_count;
+          } else if(backup_link->link_options & LINK_OPTION_RX) {
+            ++tsch_ost_unlocked_scheduled_periodic_rx_cell_count;
+          }
+        } else if(backup_link->slotframe_handle > OST_ONDEMAND_SF_ID_OFFSET) {
+          if(backup_link->link_options & LINK_OPTION_TX) {
+            ++tsch_ost_unlocked_scheduled_ondemand_tx_cell_count;
+          } else if(backup_link->link_options & LINK_OPTION_RX) {
+            ++tsch_ost_unlocked_scheduled_ondemand_rx_cell_count;
+          }
+        }
+#endif
+      }
+
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
 
 #if WITH_OST
         uint16_t rx_id = 0;
 
-        if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
+        if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+          && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
           if(current_link->link_options & LINK_OPTION_TX) {
-            ++ost_unlocked_scheduled_periodic_tx_cell_count;
-
             rx_id = ost_get_id_from_tx_sf_handle(current_link->slotframe_handle);
           } else if(current_link->link_options & LINK_OPTION_RX) {
-            ++ost_unlocked_scheduled_periodic_rx_cell_count;
-
             rx_id = OST_NODE_ID_FROM_LINKADDR(&linkaddr_node_addr);
           }
 
@@ -2420,15 +2492,11 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if OST_ON_DEMAND_PROVISION 
         else if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET) {
           if(current_link->link_options & LINK_OPTION_TX) {
-            ++ost_unlocked_scheduled_ondemand_tx_cell_count;
-
             rx_id = (current_link->slotframe_handle - SSQ_SCHEDULE_HANDLE_OFFSET - 1) / 2;
             if(current_packet == NULL) {
               /* ERROR: multi_channel 4 */
             }
           } else if(current_link->link_options & LINK_OPTION_RX) {
-            ++ost_unlocked_scheduled_ondemand_rx_cell_count;
-
             rx_id = OST_NODE_ID_FROM_LINKADDR(&linkaddr_node_addr);
           } else {
             /* ERROR: multi_channel 5 */
@@ -2489,18 +2557,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
         }
       } else {
-        ++tsch_unlocked_scheduled_idle_cell_count; //hckim
-#if WITH_OST
-        if(current_link->slotframe_handle >= 3 && current_link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
-          ++ost_unlocked_scheduled_periodic_idle_cell_count;
-        }
-#if OST_ON_DEMAND_PROVISION 
-        else if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET) {
-          ++ost_unlocked_scheduled_ondemand_idle_cell_count;
-        }
-#endif
-#endif
-
 #if !WITH_OST && !WITH_ALICE
         /* Make sure to end the burst in cast, for some reason, we were
          * in a burst but now without any more packet to send. */

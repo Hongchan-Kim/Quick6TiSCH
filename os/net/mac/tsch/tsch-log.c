@@ -119,8 +119,8 @@ tsch_log_process_pending(void)
           && !linkaddr_cmp(&log->tx.dest, &tsch_eb_address)
           && !linkaddr_cmp(&log->tx.dest, &tsch_broadcast_address)) {
           /* periodic provisioning tx slotframe only */
-          if(log->link->slotframe_handle >= 3 
-            && log->link->slotframe_handle < SSQ_SCHEDULE_HANDLE_OFFSET) {
+          if(log->link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET
+            && log->link->slotframe_handle <= SSQ_SCHEDULE_HANDLE_OFFSET) {
             
             uip_ds6_nbr_t *nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&log->tx.dest);
             if(nbr != NULL) {

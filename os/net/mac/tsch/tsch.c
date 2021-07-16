@@ -107,39 +107,50 @@ static uint16_t tsch_ip_udp_noack_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_udp_ok_count; // tsch_tx_process_pending
 static uint16_t tsch_ip_udp_error_count; // tsch_tx_process_pending
 
-uint16_t tsch_input_qloss_count;
+uint16_t tsch_input_ringbuf_full_count;
+uint16_t tsch_input_ringbuf_available_count;
+uint16_t tsch_dequeued_ringbuf_full_count;
+uint16_t tsch_dequeued_ringbuf_available_count;
 
-/* hckim for measure cell utilization during association */
-static uint16_t tsch_log_association_count;
-uint32_t tsch_unlocked_scheduled_cell_count;
-uint32_t tsch_unlocked_scheduled_tx_cell_count;
-uint32_t tsch_unlocked_scheduled_rx_cell_count;
-uint32_t tsch_unlocked_scheduled_idle_cell_count;
-uint32_t tsch_unlocked_scheduled_tx_operation_count;
-uint32_t tsch_unlocked_scheduled_rx_operation_count;
-static uint32_t tsch_timeslots_until_last_session;
-static struct tsch_asn_t tsch_last_asn_associated;
+/* hckim measure associated cell counts */
 static struct ctimer utilization_timer;
+static struct tsch_asn_t tsch_last_asn_associated;
+static uint16_t tsch_log_association_count;
+static uint32_t tsch_timeslots_until_last_session;
+
+/* hckim measure cell utilization during association */
+uint32_t tsch_unlocked_scheduled_any_cell_count;
+uint32_t tsch_unlocked_scheduled_eb_tx_cell_count;
+uint32_t tsch_unlocked_scheduled_eb_rx_cell_count;
+uint32_t tsch_unlocked_scheduled_broadcast_cell_count;
+uint32_t tsch_unlocked_scheduled_unicast_tx_cell_count;
+uint32_t tsch_unlocked_scheduled_unicast_rx_cell_count;
+#if WITH_OST
+uint32_t tsch_ost_unlocked_scheduled_periodic_tx_cell_count;
+uint32_t tsch_ost_unlocked_scheduled_periodic_rx_cell_count;
+uint32_t tsch_ost_unlocked_scheduled_ondemand_tx_cell_count;
+uint32_t tsch_ost_unlocked_scheduled_ondemand_rx_cell_count;
+#endif
+
+/* hckim measure tx/rx operation counts */
+uint32_t tsch_any_slotframe_tx_operation_count;
+uint32_t tsch_any_slotframe_rx_operation_count;
+uint32_t tsch_eb_slotframe_tx_operation_count;
+uint32_t tsch_eb_slotframe_rx_operation_count;
+uint32_t tsch_broadcast_slotframe_tx_operation_count;
+uint32_t tsch_broadcast_slotframe_rx_operation_count;
+uint32_t tsch_unicast_slotframe_tx_operation_count;
+uint32_t tsch_unicast_slotframe_rx_operation_count;
+#if WITH_OST
+uint32_t tsch_ost_periodic_provisioning_tx_operation_count;
+uint32_t tsch_ost_periodic_provisioning_rx_operation_count;
+uint32_t tsch_ost_ondemand_provisioning_tx_operation_count;
+uint32_t tsch_ost_ondemand_provisioning_rx_operation_count;
+#endif
 
 static clock_time_t clock_last_leaving;
 static clock_time_t clock_inst_leaving_time;
 static clock_time_t clock_avg_leaving_time;
-
-#if WITH_OST
-uint32_t ost_unlocked_scheduled_periodic_cell_count;
-uint32_t ost_unlocked_scheduled_periodic_tx_cell_count;
-uint32_t ost_unlocked_scheduled_periodic_rx_cell_count;
-uint32_t ost_unlocked_scheduled_periodic_idle_cell_count;
-uint32_t ost_unlocked_scheduled_periodic_tx_operation_count;
-uint32_t ost_unlocked_scheduled_periodic_rx_operation_count;
-
-uint32_t ost_unlocked_scheduled_ondemand_cell_count;
-uint32_t ost_unlocked_scheduled_ondemand_tx_cell_count;
-uint32_t ost_unlocked_scheduled_ondemand_rx_cell_count;
-uint32_t ost_unlocked_scheduled_ondemand_idle_cell_count;
-uint32_t ost_unlocked_scheduled_ondemand_tx_operation_count;
-uint32_t ost_unlocked_scheduled_ondemand_rx_operation_count;
-#endif
 
 void reset_log_tsch()
 {
@@ -173,15 +184,41 @@ void reset_log_tsch()
   tsch_ip_udp_ok_count = 0; // tsch_tx_process_pending
   tsch_ip_udp_error_count = 0; // tsch_tx_process_pending
 
-  tsch_input_qloss_count = 0;
+  tsch_input_ringbuf_full_count = 0;
+  tsch_input_ringbuf_available_count = 0;
+  tsch_dequeued_ringbuf_full_count = 0;
+  tsch_dequeued_ringbuf_available_count = 0;
 
   /* hckim for measure cell utilization during association */
-  tsch_unlocked_scheduled_cell_count = 0;;
-  tsch_unlocked_scheduled_tx_cell_count = 0;;
-  tsch_unlocked_scheduled_rx_cell_count = 0;;
-  tsch_unlocked_scheduled_idle_cell_count = 0;;
-  tsch_unlocked_scheduled_tx_operation_count = 0;;
-  tsch_unlocked_scheduled_rx_operation_count = 0;;
+  tsch_unlocked_scheduled_any_cell_count = 0;;
+  tsch_unlocked_scheduled_eb_tx_cell_count = 0;
+  tsch_unlocked_scheduled_eb_rx_cell_count = 0;
+  tsch_unlocked_scheduled_broadcast_cell_count = 0;
+  tsch_unlocked_scheduled_unicast_tx_cell_count = 0;
+  tsch_unlocked_scheduled_unicast_rx_cell_count = 0;
+#if WITH_OST
+  tsch_ost_unlocked_scheduled_periodic_tx_cell_count = 0;
+  tsch_ost_unlocked_scheduled_periodic_rx_cell_count = 0;
+  tsch_ost_unlocked_scheduled_ondemand_tx_cell_count = 0;
+  tsch_ost_unlocked_scheduled_ondemand_rx_cell_count = 0;
+#endif
+
+/* hckim measure tx/rx operation counts */
+  tsch_any_slotframe_tx_operation_count = 0;
+  tsch_any_slotframe_rx_operation_count = 0;
+  tsch_eb_slotframe_tx_operation_count = 0;
+  tsch_eb_slotframe_rx_operation_count = 0;
+  tsch_broadcast_slotframe_tx_operation_count = 0;
+  tsch_broadcast_slotframe_rx_operation_count = 0;
+  tsch_unicast_slotframe_tx_operation_count = 0;
+  tsch_unicast_slotframe_rx_operation_count = 0;
+#if WITH_OST
+  tsch_ost_periodic_provisioning_tx_operation_count = 0;
+  tsch_ost_periodic_provisioning_rx_operation_count = 0;
+  tsch_ost_ondemand_provisioning_tx_operation_count = 0;
+  tsch_ost_ondemand_provisioning_rx_operation_count = 0;
+#endif
+
 
   tsch_timeslots_until_last_session = 0;
   TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
@@ -194,22 +231,6 @@ void reset_log_tsch()
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
   alice_early_packet_drop_count = 0;
 #endif
-
-#if WITH_OST
-  ost_unlocked_scheduled_periodic_cell_count = 0;
-  ost_unlocked_scheduled_periodic_tx_cell_count = 0;
-  ost_unlocked_scheduled_periodic_rx_cell_count = 0;
-  ost_unlocked_scheduled_periodic_idle_cell_count = 0;
-  ost_unlocked_scheduled_periodic_tx_operation_count = 0;
-  ost_unlocked_scheduled_periodic_rx_operation_count = 0;
-
-  ost_unlocked_scheduled_ondemand_cell_count = 0;
-  ost_unlocked_scheduled_ondemand_tx_cell_count = 0;
-  ost_unlocked_scheduled_ondemand_rx_cell_count = 0;
-  ost_unlocked_scheduled_ondemand_idle_cell_count = 0;
-  ost_unlocked_scheduled_ondemand_tx_operation_count = 0;
-  ost_unlocked_scheduled_ondemand_rx_operation_count = 0;
-#endif
 }
 
 static void
@@ -219,40 +240,47 @@ print_utilization()
   LOG_INFO("HCK e_drop %u\n", alice_early_packet_drop_count);
 #endif
 
-  LOG_INFO("HCK input_qloss %u\n", tsch_input_qloss_count);
+  LOG_INFO("HCK input_full %u\n", tsch_input_ringbuf_full_count);
+  LOG_INFO("HCK input_available %u\n", tsch_input_ringbuf_available_count);
+  LOG_INFO("HCK dequeued_full %u\n", tsch_dequeued_ringbuf_full_count);
+  LOG_INFO("HCK dequeued_available %u\n", tsch_dequeued_ringbuf_available_count);
+
   //timeslots in current session
   int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
   //timeslots until last session + timeslots in current session
   uint32_t tsch_total_associated_timeslots = 
           tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
-  LOG_INFO("HCK act_ts %lu | tx %lu rx %lu\n", 
-          tsch_unlocked_scheduled_tx_operation_count + tsch_unlocked_scheduled_rx_operation_count,
-          tsch_unlocked_scheduled_tx_operation_count, tsch_unlocked_scheduled_rx_operation_count);
-  LOG_INFO("HCK sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
-          tsch_unlocked_scheduled_cell_count,
-          tsch_unlocked_scheduled_tx_cell_count + tsch_unlocked_scheduled_rx_cell_count + tsch_unlocked_scheduled_idle_cell_count,
-          tsch_unlocked_scheduled_tx_cell_count, tsch_unlocked_scheduled_rx_cell_count, tsch_unlocked_scheduled_idle_cell_count);
   LOG_INFO("HCK ass_ts %lu\n", tsch_total_associated_timeslots);
 
+  /* hckim measure cell utilization during association */
+  LOG_INFO("HCK sched_any %lu\n", tsch_unlocked_scheduled_any_cell_count);
+  LOG_INFO("HCK sched_eb_tx %lu\n", tsch_unlocked_scheduled_eb_tx_cell_count);
+  LOG_INFO("HCK sched_eb_rx %lu\n", tsch_unlocked_scheduled_eb_rx_cell_count);
+  LOG_INFO("HCK sched_bc %lu\n", tsch_unlocked_scheduled_broadcast_cell_count);
+  LOG_INFO("HCK sched_uc_tx %lu\n", tsch_unlocked_scheduled_unicast_tx_cell_count);
+  LOG_INFO("HCK sched_uc_rx %lu\n", tsch_unlocked_scheduled_unicast_rx_cell_count);
 #if WITH_OST
-  LOG_INFO("HCK ostP_act_ts %lu | tx %lu rx %lu\n", 
-          ost_unlocked_scheduled_periodic_tx_operation_count + ost_unlocked_scheduled_periodic_rx_operation_count,
-          ost_unlocked_scheduled_periodic_tx_operation_count, ost_unlocked_scheduled_periodic_rx_operation_count);
-  LOG_INFO("HCK ostP_sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
-          ost_unlocked_scheduled_periodic_cell_count,
-          ost_unlocked_scheduled_periodic_tx_cell_count + ost_unlocked_scheduled_periodic_rx_cell_count + ost_unlocked_scheduled_periodic_idle_cell_count,
-          ost_unlocked_scheduled_periodic_tx_cell_count, ost_unlocked_scheduled_periodic_rx_cell_count, ost_unlocked_scheduled_periodic_idle_cell_count);
-#if OST_ON_DEMAND_PROVISION
-  LOG_INFO("HCK ostO_act_ts %lu | tx %lu rx %lu\n", 
-          ost_unlocked_scheduled_ondemand_tx_operation_count + ost_unlocked_scheduled_ondemand_rx_operation_count,
-          ost_unlocked_scheduled_ondemand_tx_operation_count, ost_unlocked_scheduled_ondemand_rx_operation_count);
-  LOG_INFO("HCK ostO_sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
-          ost_unlocked_scheduled_ondemand_cell_count,
-          ost_unlocked_scheduled_ondemand_tx_cell_count + ost_unlocked_scheduled_ondemand_rx_cell_count + ost_unlocked_scheduled_ondemand_idle_cell_count,
-          ost_unlocked_scheduled_ondemand_tx_cell_count, ost_unlocked_scheduled_ondemand_rx_cell_count, ost_unlocked_scheduled_ondemand_idle_cell_count);
-#endif
+  LOG_INFO("HCK sched_op_tx %lu\n", tsch_ost_unlocked_scheduled_periodic_tx_cell_count);
+  LOG_INFO("HCK sched_op_rx %lu\n", tsch_ost_unlocked_scheduled_periodic_rx_cell_count);
+  LOG_INFO("HCK sched_oo_tx %lu\n", tsch_ost_unlocked_scheduled_ondemand_tx_cell_count);
+  LOG_INFO("HCK sched_oo_rx %lu\n", tsch_ost_unlocked_scheduled_ondemand_rx_cell_count);
 #endif
 
+  /* hckim measure tx/rx operation counts */
+  LOG_INFO("HCK any_tx_op %lu\n", tsch_any_slotframe_tx_operation_count);
+  LOG_INFO("HCK any_rx_op %lu\n", tsch_any_slotframe_rx_operation_count);
+  LOG_INFO("HCK eb_tx_op %lu\n", tsch_eb_slotframe_tx_operation_count);
+  LOG_INFO("HCK eb_rx_op %lu\n", tsch_eb_slotframe_rx_operation_count);
+  LOG_INFO("HCK bc_tx_op %lu\n", tsch_broadcast_slotframe_tx_operation_count);
+  LOG_INFO("HCK bc_rx_op %lu\n", tsch_broadcast_slotframe_rx_operation_count);
+  LOG_INFO("HCK uc_tx_op %lu\n", tsch_unicast_slotframe_tx_operation_count);
+  LOG_INFO("HCK uc_rx_op %lu\n", tsch_unicast_slotframe_rx_operation_count);
+#if WITH_OST
+  LOG_INFO("HCK op_tx_op %lu\n", tsch_ost_periodic_provisioning_tx_operation_count);
+  LOG_INFO("HCK op_rx_op %lu\n", tsch_ost_periodic_provisioning_rx_operation_count);
+  LOG_INFO("HCK oo_tx_op %lu\n", tsch_ost_ondemand_provisioning_tx_operation_count);
+  LOG_INFO("HCK oo_rx_op %lu\n", tsch_ost_ondemand_provisioning_rx_operation_count);
+#endif
 
   ctimer_reset(&utilization_timer);
 }
@@ -1160,37 +1188,45 @@ PROCESS_THREAD(tsch_process, ev, data)
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
     LOG_INFO("HCK e_drop %u\n", alice_early_packet_drop_count);
 #endif
-    LOG_INFO("HCK input_qloss %u\n", tsch_input_qloss_count);
+    LOG_INFO("HCK input_full %u\n", tsch_input_ringbuf_full_count);
+    LOG_INFO("HCK input_available %u\n", tsch_input_ringbuf_available_count);
+    LOG_INFO("HCK dequeued_full %u\n", tsch_dequeued_ringbuf_full_count);
+    LOG_INFO("HCK dequeued_available %u\n", tsch_dequeued_ringbuf_available_count);
 
+    //timeslots in current session
     int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
     uint32_t tsch_total_associated_timeslots = 
             tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
-    LOG_INFO("HCK act_ts %lu | tx %lu rx %lu\n", 
-            tsch_unlocked_scheduled_tx_operation_count + tsch_unlocked_scheduled_rx_operation_count,
-            tsch_unlocked_scheduled_tx_operation_count, tsch_unlocked_scheduled_rx_operation_count);
-    LOG_INFO("HCK sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
-          tsch_unlocked_scheduled_cell_count,
-          tsch_unlocked_scheduled_tx_cell_count + tsch_unlocked_scheduled_rx_cell_count + tsch_unlocked_scheduled_idle_cell_count,
-          tsch_unlocked_scheduled_tx_cell_count, tsch_unlocked_scheduled_rx_cell_count, tsch_unlocked_scheduled_idle_cell_count);
     LOG_INFO("HCK ass_ts %lu\n", tsch_total_associated_timeslots);
 
+    /* hckim measure cell utilization during association */
+    LOG_INFO("HCK sched_any %lu\n", tsch_unlocked_scheduled_any_cell_count);
+    LOG_INFO("HCK sched_eb_tx %lu\n", tsch_unlocked_scheduled_eb_tx_cell_count);
+    LOG_INFO("HCK sched_eb_rx %lu\n", tsch_unlocked_scheduled_eb_rx_cell_count);
+    LOG_INFO("HCK sched_bc %lu\n", tsch_unlocked_scheduled_broadcast_cell_count);
+    LOG_INFO("HCK sched_uc_tx %lu\n", tsch_unlocked_scheduled_unicast_tx_cell_count);
+    LOG_INFO("HCK sched_uc_rx %lu\n", tsch_unlocked_scheduled_unicast_rx_cell_count);
 #if WITH_OST
-  LOG_INFO("HCK ostP_act_ts %lu | tx %lu rx %lu\n", 
-          ost_unlocked_scheduled_periodic_tx_operation_count + ost_unlocked_scheduled_periodic_rx_operation_count,
-          ost_unlocked_scheduled_periodic_tx_operation_count, ost_unlocked_scheduled_periodic_rx_operation_count);
-  LOG_INFO("HCK ostP_sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
-          ost_unlocked_scheduled_periodic_cell_count,
-          ost_unlocked_scheduled_periodic_tx_cell_count + ost_unlocked_scheduled_periodic_rx_cell_count + ost_unlocked_scheduled_periodic_idle_cell_count,
-          ost_unlocked_scheduled_periodic_tx_cell_count, ost_unlocked_scheduled_periodic_rx_cell_count, ost_unlocked_scheduled_periodic_idle_cell_count);
-#if OST_ON_DEMAND_PROVISION
-  LOG_INFO("HCK ostO_act_ts %lu | tx %lu rx %lu\n", 
-          ost_unlocked_scheduled_ondemand_tx_operation_count + ost_unlocked_scheduled_ondemand_rx_operation_count,
-          ost_unlocked_scheduled_ondemand_tx_operation_count, ost_unlocked_scheduled_ondemand_rx_operation_count);
-  LOG_INFO("HCK ostO_sch_ts %lu %lu | tx %lu rx %lu idle %lu\n", 
-          ost_unlocked_scheduled_ondemand_cell_count,
-          ost_unlocked_scheduled_ondemand_tx_cell_count + ost_unlocked_scheduled_ondemand_rx_cell_count + ost_unlocked_scheduled_ondemand_idle_cell_count,
-          ost_unlocked_scheduled_ondemand_tx_cell_count, ost_unlocked_scheduled_ondemand_rx_cell_count, ost_unlocked_scheduled_ondemand_idle_cell_count);
+    LOG_INFO("HCK sched_op_tx %lu\n", tsch_ost_unlocked_scheduled_periodic_tx_cell_count);
+    LOG_INFO("HCK sched_op_rx %lu\n", tsch_ost_unlocked_scheduled_periodic_rx_cell_count);
+    LOG_INFO("HCK sched_oo_tx %lu\n", tsch_ost_unlocked_scheduled_ondemand_tx_cell_count);
+    LOG_INFO("HCK sched_oo_rx %lu\n", tsch_ost_unlocked_scheduled_ondemand_rx_cell_count);
 #endif
+    
+    /* hckim measure tx/rx operation counts */
+    LOG_INFO("HCK any_tx_op %lu\n", tsch_any_slotframe_tx_operation_count);
+    LOG_INFO("HCK any_rx_op %lu\n", tsch_any_slotframe_rx_operation_count);
+    LOG_INFO("HCK eb_tx_op %lu\n", tsch_eb_slotframe_tx_operation_count);
+    LOG_INFO("HCK eb_rx_op %lu\n", tsch_eb_slotframe_rx_operation_count);
+    LOG_INFO("HCK bc_tx_op %lu\n", tsch_broadcast_slotframe_tx_operation_count);
+    LOG_INFO("HCK bc_rx_op %lu\n", tsch_broadcast_slotframe_rx_operation_count);
+    LOG_INFO("HCK uc_tx_op %lu\n", tsch_unicast_slotframe_tx_operation_count);
+    LOG_INFO("HCK uc_rx_op %lu\n", tsch_unicast_slotframe_rx_operation_count);
+#if WITH_OST
+    LOG_INFO("HCK op_tx_op %lu\n", tsch_ost_periodic_provisioning_tx_operation_count);
+    LOG_INFO("HCK op_rx_op %lu\n", tsch_ost_periodic_provisioning_rx_operation_count);
+    LOG_INFO("HCK oo_tx_op %lu\n", tsch_ost_ondemand_provisioning_tx_operation_count);
+    LOG_INFO("HCK oo_rx_op %lu\n", tsch_ost_ondemand_provisioning_rx_operation_count);
 #endif
 
     tsch_timeslots_until_last_session = tsch_total_associated_timeslots;
