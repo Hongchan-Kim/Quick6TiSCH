@@ -528,6 +528,22 @@ uip_ds6_route_rm(uip_ds6_route_t *route)
           (const linkaddr_t *)nbr_table_get_lladdr(nbr_routes, route->neighbor_routes->route_list));
 #endif
     }
+
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
+    /* Even if this was not the only route using this neighbor,
+       execute NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK,
+       if this is the neighbor */
+    else {
+      linkaddr_t *linkaddr = nbr_table_get_lladdr(nbr_routes, route->neighbor_routes->route_list);
+      if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(linkaddr, &(route->ipaddr))) {
+#ifdef NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK
+        NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK(
+            (const linkaddr_t *)nbr_table_get_lladdr(nbr_routes, route->neighbor_routes->route_list));
+#endif
+      } 
+    }
+#endif
+
     memb_free(&routememb, route);
     memb_free(&neighborroutememb, neighbor_route);
 

@@ -157,7 +157,32 @@ alice_schedule_unicast_slotframe(void)
   nbr_table_item_t *item = nbr_table_head(nbr_routes);
   while(item != NULL) {
     linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
+    struct uip_ds6_route_neighbor_routes *routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)addr);
+    struct uip_ds6_route_neighbor_route *neighbor_route;
+    uint8_t real_child = 0;
+    for(neighbor_route = list_head(routes->route_list);
+        neighbor_route != NULL;
+        neighbor_route = list_item_next(neighbor_route)) {
+      if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(addr, &(neighbor_route->route->ipaddr))) {
+        real_child = 1;
+        break;
+      }
+    }
+    if(real_child == 1) {
+      timeslot_for_child_up = get_node_timeslot(addr, &linkaddr_node_addr); 
+      channel_offset_for_child_up = get_node_channel_offset(addr, &linkaddr_node_addr);
+      link_option_up = link_option_rx;
+      alice_tsch_schedule_add_link(sf_unicast, link_option_up, LINK_TYPE_NORMAL, 
+                                  &tsch_broadcast_address, timeslot_for_child_up, channel_offset_for_child_up);
 
+      timeslot_for_child_down = get_node_timeslot(&linkaddr_node_addr, addr); 
+      channel_offset_for_child_down = get_node_channel_offset(&linkaddr_node_addr, addr);
+      link_option_down = link_option_tx;
+      alice_tsch_schedule_add_link(sf_unicast, link_option_down, LINK_TYPE_NORMAL, 
+                                  &tsch_broadcast_address, timeslot_for_child_down, channel_offset_for_child_down);
+    }      
+#else
     timeslot_for_child_up = get_node_timeslot(addr, &linkaddr_node_addr); 
     channel_offset_for_child_up = get_node_channel_offset(addr, &linkaddr_node_addr);
     link_option_up = link_option_rx;
@@ -169,6 +194,7 @@ alice_schedule_unicast_slotframe(void)
     link_option_down = link_option_tx;
     alice_tsch_schedule_add_link(sf_unicast, link_option_down, LINK_TYPE_NORMAL, 
                                 &tsch_broadcast_address, timeslot_for_child_down, channel_offset_for_child_down);
+#endif
 
     /* move to the next item for while loop. */
     item = nbr_table_next(nbr_routes, item);
@@ -183,9 +209,24 @@ neighbor_has_uc_link(const linkaddr_t *linkaddr)
       && linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
       return 1;
     }
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
+    struct uip_ds6_route_neighbor_routes *routes;
+    routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr);
+    if(routes != NULL) {
+      struct uip_ds6_route_neighbor_route *neighbor_route;
+      for(neighbor_route = list_head(routes->route_list);
+          neighbor_route != NULL;
+          neighbor_route = list_item_next(neighbor_route)) {
+        if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(linkaddr, &(neighbor_route->route->ipaddr))) {
+          return 1;
+        }
+      }
+    }      
+#else /* original code */
     if(nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr) != NULL) {
       return 1;
     }
+#endif
   }
   return 0;
 }
@@ -213,6 +254,30 @@ alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offs
   //schedule the links between child-node and current node
   //lookup all route next hops
   nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, &rx_linkaddr);
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
+  if(item != NULL) {
+    struct uip_ds6_route_neighbor_routes *routes;
+    routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)&rx_linkaddr);
+    struct uip_ds6_route_neighbor_route *neighbor_route;
+    uint8_t real_child = 0;
+    for(neighbor_route = list_head(routes->route_list);
+        neighbor_route != NULL;
+        neighbor_route = list_item_next(neighbor_route)) {
+      if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(&rx_linkaddr, &(neighbor_route->route->ipaddr))) {
+        real_child = 1;
+        break;
+      }
+    }
+    if(real_child == 1) {
+      is_neighbor = 1;
+
+      *timeslot = get_node_timeslot(&linkaddr_node_addr, &rx_linkaddr);
+      *channel_offset = get_node_channel_offset(&linkaddr_node_addr, &rx_linkaddr); 
+
+      return is_neighbor;
+    }
+  }
+#else
   if(item != NULL) {
     is_neighbor = 1;
 
@@ -221,7 +286,7 @@ alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offs
 
     return is_neighbor;
   }
-
+#endif
   //this packet's receiver is not the node's RPL neighbor. 
   *timeslot = 0;
   *channel_offset = ALICE_BROADCAST_SF_ID;

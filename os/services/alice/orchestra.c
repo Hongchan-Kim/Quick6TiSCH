@@ -178,4 +178,8 @@ orchestra_init(void)
     }
   }
   LOG_INFO("ALICE: initialization done\n");
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION
+  LOG_INFO("modified_child_op %d sb %d\n", 
+          ORCHESTRA_MODIFIED_CHILD_OPERATION, ORCHESTRA_UNICAST_SENDER_BASED);
+#endif
 }

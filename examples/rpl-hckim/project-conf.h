@@ -17,12 +17,15 @@
 #define IOTLAB_LILLE_46                           7
 #define IOTLAB_LILLE_50                           8
 #define IOTLAB_LILLE_79                           9
-#define IOTLAB_GRENOBLE_64                        10
-#define IOTLAB_GRENOBLE_43                        11
-#define IOTLAB_GRENOBLE_63                        12
-#define IOTLAB_GRENOBLE_83                        13
-#define IOTLAB_GRENOBLE_2                         14
-#define IOTLAB_GRENOBLE_3                         15
+#define IOTLAB_GRENOBLE_R_43                      10
+#define IOTLAB_GRENOBLE_R_63                      11
+#define IOTLAB_GRENOBLE_R_83                      12
+#define IOTLAB_GRENOBLE_R_2                       13
+#define IOTLAB_GRENOBLE_R_3                       14
+#define IOTLAB_GRENOBLE_L_43                      15
+#define IOTLAB_GRENOBLE_L_63                      16
+#define IOTLAB_GRENOBLE_L_79                      17
+
 
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
@@ -33,12 +36,14 @@
 //#define IOTLAB_SITE                                IOTLAB_LILLE_46 /* z = 9.6 */
 //#define IOTLAB_SITE                                IOTLAB_LILLE_50 /* z = 6.1 */
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79 /* z = 9.6 or 9.4 */
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_64
-//#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_43 /* 4~5 hop */
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_63
-//#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_83 /* 9~10 hop */
-//#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_2
-//#define IOTLAB_SITE                                  IOTLAB_GRENOBLE_3
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_43 /* 4~5 hop */
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_63
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83 /* 9~10 hop */
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_2
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_3
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_43
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_63
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
 
 #if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
@@ -58,18 +63,22 @@
 #define NODE_NUM                                   50
 #elif IOTLAB_SITE == IOTLAB_LILLE_79
 #define NODE_NUM                                   79
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_64
-#define NODE_NUM                                   64
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_43
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_43
 #define NODE_NUM                                   43
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_63
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_63
 #define NODE_NUM                                   63
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_83
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_83
 #define NODE_NUM                                   83
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_2
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_2
 #define NODE_NUM                                   2
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_3
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_3
 #define NODE_NUM                                   3
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_43
+#define NODE_NUM                                   43
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_63
+#define NODE_NUM                                   63
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_79
+#define NODE_NUM                                   79
 #endif
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
@@ -82,7 +91,7 @@
  * Configure log
  */
 #define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO //LOG_LEVEL_DBG
 #define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
@@ -99,9 +108,9 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 6)
-//#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND) // 30
-//define APP_DATA_PERIOD                            (10 * 60 * CLOCK_SECOND) // 30
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 4)
+//#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
+//#define APP_DATA_PERIOD                            (5 * 60 * CLOCK_SECOND)
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 26
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) // 30
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
@@ -183,6 +192,9 @@
                           &unicast_per_neighbor_rpl_storing, \
                           &default_common }
 
+#define ORCHESTRA_MODIFIED_CHILD_OPERATION         1
+#define ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(linkaddr, ipaddr) (((((linkaddr)->u8[LINKADDR_SIZE - 2]) << 8) | (linkaddr)->u8[LINKADDR_SIZE - 1]) == ((((ipaddr)->u8[14]) << 8) | (ipaddr)->u8[15]))
+
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
@@ -263,7 +275,6 @@
 #define ORCHESTRA_BROADCAST_SF_ID                  2 //slotframe handle of broadcast/default slotframe
 #define OST_PERIODIC_SF_ID_OFFSET                  2
 #define OST_ONDEMAND_SF_ID_OFFSET                  SSQ_SCHEDULE_HANDLE_OFFSET
-
 
 /* OST only */
 #define OST_TSCH_TS_RX_ACK_DELAY                   1300
