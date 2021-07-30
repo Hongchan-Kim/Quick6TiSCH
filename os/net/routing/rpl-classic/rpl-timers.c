@@ -55,7 +55,6 @@
 #define LOG_LEVEL LOG_LEVEL_RPL
 
 static uint16_t rpl_dio_reset_count;
-
 static uint16_t first_hop_distance_measure;
 static uint16_t next_hop_distance_measure;
 static uint32_t hop_distance_measure_count;

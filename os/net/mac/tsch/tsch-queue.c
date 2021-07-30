@@ -65,12 +65,6 @@
 #include "orchestra.h"
 #endif
 
-#if WITH_ALICE && ALICE_EARLY_PACKET_DROP
-/* EB never experiences early_packet_drop
-   early_packet_drop only targets unicast slotframes (ex. RB) */
-uint16_t alice_early_packet_drop_count;
-#endif
-
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "TSCH Queue"

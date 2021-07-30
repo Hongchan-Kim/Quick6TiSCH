@@ -67,28 +67,28 @@ ADDR = 5
 
 # STEP-2-2: define metric indicators
 metric_list = ['id', 'addr', 
-            'tx_up', 'rx_up', 'tx_down', 'rx_down', 
+            'tx_up', 'rx_up', 'tx_down', 'rx_down',
             'fwd_ok', 'fwd_no_nexthop', 'fwd_err',
             'ip_uc_tx', 'ip_uc_ok', 'ip_uc_noack', 'ip_uc_err',
             'ip_uc_icmp6_tx', 'ip_uc_icmp6_ok', 'ip_uc_icmp6_noack', 'ip_uc_icmp6_err',
             'ip_uc_udp_tx', 'ip_uc_udp_ok', 'ip_uc_udp_noack', 'ip_uc_udp_err',
-            'ka_send', 'ka_qloss', 'ka_enqueue', 'ka_tx', 'ka_ok', 'ka_noack', 'ka_err',
+            'asso', 'asso_ts', 'leaving', 'leave_time', 
             'eb_send', 'eb_qloss', 'eb_enqueue', 'eb_ok', 'eb_noack', 'eb_err',
+            'ka_send', 'ka_qloss', 'ka_enqueue', 'ka_tx', 'ka_ok', 'ka_noack', 'ka_err',
             'ip_qloss', 'ip_enqueue', 'ip_ok', 'ip_noack', 'ip_err', 
             'ip_icmp6_qloss', 'ip_icmp6_enqueue', 'ip_icmp6_ok', 'ip_icmp6_noack', 'ip_icmp6_err', 
             'ip_udp_qloss', 'ip_udp_enqueue', 'ip_udp_ok', 'ip_udp_noack', 'ip_udp_err', 
             'input_full', 'input_available', 'dequeued_full', 'dequeued_available'
-            'asso', 'ass_ts', 'leaving', 'leave_time', 
-            'dis_send', 'dioU_send', 'dioM_send',
-            'daoP_send', 'daoN_send', 'daoP_fwd', 'daoN_fwd', 'daoA_send',
-            'ps', 'lastP', 'local_repair',
-            'hopD_now', 'hopD_sum', 'hopD_cnt', 'rdt',
-            'subtree_now', 'subtree_sum', 'subtree_cnt',
-            'dc_count', 'dc_tx_sum', 'dc_rx_sum', 'dc_total_sum',
             'sched_any', 'sched_eb_tx', 'sched_eb_rx', 'sched_bc', 'sched_uc_tx', 'sched_uc_rx', 
             'sched_op_tx', 'sched_op_rx', 'sched_oo_tx', 'sched_oo_rx',
             'any_tx_op', 'any_rx_op', 'eb_tx_op', 'eb_rx_op', 'bc_tx_op', 'bc_rx_op', 'uc_tx_op', 'uc_rx_op',
-            'op_tx_op', 'op_rx_op', 'oo_tx_op', 'oo_rx_op']
+            'op_tx_op', 'op_rx_op', 'oo_tx_op', 'oo_rx_op',
+            'ps', 'lastP', 'local_repair',
+            'dis_send', 'dioU_send', 'dioM_send',
+            'daoP_send', 'daoN_send', 'daoP_fwd', 'daoN_fwd', 'daoA_send',
+            'hopD_now', 'hopD_sum', 'hopD_cnt', 'rdt',
+            'subtree_now', 'subtree_sum', 'subtree_cnt',
+            'dc_count', 'dc_tx_sum', 'dc_rx_sum', 'dc_total_sum']
 METRIC_NUM = len(metric_list)
 
 # STEP-2-3: define metric indicators to preserve
@@ -103,7 +103,6 @@ result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr',
                'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
                'leave', 'dc',
                'SCR', 'UTOR', 'UROR', 'PTOR', 'PROR']
-               # 'SATR', 'ASTR', 'AATR'
                # scheduled cell ratio,
                # unicast tx operation ratio, unicast rx operation ratio
                # periodic tx operation ratio, periodic rx operation ratio, 
@@ -294,10 +293,10 @@ for i in range(NODE_NUM):
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('dc_total_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('dc_count')]) / 100, 2)
         elif result_list[j] == 'SCR':
-            if float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('sched_any')]) / float(bootstrap_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('sched_any')]) / float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
         elif result_list[j] == 'UTOR':
             if float(bootstrap_period_parsed[i][metric_list.index('sched_uc_tx')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
@@ -522,10 +521,10 @@ for i in range(NODE_NUM):
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('dc_total_sum')]) / float(data_period_parsed[i][metric_list.index('dc_count')]) / 100, 2)
         elif result_list[j] == 'SCR':
-            if float(data_period_parsed[i][metric_list.index('ass_ts')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('asso_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('sched_any')]) / float(data_period_parsed[i][metric_list.index('ass_ts')]) * 100, 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('sched_any')]) / float(data_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
         elif result_list[j] == 'UTOR':
             if float(data_period_parsed[i][metric_list.index('sched_uc_tx')]) == 0:
                 data_period_result[i][j] = 'NaN'

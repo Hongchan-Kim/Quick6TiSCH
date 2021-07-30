@@ -81,17 +81,17 @@
 #define LOG_MODULE "6LoWPAN"
 #define LOG_LEVEL LOG_LEVEL_6LOWPAN
 
-static uint32_t ip_ucast_transmission_count; // packet_sent
+static uint32_t ip_ucast_transmission_count;
 static uint16_t ip_ucast_ok_count;
 static uint16_t ip_ucast_noack_count;
 static uint16_t ip_ucast_error_count;
 
-static uint32_t ip_ucast_icmp6_transmission_count; // packet_sent
+static uint32_t ip_ucast_icmp6_transmission_count;
 static uint16_t ip_ucast_icmp6_ok_count;
 static uint16_t ip_ucast_icmp6_noack_count;
 static uint16_t ip_ucast_icmp6_error_count;
 
-static uint32_t ip_ucast_udp_transmission_count; // packet_sent
+static uint32_t ip_ucast_udp_transmission_count;
 static uint16_t ip_ucast_udp_ok_count;
 static uint16_t ip_ucast_udp_noack_count;
 static uint16_t ip_ucast_udp_error_count;
@@ -102,10 +102,12 @@ void reset_log_sicslowpan()
   ip_ucast_ok_count = 0;
   ip_ucast_noack_count = 0;
   ip_ucast_error_count = 0;
+
   ip_ucast_icmp6_transmission_count = 0;
   ip_ucast_icmp6_ok_count = 0;
   ip_ucast_icmp6_noack_count = 0;
   ip_ucast_icmp6_error_count = 0;
+
   ip_ucast_udp_transmission_count = 0;
   ip_ucast_udp_ok_count = 0;
   ip_ucast_udp_noack_count = 0;
@@ -1506,16 +1508,15 @@ packet_sent(void *ptr, int status, int transmissions)
   /* unicast only */
   if(status == MAC_TX_NOACK || status == MAC_TX_OK) {
     ip_ucast_transmission_count += transmissions;
+    LOG_INFO("HCK ip_uc_tx %lu\n", ip_ucast_transmission_count);
     if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
       ip_ucast_icmp6_transmission_count += transmissions;
+      LOG_INFO("HCK ip_uc_icmp6_tx %lu\n", ip_ucast_icmp6_transmission_count);
     } else {
       ip_ucast_udp_transmission_count += transmissions;
+      LOG_INFO("HCK ip_uc_udp_tx %lu\n", ip_ucast_udp_transmission_count);
     }
   }
-  LOG_INFO("HCK ip_uc_tx %lu\n", ip_ucast_transmission_count);
-  LOG_INFO("HCK ip_uc_icmp6_tx %lu\n", ip_ucast_icmp6_transmission_count);
-  LOG_INFO("HCK ip_uc_udp_tx %lu\n", ip_ucast_udp_transmission_count);
-
   if(status == MAC_TX_OK) {
     LOG_INFO("HCK ip_uc_ok %u\n", ++ip_ucast_ok_count);
     if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {

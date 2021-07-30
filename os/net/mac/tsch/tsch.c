@@ -71,52 +71,56 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+/* hckim periodically measure utilization */
+static struct ctimer utilization_timer;
+/* hckim measure associated cell counts */
+static uint32_t tsch_timeslots_until_last_session;
+static struct tsch_asn_t tsch_last_asn_associated;
+static uint16_t tsch_log_association_count;
+/* hckim measure leaving events */
 static uint16_t tsch_leaving_count;
+static clock_time_t clock_last_leaving;
+static clock_time_t clock_inst_leaving_time;
+static clock_time_t clock_avg_leaving_time;
 
 static uint16_t tsch_eb_send_count;
+static uint16_t tsch_eb_qloss_count;
+static uint16_t tsch_eb_enqueue_count;
+static uint16_t tsch_eb_ok_count;
+static uint16_t tsch_eb_noack_count;
+static uint16_t tsch_eb_error_count;
+
 static uint16_t tsch_ka_send_count;
+static uint16_t tsch_ka_qloss_count;
+static uint16_t tsch_ka_enqueue_count;
+static uint32_t tsch_ka_transmission_count;
+static uint16_t tsch_ka_ok_count;
+static uint16_t tsch_ka_noack_count;
+static uint16_t tsch_ka_error_count;
 
-static uint16_t tsch_eb_qloss_count; // tsch_send_eb_process
-static uint16_t tsch_eb_enqueue_count; // tsch_send_eb_process
-static uint16_t tsch_eb_noack_count; // tsch_tx_process_pending
-static uint16_t tsch_eb_ok_count; // tsch_tx_process_pending
-static uint16_t tsch_eb_error_count; // tsch_tx_process_pending
+static uint16_t tsch_ip_qloss_count;
+static uint16_t tsch_ip_enqueue_count;
+static uint16_t tsch_ip_ok_count;
+static uint16_t tsch_ip_noack_count;
+static uint16_t tsch_ip_error_count;
 
-static uint16_t tsch_ka_qloss_count; // send_packet
-static uint16_t tsch_ka_enqueue_count; // send_packet
-static uint16_t tsch_ka_noack_count; // tsch_tx_process_pending
-static uint16_t tsch_ka_ok_count; // tsch_tx_process_pending
-static uint16_t tsch_ka_error_count; // tsch_tx_process_pending
-static uint32_t tsch_ka_transmission_count; // keepalive_packet_sent
+static uint16_t tsch_ip_icmp6_qloss_count;
+static uint16_t tsch_ip_icmp6_enqueue_count;
+static uint16_t tsch_ip_icmp6_ok_count;
+static uint16_t tsch_ip_icmp6_noack_count;
+static uint16_t tsch_ip_icmp6_error_count;
 
-static uint16_t tsch_ip_qloss_count; // send_packet
-static uint16_t tsch_ip_enqueue_count; // send_packet
-static uint16_t tsch_ip_noack_count; // tsch_tx_process_pending
-static uint16_t tsch_ip_ok_count; // tsch_tx_process_pending
-static uint16_t tsch_ip_error_count; // tsch_tx_process_pending
-
-static uint16_t tsch_ip_icmp6_qloss_count; // send_packet
-static uint16_t tsch_ip_icmp6_enqueue_count; // send_packet
-static uint16_t tsch_ip_icmp6_noack_count; // tsch_tx_process_pending
-static uint16_t tsch_ip_icmp6_ok_count; // tsch_tx_process_pending
-static uint16_t tsch_ip_icmp6_error_count; // tsch_tx_process_pending
-
-static uint16_t tsch_ip_udp_qloss_count; // send_packet
-static uint16_t tsch_ip_udp_enqueue_count; // send_packet
-static uint16_t tsch_ip_udp_noack_count; // tsch_tx_process_pending
-static uint16_t tsch_ip_udp_ok_count; // tsch_tx_process_pending
-static uint16_t tsch_ip_udp_error_count; // tsch_tx_process_pending
+static uint16_t tsch_ip_udp_qloss_count;
+static uint16_t tsch_ip_udp_enqueue_count;
+static uint16_t tsch_ip_udp_ok_count;
+static uint16_t tsch_ip_udp_noack_count;
+static uint16_t tsch_ip_udp_error_count;
 
 uint16_t tsch_input_ringbuf_full_count;
 uint16_t tsch_input_ringbuf_available_count;
 uint16_t tsch_dequeued_ringbuf_full_count;
 uint16_t tsch_dequeued_ringbuf_available_count;
 
-/* hckim measure associated cell counts */
-static struct ctimer utilization_timer;
-static struct tsch_asn_t tsch_last_asn_associated;
-static uint16_t tsch_log_association_count;
-static uint32_t tsch_timeslots_until_last_session;
 
 /* hckim measure cell utilization during association */
 uint32_t tsch_unlocked_scheduled_any_cell_count;
@@ -148,41 +152,58 @@ uint32_t tsch_ost_ondemand_provisioning_tx_operation_count;
 uint32_t tsch_ost_ondemand_provisioning_rx_operation_count;
 #endif
 
-static clock_time_t clock_last_leaving;
-static clock_time_t clock_inst_leaving_time;
-static clock_time_t clock_avg_leaving_time;
+#if WITH_ALICE && ALICE_EARLY_PACKET_DROP
+/* EB never experiences early_packet_drop
+   early_packet_drop only targets unicast slotframes (ex. RB) */
+uint16_t alice_early_packet_drop_count;
+#endif
 
 void reset_log_tsch()
 {
+  tsch_timeslots_until_last_session = 0;
+  TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
+
+  tsch_log_association_count = 1; /* assume that this node is associated when bootstrap period ends */
+  LOG_INFO("HCK asso %u\n", tsch_log_association_count);
+
   tsch_leaving_count = 0;
+  /* do not initialize clock_last_leaving and clock_inst_leaving_time */
+  clock_avg_leaving_time = 0;
+
+  /* EB */
   tsch_eb_send_count = 0;
+  tsch_eb_qloss_count = 0;
+  tsch_eb_enqueue_count = 0;
+  tsch_eb_ok_count = 0;
+  tsch_eb_noack_count = 0;
+  tsch_eb_error_count = 0;
+
+  /* keepalive */
   tsch_ka_send_count = 0;
-  tsch_eb_qloss_count = 0; // tsch_send_eb_process
-  tsch_eb_enqueue_count = 0; // tsch_send_eb_process
-  tsch_eb_noack_count = 0; // tsch_tx_process_pending
-  tsch_eb_ok_count = 0; // tsch_tx_process_pending
-  tsch_eb_error_count = 0; // tsch_tx_process_pending
-  tsch_ka_qloss_count = 0; // send_packet
-  tsch_ka_enqueue_count = 0; // send_packet
-  tsch_ka_noack_count = 0; // tsch_tx_process_pending
-  tsch_ka_ok_count = 0; // tsch_tx_process_pending
-  tsch_ka_error_count = 0; // tsch_tx_process_pending
-  tsch_ka_transmission_count = 0; // keepalive_packet_sent
-  tsch_ip_qloss_count = 0; // send_packet
-  tsch_ip_enqueue_count = 0; // send_packet
-  tsch_ip_noack_count = 0; // tsch_tx_process_pending
-  tsch_ip_ok_count = 0; // tsch_tx_process_pending
-  tsch_ip_error_count = 0; // tsch_tx_process_pending
-  tsch_ip_icmp6_qloss_count = 0; // send_packet
-  tsch_ip_icmp6_enqueue_count = 0; // send_packet
-  tsch_ip_icmp6_noack_count = 0; // tsch_tx_process_pending
-  tsch_ip_icmp6_ok_count = 0; // tsch_tx_process_pending
-  tsch_ip_icmp6_error_count = 0; // tsch_tx_process_pending
-  tsch_ip_udp_qloss_count = 0; // send_packet
-  tsch_ip_udp_enqueue_count = 0; // send_packet
-  tsch_ip_udp_noack_count = 0; // tsch_tx_process_pending
-  tsch_ip_udp_ok_count = 0; // tsch_tx_process_pending
-  tsch_ip_udp_error_count = 0; // tsch_tx_process_pending
+  tsch_ka_qloss_count = 0;
+  tsch_ka_enqueue_count = 0;
+  tsch_ka_transmission_count = 0;
+  tsch_ka_ok_count = 0;
+  tsch_ka_noack_count = 0;
+  tsch_ka_error_count = 0;
+
+  tsch_ip_qloss_count = 0;
+  tsch_ip_enqueue_count = 0;
+  tsch_ip_ok_count = 0;
+  tsch_ip_noack_count = 0;
+  tsch_ip_error_count = 0;
+
+  tsch_ip_icmp6_qloss_count = 0;
+  tsch_ip_icmp6_enqueue_count = 0;
+  tsch_ip_icmp6_ok_count = 0;
+  tsch_ip_icmp6_noack_count = 0;
+  tsch_ip_icmp6_error_count = 0;
+
+  tsch_ip_udp_qloss_count = 0;
+  tsch_ip_udp_enqueue_count = 0;
+  tsch_ip_udp_ok_count = 0;
+  tsch_ip_udp_noack_count = 0;
+  tsch_ip_udp_error_count = 0;
 
   tsch_input_ringbuf_full_count = 0;
   tsch_input_ringbuf_available_count = 0;
@@ -219,15 +240,6 @@ void reset_log_tsch()
   tsch_ost_ondemand_provisioning_rx_operation_count = 0;
 #endif
 
-
-  tsch_timeslots_until_last_session = 0;
-  TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
-
-  tsch_log_association_count = 1; /* assume that this node is associated when bootstrap period ends */
-  LOG_INFO("HCK asso %u\n", tsch_log_association_count);
-  /* do not initialize clock_last_leaving and clock_inst_leaving_time */
-  clock_avg_leaving_time = 0;
-
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
   alice_early_packet_drop_count = 0;
 #endif
@@ -250,7 +262,7 @@ print_utilization()
   //timeslots until last session + timeslots in current session
   uint32_t tsch_total_associated_timeslots = 
           tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
-  LOG_INFO("HCK ass_ts %lu\n", tsch_total_associated_timeslots);
+  LOG_INFO("HCK asso_ts %lu\n", tsch_total_associated_timeslots);
 
   /* hckim measure cell utilization during association */
   LOG_INFO("HCK sched_any %lu\n", tsch_unlocked_scheduled_any_cell_count);
@@ -1197,7 +1209,7 @@ PROCESS_THREAD(tsch_process, ev, data)
     int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
     uint32_t tsch_total_associated_timeslots = 
             tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
-    LOG_INFO("HCK ass_ts %lu\n", tsch_total_associated_timeslots);
+    LOG_INFO("HCK asso_ts %lu\n", tsch_total_associated_timeslots);
 
     /* hckim measure cell utilization during association */
     LOG_INFO("HCK sched_any %lu\n", tsch_unlocked_scheduled_any_cell_count);
