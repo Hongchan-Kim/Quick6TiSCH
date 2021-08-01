@@ -111,8 +111,8 @@
 #define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 4)
 //#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
 //#define APP_DATA_PERIOD                            (5 * 60 * CLOCK_SECOND)
-#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND) // 26
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) // 30
+#define APP_START_DELAY                            (26 * 60 * CLOCK_SECOND) // 26
+#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND) // 30
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
@@ -251,7 +251,8 @@
 #define OST_ON_DEMAND_PROVISION                    1
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define OST_JSB_ADD                                1
-#define WITH_OST_LOG                               1
+#define WITH_OST_LOG_INFO                          1
+#define WITH_OST_LOG_DBG                           0
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 
 #define OST_N_SELECTION_PERIOD                     15 // related to OST_N_MAX: Min. traffic load = 1 / (OST_N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 

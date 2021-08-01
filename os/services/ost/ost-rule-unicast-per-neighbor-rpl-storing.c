@@ -87,7 +87,7 @@ uint8_t bootstrap_period;
 #endif
 /*---------------------------------------------------------------------------*/
 void
-print_nbr(void)
+ost_print_nbr(void)
 {
   printf("[Neighbors]");
   printf(" r_nbr / my / nbr / num_tx / new_add / my_installable / rx_no_path / my_low_prr\n");
@@ -147,6 +147,9 @@ ost_reset_nbr(const linkaddr_t *addr, uint8_t newly_added, uint8_t rx_no_path)
       nbr->ost_consecutive_new_tx_schedule_request = 0;      
     }
   }
+#if WITH_OST_LOG_INFO
+  ost_print_nbr();
+#endif
 }
 /*---------------------------------------------------------------------------*/
 uint16_t
@@ -405,6 +408,11 @@ child_removed(const linkaddr_t *linkaddr)
       if(linkaddr != NULL) {
         ost_remove_tx((linkaddr_t *)linkaddr);
         ost_remove_rx(OST_NODE_ID_FROM_LINKADDR(linkaddr));
+
+#if WITH_OST_LOG_INFO
+        tsch_schedule_print_ost();
+#endif
+
       }
     } else {
       /* do not remove this child, still needed */
@@ -506,6 +514,11 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     if(old_addr != NULL) {
       ost_remove_tx((linkaddr_t *)old_addr);
       ost_remove_rx(OST_NODE_ID_FROM_LINKADDR(old_addr));
+
+#if WITH_OST_LOG_INFO
+      tsch_schedule_print_ost();
+#endif
+
     }
 #else
     remove_uc_link(old_addr);

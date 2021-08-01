@@ -78,6 +78,7 @@ void orchestra_callback_child_removed(const linkaddr_t *addr);
 
 #if WITH_OST
 /* OST functions */
+void ost_print_nbr();
 void ost_reset_nbr(const linkaddr_t *addr, uint8_t new_add, uint8_t rx_no_path);
 uint16_t ost_get_tx_sf_handle_from_id(const uint16_t id);
 uint16_t ost_get_rx_sf_handle_from_id(const uint16_t id);

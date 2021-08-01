@@ -862,6 +862,11 @@ dao_input_storing(void)
 
         ost_remove_tx(prefix_nbr_lladdr);
         ost_remove_rx(prefix_id);
+
+#if WITH_OST_LOG_INFO
+        tsch_schedule_print_ost();
+#endif
+
       }
 #endif
 

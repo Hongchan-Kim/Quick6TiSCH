@@ -78,7 +78,7 @@ metric_list = ['id', 'addr',
             'ip_qloss', 'ip_enqueue', 'ip_ok', 'ip_noack', 'ip_err', 
             'ip_icmp6_qloss', 'ip_icmp6_enqueue', 'ip_icmp6_ok', 'ip_icmp6_noack', 'ip_icmp6_err', 
             'ip_udp_qloss', 'ip_udp_enqueue', 'ip_udp_ok', 'ip_udp_noack', 'ip_udp_err', 
-            'input_full', 'input_available', 'dequeued_full', 'dequeued_available'
+            'input_full', 'input_available', 'dequeued_full', 'dequeued_available',
             'sched_any', 'sched_eb_tx', 'sched_eb_rx', 'sched_bc', 'sched_uc_tx', 'sched_uc_rx', 
             'sched_op_tx', 'sched_op_rx', 'sched_oo_tx', 'sched_oo_rx',
             'any_tx_op', 'any_rx_op', 'eb_tx_op', 'eb_rx_op', 'bc_tx_op', 'bc_rx_op', 'uc_tx_op', 'uc_rx_op',

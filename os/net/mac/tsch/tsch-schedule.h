@@ -189,7 +189,7 @@ struct ost_ssq_schedule_t {
 #if WITH_OST
 struct tsch_slotframe *ost_tsch_schedule_get_slotframe_head(void);
 uint16_t tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn);
-void tsch_schedule_print_proposed(void);
+void tsch_schedule_print_ost(void);
 #endif
 
 
