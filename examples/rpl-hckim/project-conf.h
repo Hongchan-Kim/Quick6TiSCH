@@ -135,7 +135,7 @@
 #define RPL_DIO_FILTER_THRESHOLD                   (-80)
 #define RPL_MODIFIED_DAO_OPERATION_1               1 /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
-#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            1 /* set 1 in ALICE to enable local repair. quickly find another parent. original: 0 */
+//#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /*  original: 0, set 1 in ALICE to enable local repair, quickly find another parent. */
 /*---------------------------------------------------------------------------*/
 
 
