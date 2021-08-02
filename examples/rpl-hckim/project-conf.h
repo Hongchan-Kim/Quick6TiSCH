@@ -108,11 +108,9 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 4)
-//#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
-//#define APP_DATA_PERIOD                            (5 * 60 * CLOCK_SECOND)
-#define APP_START_DELAY                            (26 * 60 * CLOCK_SECOND) // 26
-#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND) // 30
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 8)
+#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
@@ -131,8 +129,6 @@
 #define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
 #define RPL_RELAXED_ETX_NOACK_PENALTY              1
-#define RPL_DIO_FILTER                             0
-#define RPL_DIO_FILTER_THRESHOLD                   (-80)
 #define RPL_MODIFIED_DAO_OPERATION_1               1 /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 //#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /*  original: 0, set 1 in ALICE to enable local repair, quickly find another parent. */

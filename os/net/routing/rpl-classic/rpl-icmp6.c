@@ -56,10 +56,6 @@
 #include "net/ipv6/multicast/uip-mcast6.h"
 #include "lib/random.h"
 
-#if RPL_DIO_FILTER
-#include "net/link-stats.h"
-#endif
-
 #if WITH_OST
 #include "node-info.h"
 #include "orchestra.h"
@@ -348,15 +344,6 @@ dio_input(void)
   LOG_INFO("HCK dio_recv %u | Received a DIO from ", ++rpl_dio_recv_count);
   LOG_INFO_6ADDR(&from);
   LOG_INFO_("\n");
-
-#if RPL_DIO_FILTER
-  int16_t dio_rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI);
-  if(dio_rssi < RPL_DIO_FILTER_THRESHOLD) {
-    LOG_INFO("Discard DIO with low RSSI %d\n", dio_rssi);
-    goto discard;
-  }
-  LOG_INFO("Accept DIO with RSSI %d\n", dio_rssi);
-#endif
 
   buffer_length = uip_len - uip_l3_icmp_hdr_len;
 
