@@ -73,14 +73,14 @@ metric_list = ['id', 'addr',
             'ip_uc_icmp6_tx', 'ip_uc_icmp6_ok', 'ip_uc_icmp6_noack', 'ip_uc_icmp6_err',
             'ip_uc_udp_tx', 'ip_uc_udp_ok', 'ip_uc_udp_noack', 'ip_uc_udp_err',
             'asso', 'asso_ts', 'leaving', 'leave_time', 
-            'eb_send', 'eb_qloss', 'eb_enqueue', 'eb_ok', 'eb_noack', 'eb_err',
-            'ka_send', 'ka_qloss', 'ka_enqueue', 'ka_tx', 'ka_ok', 'ka_noack', 'ka_err',
-            'ip_qloss', 'ip_enqueue', 'ip_ok', 'ip_noack', 'ip_err', 
-            'ip_icmp6_qloss', 'ip_icmp6_enqueue', 'ip_icmp6_ok', 'ip_icmp6_noack', 'ip_icmp6_err', 
-            'ip_udp_qloss', 'ip_udp_enqueue', 'ip_udp_ok', 'ip_udp_noack', 'ip_udp_err', 
-            'input_full', 'input_available', 'dequeued_full', 'dequeued_available',
-            'sched_any', 'sched_eb_tx', 'sched_eb_rx', 'sched_bc', 'sched_uc_tx', 'sched_uc_rx', 
-            'sched_op_tx', 'sched_op_rx', 'sched_oo_tx', 'sched_oo_rx',
+            'eb_send', 'eb_qloss', 'eb_enq', 'eb_ok', 'eb_noack', 'eb_err',
+            'ka_send', 'ka_qloss', 'ka_enq', 'ka_tx', 'ka_ok', 'ka_noack', 'ka_err',
+            'ip_qloss', 'ip_enq', 'ip_ok', 'ip_noack', 'ip_err', 
+            'ip_icmp6_qloss', 'ip_icmp6_enq', 'ip_icmp6_ok', 'ip_icmp6_noack', 'ip_icmp6_err', 
+            'ip_udp_qloss', 'ip_udp_enq', 'ip_udp_ok', 'ip_udp_noack', 'ip_udp_err', 
+            'input_full', 'input_avail', 'dequeued_full', 'dequeued_avail',
+            'sch_any', 'sch_eb_tx', 'sch_eb_rx', 'sch_bc', 'sch_uc_tx', 'sch_uc_rx', 
+            'sch_op_tx', 'sch_op_rx', 'sch_oo_tx', 'sch_oo_rx',
             'any_tx_op', 'any_rx_op', 'eb_tx_op', 'eb_rx_op', 'bc_tx_op', 'bc_rx_op', 'uc_tx_op', 'uc_rx_op',
             'op_tx_op', 'op_rx_op', 'oo_tx_op', 'oo_rx_op',
             'ps', 'lastP', 'local_repair',
@@ -261,7 +261,7 @@ for i in range(NODE_NUM):
             bootstrap_period_result[i][j] = tot_qloss
         elif result_list[j] == 'IPQR':
             tot_qloss = float(bootstrap_period_parsed[i][metric_list.index('ip_qloss')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_qloss')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_qloss')])
-            tot_enqueue = float(bootstrap_period_parsed[i][metric_list.index('ip_enqueue')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_enqueue')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_enqueue')])
+            tot_enqueue = float(bootstrap_period_parsed[i][metric_list.index('ip_enq')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_enq')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_enq')])
             if tot_qloss + tot_enqueue == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
@@ -281,7 +281,7 @@ for i in range(NODE_NUM):
             bootstrap_period_result[i][j] = tot_qloss
         elif result_list[j] == 'IUQR':
             tot_qloss = float(bootstrap_period_parsed[i][metric_list.index('ip_udp_qloss')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_qloss')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_qloss')])
-            tot_enqueue = float(bootstrap_period_parsed[i][metric_list.index('ip_udp_enqueue')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_enqueue')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_enqueue')])
+            tot_enqueue = float(bootstrap_period_parsed[i][metric_list.index('ip_udp_enq')])# + float(bootstrap_period_parsed[i][metric_list.index('ka_enq')]) + float(bootstrap_period_parsed[i][metric_list.index('eb_enq')])
             if tot_qloss + tot_enqueue == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
@@ -316,27 +316,27 @@ for i in range(NODE_NUM):
             if float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('sched_any')]) / float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('sch_any')]) / float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
         elif result_list[j] == 'UTOR':
-            if float(bootstrap_period_parsed[i][metric_list.index('sched_uc_tx')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('sch_uc_tx')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('uc_tx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sched_uc_tx')]) * 100, 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('uc_tx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sch_uc_tx')]) * 100, 2)
         elif result_list[j] == 'UROR':
-            if float(bootstrap_period_parsed[i][metric_list.index('sched_uc_rx')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('sch_uc_rx')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('uc_rx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sched_uc_rx')]) * 100, 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('uc_rx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sch_uc_rx')]) * 100, 2)
         elif result_list[j] == 'PTOR':
-            if float(bootstrap_period_parsed[i][metric_list.index('sched_op_tx')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('sch_op_tx')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('op_tx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sched_op_tx')]) * 100, 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('op_tx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sch_op_tx')]) * 100, 2)
         elif result_list[j] == 'PROR':
-            if float(bootstrap_period_parsed[i][metric_list.index('sched_op_rx')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('sch_op_rx')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('op_rx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sched_op_rx')]) * 100, 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('op_rx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sch_op_rx')]) * 100, 2)
         
 # STEP-3-5: [bootstrap period] print bootstrap_period_result
 print('----- bootstrap period -----')
@@ -508,7 +508,7 @@ for i in range(NODE_NUM):
             data_period_result[i][j] = tot_qloss
         elif result_list[j] == 'IPQR':
             tot_qloss = float(data_period_parsed[i][metric_list.index('ip_qloss')])# + float(data_period_parsed[i][metric_list.index('ka_qloss')]) + float(data_period_parsed[i][metric_list.index('eb_qloss')])
-            tot_enqueue = float(data_period_parsed[i][metric_list.index('ip_enqueue')])# + float(data_period_parsed[i][metric_list.index('ka_enqueue')]) + float(data_period_parsed[i][metric_list.index('eb_enqueue')])
+            tot_enqueue = float(data_period_parsed[i][metric_list.index('ip_enq')])# + float(data_period_parsed[i][metric_list.index('ka_enq')]) + float(data_period_parsed[i][metric_list.index('eb_enq')])
             if tot_qloss + tot_enqueue == 0:
                 data_period_result[i][j] = 'NaN'
             else:
@@ -528,7 +528,7 @@ for i in range(NODE_NUM):
             data_period_result[i][j] = tot_qloss
         elif result_list[j] == 'IUQR':
             tot_qloss = float(data_period_parsed[i][metric_list.index('ip_udp_qloss')])# + float(data_period_parsed[i][metric_list.index('ka_qloss')]) + float(data_period_parsed[i][metric_list.index('eb_qloss')])
-            tot_enqueue = float(data_period_parsed[i][metric_list.index('ip_udp_enqueue')])# + float(data_period_parsed[i][metric_list.index('ka_enqueue')]) + float(data_period_parsed[i][metric_list.index('eb_enqueue')])
+            tot_enqueue = float(data_period_parsed[i][metric_list.index('ip_udp_enq')])# + float(data_period_parsed[i][metric_list.index('ka_enq')]) + float(data_period_parsed[i][metric_list.index('eb_enq')])
             if tot_qloss + tot_enqueue == 0:
                 data_period_result[i][j] = 'NaN'
             else:
@@ -563,27 +563,27 @@ for i in range(NODE_NUM):
             if float(data_period_parsed[i][metric_list.index('asso_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('sched_any')]) / float(data_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('sch_any')]) / float(data_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
         elif result_list[j] == 'UTOR':
-            if float(data_period_parsed[i][metric_list.index('sched_uc_tx')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('sch_uc_tx')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('uc_tx_op')]) / float(data_period_parsed[i][metric_list.index('sched_uc_tx')]) * 100, 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('uc_tx_op')]) / float(data_period_parsed[i][metric_list.index('sch_uc_tx')]) * 100, 2)
         elif result_list[j] == 'UROR':
-            if float(data_period_parsed[i][metric_list.index('sched_uc_rx')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('sch_uc_rx')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('uc_rx_op')]) / float(data_period_parsed[i][metric_list.index('sched_uc_rx')]) * 100, 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('uc_rx_op')]) / float(data_period_parsed[i][metric_list.index('sch_uc_rx')]) * 100, 2)
         elif result_list[j] == 'PTOR':
-            if float(data_period_parsed[i][metric_list.index('sched_op_tx')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('sch_op_tx')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('op_tx_op')]) / float(data_period_parsed[i][metric_list.index('sched_op_tx')]) * 100, 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('op_tx_op')]) / float(data_period_parsed[i][metric_list.index('sch_op_tx')]) * 100, 2)
         elif result_list[j] == 'PROR':
-            if float(data_period_parsed[i][metric_list.index('sched_op_rx')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('sch_op_rx')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('op_rx_op')]) / float(data_period_parsed[i][metric_list.index('sched_op_rx')]) * 100, 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('op_rx_op')]) / float(data_period_parsed[i][metric_list.index('sch_op_rx')]) * 100, 2)
 
 # STEP-4-6: [data period] print data_period_result
 print('----- data period -----')

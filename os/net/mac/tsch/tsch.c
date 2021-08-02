@@ -252,7 +252,7 @@ print_utilization()
   LOG_INFO("HCK e_drop %u |\n", alice_early_packet_drop_count);
 #endif
 
-  LOG_INFO("HCK input_full %u input_available %u dequeued_full %u dequeued_available %u |\n", 
+  LOG_INFO("HCK input_full %u input_avail %u dequeued_full %u dequeued_avail %u |\n", 
           tsch_input_ringbuf_full_count, 
           tsch_input_ringbuf_available_count, 
           tsch_dequeued_ringbuf_full_count, 
@@ -265,7 +265,7 @@ print_utilization()
           tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
 
 #if WITH_OST
-  LOG_INFO("HCK asso_ts %lu sched_any %lu sched_eb_tx %lu sched_eb_rx %lu sched_bc %lu sched_uc_tx %lu sched_uc_rx %lu sched_op_tx %lu sched_op_rx %lu sched_oo_tx %lu sched_oo_rx %lu |\n", 
+  LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb_tx %lu sch_eb_rx %lu sch_bc %lu sch_uc_tx %lu sch_uc_rx %lu sch_op_tx %lu sch_op_rx %lu sch_oo_tx %lu sch_oo_rx %lu |\n", 
           tsch_total_associated_timeslots, 
           tsch_unlocked_scheduled_any_cell_count, 
           tsch_unlocked_scheduled_eb_tx_cell_count, 
@@ -291,7 +291,7 @@ print_utilization()
           tsch_ost_ondemand_provisioning_tx_operation_count, 
           tsch_ost_ondemand_provisioning_rx_operation_count);
 #else
-  LOG_INFO("HCK asso_ts %lu sched_any %lu sched_eb_tx %lu sched_eb_rx %lu sched_bc %lu sched_uc_tx %lu sched_uc_rx %lu |\n", 
+  LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb_tx %lu sch_eb_rx %lu sch_bc %lu sch_uc_tx %lu sch_uc_rx %lu |\n", 
           tsch_total_associated_timeslots, 
           tsch_unlocked_scheduled_any_cell_count, 
           tsch_unlocked_scheduled_eb_tx_cell_count, 
@@ -1215,7 +1215,7 @@ PROCESS_THREAD(tsch_process, ev, data)
     LOG_INFO("HCK e_drop %u\n", alice_early_packet_drop_count);
 #endif
 
-  LOG_INFO("HCK input_full %u input_available %u dequeued_full %u dequeued_available %u |\n", 
+  LOG_INFO("HCK input_full %u input_avail %u dequeued_full %u dequeued_avail %u |\n", 
           tsch_input_ringbuf_full_count, 
           tsch_input_ringbuf_available_count, 
           tsch_dequeued_ringbuf_full_count, 
@@ -1227,7 +1227,7 @@ PROCESS_THREAD(tsch_process, ev, data)
             tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
 
 #if WITH_OST
-  LOG_INFO("HCK asso_ts %lu sched_any %lu sched_eb_tx %lu sched_eb_rx %lu sched_bc %lu sched_uc_tx %lu sched_uc_rx %lu sched_op_tx %lu sched_op_rx %lu sched_oo_tx %lu sched_oo_rx %lu |\n", 
+  LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb_tx %lu sch_eb_rx %lu sch_bc %lu sch_uc_tx %lu sch_uc_rx %lu sch_op_tx %lu sch_op_rx %lu sch_oo_tx %lu sch_oo_rx %lu |\n", 
           tsch_total_associated_timeslots, 
           tsch_unlocked_scheduled_any_cell_count, 
           tsch_unlocked_scheduled_eb_tx_cell_count, 
@@ -1253,7 +1253,7 @@ PROCESS_THREAD(tsch_process, ev, data)
           tsch_ost_ondemand_provisioning_tx_operation_count, 
           tsch_ost_ondemand_provisioning_rx_operation_count);
 #else
-  LOG_INFO("HCK asso_ts %lu sched_any %lu sched_eb_tx %lu sched_eb_rx %lu sched_bc %lu sched_uc_tx %lu sched_uc_rx %lu |\n", 
+  LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb_tx %lu sch_eb_rx %lu sch_bc %lu sch_uc_tx %lu sch_uc_rx %lu |\n", 
           tsch_total_associated_timeslots, 
           tsch_unlocked_scheduled_any_cell_count, 
           tsch_unlocked_scheduled_eb_tx_cell_count, 
@@ -1329,7 +1329,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
           if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
             LOG_ERR("HCK eb_qloss %u | ! could not enqueue EB packet\n", ++tsch_eb_qloss_count);
           } else {
-              LOG_INFO("HCK eb_enqueue %u | TSCH: enqueue EB packet %u %u\n", ++tsch_eb_enqueue_count,
+              LOG_INFO("HCK eb_enq %u | TSCH: enqueue EB packet %u %u\n", ++tsch_eb_enqueue_count,
                        packetbuf_totlen(), packetbuf_hdrlen());
               LOG_INFO("HCK eb_send %u |\n", ++tsch_eb_send_count);
             p->tsch_sync_ie_offset = tsch_sync_ie_offset;
@@ -1559,13 +1559,13 @@ send_packet(mac_callback_t sent, void *ptr)
              TSCH_QUEUE_NUM_PER_NEIGHBOR, tsch_queue_global_packet_count(),
              QUEUEBUF_NUM, p->header_len, queuebuf_datalen(p->qb));
       if(sent == keepalive_packet_sent) {
-        LOG_INFO("HCK ka_enqueue %u |\n", ++tsch_ka_enqueue_count);
+        LOG_INFO("HCK ka_enq %u |\n", ++tsch_ka_enqueue_count);
       } else {
-        LOG_INFO("HCK ip_enqueue %u |\n", ++tsch_ip_enqueue_count);
+        LOG_INFO("HCK ip_enq %u |\n", ++tsch_ip_enqueue_count);
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_enqueue %u |\n", ++tsch_ip_icmp6_enqueue_count);
+          LOG_ERR("HCK ip_icmp6_enq %u |\n", ++tsch_ip_icmp6_enqueue_count);
         } else {
-          LOG_ERR("HCK ip_udp_enqueue %u |\n", ++tsch_ip_udp_enqueue_count);
+          LOG_ERR("HCK ip_udp_enq %u |\n", ++tsch_ip_udp_enqueue_count);
         }
       }
 
