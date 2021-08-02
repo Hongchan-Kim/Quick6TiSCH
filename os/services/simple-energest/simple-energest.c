@@ -124,11 +124,8 @@ simple_energest_step(void)
   dc_rx_sum += to_per_ten_thousand(delta_rx, delta_time);
   dc_total_sum += to_per_ten_thousand(delta_tx+delta_rx, delta_time);
 
-  LOG_INFO("HCK dc_count %lu\n", dc_count);
-  LOG_INFO("HCK dc_tx_sum %lu (%lu.%02lu percent)\n", dc_tx_sum, (dc_tx_sum / dc_count) / 100, (dc_tx_sum / dc_count) % 100);
-  LOG_INFO("HCK dc_rx_sum %lu (%lu.%02lu percent)\n", dc_rx_sum, (dc_rx_sum / dc_count) / 100, (dc_rx_sum / dc_count) % 100);
-  LOG_INFO("HCK dc_total_sum %lu (%lu.%02lu percent)\n", 
-          dc_total_sum, (dc_total_sum / dc_count) / 100, (dc_total_sum / dc_count) % 100);
+  LOG_INFO("HCK dc_count %lu dc_tx_sum %lu dc_rx_sum %lu dc_total_sum %lu |\n", 
+          dc_count, dc_tx_sum, dc_rx_sum, dc_total_sum);
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(simple_energest_process, ev, data)

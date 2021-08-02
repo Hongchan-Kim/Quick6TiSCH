@@ -680,7 +680,7 @@ tcpip_ipv6_output(void)
 
   /* Look for a next hop */
   if((nexthop = get_nexthop(&ipaddr)) == NULL) {
-    LOG_INFO("HCK fwd_no_nexthop %u\n", ++tcpip_fwd_no_nexthop_count);
+    LOG_INFO("HCK fwd_no_nexthop %u |\n", ++tcpip_fwd_no_nexthop_count);
     goto exit;
   }
   annotate_transmission(nexthop);

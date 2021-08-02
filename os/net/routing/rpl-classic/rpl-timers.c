@@ -121,18 +121,14 @@ handle_periodic_timer(void *ptr)
         && (dag->preferred_parent->rank != RPL_INFINITE_RANK) 
         && (dag->preferred_parent->hop_distance != 0xff)) {
         uint8_t my_hop_distance = dag->preferred_parent->hop_distance + 1;
-        LOG_INFO("HCK hopD_now %u\n", my_hop_distance);
+        LOG_INFO("HCK hopD_now %u |\n", my_hop_distance);
 
         hop_distance_measure_sum += (uint32_t)my_hop_distance;
         hop_distance_measure_count++;
-      } else {
-        LOG_INFO("HCK hopD not measurable\n");
       }
 
       next_hop_distance_measure = 0;
-      LOG_INFO("HCK hopD_sum %lu\n", hop_distance_measure_sum);
-      LOG_INFO("HCK hopD_cnt %lu\n", hop_distance_measure_count);
-      LOG_INFO("HCK hopD_avg %lu / 100\n", 100 * hop_distance_measure_sum / hop_distance_measure_count);
+      LOG_INFO("HCK hopD_sum %lu hopD_cnt %lu |\n", hop_distance_measure_sum, hop_distance_measure_count);
     }
   } 
 

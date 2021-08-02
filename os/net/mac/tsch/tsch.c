@@ -164,7 +164,7 @@ void reset_log_tsch()
   TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
 
   tsch_log_association_count = 1; /* assume that this node is associated when bootstrap period ends */
-  LOG_INFO("HCK asso %u\n", tsch_log_association_count);
+  LOG_INFO("HCK asso %u |\n", tsch_log_association_count);
 
   tsch_leaving_count = 0;
   /* do not initialize clock_last_leaving and clock_inst_leaving_time */
@@ -249,49 +249,65 @@ static void
 print_utilization()
 {
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
-  LOG_INFO("HCK e_drop %u\n", alice_early_packet_drop_count);
+  LOG_INFO("HCK e_drop %u |\n", alice_early_packet_drop_count);
 #endif
 
-  LOG_INFO("HCK input_full %u\n", tsch_input_ringbuf_full_count);
-  LOG_INFO("HCK input_available %u\n", tsch_input_ringbuf_available_count);
-  LOG_INFO("HCK dequeued_full %u\n", tsch_dequeued_ringbuf_full_count);
-  LOG_INFO("HCK dequeued_available %u\n", tsch_dequeued_ringbuf_available_count);
+  LOG_INFO("HCK input_full %u input_available %u dequeued_full %u dequeued_available %u |\n", 
+          tsch_input_ringbuf_full_count, 
+          tsch_input_ringbuf_available_count, 
+          tsch_dequeued_ringbuf_full_count, 
+          tsch_dequeued_ringbuf_available_count);
 
   //timeslots in current session
   int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
   //timeslots until last session + timeslots in current session
   uint32_t tsch_total_associated_timeslots = 
           tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
-  LOG_INFO("HCK asso_ts %lu\n", tsch_total_associated_timeslots);
 
-  /* hckim measure cell utilization during association */
-  LOG_INFO("HCK sched_any %lu\n", tsch_unlocked_scheduled_any_cell_count);
-  LOG_INFO("HCK sched_eb_tx %lu\n", tsch_unlocked_scheduled_eb_tx_cell_count);
-  LOG_INFO("HCK sched_eb_rx %lu\n", tsch_unlocked_scheduled_eb_rx_cell_count);
-  LOG_INFO("HCK sched_bc %lu\n", tsch_unlocked_scheduled_broadcast_cell_count);
-  LOG_INFO("HCK sched_uc_tx %lu\n", tsch_unlocked_scheduled_unicast_tx_cell_count);
-  LOG_INFO("HCK sched_uc_rx %lu\n", tsch_unlocked_scheduled_unicast_rx_cell_count);
 #if WITH_OST
-  LOG_INFO("HCK sched_op_tx %lu\n", tsch_ost_unlocked_scheduled_periodic_tx_cell_count);
-  LOG_INFO("HCK sched_op_rx %lu\n", tsch_ost_unlocked_scheduled_periodic_rx_cell_count);
-  LOG_INFO("HCK sched_oo_tx %lu\n", tsch_ost_unlocked_scheduled_ondemand_tx_cell_count);
-  LOG_INFO("HCK sched_oo_rx %lu\n", tsch_ost_unlocked_scheduled_ondemand_rx_cell_count);
-#endif
-
-  /* hckim measure tx/rx operation counts */
-  LOG_INFO("HCK any_tx_op %lu\n", tsch_any_slotframe_tx_operation_count);
-  LOG_INFO("HCK any_rx_op %lu\n", tsch_any_slotframe_rx_operation_count);
-  LOG_INFO("HCK eb_tx_op %lu\n", tsch_eb_slotframe_tx_operation_count);
-  LOG_INFO("HCK eb_rx_op %lu\n", tsch_eb_slotframe_rx_operation_count);
-  LOG_INFO("HCK bc_tx_op %lu\n", tsch_broadcast_slotframe_tx_operation_count);
-  LOG_INFO("HCK bc_rx_op %lu\n", tsch_broadcast_slotframe_rx_operation_count);
-  LOG_INFO("HCK uc_tx_op %lu\n", tsch_unicast_slotframe_tx_operation_count);
-  LOG_INFO("HCK uc_rx_op %lu\n", tsch_unicast_slotframe_rx_operation_count);
-#if WITH_OST
-  LOG_INFO("HCK op_tx_op %lu\n", tsch_ost_periodic_provisioning_tx_operation_count);
-  LOG_INFO("HCK op_rx_op %lu\n", tsch_ost_periodic_provisioning_rx_operation_count);
-  LOG_INFO("HCK oo_tx_op %lu\n", tsch_ost_ondemand_provisioning_tx_operation_count);
-  LOG_INFO("HCK oo_rx_op %lu\n", tsch_ost_ondemand_provisioning_rx_operation_count);
+  LOG_INFO("HCK asso_ts %lu sched_any %lu sched_eb_tx %lu sched_eb_rx %lu sched_bc %lu sched_uc_tx %lu sched_uc_rx %lu sched_op_tx %lu sched_op_rx %lu sched_oo_tx %lu sched_oo_rx %lu |\n", 
+          tsch_total_associated_timeslots, 
+          tsch_unlocked_scheduled_any_cell_count, 
+          tsch_unlocked_scheduled_eb_tx_cell_count, 
+          tsch_unlocked_scheduled_eb_rx_cell_count, 
+          tsch_unlocked_scheduled_broadcast_cell_count, 
+          tsch_unlocked_scheduled_unicast_tx_cell_count, 
+          tsch_unlocked_scheduled_unicast_rx_cell_count, 
+          tsch_ost_unlocked_scheduled_periodic_tx_cell_count, 
+          tsch_ost_unlocked_scheduled_periodic_rx_cell_count, 
+          tsch_ost_unlocked_scheduled_ondemand_tx_cell_count, 
+          tsch_ost_unlocked_scheduled_ondemand_rx_cell_count);
+  LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu op_tx_op %lu op_rx_op %lu oo_tx_op %lu oo_rx_op %lu |\n", 
+          tsch_any_slotframe_tx_operation_count, 
+          tsch_any_slotframe_rx_operation_count, 
+          tsch_eb_slotframe_tx_operation_count, 
+          tsch_eb_slotframe_rx_operation_count, 
+          tsch_broadcast_slotframe_tx_operation_count, 
+          tsch_broadcast_slotframe_rx_operation_count, 
+          tsch_unicast_slotframe_tx_operation_count, 
+          tsch_unicast_slotframe_rx_operation_count, 
+          tsch_ost_periodic_provisioning_tx_operation_count, 
+          tsch_ost_periodic_provisioning_rx_operation_count, 
+          tsch_ost_ondemand_provisioning_tx_operation_count, 
+          tsch_ost_ondemand_provisioning_rx_operation_count);
+#else
+  LOG_INFO("HCK asso_ts %lu sched_any %lu sched_eb_tx %lu sched_eb_rx %lu sched_bc %lu sched_uc_tx %lu sched_uc_rx %lu |\n", 
+          tsch_total_associated_timeslots, 
+          tsch_unlocked_scheduled_any_cell_count, 
+          tsch_unlocked_scheduled_eb_tx_cell_count, 
+          tsch_unlocked_scheduled_eb_rx_cell_count, 
+          tsch_unlocked_scheduled_broadcast_cell_count, 
+          tsch_unlocked_scheduled_unicast_tx_cell_count, 
+          tsch_unlocked_scheduled_unicast_rx_cell_count);
+  LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
+          tsch_any_slotframe_tx_operation_count, 
+          tsch_any_slotframe_rx_operation_count, 
+          tsch_eb_slotframe_tx_operation_count, 
+          tsch_eb_slotframe_rx_operation_count, 
+          tsch_broadcast_slotframe_tx_operation_count, 
+          tsch_broadcast_slotframe_rx_operation_count, 
+          tsch_unicast_slotframe_tx_operation_count, 
+          tsch_unicast_slotframe_rx_operation_count);
 #endif
 
   ctimer_reset(&utilization_timer);
@@ -539,14 +555,12 @@ keepalive_packet_sent(void *ptr, int status, int transmissions)
 #ifdef TSCH_CALLBACK_KA_SENT
   TSCH_CALLBACK_KA_SENT(status, transmissions);
 #endif /* TSCH_CALLBACK_KA_SENT */
-  LOG_INFO("KA sent to ");
-  LOG_INFO_LLADDR(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
-  LOG_INFO_(", st %d-%d\n", status, transmissions);
-
   if(status == MAC_TX_NOACK || status == MAC_TX_OK) {
     tsch_ka_transmission_count += transmissions;
   }
-  LOG_INFO("HCK ka_tx %lu\n", tsch_ka_transmission_count);
+  LOG_INFO("HCK ka_tx %lu | KA sent to ", tsch_ka_transmission_count);
+  LOG_INFO_LLADDR(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
+  LOG_INFO_(", st %d-%d\n", status, transmissions);
 
   /* We got no ack, try to resynchronize */
   if(status == MAC_TX_NOACK) {
@@ -803,42 +817,42 @@ tsch_tx_process_pending(void)
 
     if(p->sent == NULL) { // EB
       if(p->ret == MAC_TX_NOACK) {
-        LOG_INFO("HCK eb_noack %u\n", ++tsch_eb_noack_count);
+        LOG_INFO("HCK eb_noack %u |\n", ++tsch_eb_noack_count);
       } else if(p->ret == MAC_TX_OK) {
-        LOG_INFO("HCK eb_ok %u\n", ++tsch_eb_ok_count);
+        LOG_INFO("HCK eb_ok %u |\n", ++tsch_eb_ok_count);
       } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
-        LOG_INFO("HCK eb_err %u\n", ++tsch_eb_error_count);
+        LOG_INFO("HCK eb_err %u |\n", ++tsch_eb_error_count);
       }
     } else if(p->sent == keepalive_packet_sent) { // KA
       if(p->ret == MAC_TX_NOACK) {
-        LOG_INFO("HCK ka_noack %u\n", ++tsch_ka_noack_count);
+        LOG_INFO("HCK ka_noack %u |\n", ++tsch_ka_noack_count);
       } else if(p->ret == MAC_TX_OK) {
-        LOG_INFO("HCK ka_ok %u\n", ++tsch_ka_ok_count);
+        LOG_INFO("HCK ka_ok %u |\n", ++tsch_ka_ok_count);
       } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
-        LOG_INFO("HCK ka_err %u\n", ++tsch_ka_error_count);
+        LOG_INFO("HCK ka_err %u |\n", ++tsch_ka_error_count);
       }
     } else {
       if(p->ret == MAC_TX_NOACK) { // IP layer packet
-        LOG_INFO("HCK ip_noack %u\n", ++tsch_ip_noack_count);
+        LOG_INFO("HCK ip_noack %u |\n", ++tsch_ip_noack_count);
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_noack %u\n", ++tsch_ip_icmp6_noack_count);
+          LOG_ERR("HCK ip_icmp6_noack %u |\n", ++tsch_ip_icmp6_noack_count);
         } else {
-          LOG_ERR("HCK ip_udp_noack %u\n", ++tsch_ip_udp_noack_count);
+          LOG_ERR("HCK ip_udp_noack %u |\n", ++tsch_ip_udp_noack_count);
         }
 
       } else if(p->ret == MAC_TX_OK) {
-        LOG_INFO("HCK ip_ok %u\n", ++tsch_ip_ok_count);
+        LOG_INFO("HCK ip_ok %u |\n", ++tsch_ip_ok_count);
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_ok %u\n", ++tsch_ip_icmp6_ok_count);
+          LOG_ERR("HCK ip_icmp6_ok %u |\n", ++tsch_ip_icmp6_ok_count);
         } else {
-          LOG_ERR("HCK ip_udp_ok %u\n", ++tsch_ip_udp_ok_count);
+          LOG_ERR("HCK ip_udp_ok %u |\n", ++tsch_ip_udp_ok_count);
         }
       } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
-        LOG_INFO("HCK ip_err %u\n", ++tsch_ip_error_count);
+        LOG_INFO("HCK ip_err %u |\n", ++tsch_ip_error_count);
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_err %u\n", ++tsch_ip_icmp6_error_count);
+          LOG_ERR("HCK ip_icmp6_err %u |\n", ++tsch_ip_icmp6_error_count);
         } else {
-          LOG_ERR("HCK ip_udp_err %u\n", ++tsch_ip_udp_error_count);
+          LOG_ERR("HCK ip_udp_err %u |\n", ++tsch_ip_udp_error_count);
         }
       }
     }
@@ -1044,8 +1058,14 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
 
       tsch_log_association_count++;
       tsch_association_count++;
-      LOG_INFO("HCK asso %u | association done (%u), sec %u, PAN ID %x, asn-%x.%lx, jp %u, timeslot id %u, hopping id %u, slotframe len %u with %u links, from ",
+      if(tsch_log_association_count > 1) {
+        clock_inst_leaving_time = clock_time() - clock_last_leaving;
+        clock_avg_leaving_time = (clock_avg_leaving_time * (tsch_log_association_count - 2) + clock_inst_leaving_time) / (tsch_log_association_count - 1);
+      }
+      LOG_INFO("HCK asso %u leave_time %lu | inst %lu association done (%u), sec %u, PAN ID %x, asn-%x.%lx, jp %u, timeslot id %u, hopping id %u, slotframe len %u with %u links, from ",
              tsch_log_association_count,
+             clock_avg_leaving_time, 
+             clock_inst_leaving_time, 
              tsch_association_count,
              tsch_is_pan_secured,
              frame.src_pid,
@@ -1056,12 +1076,6 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
              ies.ie_tsch_slotframe_and_link.num_links);
       LOG_INFO_LLADDR((const linkaddr_t *)&frame.src_addr);
       LOG_INFO_("\n");
-
-      if(tsch_log_association_count > 1) {
-        clock_inst_leaving_time = clock_time() - clock_last_leaving;
-        clock_avg_leaving_time = (clock_avg_leaving_time * (tsch_log_association_count - 2) + clock_inst_leaving_time) / (tsch_log_association_count - 1);
-      }
-      LOG_INFO("HCK leave_time %lu inst %lu\n", clock_avg_leaving_time, clock_inst_leaving_time);
 
       return 1;
     }
@@ -1200,45 +1214,62 @@ PROCESS_THREAD(tsch_process, ev, data)
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
     LOG_INFO("HCK e_drop %u\n", alice_early_packet_drop_count);
 #endif
-    LOG_INFO("HCK input_full %u\n", tsch_input_ringbuf_full_count);
-    LOG_INFO("HCK input_available %u\n", tsch_input_ringbuf_available_count);
-    LOG_INFO("HCK dequeued_full %u\n", tsch_dequeued_ringbuf_full_count);
-    LOG_INFO("HCK dequeued_available %u\n", tsch_dequeued_ringbuf_available_count);
+
+  LOG_INFO("HCK input_full %u input_available %u dequeued_full %u dequeued_available %u |\n", 
+          tsch_input_ringbuf_full_count, 
+          tsch_input_ringbuf_available_count, 
+          tsch_dequeued_ringbuf_full_count, 
+          tsch_dequeued_ringbuf_available_count);
 
     //timeslots in current session
     int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
     uint32_t tsch_total_associated_timeslots = 
             tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
-    LOG_INFO("HCK asso_ts %lu\n", tsch_total_associated_timeslots);
 
-    /* hckim measure cell utilization during association */
-    LOG_INFO("HCK sched_any %lu\n", tsch_unlocked_scheduled_any_cell_count);
-    LOG_INFO("HCK sched_eb_tx %lu\n", tsch_unlocked_scheduled_eb_tx_cell_count);
-    LOG_INFO("HCK sched_eb_rx %lu\n", tsch_unlocked_scheduled_eb_rx_cell_count);
-    LOG_INFO("HCK sched_bc %lu\n", tsch_unlocked_scheduled_broadcast_cell_count);
-    LOG_INFO("HCK sched_uc_tx %lu\n", tsch_unlocked_scheduled_unicast_tx_cell_count);
-    LOG_INFO("HCK sched_uc_rx %lu\n", tsch_unlocked_scheduled_unicast_rx_cell_count);
 #if WITH_OST
-    LOG_INFO("HCK sched_op_tx %lu\n", tsch_ost_unlocked_scheduled_periodic_tx_cell_count);
-    LOG_INFO("HCK sched_op_rx %lu\n", tsch_ost_unlocked_scheduled_periodic_rx_cell_count);
-    LOG_INFO("HCK sched_oo_tx %lu\n", tsch_ost_unlocked_scheduled_ondemand_tx_cell_count);
-    LOG_INFO("HCK sched_oo_rx %lu\n", tsch_ost_unlocked_scheduled_ondemand_rx_cell_count);
-#endif
-    
-    /* hckim measure tx/rx operation counts */
-    LOG_INFO("HCK any_tx_op %lu\n", tsch_any_slotframe_tx_operation_count);
-    LOG_INFO("HCK any_rx_op %lu\n", tsch_any_slotframe_rx_operation_count);
-    LOG_INFO("HCK eb_tx_op %lu\n", tsch_eb_slotframe_tx_operation_count);
-    LOG_INFO("HCK eb_rx_op %lu\n", tsch_eb_slotframe_rx_operation_count);
-    LOG_INFO("HCK bc_tx_op %lu\n", tsch_broadcast_slotframe_tx_operation_count);
-    LOG_INFO("HCK bc_rx_op %lu\n", tsch_broadcast_slotframe_rx_operation_count);
-    LOG_INFO("HCK uc_tx_op %lu\n", tsch_unicast_slotframe_tx_operation_count);
-    LOG_INFO("HCK uc_rx_op %lu\n", tsch_unicast_slotframe_rx_operation_count);
-#if WITH_OST
-    LOG_INFO("HCK op_tx_op %lu\n", tsch_ost_periodic_provisioning_tx_operation_count);
-    LOG_INFO("HCK op_rx_op %lu\n", tsch_ost_periodic_provisioning_rx_operation_count);
-    LOG_INFO("HCK oo_tx_op %lu\n", tsch_ost_ondemand_provisioning_tx_operation_count);
-    LOG_INFO("HCK oo_rx_op %lu\n", tsch_ost_ondemand_provisioning_rx_operation_count);
+  LOG_INFO("HCK asso_ts %lu sched_any %lu sched_eb_tx %lu sched_eb_rx %lu sched_bc %lu sched_uc_tx %lu sched_uc_rx %lu sched_op_tx %lu sched_op_rx %lu sched_oo_tx %lu sched_oo_rx %lu |\n", 
+          tsch_total_associated_timeslots, 
+          tsch_unlocked_scheduled_any_cell_count, 
+          tsch_unlocked_scheduled_eb_tx_cell_count, 
+          tsch_unlocked_scheduled_eb_rx_cell_count, 
+          tsch_unlocked_scheduled_broadcast_cell_count, 
+          tsch_unlocked_scheduled_unicast_tx_cell_count, 
+          tsch_unlocked_scheduled_unicast_rx_cell_count, 
+          tsch_ost_unlocked_scheduled_periodic_tx_cell_count, 
+          tsch_ost_unlocked_scheduled_periodic_rx_cell_count, 
+          tsch_ost_unlocked_scheduled_ondemand_tx_cell_count, 
+          tsch_ost_unlocked_scheduled_ondemand_rx_cell_count);
+  LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu op_tx_op %lu op_rx_op %lu oo_tx_op %lu oo_rx_op %lu |\n", 
+          tsch_any_slotframe_tx_operation_count, 
+          tsch_any_slotframe_rx_operation_count, 
+          tsch_eb_slotframe_tx_operation_count, 
+          tsch_eb_slotframe_rx_operation_count, 
+          tsch_broadcast_slotframe_tx_operation_count, 
+          tsch_broadcast_slotframe_rx_operation_count, 
+          tsch_unicast_slotframe_tx_operation_count, 
+          tsch_unicast_slotframe_rx_operation_count, 
+          tsch_ost_periodic_provisioning_tx_operation_count, 
+          tsch_ost_periodic_provisioning_rx_operation_count, 
+          tsch_ost_ondemand_provisioning_tx_operation_count, 
+          tsch_ost_ondemand_provisioning_rx_operation_count);
+#else
+  LOG_INFO("HCK asso_ts %lu sched_any %lu sched_eb_tx %lu sched_eb_rx %lu sched_bc %lu sched_uc_tx %lu sched_uc_rx %lu |\n", 
+          tsch_total_associated_timeslots, 
+          tsch_unlocked_scheduled_any_cell_count, 
+          tsch_unlocked_scheduled_eb_tx_cell_count, 
+          tsch_unlocked_scheduled_eb_rx_cell_count, 
+          tsch_unlocked_scheduled_broadcast_cell_count, 
+          tsch_unlocked_scheduled_unicast_tx_cell_count, 
+          tsch_unlocked_scheduled_unicast_rx_cell_count);
+  LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
+          tsch_any_slotframe_tx_operation_count, 
+          tsch_any_slotframe_rx_operation_count, 
+          tsch_eb_slotframe_tx_operation_count, 
+          tsch_eb_slotframe_rx_operation_count, 
+          tsch_broadcast_slotframe_tx_operation_count, 
+          tsch_broadcast_slotframe_rx_operation_count, 
+          tsch_unicast_slotframe_tx_operation_count, 
+          tsch_unicast_slotframe_rx_operation_count);
 #endif
 
     tsch_timeslots_until_last_session = tsch_total_associated_timeslots;
@@ -1296,11 +1327,11 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
           struct tsch_packet *p;
           /* Enqueue EB packet, for a single transmission only */
           if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
-            LOG_ERR("HCK eb_qloss %u ! could not enqueue EB packet\n", ++tsch_eb_qloss_count);
+            LOG_ERR("HCK eb_qloss %u | ! could not enqueue EB packet\n", ++tsch_eb_qloss_count);
           } else {
-              LOG_INFO("HCK eb_enqueue %u TSCH: enqueue EB packet %u %u\n", ++tsch_eb_enqueue_count,
+              LOG_INFO("HCK eb_enqueue %u | TSCH: enqueue EB packet %u %u\n", ++tsch_eb_enqueue_count,
                        packetbuf_totlen(), packetbuf_hdrlen());
-              LOG_INFO("HCK eb_send %u\n", ++tsch_eb_send_count);
+              LOG_INFO("HCK eb_send %u |\n", ++tsch_eb_send_count);
             p->tsch_sync_ie_offset = tsch_sync_ie_offset;
             p->header_len = hdr_len;
           }
@@ -1510,13 +1541,13 @@ send_packet(mac_callback_t sent, void *ptr)
           QUEUEBUF_NUM);
       ret = MAC_TX_ERR;
       if(sent == keepalive_packet_sent) {
-        LOG_ERR("HCK ka_qloss %u\n", ++tsch_ka_qloss_count);
+        LOG_ERR("HCK ka_qloss %u |\n", ++tsch_ka_qloss_count);
       } else {
-        LOG_ERR("HCK ip_qloss %u\n", ++tsch_ip_qloss_count);
+        LOG_ERR("HCK ip_qloss %u |\n", ++tsch_ip_qloss_count);
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_qloss %u\n", ++tsch_ip_icmp6_qloss_count);
+          LOG_ERR("HCK ip_icmp6_qloss %u |\n", ++tsch_ip_icmp6_qloss_count);
         } else {
-          LOG_ERR("HCK ip_udp_qloss %u\n", ++tsch_ip_udp_qloss_count);
+          LOG_ERR("HCK ip_udp_qloss %u |\n", ++tsch_ip_udp_qloss_count);
         }
       }
     } else {
@@ -1528,13 +1559,13 @@ send_packet(mac_callback_t sent, void *ptr)
              TSCH_QUEUE_NUM_PER_NEIGHBOR, tsch_queue_global_packet_count(),
              QUEUEBUF_NUM, p->header_len, queuebuf_datalen(p->qb));
       if(sent == keepalive_packet_sent) {
-        LOG_INFO("HCK ka_enqueue %u\n", ++tsch_ka_enqueue_count);
+        LOG_INFO("HCK ka_enqueue %u |\n", ++tsch_ka_enqueue_count);
       } else {
-        LOG_INFO("HCK ip_enqueue %u\n", ++tsch_ip_enqueue_count);
+        LOG_INFO("HCK ip_enqueue %u |\n", ++tsch_ip_enqueue_count);
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_enqueue %u\n", ++tsch_ip_icmp6_enqueue_count);
+          LOG_ERR("HCK ip_icmp6_enqueue %u |\n", ++tsch_ip_icmp6_enqueue_count);
         } else {
-          LOG_ERR("HCK ip_udp_enqueue %u\n", ++tsch_ip_udp_enqueue_count);
+          LOG_ERR("HCK ip_udp_enqueue %u |\n", ++tsch_ip_udp_enqueue_count);
         }
       }
 

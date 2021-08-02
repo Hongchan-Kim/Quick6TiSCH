@@ -51,7 +51,7 @@ AUTOSTART_PROCESSES(&udp_client_process);
 static void
 reset_log()
 {
-  LOG_INFO("HCK reset_log\n");
+  LOG_INFO("HCK reset_log |\n");
   reset_log_tcpip();              /* tcpip.c */
   reset_log_sicslowpan();         /* sicslowpan.c */
   reset_log_tsch();               /* tsch.c */

@@ -247,7 +247,9 @@ static void
 rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
 {
   if(dag != NULL && dag->preferred_parent != p) {
-    LOG_INFO("HCK ps %u | rpl_set_preferred_parent ", ++rpl_parent_switch_count);
+    LOG_INFO("HCK ps %u lastP %x | rpl_set_preferred_parent ", ++rpl_parent_switch_count, 
+          (p == NULL) ? 0 : 
+          (rpl_parent_get_ipaddr(p)->u8[14] << 8) + (rpl_parent_get_ipaddr(p)->u8[15]));
     if(p != NULL) {
       LOG_INFO_6ADDR(rpl_parent_get_ipaddr(p));
     } else {
@@ -260,10 +262,6 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
       LOG_INFO_("NULL");
     }
     LOG_INFO_("\n");
-
-    LOG_INFO("HCK lastP %x\n", 
-        (p == NULL) ? 0 : 
-        (rpl_parent_get_ipaddr(p)->u8[14] << 8) + (rpl_parent_get_ipaddr(p)->u8[15]));
 
 #ifdef RPL_CALLBACK_PARENT_SWITCH
     RPL_CALLBACK_PARENT_SWITCH(dag->preferred_parent, p);
