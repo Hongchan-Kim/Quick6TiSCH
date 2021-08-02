@@ -1532,7 +1532,7 @@ packet_sent(void *ptr, int status, int transmissions)
       LOG_INFO("HCK ip_uc_udp_noack %u |\n", ++ip_ucast_udp_noack_count);
     }
   } else if(status == MAC_TX_ERR || status == MAC_TX_ERR_FATAL) {
-    LOG_INFO("HCK ip_uc_err %u\n", ++ip_ucast_error_count);
+    LOG_INFO("HCK ip_uc_err %u |\n", ++ip_ucast_error_count);
     if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
       LOG_INFO("HCK ip_uc_icmp6_err %u |\n", ++ip_ucast_icmp6_error_count);
     } else {

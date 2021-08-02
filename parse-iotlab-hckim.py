@@ -125,6 +125,7 @@ for node_id in non_root_id_list:
 
     file_name = 'log-' + iter + '-' + str(node_id) + '.txt'
     f = open(file_name, 'r', errors='ignore')
+    bootstrap_period_finished_this = 0
 
     line = f.readline()
     while line:
@@ -134,22 +135,30 @@ for node_id in non_root_id_list:
             if len(line_s) > 1:
                 message = line_s[1].split(' ')
                 if message[HCK] == 'HCK':
-                    current_metric = message[IND]
-                    if current_metric == 'reset_log':
-                        bootstrap_period_finished_any = 1
-                        break
-                    elif current_metric in metric_list:
-                        current_metric_index = metric_list.index(current_metric)
-                        if current_metric == 'lastP': # to find node_id of last parent 
-                            if message[VAL] == '0':
-                                bootstrap_period_parsed[node_index][current_metric_index] = 0
-                            else:
-                                if message[VAL] == ROOT_ADDR:
-                                    bootstrap_period_parsed[node_index][current_metric_index] = ROOT_ID
+                    ind_loc = IND
+                    val_loc = VAL
+                    while message[ind_loc] != '|':
+                        current_metric = message[ind_loc]
+                        if current_metric == 'reset_log':
+                            bootstrap_period_finished_this = 1
+                            bootstrap_period_finished_any = 1
+                            break
+                        elif current_metric in metric_list:
+                            current_metric_index = metric_list.index(current_metric)
+                            if current_metric == 'lastP': # to find node_id of last parent 
+                                if message[val_loc] == '0':
+                                    bootstrap_period_parsed[node_index][current_metric_index] = 0
                                 else:
-                                    bootstrap_period_parsed[node_index][current_metric_index] = non_root_id_list[non_root_address_list.index(message[VAL])]
-                        else:
-                            bootstrap_period_parsed[node_index][current_metric_index] = message[VAL]
+                                    if message[val_loc] == ROOT_ADDR:
+                                        bootstrap_period_parsed[node_index][current_metric_index] = ROOT_ID
+                                    else:
+                                        bootstrap_period_parsed[node_index][current_metric_index] = non_root_id_list[non_root_address_list.index(message[val_loc])]
+                            else:
+                                bootstrap_period_parsed[node_index][current_metric_index] = message[val_loc]
+                        ind_loc += 2
+                        val_loc += 2
+                    if bootstrap_period_finished_this == 1:
+                        break
         line = f.readline()
     f.close()
 
@@ -160,6 +169,7 @@ bootstrap_period_parsed[ROOT_INDEX][metric_list.index('addr')] = ROOT_ADDR
 
 file_name = 'log-' + iter + '-' + str(ROOT_ID) + '.txt'
 f = open(file_name, 'r', errors='ignore')
+bootstrap_period_finished_this = 0
 
 line = f.readline()
 while line:
@@ -169,20 +179,30 @@ while line:
         if len(line_s) > 1:
             message = line_s[1].split(' ')
             if message[HCK] == 'HCK':
-                current_metric = message[IND]
-                if current_metric == 'reset_log':
-                    bootstrap_period_finished_any = 1
+                ind_loc = IND
+                val_loc = VAL
+                while message[ind_loc] != '|':
+                    current_metric = message[ind_loc]
+                    if current_metric == 'reset_log':
+                        bootstrap_period_finished_this = 1
+                        bootstrap_period_finished_any = 1
+                        break
+                    elif current_metric in metric_list:
+                        current_metric_index = metric_list.index(current_metric)
+                        if current_metric == 'rx_up':
+                            tx_node_index = non_root_address_list.index(message[ADDR]) + 1 # index in bootstrap_period_parsed array
+                            bootstrap_period_parsed[tx_node_index][current_metric_index] = message[val_loc]
+                            break
+                        elif current_metric == 'tx_down':
+                            rx_node_index = non_root_address_list.index(message[ADDR]) + 1 # index in bootstrap_period_parsed array
+                            bootstrap_period_parsed[rx_node_index][current_metric_index] = message[val_loc]
+                            break
+                        else:
+                            bootstrap_period_parsed[ROOT_INDEX][current_metric_index] = message[val_loc]
+                    ind_loc += 2
+                    val_loc += 2
+                if bootstrap_period_finished_this == 1:
                     break
-                elif current_metric in metric_list:
-                    current_metric_index = metric_list.index(current_metric)
-                    if current_metric == 'rx_up':
-                        tx_node_index = non_root_address_list.index(message[ADDR]) + 1 # index in bootstrap_period_parsed array
-                        bootstrap_period_parsed[tx_node_index][current_metric_index] = message[VAL]
-                    elif current_metric == 'tx_down':
-                        rx_node_index = non_root_address_list.index(message[ADDR]) + 1 # index in bootstrap_period_parsed array
-                        bootstrap_period_parsed[rx_node_index][current_metric_index] = message[VAL]
-                    else:
-                        bootstrap_period_parsed[ROOT_INDEX][current_metric_index] = message[VAL]
     line = f.readline()
 f.close()
 
@@ -349,6 +369,7 @@ for node_id in non_root_id_list:
 
     file_name = 'log-' + iter + '-' + str(node_id) + '.txt'
     f = open(file_name, 'r', errors='ignore')
+    bootstrap_period_finished_this = 0
 
     in_data_period = 0
 
@@ -363,19 +384,27 @@ for node_id in non_root_id_list:
                     current_metric = message[IND]
                     if current_metric == 'reset_log':
                         in_data_period = 1
+                        line = f.readline()
+                        continue
                     if in_data_period == 1:
-                        if current_metric in metric_list:
-                            current_metric_index = metric_list.index(current_metric)
-                            if current_metric == 'lastP': # to find node_id of last parent 
-                                if message[VAL] == '0':
-                                    data_period_parsed[node_index][current_metric_index] = 0
-                                else:
-                                    if message[VAL] == ROOT_ADDR:
-                                        data_period_parsed[node_index][current_metric_index] = ROOT_ID
+                        ind_loc = IND
+                        val_loc = VAL
+                        while message[ind_loc] != '|':
+                            current_metric = message[ind_loc]
+                            if current_metric in metric_list:
+                                current_metric_index = metric_list.index(current_metric)
+                                if current_metric == 'lastP': # to find node_id of last parent 
+                                    if message[val_loc] == '0':
+                                        data_period_parsed[node_index][current_metric_index] = 0
                                     else:
-                                        data_period_parsed[node_index][current_metric_index] = non_root_id_list[non_root_address_list.index(message[VAL])]
-                            else:
-                                data_period_parsed[node_index][current_metric_index] = message[VAL]
+                                        if message[val_loc] == ROOT_ADDR:
+                                            data_period_parsed[node_index][current_metric_index] = ROOT_ID
+                                        else:
+                                            data_period_parsed[node_index][current_metric_index] = non_root_id_list[non_root_address_list.index(message[val_loc])]
+                                else:
+                                    data_period_parsed[node_index][current_metric_index] = message[val_loc]
+                            ind_loc += 2
+                            val_loc += 2
         line = f.readline()
     f.close()
 
@@ -400,17 +429,27 @@ while line:
                 current_metric = message[IND]
                 if current_metric == 'reset_log':
                     in_data_period = 1
+                    line = f.readline()
+                    continue
                 if in_data_period == 1:
-                    if current_metric in metric_list:
-                        current_metric_index = metric_list.index(current_metric)
-                        if current_metric == 'rx_up':
-                            tx_node_index = non_root_address_list.index(message[ADDR]) + 1 # index in data_period_parsed array
-                            data_period_parsed[tx_node_index][current_metric_index] = message[VAL]
-                        elif current_metric == 'tx_down':
-                            rx_node_index = non_root_address_list.index(message[ADDR]) + 1 # index in data_period_parsed array
-                            data_period_parsed[rx_node_index][current_metric_index] = message[VAL]
-                        else:
-                            data_period_parsed[ROOT_INDEX][current_metric_index] = message[VAL]
+                    ind_loc = IND
+                    val_loc = VAL
+                    while message[ind_loc] != '|':
+                        current_metric = message[ind_loc]
+                        if current_metric in metric_list:
+                            current_metric_index = metric_list.index(current_metric)
+                            if current_metric == 'rx_up':
+                                tx_node_index = non_root_address_list.index(message[ADDR]) + 1 # index in data_period_parsed array
+                                data_period_parsed[tx_node_index][current_metric_index] = message[val_loc]
+                                break
+                            elif current_metric == 'tx_down':
+                                rx_node_index = non_root_address_list.index(message[ADDR]) + 1 # index in data_period_parsed array
+                                data_period_parsed[rx_node_index][current_metric_index] = message[val_loc]
+                                break
+                            else:
+                                data_period_parsed[ROOT_INDEX][current_metric_index] = message[val_loc]
+                        ind_loc += 2
+                        val_loc += 2
     line = f.readline()
 f.close()
 
