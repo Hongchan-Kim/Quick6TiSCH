@@ -108,7 +108,7 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 4)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 2)
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)

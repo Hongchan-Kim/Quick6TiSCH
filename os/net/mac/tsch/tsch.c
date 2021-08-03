@@ -159,6 +159,67 @@ uint16_t alice_early_packet_drop_count;
 
 void reset_log_tsch()
 {
+#if WITH_ALICE && ALICE_EARLY_PACKET_DROP
+  LOG_INFO("HCK e_drop %u |\n", alice_early_packet_drop_count);
+#endif
+
+  LOG_INFO("HCK input_full %u input_avail %u dequeued_full %u dequeued_avail %u |\n", 
+          tsch_input_ringbuf_full_count, 
+          tsch_input_ringbuf_available_count, 
+          tsch_dequeued_ringbuf_full_count, 
+          tsch_dequeued_ringbuf_available_count);
+
+  //timeslots in current session
+  int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
+  //timeslots until last session + timeslots in current session
+  uint32_t tsch_total_associated_timeslots = 
+          tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
+#if WITH_OST
+  LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb_tx %lu sch_eb_rx %lu sch_bc %lu sch_uc_tx %lu sch_uc_rx %lu sch_op_tx %lu sch_op_rx %lu sch_oo_tx %lu sch_oo_rx %lu |\n", 
+          tsch_total_associated_timeslots, 
+          tsch_unlocked_scheduled_any_cell_count, 
+          tsch_unlocked_scheduled_eb_tx_cell_count, 
+          tsch_unlocked_scheduled_eb_rx_cell_count, 
+          tsch_unlocked_scheduled_broadcast_cell_count, 
+          tsch_unlocked_scheduled_unicast_tx_cell_count, 
+          tsch_unlocked_scheduled_unicast_rx_cell_count, 
+          tsch_ost_unlocked_scheduled_periodic_tx_cell_count, 
+          tsch_ost_unlocked_scheduled_periodic_rx_cell_count, 
+          tsch_ost_unlocked_scheduled_ondemand_tx_cell_count, 
+          tsch_ost_unlocked_scheduled_ondemand_rx_cell_count);
+  LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu op_tx_op %lu op_rx_op %lu oo_tx_op %lu oo_rx_op %lu |\n", 
+          tsch_any_slotframe_tx_operation_count, 
+          tsch_any_slotframe_rx_operation_count, 
+          tsch_eb_slotframe_tx_operation_count, 
+          tsch_eb_slotframe_rx_operation_count, 
+          tsch_broadcast_slotframe_tx_operation_count, 
+          tsch_broadcast_slotframe_rx_operation_count, 
+          tsch_unicast_slotframe_tx_operation_count, 
+          tsch_unicast_slotframe_rx_operation_count, 
+          tsch_ost_periodic_provisioning_tx_operation_count, 
+          tsch_ost_periodic_provisioning_rx_operation_count, 
+          tsch_ost_ondemand_provisioning_tx_operation_count, 
+          tsch_ost_ondemand_provisioning_rx_operation_count);
+#else
+  LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb_tx %lu sch_eb_rx %lu sch_bc %lu sch_uc_tx %lu sch_uc_rx %lu |\n", 
+          tsch_total_associated_timeslots, 
+          tsch_unlocked_scheduled_any_cell_count, 
+          tsch_unlocked_scheduled_eb_tx_cell_count, 
+          tsch_unlocked_scheduled_eb_rx_cell_count, 
+          tsch_unlocked_scheduled_broadcast_cell_count, 
+          tsch_unlocked_scheduled_unicast_tx_cell_count, 
+          tsch_unlocked_scheduled_unicast_rx_cell_count);
+  LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
+          tsch_any_slotframe_tx_operation_count, 
+          tsch_any_slotframe_rx_operation_count, 
+          tsch_eb_slotframe_tx_operation_count, 
+          tsch_eb_slotframe_rx_operation_count, 
+          tsch_broadcast_slotframe_tx_operation_count, 
+          tsch_broadcast_slotframe_rx_operation_count, 
+          tsch_unicast_slotframe_tx_operation_count, 
+          tsch_unicast_slotframe_rx_operation_count);
+#endif
+
   tsch_timeslots_until_last_session = 0;
   TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
 
@@ -1210,7 +1271,7 @@ PROCESS_THREAD(tsch_process, ev, data)
     ctimer_stop(&utilization_timer);
 
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
-    LOG_INFO("HCK e_drop %u\n", alice_early_packet_drop_count);
+    LOG_INFO("HCK e_drop %u|\n", alice_early_packet_drop_count);
 #endif
 
   LOG_INFO("HCK input_full %u input_avail %u dequeued_full %u dequeued_avail %u |\n", 

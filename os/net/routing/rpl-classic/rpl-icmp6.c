@@ -864,7 +864,7 @@ dao_input_storing(void)
         uint8_t out_seq;
         out_seq = prepare_for_dao_fwd(sequence, rep);
 
-        LOG_INFO("HCK daoN_fwd %u | \n", ++rpl_dao_nopath_fwd_count);
+        LOG_INFO("HCK daoN_fwd %u |\n", ++rpl_dao_nopath_fwd_count);
 
         LOG_DBG("Forwarding No-path DAO to parent - out_seq:%d ",
                out_seq);
@@ -970,7 +970,7 @@ fwd_dao:
         }
       }
 
-      LOG_INFO("HCK daoP_fwd %u | \n", ++rpl_dao_path_fwd_count);
+      LOG_INFO("HCK daoP_fwd %u |\n", ++rpl_dao_path_fwd_count);
       LOG_DBG("Forwarding DAO to parent ");
       LOG_DBG_6ADDR(rpl_parent_get_ipaddr(dag->preferred_parent));
       LOG_DBG_(" in seq: %d out seq: %d\n", sequence, out_seq);
@@ -1335,9 +1335,9 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   }
 
   if(lifetime == RPL_ZERO_LIFETIME) {
-    LOG_INFO("HCK daoN_send %u | \n", ++rpl_dao_nopath_send_count);
+    LOG_INFO("HCK daoN_send %u |\n", ++rpl_dao_nopath_send_count);
   } else {
-    LOG_INFO("HCK daoP_send %u | \n", ++rpl_dao_path_send_count);
+    LOG_INFO("HCK daoP_send %u |\n", ++rpl_dao_path_send_count);
   }
 
   LOG_INFO("Sending a %sDAO with sequence number %u, lifetime %u, prefix ",
