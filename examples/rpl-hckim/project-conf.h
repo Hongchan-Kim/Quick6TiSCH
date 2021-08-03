@@ -108,7 +108,7 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 8)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 4)
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
@@ -247,7 +247,7 @@
 #define OST_ON_DEMAND_PROVISION                    1
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define OST_JSB_ADD                                1
-#define WITH_OST_LOG_INFO                          1
+#define WITH_OST_LOG_INFO                          0
 #define WITH_OST_LOG_DBG                           0
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 

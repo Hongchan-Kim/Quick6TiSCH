@@ -83,7 +83,6 @@ static clock_time_t clock_last_leaving;
 static clock_time_t clock_inst_leaving_time;
 static clock_time_t clock_avg_leaving_time;
 
-static uint16_t tsch_eb_send_count;
 static uint16_t tsch_eb_qloss_count;
 static uint16_t tsch_eb_enqueue_count;
 static uint16_t tsch_eb_ok_count;
@@ -171,7 +170,6 @@ void reset_log_tsch()
   clock_avg_leaving_time = 0;
 
   /* EB */
-  tsch_eb_send_count = 0;
   tsch_eb_qloss_count = 0;
   tsch_eb_enqueue_count = 0;
   tsch_eb_ok_count = 0;
@@ -833,26 +831,26 @@ tsch_tx_process_pending(void)
       }
     } else {
       if(p->ret == MAC_TX_NOACK) { // IP layer packet
-        LOG_INFO("HCK ip_noack %u |\n", ++tsch_ip_noack_count);
+        ++tsch_ip_noack_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_noack %u |\n", ++tsch_ip_icmp6_noack_count);
+          LOG_ERR("HCK ip_noack %u ip_icmp6_noack %u |\n", tsch_ip_noack_count, ++tsch_ip_icmp6_noack_count);
         } else {
-          LOG_ERR("HCK ip_udp_noack %u |\n", ++tsch_ip_udp_noack_count);
+          LOG_ERR("HCK ip_noack %u ip_udp_noack %u |\n", tsch_ip_noack_count, ++tsch_ip_udp_noack_count);
         }
 
       } else if(p->ret == MAC_TX_OK) {
-        LOG_INFO("HCK ip_ok %u |\n", ++tsch_ip_ok_count);
+        ++tsch_ip_ok_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_ok %u |\n", ++tsch_ip_icmp6_ok_count);
+          LOG_ERR("HCK ip_ok %u ip_icmp6_ok %u |\n", tsch_ip_ok_count, ++tsch_ip_icmp6_ok_count);
         } else {
-          LOG_ERR("HCK ip_udp_ok %u |\n", ++tsch_ip_udp_ok_count);
+          LOG_ERR("HCK ip_ok %u ip_udp_ok %u |\n", tsch_ip_ok_count, ++tsch_ip_udp_ok_count);
         }
       } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
-        LOG_INFO("HCK ip_err %u |\n", ++tsch_ip_error_count);
+        ++tsch_ip_error_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_err %u |\n", ++tsch_ip_icmp6_error_count);
+          LOG_ERR("HCK ip_err %u ip_icmp6_err %u |\n", tsch_ip_error_count, ++tsch_ip_icmp6_error_count);
         } else {
-          LOG_ERR("HCK ip_udp_err %u |\n", ++tsch_ip_udp_error_count);
+          LOG_ERR("HCK ip_err %u ip_udp_err %u |\n", tsch_ip_error_count, ++tsch_ip_udp_error_count);
         }
       }
     }
@@ -1331,7 +1329,6 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
           } else {
               LOG_INFO("HCK eb_enq %u | TSCH: enqueue EB packet %u %u\n", ++tsch_eb_enqueue_count,
                        packetbuf_totlen(), packetbuf_hdrlen());
-              LOG_INFO("HCK eb_send %u |\n", ++tsch_eb_send_count);
             p->tsch_sync_ie_offset = tsch_sync_ie_offset;
             p->header_len = hdr_len;
           }
@@ -1543,11 +1540,11 @@ send_packet(mac_callback_t sent, void *ptr)
       if(sent == keepalive_packet_sent) {
         LOG_ERR("HCK ka_qloss %u |\n", ++tsch_ka_qloss_count);
       } else {
-        LOG_ERR("HCK ip_qloss %u |\n", ++tsch_ip_qloss_count);
+        ++tsch_ip_qloss_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_qloss %u |\n", ++tsch_ip_icmp6_qloss_count);
+          LOG_ERR("HCK ip_qloss %u ip_icmp6_qloss %u |\n", tsch_ip_qloss_count, ++tsch_ip_icmp6_qloss_count);
         } else {
-          LOG_ERR("HCK ip_udp_qloss %u |\n", ++tsch_ip_udp_qloss_count);
+          LOG_ERR("HCK ip_qloss %u ip_udp_qloss %u |\n", tsch_ip_qloss_count, ++tsch_ip_udp_qloss_count);
         }
       }
     } else {
@@ -1561,11 +1558,11 @@ send_packet(mac_callback_t sent, void *ptr)
       if(sent == keepalive_packet_sent) {
         LOG_INFO("HCK ka_enq %u |\n", ++tsch_ka_enqueue_count);
       } else {
-        LOG_INFO("HCK ip_enq %u |\n", ++tsch_ip_enqueue_count);
+        ++tsch_ip_enqueue_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_icmp6_enq %u |\n", ++tsch_ip_icmp6_enqueue_count);
+          LOG_ERR("HCK ip_enq %u ip_icmp6_enq %u |\n", tsch_ip_enqueue_count, ++tsch_ip_icmp6_enqueue_count);
         } else {
-          LOG_ERR("HCK ip_udp_enq %u |\n", ++tsch_ip_udp_enqueue_count);
+          LOG_ERR("HCK ip_enq %u ip_udp_enq %u |\n", tsch_ip_enqueue_count, ++tsch_ip_udp_enqueue_count);
         }
       }
 
