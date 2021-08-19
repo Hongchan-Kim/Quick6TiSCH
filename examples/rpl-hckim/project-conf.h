@@ -99,7 +99,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
 /*---------------------------------------------------------------------------*/
 
 
@@ -108,7 +108,7 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 2)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 6)
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
@@ -157,7 +157,7 @@
 #define WITH_SECURITY                              0
 #endif /* WITH_SECURITY */
 #define TSCH_NEXT_PRINT_PERIOD                     (1 * 60 * CLOCK_SECOND)
-#define TSCH_LOG_CONF_QUEUE_LEN                    16
+#define TSCH_LOG_CONF_QUEUE_LEN                    128 // original: 16
 /*---------------------------------------------------------------------------*/
 
 
@@ -247,8 +247,10 @@
 #define OST_ON_DEMAND_PROVISION                    1
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define OST_JSB_ADD                                1
-#define WITH_OST_LOG_INFO                          0
+#define WITH_OST_LOG_INFO                          1
 #define WITH_OST_LOG_DBG                           0
+#define WITH_OST_LOG_NBR                           0
+#define WITH_OST_LOG_SCH                           0
 #define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
 
 #define OST_N_SELECTION_PERIOD                     15 // related to OST_N_MAX: Min. traffic load = 1 / (OST_N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 

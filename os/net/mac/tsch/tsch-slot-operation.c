@@ -581,18 +581,18 @@ ost_select_t_offset(uint16_t target_id, uint16_t target_N)  /* similar with ost_
   }
 
   if(i == (1 << target_N)) { /* failed to select t_offset */
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "ost select_t_offset: (%u, %u) -> failed", target_id, target_N);
+                "ost sel_T: n %u N %u -> fail", target_id, target_N);
     );
 #endif
     return 0xffff;
   } else {
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "ost select_t_offset: (%u, %u) -> %lu", target_id, target_N, j);
+                "ost sel_T: n %u N %u -> %lu", target_id, target_N, j);
     );
 #endif
     return j;
@@ -637,7 +637,7 @@ ost_process_rx_N(frame802154_t *frame, struct input_packet *current_input)
 #if WITH_OST_LOG_DBG
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "ost rcvd N: nbr %u, %u -> %u", ds6_nbr_id, ds6_nbr->ost_nbr_N, frame->ost_pigg1);
+                "ost rcvd N: n %u N %u -> %u", ds6_nbr_id, ds6_nbr->ost_nbr_N, frame->ost_pigg1);
     );
 #endif
 
@@ -649,12 +649,11 @@ ost_process_rx_N(frame802154_t *frame, struct input_packet *current_input)
         ds6_nbr->ost_consecutive_new_tx_schedule_request++;
         current_input->ost_prN_new_N = (frame->ost_pigg1) - OST_N_OFFSET_NEW_TX_REQUEST;
 
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ost prN: uninstallable/low PRR (%u, %u)", 
-                    ds6_nbr->ost_consecutive_new_tx_schedule_request, 
-                    current_input->ost_flag_respond_to_consec_new_tx_sched_req);
+                    "ost prN: non-inst/lowPRR %u", 
+                    ds6_nbr->ost_consecutive_new_tx_schedule_request);
         );
 #endif
 
@@ -700,15 +699,17 @@ ost_post_process_rx_N(struct input_packet *current_input)
       ost_remove_rx(nbr_id);
       ost_add_rx(nbr_id, current_input->ost_prN_new_N, current_input->ost_prN_new_t_offset);
 
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
       TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-                  "ost post_prN: nbr %u, (%u, %u)", nbr_id, current_input->ost_prN_new_N, current_input->ost_prN_new_t_offset);
+                  "ost pprN: n %u N %u T %u", nbr_id, current_input->ost_prN_new_N, current_input->ost_prN_new_t_offset);
       );
 #endif
 
-#if WITH_OST_LOG_INFO
+#if WITH_OST_LOG_NBR
       ost_print_nbr();
+#endif
+#if WITH_OST_LOG_SCH
       tsch_schedule_print_ost();
 #endif
 
@@ -1022,20 +1023,20 @@ ost_process_rx_t_offset(frame802154_t* frame)
 
       if(frame->ost_pigg1 == OST_T_OFFSET_ALLOCATION_FAILURE) {
         current_packet->ost_flag_increase_N = 1; /* increase N due to allocation failure */
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ost prT: t_offset alloc fail");
+                    "ost prT: T alloc fail");
         );
 #endif
         return;
       }
       if(frame->ost_pigg1 == OST_T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST) {
         current_packet->ost_flag_increase_N = 1; /* increase N due to low prr or consec req */
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ost prT: consecutive request");
+                    "ost prT: consec req");
         );
 #endif
         return;          
@@ -1052,12 +1053,10 @@ ost_process_rx_t_offset(frame802154_t* frame)
           ds6_nbr->ost_my_installable = 1;
           current_packet->ost_flag_update_N_of_pkts_in_queue = 1; /* WHY??? */
         }
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ost prT: installable (%u, %u, %u, %u)", 
-                    ds6_nbr->ost_my_installable, current_packet->ost_flag_update_N_of_pkts_in_queue, 
-                    current_packet->ost_flag_rejected_by_nbr, current_packet->ost_flag_change_tx_schedule);
+                    "ost prT: inst");
         );
 #endif
         return;
@@ -1066,12 +1065,10 @@ ost_process_rx_t_offset(frame802154_t* frame)
           ds6_nbr->ost_my_installable = 0;
           current_packet->ost_flag_update_N_of_pkts_in_queue = 1; /* WHY??? */
         }
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ost prT: non-installable (%u, %u, %u, %u)", 
-                    ds6_nbr->ost_my_installable, current_packet->ost_flag_update_N_of_pkts_in_queue, 
-                    current_packet->ost_flag_rejected_by_nbr, current_packet->ost_flag_change_tx_schedule);
+                    "ost prT: non-inst");
         );
 #endif
         return;
@@ -1081,12 +1078,10 @@ ost_process_rx_t_offset(frame802154_t* frame)
           current_packet->ost_flag_update_N_of_pkts_in_queue = 1;
         }
         current_packet->ost_flag_rejected_by_nbr = 1;
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ost prT: denial (%u, %u, %u, %u)", 
-                    ds6_nbr->ost_my_installable, current_packet->ost_flag_update_N_of_pkts_in_queue, 
-                    current_packet->ost_flag_rejected_by_nbr, current_packet->ost_flag_change_tx_schedule);
+                    "ost prT: deny");
         );
 #endif
         return;
@@ -1108,19 +1103,19 @@ ost_post_process_rx_t_offset(struct tsch_packet *p)
     p->ost_flag_increase_N = 0;
 
     if((p->ost_prt_nbr)->ost_my_N < OST_N_MAX) {
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
       TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-                  "ost post_prT: inc N %u -> %u", (p->ost_prt_nbr)->ost_my_N, ((p->ost_prt_nbr)->ost_my_N) + 1);
+                  "ost pprT: inc N %u -> %u", (p->ost_prt_nbr)->ost_my_N, ((p->ost_prt_nbr)->ost_my_N) + 1);
       );
 #endif
       ((p->ost_prt_nbr)->ost_my_N)++;
       ost_update_N_of_packets_in_queue(nbr_lladdr, (p->ost_prt_nbr)->ost_my_N);
     } else {
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
       TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-                  "ost post_prT: inc N MAX");
+                  "ost pprT: inc N MAX");
       );
 #endif
     }
@@ -1134,20 +1129,20 @@ ost_post_process_rx_t_offset(struct tsch_packet *p)
       if((p->ost_prt_nbr)->ost_my_installable == 1) {
         if(p->ost_flag_rejected_by_nbr == 0) { /* installable, not rejected (0xffff) */
           ost_add_tx(nbr_lladdr, (p->ost_prt_nbr)->ost_my_N, p->ost_prt_new_t_offset);
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
           uint16_t nbr_id = OST_NODE_ID_FROM_IPADDR(&((p->ost_prt_nbr)->ipaddr));
           TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),
-                      "ost post_prT: nbr %u, (%u, %u)", nbr_id, (p->ost_prt_nbr)->ost_my_N, p->ost_prt_new_t_offset);
+                      "ost pprT: inst n %u N %u T %u", nbr_id, (p->ost_prt_nbr)->ost_my_N, p->ost_prt_new_t_offset);
           );
 #endif
         }
       } else { /* cannot install */
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
         uint16_t nbr_id = OST_NODE_ID_FROM_IPADDR(&((p->ost_prt_nbr)->ipaddr));
         TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ost post_prT: uninstallable nbr %u", nbr_id);
+                    "ost pprT: non-inst n %u", nbr_id);
         );
 #endif
       }
@@ -1162,8 +1157,10 @@ ost_post_process_rx_t_offset(struct tsch_packet *p)
         }
       }
 
-#if WITH_OST_LOG_INFO
+#if WITH_OST_LOG_NBR
       ost_print_nbr();
+#endif
+#if WITH_OST_LOG_SCH
       tsch_schedule_print_ost();
 #endif
     }
@@ -1618,10 +1615,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               }
             }            
 
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                "ost odp: ssq_sched %u", ssq_schedule)
+                "ost odp: ssq_s %u", ssq_schedule)
             );
 #endif
 
@@ -1773,7 +1770,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
                 TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                    "ost rcvd t_offset: nbr %u, %u", nbr_id, frame.ost_pigg1)
+                    "ost rcvd T: n %u T %u", nbr_id, frame.ost_pigg1)
                 );
 #endif
 
@@ -2118,10 +2115,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               ost_process_rx_N(&frame, current_input);
 #if OST_ON_DEMAND_PROVISION              
               uint16_t matching_slot = ost_process_rx_schedule_info(&frame);
-#if WITH_OST_LOG_DBG
+#if WITH_OST_LOG_INFO
               TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),
-                  "ost odp: matching_slot %u", matching_slot)
+                  "ost odp: m_slot %u", matching_slot)
               );
 #endif
 #endif
@@ -2457,7 +2454,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if WITH_OST_LOG_DBG
           TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                        "ost odp: operation");
+                        "ost odp: op");
           );
 #endif
 

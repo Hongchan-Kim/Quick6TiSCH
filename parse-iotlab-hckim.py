@@ -101,8 +101,10 @@ PRESERVE_METRIC_NUM = len(preserve_metric_list)
 result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 
                'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
                'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
-               'leave', 'dc',
-               'SCR', 'UTOR', 'UROR', 'PTOR', 'PROR']
+               #'leave', 
+               'dc',
+               'SCR', 'UTOR', 'UROR', 'PTOR', 'PROR',
+               'OPTR', 'OPRR']
                # scheduled cell ratio,
                # unicast tx operation ratio, unicast rx operation ratio
                # periodic tx operation ratio, periodic rx operation ratio, 
@@ -157,6 +159,8 @@ for node_id in non_root_id_list:
                                 bootstrap_period_parsed[node_index][current_metric_index] = message[val_loc]
                         ind_loc += 2
                         val_loc += 2
+                        if ind_loc > len(message) or val_loc > len(message):
+                            break
                     if bootstrap_period_finished_this == 1:
                         break
         line = f.readline()
@@ -201,6 +205,8 @@ while line:
                             bootstrap_period_parsed[ROOT_INDEX][current_metric_index] = message[val_loc]
                     ind_loc += 2
                     val_loc += 2
+                    if ind_loc > len(message) or val_loc > len(message):
+                            break
                 if bootstrap_period_finished_this == 1:
                     break
     line = f.readline()
@@ -337,6 +343,16 @@ for i in range(NODE_NUM):
                 bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('op_rx_op')]) / float(bootstrap_period_parsed[i][metric_list.index('sch_op_rx')]) * 100, 2)
+        elif result_list[j] == 'OPTR':
+            if float(bootstrap_period_parsed[i][metric_list.index('op_tx_op')]) + float(bootstrap_period_parsed[i][metric_list.index('oo_tx_op')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('oo_tx_op')]) / (float(bootstrap_period_parsed[i][metric_list.index('op_tx_op')]) + float(bootstrap_period_parsed[i][metric_list.index('oo_tx_op')])) * 100, 2)
+        elif result_list[j] == 'OPRR':
+            if float(bootstrap_period_parsed[i][metric_list.index('op_rx_op')]) + float(bootstrap_period_parsed[i][metric_list.index('oo_rx_op')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('oo_rx_op')]) / (float(bootstrap_period_parsed[i][metric_list.index('op_rx_op')]) + float(bootstrap_period_parsed[i][metric_list.index('oo_rx_op')])) * 100, 2)
         
 # STEP-3-5: [bootstrap period] print bootstrap_period_result
 print('----- bootstrap period -----')
@@ -405,6 +421,8 @@ for node_id in non_root_id_list:
                                     data_period_parsed[node_index][current_metric_index] = message[val_loc]
                             ind_loc += 2
                             val_loc += 2
+                            if ind_loc > len(message) or val_loc > len(message):
+                                break
         line = f.readline()
     f.close()
 
@@ -450,6 +468,8 @@ while line:
                                 data_period_parsed[ROOT_INDEX][current_metric_index] = message[val_loc]
                         ind_loc += 2
                         val_loc += 2
+                        if ind_loc > len(message) or val_loc > len(message):
+                            break
     line = f.readline()
 f.close()
 
@@ -584,6 +604,17 @@ for i in range(NODE_NUM):
                 data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('op_rx_op')]) / float(data_period_parsed[i][metric_list.index('sch_op_rx')]) * 100, 2)
+        elif result_list[j] == 'OPTR':
+            if float(data_period_parsed[i][metric_list.index('op_tx_op')]) + float(data_period_parsed[i][metric_list.index('oo_tx_op')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('oo_tx_op')]) / (float(data_period_parsed[i][metric_list.index('op_tx_op')]) + float(data_period_parsed[i][metric_list.index('oo_tx_op')])) * 100, 2)
+        elif result_list[j] == 'OPRR':
+            if float(data_period_parsed[i][metric_list.index('op_rx_op')]) + float(data_period_parsed[i][metric_list.index('oo_rx_op')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('oo_rx_op')]) / (float(data_period_parsed[i][metric_list.index('op_rx_op')]) + float(data_period_parsed[i][metric_list.index('oo_rx_op')])) * 100, 2)
+
 
 # STEP-4-6: [data period] print data_period_result
 print('----- data period -----')

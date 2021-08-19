@@ -185,7 +185,7 @@ void ost_select_N(void* ptr)
               ds6_nbr->ost_consecutive_my_N_inc = 0;
             }
 #if WITH_OST_LOG_INFO
-            LOG_INFO("ost select_N: ");
+            LOG_INFO("ost sel_N: ");
             LOG_INFO_LLADDR((linkaddr_t *)uip_ds6_nbr_get_ll(ds6_nbr));
             LOG_INFO_(" %u -> %u (%u, %u)\n", old_N, ds6_nbr->ost_my_N,
                     ds6_nbr->ost_num_tx, ds6_nbr->ost_consecutive_my_N_inc);
@@ -198,19 +198,14 @@ void ost_select_N(void* ptr)
         ds6_nbr->ost_my_N = 5;
         if(ds6_nbr->ost_newly_added == 1) { 
           ds6_nbr->ost_newly_added = 0;
-#if WITH_OST_LOG_DBG
-        LOG_INFO("ost select_N: ");
-        LOG_INFO_LLADDR((linkaddr_t *)uip_ds6_nbr_get_ll(ds6_nbr));
-        LOG_INFO_(" (newly_added) %u\n", ds6_nbr->ost_my_N);
+#if WITH_OST_LOG_INFO
+          if(ost_is_routing_nbr(ds6_nbr) == 1) {
+            LOG_INFO("ost sel_N: ");
+            LOG_INFO_LLADDR((linkaddr_t *)uip_ds6_nbr_get_ll(ds6_nbr));
+            LOG_INFO_(" new_r_nbr %u\n", ds6_nbr->ost_my_N);
+          }
 #endif
         }
-#if WITH_OST_LOG_DBG
-        if(ost_is_routing_nbr(ds6_nbr) == 0) {
-          LOG_INFO("ost select_N: ");
-          LOG_INFO_LLADDR((linkaddr_t *)uip_ds6_nbr_get_ll(ds6_nbr));
-          LOG_INFO_(" (no_routing_nbr) %u\n", ds6_nbr->ost_my_N);
-        }
-#endif
       }
 
       ds6_nbr = uip_ds6_nbr_next(ds6_nbr);

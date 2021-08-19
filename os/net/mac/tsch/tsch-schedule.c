@@ -141,7 +141,7 @@ tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)
     }
   }
 
-  /* Check matching slot schedule, hckim why again??? */
+  /* Check matching slot schedule (check ssq up to now) */
   uint64_t curr_ASN = (uint64_t)(asn->ls4b) + ((uint64_t)(asn->ms1b) << 32);
   uint64_t ssq_ASN;
 

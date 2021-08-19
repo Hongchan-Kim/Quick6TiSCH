@@ -147,7 +147,7 @@ ost_reset_nbr(const linkaddr_t *addr, uint8_t newly_added, uint8_t rx_no_path)
       nbr->ost_consecutive_new_tx_schedule_request = 0;      
     }
   }
-#if WITH_OST_LOG_INFO
+#if WITH_OST_LOG_NBR
   ost_print_nbr();
 #endif
 }
@@ -409,7 +409,7 @@ child_removed(const linkaddr_t *linkaddr)
         ost_remove_tx((linkaddr_t *)linkaddr);
         ost_remove_rx(OST_NODE_ID_FROM_LINKADDR(linkaddr));
 
-#if WITH_OST_LOG_INFO
+#if WITH_OST_LOG_SCH
         tsch_schedule_print_ost();
 #endif
 
@@ -515,7 +515,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       ost_remove_tx((linkaddr_t *)old_addr);
       ost_remove_rx(OST_NODE_ID_FROM_LINKADDR(old_addr));
 
-#if WITH_OST_LOG_INFO
+#if WITH_OST_LOG_SCH
       tsch_schedule_print_ost();
 #endif
 
