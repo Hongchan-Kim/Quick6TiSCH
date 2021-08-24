@@ -2787,8 +2787,20 @@ ost_donothing:
             tsch_current_burst_count = 0;
           }
         }
-#endif
 #else
+        /* Get next active link */
+        current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);
+        if(current_link == NULL) {
+          /* There is no next link. Fall back to default
+           * behavior: wake up at the next slot. */
+          timeslot_diff = 1;
+        } else {
+          /* Reset burst index now that the link was scheduled from
+            normal schedule (as opposed to from ongoing burst) */
+          tsch_current_burst_count = 0;
+        }
+#endif
+#else /* WITH_ALICE */
         /* Get next active link */
         current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);
         if(current_link == NULL) {
