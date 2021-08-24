@@ -86,6 +86,13 @@ extern uint32_t tsch_ost_unlocked_scheduled_periodic_tx_cell_count;
 extern uint32_t tsch_ost_unlocked_scheduled_periodic_rx_cell_count;
 extern uint32_t tsch_ost_unlocked_scheduled_ondemand_tx_cell_count;
 extern uint32_t tsch_ost_unlocked_scheduled_ondemand_rx_cell_count;
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+extern uint32_t tsch_unlocked_burst_broadcast_cell_count;
+extern uint32_t tsch_unlocked_burst_unicast_tx_cell_count;
+extern uint32_t tsch_unlocked_burst_unicast_rx_cell_count;
+extern uint32_t tsch_ost_unlocked_burst_periodic_tx_cell_count;
+extern uint32_t tsch_ost_unlocked_burst_periodic_rx_cell_count;
+#endif
 #endif
 
 /* hckim measure tx/rx operation counts */
@@ -102,6 +109,14 @@ extern uint32_t tsch_ost_periodic_provisioning_tx_operation_count;
 extern uint32_t tsch_ost_periodic_provisioning_rx_operation_count;
 extern uint32_t tsch_ost_ondemand_provisioning_tx_operation_count;
 extern uint32_t tsch_ost_ondemand_provisioning_rx_operation_count;
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+extern uint32_t tsch_broadcast_slotframe_burst_tx_operation_count;
+extern uint32_t tsch_broadcast_slotframe_burst_rx_operation_count;
+extern uint32_t tsch_unicast_slotframe_burst_tx_operation_count;
+extern uint32_t tsch_unicast_slotframe_burst_rx_operation_count;
+extern uint32_t tsch_ost_periodic_provisioning_burst_tx_operation_count;
+extern uint32_t tsch_ost_periodic_provisioning_burst_rx_operation_count;
+#endif
 #endif
 
 void reset_log_tsch();

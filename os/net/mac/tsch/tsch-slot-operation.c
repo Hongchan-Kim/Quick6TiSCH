@@ -179,6 +179,11 @@ static struct tsch_neighbor *current_neighbor = NULL;
 #if !WITH_OST && !WITH_ALICE
 /* Indicates whether an extra link is needed to handle the current burst */
 static int burst_link_scheduled = 0;
+#elif WITH_OST
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+static int burst_link_scheduled = 0;
+static int is_burst_slot = 0;
+#endif
 #endif
 /* Counts the length of the current burst */
 int tsch_current_burst_count = 0;
@@ -1551,6 +1556,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if !WITH_OST && !WITH_ALICE
       /* Did we set the frame pending bit to request an extra burst link? */
       static int burst_link_requested;
+#elif WITH_OST
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+      static int burst_link_requested;
+#endif
 #endif
 
 #if TSCH_CCA_ENABLED
@@ -1648,6 +1657,40 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
 #else /* OST_ON_DEMAND_PROVISION */
 
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+      /* Unicast. More packets in queue for the neighbor? */
+      burst_link_requested = 0;
+      if(do_wait_for_ack
+             && tsch_current_burst_count + 1 < TSCH_BURST_MAX_LEN
+             && tsch_queue_nbr_packet_count(current_neighbor) > 1) {
+        uint16_t time_to_earliest_schedule = 0;
+        if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
+          burst_link_requested = 1;
+          tsch_packet_set_frame_pending(packet, packet_len);
+/*
+          uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "khc Tx burst request: n %u q %u t %u", nbr_id, tsch_queue_nbr_packet_count(current_neighbor), time_to_earliest_schedule)
+          );
+        } else {
+          uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "khc Tx burst skip: n %u q %u t %u", nbr_id, tsch_queue_nbr_packet_count(current_neighbor), time_to_earliest_schedule)
+          );
+*/
+        }
+/*
+      } else {
+        uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "khc Tx no burst: n %u", nbr_id)
+        );
+*/
+      }
+#endif
       seqno = ((uint8_t *)(packet))[4];
 
 #endif /* OST_ON_DEMAND_PROVISION */
@@ -1832,6 +1875,32 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 if(burst_link_requested) {
                   burst_link_scheduled = 1;
                 }
+#elif WITH_OST
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+                /* We requested an extra slot and got an ack. This means
+                the extra slot will be scheduled at the received */
+                if(burst_link_requested) {
+                  if(tsch_packet_get_frame_pending(ackbuf, ack_len)) {
+                    burst_link_scheduled = 1;
+/*
+                    uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
+                    TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "khc Tx burst allowed: n %u", nbr_id)
+                    );
+*/
+                  } else {
+                    burst_link_scheduled = 0;
+/*
+                    uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
+                    TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "khc Tx burst denied: n %u", nbr_id)
+                    );
+*/
+                  }
+                }
+#endif
 #endif
               } else {
                 mac_tx_status = MAC_TX_NOACK;
@@ -1887,6 +1956,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     /* hckim measure tx operation counts */
     ++tsch_any_slotframe_tx_operation_count;
 
+#if !WITH_OST
     if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
       ++tsch_eb_slotframe_tx_operation_count;
     } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
@@ -1894,13 +1964,43 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
       ++tsch_unicast_slotframe_tx_operation_count;
     } 
-#if WITH_OST
-    else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+#else /* WITH_OST */
+#if !TSCH_DEFAULT_BURST_TRANSMISSION
+    if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+      ++tsch_eb_slotframe_tx_operation_count;
+    } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+      ++tsch_broadcast_slotframe_tx_operation_count;
+    } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+      ++tsch_unicast_slotframe_tx_operation_count;
+    } else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
           && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
       ++tsch_ost_periodic_provisioning_tx_operation_count;
     } else if(current_link->slotframe_handle > OST_ONDEMAND_SF_ID_OFFSET) {
       ++tsch_ost_ondemand_provisioning_tx_operation_count;
     }
+#else
+    if(is_burst_slot) {
+      if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+        ++tsch_broadcast_slotframe_burst_tx_operation_count;
+      } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+        ++tsch_unicast_slotframe_burst_tx_operation_count;
+      } else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+            && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+        ++tsch_ost_periodic_provisioning_burst_tx_operation_count;
+      }
+    } else {
+      if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+        ++tsch_eb_slotframe_tx_operation_count;
+      } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+        ++tsch_broadcast_slotframe_tx_operation_count;
+      } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+        ++tsch_unicast_slotframe_tx_operation_count;
+      } else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+            && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+        ++tsch_ost_periodic_provisioning_tx_operation_count;
+      }
+    }
+#endif
 #endif
 
     /* Poll process for later processing of packet sent events and logs */
@@ -1958,6 +2058,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
   if(input_index == -1) {
     /* hckim log */
     ++tsch_input_ringbuf_full_count;
+
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+            "full input queue");
+    );
 
     input_queue_drop++;
   } else {
@@ -2121,7 +2226,39 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                   "ost odp: m_slot %u", matching_slot)
               );
 #endif
+#else /* OST_ON_DEMAND_PROVISION */
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+              /* Schedule a burst link iff the frame pending bit was set */
+              int frame_pending_bit_set_or_not = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
+              if(frame_pending_bit_set_or_not) {
+                uint16_t time_to_earliest_schedule = 0;
+                if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
+                  burst_link_scheduled = 1;
+/*
+                  TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                      "khc Rx burst allow: t %u", time_to_earliest_schedule)
+                  );
+*/
+                } else {
+                  burst_link_scheduled = 0;
+/*
+                  TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                      "khc Rx burst deny: t %u", time_to_earliest_schedule)
+                  );
+*/
+                }
+/*
+              } else {
+                TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                    "khc Rx no burst")
+                );
+*/
+              }
 #endif
+#endif /* OST_ON_DEMAND_PROVISION */
 #endif
 
 #if WITH_OST
@@ -2135,6 +2272,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
                   current_input);
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+              if(burst_link_scheduled == 1) {
+                tsch_packet_set_frame_pending(ack_buf, ack_len);
+              }
+#endif
 #endif
 #else
               /* Build ACK frame */
@@ -2207,20 +2349,51 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           /* hckim measure tx operation counts */
           ++tsch_any_slotframe_rx_operation_count;
 
+#if !WITH_OST
           if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
             ++tsch_eb_slotframe_rx_operation_count;
           } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
             ++tsch_broadcast_slotframe_rx_operation_count;
           } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
             ++tsch_unicast_slotframe_rx_operation_count;
-          } 
-#if WITH_OST
-          else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+          }
+#else /* WITH_OST */
+#if !TSCH_DEFAULT_BURST_TRANSMISSION
+          if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+            ++tsch_eb_slotframe_rx_operation_count;
+          } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+            ++tsch_broadcast_slotframe_rx_operation_count;
+          } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+            ++tsch_unicast_slotframe_rx_operation_count;
+          } else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
             && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
             ++tsch_ost_periodic_provisioning_rx_operation_count;
           } else if(current_link->slotframe_handle > OST_ONDEMAND_SF_ID_OFFSET) {
             ++tsch_ost_ondemand_provisioning_rx_operation_count;
           }
+#else
+          if(is_burst_slot) {
+            if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+              ++tsch_broadcast_slotframe_burst_rx_operation_count;
+            } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+              ++tsch_unicast_slotframe_burst_rx_operation_count;
+            } else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+              && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+              ++tsch_ost_periodic_provisioning_burst_rx_operation_count;
+            }
+          } else {
+            if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+              ++tsch_eb_slotframe_rx_operation_count;
+            } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+              ++tsch_broadcast_slotframe_rx_operation_count;
+            } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+              ++tsch_unicast_slotframe_rx_operation_count;
+            } else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+              && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+              ++tsch_ost_periodic_provisioning_rx_operation_count;
+            }
+          }
+#endif
 #endif
 
 
@@ -2292,6 +2465,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       /* hckim measure cell utilization from current_link */
       ++tsch_unlocked_scheduled_any_cell_count; //hckim
 
+#if !WITH_OST
       if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
         if(current_link->link_options & LINK_OPTION_TX) {
           ++tsch_unlocked_scheduled_eb_tx_cell_count;
@@ -2307,8 +2481,23 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           ++tsch_unlocked_scheduled_unicast_rx_cell_count;
         }
       } 
-#if WITH_OST
-      else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+#else /* WITH_OST */
+#if !TSCH_DEFAULT_BURST_TRANSMISSION
+      if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+        if(current_link->link_options & LINK_OPTION_TX) {
+          ++tsch_unlocked_scheduled_eb_tx_cell_count;
+        } else if(current_link->link_options & LINK_OPTION_RX) {
+          ++tsch_unlocked_scheduled_eb_rx_cell_count;
+        }
+      } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+        ++tsch_unlocked_scheduled_broadcast_cell_count;
+      } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+        if(current_link->link_options & LINK_OPTION_TX) {
+          ++tsch_unlocked_scheduled_unicast_tx_cell_count;
+        } else if(current_link->link_options & LINK_OPTION_RX) {
+          ++tsch_unlocked_scheduled_unicast_rx_cell_count;
+        }
+      } else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
             && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
         if(current_link->link_options & LINK_OPTION_TX) {
           ++tsch_ost_unlocked_scheduled_periodic_tx_cell_count;
@@ -2322,6 +2511,49 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           ++tsch_ost_unlocked_scheduled_ondemand_rx_cell_count;
         }
       }
+#else
+      if(burst_link_scheduled) {
+        if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+          ++tsch_unlocked_burst_broadcast_cell_count;
+        } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+          if(current_link->link_options & LINK_OPTION_TX) {
+            ++tsch_unlocked_burst_unicast_tx_cell_count;
+          } else if(current_link->link_options & LINK_OPTION_RX) {
+            ++tsch_unlocked_burst_unicast_rx_cell_count;
+          }
+        } else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+              && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+          if(current_link->link_options & LINK_OPTION_TX) {
+            ++tsch_ost_unlocked_burst_periodic_tx_cell_count;
+          } else if(current_link->link_options & LINK_OPTION_RX) {
+            ++tsch_ost_unlocked_burst_periodic_rx_cell_count;
+          }
+        }        
+      } else {
+        if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+          if(current_link->link_options & LINK_OPTION_TX) {
+            ++tsch_unlocked_scheduled_eb_tx_cell_count;
+          } else if(current_link->link_options & LINK_OPTION_RX) {
+            ++tsch_unlocked_scheduled_eb_rx_cell_count;
+          }
+        } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+          ++tsch_unlocked_scheduled_broadcast_cell_count;
+        } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+          if(current_link->link_options & LINK_OPTION_TX) {
+            ++tsch_unlocked_scheduled_unicast_tx_cell_count;
+          } else if(current_link->link_options & LINK_OPTION_RX) {
+            ++tsch_unlocked_scheduled_unicast_rx_cell_count;
+          }
+        } else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+              && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+          if(current_link->link_options & LINK_OPTION_TX) {
+            ++tsch_ost_unlocked_scheduled_periodic_tx_cell_count;
+          } else if(current_link->link_options & LINK_OPTION_RX) {
+            ++tsch_ost_unlocked_scheduled_periodic_rx_cell_count;
+          }
+        }        
+      }
+#endif
 #endif
 
       int is_active_slot;
@@ -2470,11 +2702,22 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           /* Reset burst_link_scheduled flag. Will be set again if burst continue. */
           burst_link_scheduled = 0;
         } else 
+#elif WITH_OST
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+        if(burst_link_scheduled) {
+          /* Reset burst_link_scheduled flag. Will be set again if burst continue. */
+          burst_link_scheduled = 0;
+          is_burst_slot = 1;
+        } else 
+#endif
 #endif
         {
           /* Hop channel */
           tsch_current_channel_offset = tsch_get_channel_offset(current_link, current_packet);
           tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
+#if WITH_OST && TSCH_DEFAULT_BURST_TRANSMISSION
+          is_burst_slot = 0;
+#endif
         }
         NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
         /* Turn the radio on already here if configured so; necessary for radios with slow startup */
@@ -2494,11 +2737,22 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           static struct pt slot_rx_pt;
           PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
         }
+#if WITH_OST && TSCH_DEFAULT_BURST_TRANSMISSION
+        if(is_burst_slot) {
+          is_burst_slot = 0;
+        }
+#endif
       } else {
 #if !WITH_OST && !WITH_ALICE
         /* Make sure to end the burst in cast, for some reason, we were
          * in a burst but now without any more packet to send. */
         burst_link_scheduled = 0;
+#elif WITH_OST
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+        /* Make sure to end the burst in cast, for some reason, we were
+         * in a burst but now without any more packet to send. */
+        burst_link_scheduled = 0;
+#endif
 #endif
       }
 
@@ -2565,6 +2819,29 @@ ost_donothing:
             tsch_current_burst_count = 0;
           }
         }
+#elif WITH_OST
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+        /* A burst link was scheduled. Replay the current link at the
+        next time offset */
+        if(burst_link_scheduled && current_link != NULL) {
+          timeslot_diff = 1;
+          backup_link = NULL;
+          /* Keep track of the number of repetitions */
+          tsch_current_burst_count++;
+        } else {
+          /* Get next active link */
+          current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);
+          if(current_link == NULL) {
+            /* There is no next link. Fall back to default
+             * behavior: wake up at the next slot. */
+            timeslot_diff = 1;
+          } else {
+            /* Reset burst index now that the link was scheduled from
+              normal schedule (as opposed to from ongoing burst) */
+            tsch_current_burst_count = 0;
+          }
+        }
+#endif
 #else
         /* Get next active link */
         current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);

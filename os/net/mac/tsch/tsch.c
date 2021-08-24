@@ -133,6 +133,13 @@ uint32_t tsch_ost_unlocked_scheduled_periodic_tx_cell_count;
 uint32_t tsch_ost_unlocked_scheduled_periodic_rx_cell_count;
 uint32_t tsch_ost_unlocked_scheduled_ondemand_tx_cell_count;
 uint32_t tsch_ost_unlocked_scheduled_ondemand_rx_cell_count;
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+uint32_t tsch_unlocked_burst_broadcast_cell_count;
+uint32_t tsch_unlocked_burst_unicast_tx_cell_count;
+uint32_t tsch_unlocked_burst_unicast_rx_cell_count;
+uint32_t tsch_ost_unlocked_burst_periodic_tx_cell_count;
+uint32_t tsch_ost_unlocked_burst_periodic_rx_cell_count;
+#endif
 #endif
 
 /* hckim measure tx/rx operation counts */
@@ -149,6 +156,14 @@ uint32_t tsch_ost_periodic_provisioning_tx_operation_count;
 uint32_t tsch_ost_periodic_provisioning_rx_operation_count;
 uint32_t tsch_ost_ondemand_provisioning_tx_operation_count;
 uint32_t tsch_ost_ondemand_provisioning_rx_operation_count;
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+uint32_t tsch_broadcast_slotframe_burst_tx_operation_count;
+uint32_t tsch_broadcast_slotframe_burst_rx_operation_count;
+uint32_t tsch_unicast_slotframe_burst_tx_operation_count;
+uint32_t tsch_unicast_slotframe_burst_rx_operation_count;
+uint32_t tsch_ost_periodic_provisioning_burst_tx_operation_count;
+uint32_t tsch_ost_periodic_provisioning_burst_rx_operation_count;
+#endif
 #endif
 
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
@@ -187,6 +202,14 @@ void reset_log_tsch()
           tsch_ost_unlocked_scheduled_periodic_rx_cell_count, 
           tsch_ost_unlocked_scheduled_ondemand_tx_cell_count, 
           tsch_ost_unlocked_scheduled_ondemand_rx_cell_count);
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+  LOG_INFO("HCK bst_bc %lu bst_uc_tx %lu bst_uc_rx %lu bst_op_tx %lu bst_op_rx %lu |\n", 
+          tsch_unlocked_burst_broadcast_cell_count,
+          tsch_unlocked_burst_unicast_tx_cell_count,
+          tsch_unlocked_burst_unicast_rx_cell_count,
+          tsch_ost_unlocked_burst_periodic_tx_cell_count,
+          tsch_ost_unlocked_burst_periodic_rx_cell_count);
+#endif
   LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu op_tx_op %lu op_rx_op %lu oo_tx_op %lu oo_rx_op %lu |\n", 
           tsch_any_slotframe_tx_operation_count, 
           tsch_any_slotframe_rx_operation_count, 
@@ -200,6 +223,15 @@ void reset_log_tsch()
           tsch_ost_periodic_provisioning_rx_operation_count, 
           tsch_ost_ondemand_provisioning_tx_operation_count, 
           tsch_ost_ondemand_provisioning_rx_operation_count);
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+  LOG_INFO("HCK bc_b_tx_op %lu bc_b_rx_op %lu uc_b_tx_op %lu uc_b_rx_op %lu op_b_tx_op %lu op_b_rx_op %lu |\n", 
+          tsch_broadcast_slotframe_burst_tx_operation_count,
+          tsch_broadcast_slotframe_burst_rx_operation_count,
+          tsch_unicast_slotframe_burst_tx_operation_count,
+          tsch_unicast_slotframe_burst_rx_operation_count,
+          tsch_ost_periodic_provisioning_burst_tx_operation_count,
+          tsch_ost_periodic_provisioning_burst_rx_operation_count);
+#endif
 #else
   LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb_tx %lu sch_eb_rx %lu sch_bc %lu sch_uc_tx %lu sch_uc_rx %lu |\n", 
           tsch_total_associated_timeslots, 
@@ -281,6 +313,13 @@ void reset_log_tsch()
   tsch_ost_unlocked_scheduled_periodic_rx_cell_count = 0;
   tsch_ost_unlocked_scheduled_ondemand_tx_cell_count = 0;
   tsch_ost_unlocked_scheduled_ondemand_rx_cell_count = 0;
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+  tsch_unlocked_burst_broadcast_cell_count = 0;
+  tsch_unlocked_burst_unicast_tx_cell_count = 0;
+  tsch_unlocked_burst_unicast_rx_cell_count = 0;
+  tsch_ost_unlocked_burst_periodic_tx_cell_count = 0;
+  tsch_ost_unlocked_burst_periodic_rx_cell_count = 0;
+#endif
 #endif
 
 /* hckim measure tx/rx operation counts */
@@ -297,6 +336,14 @@ void reset_log_tsch()
   tsch_ost_periodic_provisioning_rx_operation_count = 0;
   tsch_ost_ondemand_provisioning_tx_operation_count = 0;
   tsch_ost_ondemand_provisioning_rx_operation_count = 0;
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+  tsch_broadcast_slotframe_burst_tx_operation_count = 0;
+  tsch_broadcast_slotframe_burst_rx_operation_count = 0;
+  tsch_unicast_slotframe_burst_tx_operation_count = 0;
+  tsch_unicast_slotframe_burst_rx_operation_count = 0;
+  tsch_ost_periodic_provisioning_burst_tx_operation_count = 0;
+  tsch_ost_periodic_provisioning_burst_rx_operation_count = 0;
+#endif
 #endif
 
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
@@ -336,6 +383,14 @@ print_utilization()
           tsch_ost_unlocked_scheduled_periodic_rx_cell_count, 
           tsch_ost_unlocked_scheduled_ondemand_tx_cell_count, 
           tsch_ost_unlocked_scheduled_ondemand_rx_cell_count);
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+  LOG_INFO("HCK bst_bc %lu bst_uc_tx %lu bst_uc_rx %lu bst_op_tx %lu bst_op_rx %lu |\n", 
+          tsch_unlocked_burst_broadcast_cell_count,
+          tsch_unlocked_burst_unicast_tx_cell_count,
+          tsch_unlocked_burst_unicast_rx_cell_count,
+          tsch_ost_unlocked_burst_periodic_tx_cell_count,
+          tsch_ost_unlocked_burst_periodic_rx_cell_count);
+#endif
   LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu op_tx_op %lu op_rx_op %lu oo_tx_op %lu oo_rx_op %lu |\n", 
           tsch_any_slotframe_tx_operation_count, 
           tsch_any_slotframe_rx_operation_count, 
@@ -349,6 +404,15 @@ print_utilization()
           tsch_ost_periodic_provisioning_rx_operation_count, 
           tsch_ost_ondemand_provisioning_tx_operation_count, 
           tsch_ost_ondemand_provisioning_rx_operation_count);
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+  LOG_INFO("HCK bc_b_tx_op %lu bc_b_rx_op %lu uc_b_tx_op %lu uc_b_rx_op %lu op_b_tx_op %lu op_b_rx_op %lu |\n", 
+          tsch_broadcast_slotframe_burst_tx_operation_count,
+          tsch_broadcast_slotframe_burst_rx_operation_count,
+          tsch_unicast_slotframe_burst_tx_operation_count,
+          tsch_unicast_slotframe_burst_rx_operation_count,
+          tsch_ost_periodic_provisioning_burst_tx_operation_count,
+          tsch_ost_periodic_provisioning_burst_rx_operation_count);
+#endif
 #else
   LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb_tx %lu sch_eb_rx %lu sch_bc %lu sch_uc_tx %lu sch_uc_rx %lu |\n", 
           tsch_total_associated_timeslots, 
@@ -1298,6 +1362,14 @@ PROCESS_THREAD(tsch_process, ev, data)
           tsch_ost_unlocked_scheduled_periodic_rx_cell_count, 
           tsch_ost_unlocked_scheduled_ondemand_tx_cell_count, 
           tsch_ost_unlocked_scheduled_ondemand_rx_cell_count);
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+  LOG_INFO("HCK bst_bc %lu bst_uc_tx %lu bst_uc_rx %lu bst_op_tx %lu bst_op_rx %lu |\n", 
+          tsch_unlocked_burst_broadcast_cell_count,
+          tsch_unlocked_burst_unicast_tx_cell_count,
+          tsch_unlocked_burst_unicast_rx_cell_count,
+          tsch_ost_unlocked_burst_periodic_tx_cell_count,
+          tsch_ost_unlocked_burst_periodic_rx_cell_count);
+#endif
   LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu op_tx_op %lu op_rx_op %lu oo_tx_op %lu oo_rx_op %lu |\n", 
           tsch_any_slotframe_tx_operation_count, 
           tsch_any_slotframe_rx_operation_count, 
@@ -1311,6 +1383,15 @@ PROCESS_THREAD(tsch_process, ev, data)
           tsch_ost_periodic_provisioning_rx_operation_count, 
           tsch_ost_ondemand_provisioning_tx_operation_count, 
           tsch_ost_ondemand_provisioning_rx_operation_count);
+#if TSCH_DEFAULT_BURST_TRANSMISSION
+  LOG_INFO("HCK bc_b_tx_op %lu bc_b_rx_op %lu uc_b_tx_op %lu uc_b_rx_op %lu op_b_tx_op %lu op_b_rx_op %lu |\n", 
+          tsch_broadcast_slotframe_burst_tx_operation_count,
+          tsch_broadcast_slotframe_burst_rx_operation_count,
+          tsch_unicast_slotframe_burst_tx_operation_count,
+          tsch_unicast_slotframe_burst_rx_operation_count,
+          tsch_ost_periodic_provisioning_burst_tx_operation_count,
+          tsch_ost_periodic_provisioning_burst_rx_operation_count);
+#endif
 #else
   LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb_tx %lu sch_eb_rx %lu sch_bc %lu sch_uc_tx %lu sch_uc_rx %lu |\n", 
           tsch_total_associated_timeslots, 
