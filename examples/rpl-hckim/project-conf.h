@@ -108,7 +108,7 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 8)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 2)
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
@@ -244,9 +244,9 @@
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 
 #define WITH_OST                                   1
-#define OST_ON_DEMAND_PROVISION                    0
+#define OST_ON_DEMAND_PROVISION                    1
 
-#define TSCH_DEFAULT_BURST_TRANSMISSION            1
+#define TSCH_DEFAULT_BURST_TRANSMISSION            0
 #if TSCH_DEFAULT_BURST_TRANSMISSION
 #undef TSCH_CONF_BURST_MAX_LEN
 #define TSCH_CONF_BURST_MAX_LEN                    16 /* turn burst off */

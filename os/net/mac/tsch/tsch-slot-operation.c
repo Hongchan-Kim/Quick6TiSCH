@@ -1667,28 +1667,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
           burst_link_requested = 1;
           tsch_packet_set_frame_pending(packet, packet_len);
-/*
-          uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "khc Tx burst request: n %u q %u t %u", nbr_id, tsch_queue_nbr_packet_count(current_neighbor), time_to_earliest_schedule)
-          );
-        } else {
-          uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "khc Tx burst skip: n %u q %u t %u", nbr_id, tsch_queue_nbr_packet_count(current_neighbor), time_to_earliest_schedule)
-          );
-*/
         }
-/*
-      } else {
-        uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
-        TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-            "khc Tx no burst: n %u", nbr_id)
-        );
-*/
       }
 #endif
       seqno = ((uint8_t *)(packet))[4];
@@ -1882,22 +1861,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 if(burst_link_requested) {
                   if(tsch_packet_get_frame_pending(ackbuf, ack_len)) {
                     burst_link_scheduled = 1;
-/*
-                    uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
-                    TSCH_LOG_ADD(tsch_log_message,
-                        snprintf(log->message, sizeof(log->message),
-                        "khc Tx burst allowed: n %u", nbr_id)
-                    );
-*/
                   } else {
                     burst_link_scheduled = 0;
-/*
-                    uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
-                    TSCH_LOG_ADD(tsch_log_message,
-                        snprintf(log->message, sizeof(log->message),
-                        "khc Tx burst denied: n %u", nbr_id)
-                    );
-*/
                   }
                 }
 #endif
@@ -2234,28 +2199,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 uint16_t time_to_earliest_schedule = 0;
                 if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
                   burst_link_scheduled = 1;
-/*
-                  TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                      "khc Rx burst allow: t %u", time_to_earliest_schedule)
-                  );
-*/
                 } else {
                   burst_link_scheduled = 0;
-/*
-                  TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                      "khc Rx burst deny: t %u", time_to_earliest_schedule)
-                  );
-*/
                 }
-/*
-              } else {
-                TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                    "khc Rx no burst")
-                );
-*/
               }
 #endif
 #endif /* OST_ON_DEMAND_PROVISION */

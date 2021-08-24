@@ -83,6 +83,8 @@ metric_list = ['id', 'addr',
             'sch_op_tx', 'sch_op_rx', 'sch_oo_tx', 'sch_oo_rx',
             'any_tx_op', 'any_rx_op', 'eb_tx_op', 'eb_rx_op', 'bc_tx_op', 'bc_rx_op', 'uc_tx_op', 'uc_rx_op',
             'op_tx_op', 'op_rx_op', 'oo_tx_op', 'oo_rx_op',
+            'bst_bc', 'bst_uc_tx', 'bst_uc_rx', 'bst_op_tx', 'bst_op_rx', 
+            'bc_b_tx_op', 'bc_b_rx_op', 'uc_b_tx_op', 'uc_b_rx_op', 'op_b_tx_op', 'op_b_rx_op',
             'ps', 'lastP', 'local_repair',
             'dis_send', 'dioU_send', 'dioM_send',
             'daoP_send', 'daoN_send', 'daoP_fwd', 'daoN_fwd', 'daoA_send',
@@ -98,16 +100,16 @@ preserve_metric_list = ['id', 'addr',
 PRESERVE_METRIC_NUM = len(preserve_metric_list)
 
 # STEP-2-4: define result list
-result_list = ['id', 'addr', 'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 
-               'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
-               'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
-               #'leave', 
-               'dc',
-               'SCR', 'UTOR', 'UROR', 'PTOR', 'PROR',
-               'OPTR', 'OPRR']
-               # scheduled cell ratio,
-               # unicast tx operation ratio, unicast rx operation ratio
-               # periodic tx operation ratio, periodic rx operation ratio, 
+result_list = ['id', 'addr', 'tx_up', #'rx_up', 
+            'uPdr', 'tx_dw', #'rx_dw', 
+            'dPdr', 'pdr', 
+            'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
+            'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
+            #'leave', 
+            'dc',
+            'SCR', 'UTOR', 'UROR', 'PTOR', 'PROR',
+            'OPTR', 'OPRR', 
+            'DBTR', 'DBRR']
 RESULT_NUM = len(result_list)
 
 
@@ -353,6 +355,16 @@ for i in range(NODE_NUM):
                 bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('oo_rx_op')]) / (float(bootstrap_period_parsed[i][metric_list.index('op_rx_op')]) + float(bootstrap_period_parsed[i][metric_list.index('oo_rx_op')])) * 100, 2)
+        elif result_list[j] == 'DBTR':
+            if float(bootstrap_period_parsed[i][metric_list.index('op_tx_op')]) + float(bootstrap_period_parsed[i][metric_list.index('op_b_tx_op')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('op_b_tx_op')]) / (float(bootstrap_period_parsed[i][metric_list.index('op_tx_op')]) + float(bootstrap_period_parsed[i][metric_list.index('op_b_tx_op')])) * 100, 2)
+        elif result_list[j] == 'DBRR':
+            if float(bootstrap_period_parsed[i][metric_list.index('op_rx_op')]) + float(bootstrap_period_parsed[i][metric_list.index('op_b_rx_op')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('op_b_rx_op')]) / (float(bootstrap_period_parsed[i][metric_list.index('op_rx_op')]) + float(bootstrap_period_parsed[i][metric_list.index('op_b_rx_op')])) * 100, 2)
         
 # STEP-3-5: [bootstrap period] print bootstrap_period_result
 print('----- bootstrap period -----')
@@ -614,6 +626,16 @@ for i in range(NODE_NUM):
                 data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('oo_rx_op')]) / (float(data_period_parsed[i][metric_list.index('op_rx_op')]) + float(data_period_parsed[i][metric_list.index('oo_rx_op')])) * 100, 2)
+        elif result_list[j] == 'DBTR':
+            if float(data_period_parsed[i][metric_list.index('op_tx_op')]) + float(data_period_parsed[i][metric_list.index('op_b_tx_op')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('op_b_tx_op')]) / (float(data_period_parsed[i][metric_list.index('op_tx_op')]) + float(data_period_parsed[i][metric_list.index('op_b_tx_op')])) * 100, 2)
+        elif result_list[j] == 'DBRR':
+            if float(data_period_parsed[i][metric_list.index('op_rx_op')]) + float(data_period_parsed[i][metric_list.index('op_b_rx_op')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('op_b_rx_op')]) / (float(data_period_parsed[i][metric_list.index('op_rx_op')]) + float(data_period_parsed[i][metric_list.index('op_b_rx_op')])) * 100, 2)
 
 
 # STEP-4-6: [data period] print data_period_result
