@@ -107,7 +107,10 @@ result_list = ['id', 'addr', 'tx_up', #'rx_up',
             'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
             #'leave', 
             'dc',
-            'SCR', 'UTOR', 'UROR', 'PTOR', 'PROR',
+            #'SCR',
+            'OPSR', 'OOSR',
+            #'UTOR', 'UROR',
+            'PTOR', 'PROR',
             'OPTR', 'OPRR', 
             'DBTR', 'DBRR']
 RESULT_NUM = len(result_list)
@@ -325,6 +328,16 @@ for i in range(NODE_NUM):
                 bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('sch_any')]) / float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
+        elif result_list[j] == 'OPSR':
+            if float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round((float(bootstrap_period_parsed[i][metric_list.index('sch_op_tx')]) + float(bootstrap_period_parsed[i][metric_list.index('sch_op_rx')])) / float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
+        elif result_list[j] == 'OOSR':
+            if float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round((float(bootstrap_period_parsed[i][metric_list.index('sch_oo_tx')]) + float(bootstrap_period_parsed[i][metric_list.index('sch_oo_rx')])) / float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
         elif result_list[j] == 'UTOR':
             if float(bootstrap_period_parsed[i][metric_list.index('sch_uc_tx')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
@@ -596,6 +609,16 @@ for i in range(NODE_NUM):
                 data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('sch_any')]) / float(data_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
+        elif result_list[j] == 'OPSR':
+            if float(data_period_parsed[i][metric_list.index('asso_ts')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round((float(data_period_parsed[i][metric_list.index('sch_op_tx')]) + float(data_period_parsed[i][metric_list.index('sch_op_rx')])) / float(data_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
+        elif result_list[j] == 'OOSR':
+            if float(data_period_parsed[i][metric_list.index('asso_ts')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round((float(data_period_parsed[i][metric_list.index('sch_oo_tx')]) + float(data_period_parsed[i][metric_list.index('sch_oo_rx')])) / float(data_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
         elif result_list[j] == 'UTOR':
             if float(data_period_parsed[i][metric_list.index('sch_uc_tx')]) == 0:
                 data_period_result[i][j] = 'NaN'
