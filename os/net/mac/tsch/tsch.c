@@ -958,24 +958,24 @@ tsch_tx_process_pending(void)
       if(p->ret == MAC_TX_NOACK) { // IP layer packet
         ++tsch_ip_noack_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_noack %u ip_icmp6_noack %u |\n", tsch_ip_noack_count, ++tsch_ip_icmp6_noack_count);
+          LOG_INFO("HCK ip_noack %u ip_icmp6_noack %u |\n", tsch_ip_noack_count, ++tsch_ip_icmp6_noack_count);
         } else {
-          LOG_ERR("HCK ip_noack %u ip_udp_noack %u |\n", tsch_ip_noack_count, ++tsch_ip_udp_noack_count);
+          LOG_INFO("HCK ip_noack %u ip_udp_noack %u |\n", tsch_ip_noack_count, ++tsch_ip_udp_noack_count);
         }
 
       } else if(p->ret == MAC_TX_OK) {
         ++tsch_ip_ok_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_ok %u ip_icmp6_ok %u |\n", tsch_ip_ok_count, ++tsch_ip_icmp6_ok_count);
+          LOG_INFO("HCK ip_ok %u ip_icmp6_ok %u |\n", tsch_ip_ok_count, ++tsch_ip_icmp6_ok_count);
         } else {
-          LOG_ERR("HCK ip_ok %u ip_udp_ok %u |\n", tsch_ip_ok_count, ++tsch_ip_udp_ok_count);
+          LOG_INFO("HCK ip_ok %u ip_udp_ok %u |\n", tsch_ip_ok_count, ++tsch_ip_udp_ok_count);
         }
       } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
         ++tsch_ip_error_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_err %u ip_icmp6_err %u |\n", tsch_ip_error_count, ++tsch_ip_icmp6_error_count);
+          LOG_INFO("HCK ip_err %u ip_icmp6_err %u |\n", tsch_ip_error_count, ++tsch_ip_icmp6_error_count);
         } else {
-          LOG_ERR("HCK ip_err %u ip_udp_err %u |\n", tsch_ip_error_count, ++tsch_ip_udp_error_count);
+          LOG_INFO("HCK ip_err %u ip_udp_err %u |\n", tsch_ip_error_count, ++tsch_ip_udp_error_count);
         }
       }
     }
@@ -1707,9 +1707,9 @@ send_packet(mac_callback_t sent, void *ptr)
       } else {
         ++tsch_ip_enqueue_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_enq %u ip_icmp6_enq %u |\n", tsch_ip_enqueue_count, ++tsch_ip_icmp6_enqueue_count);
+          LOG_INFO("HCK ip_enq %u ip_icmp6_enq %u |\n", tsch_ip_enqueue_count, ++tsch_ip_icmp6_enqueue_count);
         } else {
-          LOG_ERR("HCK ip_enq %u ip_udp_enq %u |\n", tsch_ip_enqueue_count, ++tsch_ip_udp_enqueue_count);
+          LOG_INFO("HCK ip_enq %u ip_udp_enq %u |\n", tsch_ip_enqueue_count, ++tsch_ip_udp_enqueue_count);
         }
       }
 
