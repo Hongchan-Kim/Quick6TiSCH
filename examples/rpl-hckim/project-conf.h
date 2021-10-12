@@ -38,12 +38,12 @@
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79 /* z = 9.6 or 9.4 */
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_43 /* 4~5 hop */
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_63
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83 /* 9~10 hop */
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83 /* 9~10 hop */
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_2
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_3
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_43
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_63
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
 
 #if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
@@ -108,7 +108,7 @@
  * Configure App
  */
 #define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 2)
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 8)
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
@@ -158,6 +158,7 @@
 #endif /* WITH_SECURITY */
 #define TSCH_NEXT_PRINT_PERIOD                     (1 * 60 * CLOCK_SECOND)
 #define TSCH_LOG_CONF_QUEUE_LEN                    128 // original: 16
+#define TSCH_TX_RX_PROCESS_PENDING                 1
 /*---------------------------------------------------------------------------*/
 
 
