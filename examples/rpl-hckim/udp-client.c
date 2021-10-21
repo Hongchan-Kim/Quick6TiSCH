@@ -119,7 +119,11 @@ PROCESS_THREAD(udp_client_process, ev, data)
       etimer_set(&periodic_timer, APP_SEND_INTERVAL);
     } else if(data == &send_timer) {
       if(count <= APP_MAX_TX) {
+#if WITH_COOJA
+        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, COOJA_ROOT_ID);
+#elif WITH_IOTLAB
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, IOTLAB_ROOT_ID);
+#endif
         /* Send to DAG root */
         LOG_INFO("HCK tx_up %u | Sending message %u to ", count, count);
         LOG_INFO_6ADDR(&dest_ipaddr);

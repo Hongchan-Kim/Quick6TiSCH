@@ -4,6 +4,16 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
+#if WITH_COOJA
+
+uint16_t cooja_nodes[NODE_NUM][3] = {
+  /* {host name, uid, rx count} */
+  {1, 0x0001, 0}, /* root */
+  {2, 0x0002, 0}
+};
+
+#elif WITH_IOTLAB
+
 #if IOTLAB_SITE == IOTLAB_LYON_2
 uint16_t iotlab_nodes[NODE_NUM][3] = {
   /* {host name, uid, rx count} */
@@ -722,6 +732,93 @@ uint16_t iotlab_nodes[NODE_NUM][3] = {
   {177, 0x3061, 0},
   {178, 0xa281, 0}
 };
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_83_2
+uint16_t iotlab_nodes[NODE_NUM][3] = {
+  /* {host name, uid, rx count} */
+  {242, 0x9077, 0}, /* root node */
+  {289, 0xc370, 0},
+  {288, 0x1162, 0},
+  {287, 0xb982, 0},
+  {286, 0xa969, 0},
+  {285, 0xa583, 0},
+  {284, 0x9875, 0},
+  {283, 0xb781, 0},
+  {282, 0xa283, 0},
+  {281, 0xa582, 0},
+  {280, 0xb381, 0},
+  {279, 0x9780, 0},
+  {278, 0xa968, 0},
+  {277, 0xc176, 0},
+  {276, 0x9482, 0},
+  {275, 0x9771, 0},
+  {274, 0xa880, 0},
+  {273, 0x9279, 0},
+  {272, 0x2861, 0},
+  {271, 0xa980, 0},
+  {270, 0xb380, 0},
+  {269, 0xb477, 0},
+  {268, 0x9681, 0},
+  {267, 0xb182, 0},
+  {266, 0xc369, 0},
+  {265, 0xa470, 0},
+  {264, 0x9575, 0},
+  {263, 0x8470, 0},
+  {261, 0x9483, 0},
+  {260, 0xa478, 0},
+  {259, 0xa580, 0},
+  {258, 0x1860, 0},
+  {257, 0xb668, 0},
+  {256, 0x1660, 0},
+  {255, 0xb168, 0},
+  {254, 0x8982, 0},
+  {253, 0xc277, 0},
+  {252, 0xb580, 0},
+  {251, 0x9876, 0},
+  {250, 0xa483, 0},
+  {249, 0x9583, 0},
+  {248, 0xb383, 0},
+  {247, 0xa982, 0},
+  {246, 0xb881, 0},
+  {245, 0x9269, 0},
+  {244, 0x9579, 0},
+  {241, 0x8371, 0},
+  {240, 0x3761, 0},
+  {239, 0xb876, 0},
+  {238, 0xa083, 0},
+  {237, 0x1562, 0},
+  {236, 0xa677, 0},
+  {235, 0x2362, 0},
+  {234, 0x9481, 0},
+  {233, 0x8881, 0},
+  {232, 0xa372, 0},
+  {231, 0x8779, 0},
+  {230, 0x3861, 0},
+  {229, 0xb068, 0},
+  {228, 0x9283, 0},
+  {227, 0x9377, 0},
+  {226, 0xb268, 0},
+  {225, 0xc068, 0},
+  {224, 0xb180, 0},
+  {223, 0xb768, 0},
+  {222, 0x3860, 0},
+  {221, 0x9981, 0},
+  {220, 0x2160, 0},
+  {219, 0xb481, 0},
+  {218, 0xb582, 0},
+  {217, 0x9871, 0},
+  {216, 0xb369, 0},
+  {215, 0x9175, 0},
+  {214, 0x9567, 0},
+  {213, 0x8472, 0},
+  {212, 0xb280, 0},
+  {211, 0x8875, 0},
+  {210, 0xc081, 0},
+  {209, 0xb379, 0},
+  {208, 0x9076, 0},
+  {207, 0xa379, 0},
+  {205, 0x8967, 0},
+  {204, 0xb877, 0}
+};
 #endif
 
 uint16_t
@@ -735,15 +832,26 @@ iotlab_node_id_from_uid(uint16_t uid)
   }
   return 0; /* no matching index */
 }
+
+#endif
+
 /*---------------------------------------------------------------------------*/
 void
 print_node_info()
 {
+#if WITH_COOJA
+  LOG_INFO("HCK-NODE root %u %x (%u %x)\n", COOJA_ROOT_ID, COOJA_ROOT_ID, cooja_nodes[0][0], cooja_nodes[0][1]);
+  uint8_t i = 1;
+  for(i = 1; i < NODE_NUM; i++) {
+    LOG_INFO("HCK-NODE non_root %u %x (%u %x)\n", i + 1, i + 1, cooja_nodes[i][0], cooja_nodes[i][1]);
+  }
+#elif WITH_IOTLAB
   LOG_INFO("HCK-NODE root %u %x (%u %x)\n", IOTLAB_ROOT_ID, IOTLAB_ROOT_ID, iotlab_nodes[0][0], iotlab_nodes[0][1]);
   uint8_t i = 1;
   for(i = 1; i < NODE_NUM; i++) {
     LOG_INFO("HCK-NODE non_root %u %x (%u %x)\n", i + 1, i + 1, iotlab_nodes[i][0], iotlab_nodes[i][1]);
   }
+#endif
   LOG_INFO("HCK-NODE end\n");
 }
 /*---------------------------------------------------------------------------*/

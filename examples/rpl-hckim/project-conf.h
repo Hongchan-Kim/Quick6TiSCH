@@ -6,7 +6,14 @@
 /*
  * Configure testbed site, node num, topology
  */
+#define WITH_COOJA                            0
 #define WITH_IOTLAB                               1
+
+#if WITH_COOJA
+
+#define NODE_NUM                                2
+
+#elif WITH_IOTLAB
 
 #define IOTLAB_LYON_2                             1
 #define IOTLAB_LYON_3                             2
@@ -25,6 +32,7 @@
 #define IOTLAB_GRENOBLE_L_43                      15
 #define IOTLAB_GRENOBLE_L_63                      16
 #define IOTLAB_GRENOBLE_L_79                      17
+#define IOTLAB_GRENOBLE_R_83_2                    18
 
 
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
@@ -43,7 +51,8 @@
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_3
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_43
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_63
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83_2 
 
 #if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
@@ -79,6 +88,10 @@
 #define NODE_NUM                                   63
 #elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_79
 #define NODE_NUM                                   79
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_83_2
+#define NODE_NUM                                   83
+#endif
+
 #endif
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
@@ -107,8 +120,8 @@
 /*
  * Configure App
  */
-#define DOWNWARD_TRAFFIC                           1
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 8)
+#define DOWNWARD_TRAFFIC                           0
+#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 16)
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
