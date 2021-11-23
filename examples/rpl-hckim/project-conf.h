@@ -1,93 +1,30 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
-
 /*---------------------------------------------------------------------------*/
 /*
  * Configure testbed site, node num, topology
  */
-#define WITH_IOTLAB                               1
-
+#define WITH_IOTLAB                                1
 #if WITH_IOTLAB
 
-#define IOTLAB_LYON_2                             1
-#define IOTLAB_LYON_3                             2
-#define IOTLAB_LYON_10                            3
-#define IOTLAB_LYON_17                            4
-#define IOTLAB_LILLE_24                           5
-#define IOTLAB_LILLE_40                           6
-#define IOTLAB_LILLE_46                           7
-#define IOTLAB_LILLE_50                           8
-#define IOTLAB_LILLE_79                           9
-#define IOTLAB_GRENOBLE_R_43                      10
-#define IOTLAB_GRENOBLE_R_63                      11
-#define IOTLAB_GRENOBLE_R_83                      12
-#define IOTLAB_GRENOBLE_R_2                       13
-#define IOTLAB_GRENOBLE_R_3                       14
-#define IOTLAB_GRENOBLE_L_43                      15
-#define IOTLAB_GRENOBLE_L_63                      16
-#define IOTLAB_GRENOBLE_L_79                      17
-#define IOTLAB_GRENOBLE_R_83_2                    18
+#define IOTLAB_GRENOBLE_83_CORNER                  1 /* 83 nodes */
+#define IOTLAB_LILLE_79_CORNER                     2 /* 79 nodes */
+#define IOTLAB_LILLE_79_CENTER                     2 /* 79 nodes */
 
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_CORNER
+#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
+//#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 
-//#define IOTLAB_SITE                                IOTLAB_LYON_2
-//#define IOTLAB_SITE                                IOTLAB_LYON_3
-#define IOTLAB_SITE                                IOTLAB_LYON_10
-//#define IOTLAB_SITE                                IOTLAB_LYON_17
-//#define IOTLAB_SITE                                IOTLAB_LILLE_24 /* z = 9.6 */
-//#define IOTLAB_SITE                                IOTLAB_LILLE_40 /* z = 6.1 */
-//#define IOTLAB_SITE                                IOTLAB_LILLE_46 /* z = 9.6 */
-//#define IOTLAB_SITE                                IOTLAB_LILLE_50 /* z = 6.1 */
-//#define IOTLAB_SITE                                IOTLAB_LILLE_79 /* z = 9.6 or 9.4 */
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_43 /* 4~5 hop */
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_63
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83 /* 9~10 hop */
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_2
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_3
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_43
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_63
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83_2 
-
-#if IOTLAB_SITE == IOTLAB_LYON_2
-#define NODE_NUM                                   2
-#elif IOTLAB_SITE == IOTLAB_LYON_3
-#define NODE_NUM                                   3
-#elif IOTLAB_SITE == IOTLAB_LYON_10
-#define NODE_NUM                                   10
-#elif IOTLAB_SITE == IOTLAB_LYON_17
-#define NODE_NUM                                   17
-#elif IOTLAB_SITE == IOTLAB_LILLE_24
-#define NODE_NUM                                   24
-#elif IOTLAB_SITE == IOTLAB_LILLE_40
-#define NODE_NUM                                   40
-#elif IOTLAB_SITE == IOTLAB_LILLE_46
-#define NODE_NUM                                   46
-#elif IOTLAB_SITE == IOTLAB_LILLE_50
-#define NODE_NUM                                   50
-#elif IOTLAB_SITE == IOTLAB_LILLE_79
-#define NODE_NUM                                   79
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_43
-#define NODE_NUM                                   43
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_63
-#define NODE_NUM                                   63
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_83
+#if IOTLAB_SITE == IOTLAB_GRENOBLE_83_CORNER
 #define NODE_NUM                                   83
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_2
-#define NODE_NUM                                   2
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_3
-#define NODE_NUM                                   3
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_43
-#define NODE_NUM                                   43
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_63
-#define NODE_NUM                                   63
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_79
+#elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
 #define NODE_NUM                                   79
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_83_2
-#define NODE_NUM                                   83
+#elif IOTLAB_SITE == IOTLAB_LILLE_79_CENTER
+#define NODE_NUM                                   79
 #endif
 
-#endif
+#endif /* WITH_IOTLAB */
 
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
 #define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
@@ -134,8 +71,8 @@
 #define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST
 #define RPL_CONF_WITH_DAO_ACK                      1
 #define RPL_CONF_WITH_PROBING                      1
-#define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
-#define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND) /* originally 5 seconds */
+//#define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
+//#define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND) /* originally 5 seconds */
 #define RPL_FIRST_MEASURE_PERIOD                   (1 * 60)
 #define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
@@ -159,8 +96,8 @@
 /*
  * Configure TSCH
  */
-#define QUEUEBUF_CONF_NUM                          16 /* original: 8, 16 in Orchestra, ALICE, and OST */
-#define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* original: 4, 8 in OST */
+#define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
+#define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* 8 in OST, originally 4 */
 //#define IEEE802154_CONF_PANID                      0x81a5 //ksh
 //#define TSCH_CONF_AUTOSTART                        0 //ksh
 //#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH          3 //ksh 6TiSCH minimal schedule length.
@@ -168,7 +105,7 @@
 #define WITH_SECURITY                              0
 #endif /* WITH_SECURITY */
 #define TSCH_NEXT_PRINT_PERIOD                     (1 * 60 * CLOCK_SECOND)
-#define TSCH_LOG_CONF_QUEUE_LEN                    128 // original: 16
+#define TSCH_LOG_CONF_QUEUE_LEN                    128 // originally 16
 #define TSCH_TX_RX_PROCESS_PENDING                 1
 /*---------------------------------------------------------------------------*/
 
@@ -319,5 +256,85 @@
 #define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
 /*---------------------------------------------------------------------------*/
 
+
+/* Backup settings */
+
+/*
+#define IOTLAB_LYON_2                             1
+#define IOTLAB_LYON_3                             2
+#define IOTLAB_LYON_10                            3
+#define IOTLAB_LYON_17                            4
+#define IOTLAB_LILLE_24                           5
+#define IOTLAB_LILLE_40                           6
+#define IOTLAB_LILLE_46                           7
+#define IOTLAB_LILLE_50                           8
+#define IOTLAB_LILLE_79                           9
+#define IOTLAB_GRENOBLE_R_43                      10
+#define IOTLAB_GRENOBLE_R_63                      11
+#define IOTLAB_GRENOBLE_R_83                      12
+#define IOTLAB_GRENOBLE_R_2                       13
+#define IOTLAB_GRENOBLE_R_3                       14
+#define IOTLAB_GRENOBLE_L_43                      15
+#define IOTLAB_GRENOBLE_L_63                      16
+#define IOTLAB_GRENOBLE_L_79                      17
+#define IOTLAB_GRENOBLE_R_83_2                    18
+
+//#define IOTLAB_SITE                                IOTLAB_LYON_2
+//#define IOTLAB_SITE                                IOTLAB_LYON_3
+//#define IOTLAB_SITE                                IOTLAB_LYON_10
+//#define IOTLAB_SITE                                IOTLAB_LYON_17
+//#define IOTLAB_SITE                                IOTLAB_LILLE_24 // z = 9.6
+//#define IOTLAB_SITE                                IOTLAB_LILLE_40 // z = 6.1
+//#define IOTLAB_SITE                                IOTLAB_LILLE_46 // z = 9.6
+//#define IOTLAB_SITE                                IOTLAB_LILLE_50 // z = 6.1
+//#define IOTLAB_SITE                                IOTLAB_LILLE_79 // z = 9.6 or 9.4
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_43 // 4~5 hop
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_63
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83 // 9~10 hop
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_2
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_3
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_43
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_63
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83_2 
+
+#if IOTLAB_SITE == IOTLAB_LYON_2
+#define NODE_NUM                                   2
+#elif IOTLAB_SITE == IOTLAB_LYON_3
+#define NODE_NUM                                   3
+#elif IOTLAB_SITE == IOTLAB_LYON_10
+#define NODE_NUM                                   10
+#elif IOTLAB_SITE == IOTLAB_LYON_17
+#define NODE_NUM                                   17
+#elif IOTLAB_SITE == IOTLAB_LILLE_24
+#define NODE_NUM                                   24
+#elif IOTLAB_SITE == IOTLAB_LILLE_40
+#define NODE_NUM                                   40
+#elif IOTLAB_SITE == IOTLAB_LILLE_46
+#define NODE_NUM                                   46
+#elif IOTLAB_SITE == IOTLAB_LILLE_50
+#define NODE_NUM                                   50
+#elif IOTLAB_SITE == IOTLAB_LILLE_79
+#define NODE_NUM                                   79
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_43
+#define NODE_NUM                                   43
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_63
+#define NODE_NUM                                   63
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_83
+#define NODE_NUM                                   83
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_2
+#define NODE_NUM                                   2
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_3
+#define NODE_NUM                                   3
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_43
+#define NODE_NUM                                   43
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_63
+#define NODE_NUM                                   63
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_79
+#define NODE_NUM                                   79
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_83_2
+#define NODE_NUM                                   83
+#endif
+*/
 
 #endif /* PROJECT_CONF_H_ */ 
