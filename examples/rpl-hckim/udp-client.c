@@ -28,12 +28,12 @@
 #define APP_PRINT_DELAY     (1 * 30 * CLOCK_SECOND)
 #endif
 
-#ifndef APP_SEND_INTERVAL
-#define APP_SEND_INTERVAL   (1 * 60 * CLOCK_SECOND)
+#ifndef APP_UPWARD_SEND_INTERVAL
+#define APP_UPWARD_SEND_INTERVAL   (1 * 60 * CLOCK_SECOND)
 #endif
 
-#ifndef APP_MAX_TX
-#define APP_MAX_TX          100
+#ifndef APP_UPWARD_MAX_TX
+#define APP_UPWARD_MAX_TX          100
 #endif
 
 static struct simple_udp_connection udp_conn;
@@ -98,7 +98,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL,
                       UDP_SERVER_PORT, udp_rx_callback);
 
-  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_SEND_INTERVAL)));
+  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_UPWARD_SEND_INTERVAL)));
   etimer_set(&print_timer, APP_PRINT_DELAY);
   etimer_set(&reset_log_timer, APP_START_DELAY);
 #if WITH_OST && OST_HANDLE_QUEUED_PACKETS
@@ -115,10 +115,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #endif
       reset_log();
     } else if(data == &start_timer || data == &periodic_timer) {
-      etimer_set(&send_timer, random_rand() % (APP_SEND_INTERVAL / 2));
-      etimer_set(&periodic_timer, APP_SEND_INTERVAL);
+      etimer_set(&send_timer, random_rand() % (APP_UPWARD_SEND_INTERVAL / 2));
+      etimer_set(&periodic_timer, APP_UPWARD_SEND_INTERVAL);
     } else if(data == &send_timer) {
-      if(count <= APP_MAX_TX) {
+      if(count <= APP_UPWARD_MAX_TX) {
 #if WITH_COOJA
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, COOJA_ROOT_ID);
 #elif WITH_IOTLAB

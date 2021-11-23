@@ -37,7 +37,7 @@
 
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
-//#define IOTLAB_SITE                                IOTLAB_LYON_10
+#define IOTLAB_SITE                                IOTLAB_LYON_10
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
 //#define IOTLAB_SITE                                IOTLAB_LILLE_24 /* z = 9.6 */
 //#define IOTLAB_SITE                                IOTLAB_LILLE_40 /* z = 6.1 */
@@ -52,7 +52,7 @@
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_43
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_63
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83_2 
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83_2 
 
 #if IOTLAB_SITE == IOTLAB_LYON_2
 #define NODE_NUM                                   2
@@ -120,12 +120,15 @@
 /*
  * Configure App
  */
-#define DOWNWARD_TRAFFIC                           0
-#define APP_SEND_INTERVAL                          (1 * 60 * CLOCK_SECOND / 16)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
+#define DOWNWARD_TRAFFIC                           1
+#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
-#define APP_MAX_TX                                 (APP_DATA_PERIOD / APP_SEND_INTERVAL)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
+
+#define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
+#define APP_DOWNWARD_MAX_TX                        (APP_DATA_PERIOD / APP_DOWNWARD_SEND_INTERVAL)
 /*---------------------------------------------------------------------------*/
 
 

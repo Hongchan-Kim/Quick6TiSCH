@@ -57,18 +57,18 @@
 #define APP_PRINT_DELAY     (1 * 30 * CLOCK_SECOND)
 #endif
 
-#ifndef APP_SEND_INTERVAL
-#define APP_SEND_INTERVAL   (1 * 60 * CLOCK_SECOND)
+#ifndef APP_DOWNWARD_SEND_INTERVAL
+#define APP_DOWNWARD_SEND_INTERVAL   (1 * 60 * CLOCK_SECOND)
 #endif
 
-#ifndef APP_MAX_TX
-#define APP_MAX_TX          100
+#ifndef APP_DOWNWARD_MAX_TX
+#define APP_DOWNWARD_MAX_TX          100
 #endif
 
 static struct simple_udp_connection udp_conn;
 
 #if DOWNWARD_TRAFFIC
-#define APP_DOWN_INTERVAL   (APP_SEND_INTERVAL / (NON_ROOT_NUM + 1))
+#define APP_DOWN_INTERVAL   (APP_DOWNWARD_SEND_INTERVAL / (NON_ROOT_NUM + 1))
 #endif
 
 #if WITH_OST && OST_HANDLE_QUEUED_PACKETS
@@ -153,7 +153,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
                       UDP_CLIENT_PORT, udp_rx_callback);
 
 #if DOWNWARD_TRAFFIC
-  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_SEND_INTERVAL / 2)));
+  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_DOWNWARD_SEND_INTERVAL / 2)));
 #endif
 
   etimer_set(&print_timer, APP_PRINT_DELAY);
@@ -175,10 +175,10 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #if DOWNWARD_TRAFFIC
     else if(data == &start_timer || data == &periodic_timer) {
       etimer_set(&send_timer, APP_DOWN_INTERVAL);
-      etimer_set(&periodic_timer, APP_SEND_INTERVAL);
+      etimer_set(&periodic_timer, APP_DOWNWARD_SEND_INTERVAL);
     }
     else if(data == &send_timer) {
-      if(count <= APP_MAX_TX) {
+      if(count <= APP_DOWNWARD_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
         /* Send to clients */
         uint16_t dest_index = dest_id - 1;
