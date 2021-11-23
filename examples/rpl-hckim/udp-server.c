@@ -107,13 +107,7 @@ udp_rx_callback(struct simple_udp_connection *c,
     LOG_INFO("Fail to receive: out of index\n");
     return;
   }
-#if WITH_COOJA
-  LOG_INFO("HCK rx_up %u from %u %x (%u %x) | Received message '%.*s' from ", 
-            ++cooja_nodes[sender_index][2],
-            sender_index + 1, sender_index + 1, 
-            cooja_nodes[sender_index][0], cooja_nodes[sender_index][1],
-            datalen, (char *) data);
-#elif WITH_IOTLAB
+#if WITH_IOTLAB
   LOG_INFO("HCK rx_up %u from %u %x (%u %x) | Received message '%.*s' from ", 
             ++iotlab_nodes[sender_index][2],
             sender_index + 1, sender_index + 1, 
@@ -134,9 +128,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
   static struct etimer periodic_timer;
   static struct etimer send_timer;
   static unsigned count = 1;
-#if WITH_COOJA
-  static unsigned dest_id = COOJA_ROOT_ID + 1;
-#elif WITH_IOTLAB
+#if WITH_IOTLAB
   static unsigned dest_id = IOTLAB_ROOT_ID + 1;
 #endif
   static char str[32];
@@ -182,12 +174,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
         /* Send to clients */
         uint16_t dest_index = dest_id - 1;
-#if WITH_COOJA
-        LOG_INFO("HCK tx_down %u to %u %x (%u %x) | Sending message %u to ", 
-                  count, dest_id, dest_id,
-                  cooja_nodes[dest_index][0], cooja_nodes[dest_index][1],
-                  count);
-#elif WITH_IOTLAB
+#if WITH_IOTLAB
         LOG_INFO("HCK tx_down %u to %u %x (%u %x) | Sending message %u to ", 
                   count, dest_id, dest_id,
                   iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],

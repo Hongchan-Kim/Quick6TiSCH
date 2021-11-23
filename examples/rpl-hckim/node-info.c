@@ -4,15 +4,7 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-#if WITH_COOJA
-
-uint16_t cooja_nodes[NODE_NUM][3] = {
-  /* {host name, uid, rx count} */
-  {1, 0x0001, 0}, /* root */
-  {2, 0x0002, 0}
-};
-
-#elif WITH_IOTLAB
+#if WITH_IOTLAB
 
 #if IOTLAB_SITE == IOTLAB_LYON_2
 uint16_t iotlab_nodes[NODE_NUM][3] = {
@@ -839,13 +831,7 @@ iotlab_node_id_from_uid(uint16_t uid)
 void
 print_node_info()
 {
-#if WITH_COOJA
-  LOG_INFO("HCK-NODE root %u %x (%u %x)\n", COOJA_ROOT_ID, COOJA_ROOT_ID, cooja_nodes[0][0], cooja_nodes[0][1]);
-  uint8_t i = 1;
-  for(i = 1; i < NODE_NUM; i++) {
-    LOG_INFO("HCK-NODE non_root %u %x (%u %x)\n", i + 1, i + 1, cooja_nodes[i][0], cooja_nodes[i][1]);
-  }
-#elif WITH_IOTLAB
+#if WITH_IOTLAB
   LOG_INFO("HCK-NODE root %u %x (%u %x)\n", IOTLAB_ROOT_ID, IOTLAB_ROOT_ID, iotlab_nodes[0][0], iotlab_nodes[0][1]);
   uint8_t i = 1;
   for(i = 1; i < NODE_NUM; i++) {
