@@ -10,11 +10,11 @@
 
 #define IOTLAB_GRENOBLE_83_CORNER                  1 /* 83 nodes */
 #define IOTLAB_LILLE_79_CORNER                     2 /* 79 nodes */
-#define IOTLAB_LILLE_79_CENTER                     2 /* 79 nodes */
+#define IOTLAB_LILLE_79_CENTER                     3 /* 79 nodes */
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_CORNER
-#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
-//#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
+//#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
+#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_CORNER
 #define NODE_NUM                                   83
@@ -25,26 +25,6 @@
 #endif
 
 #endif /* WITH_IOTLAB */
-
-#define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
-#define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * Configure log
- */
-#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO //LOG_LEVEL_DBG
-#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
-#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
-
-#define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
-#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
 /*---------------------------------------------------------------------------*/
 
 
@@ -52,7 +32,7 @@
 /*
  * Configure App
  */
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 1)
 #define DOWNWARD_TRAFFIC                           1
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
@@ -61,6 +41,24 @@
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
 #define APP_DOWNWARD_MAX_TX                        (APP_DATA_PERIOD / APP_DOWNWARD_SEND_INTERVAL)
+/*---------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------*/
+/* 
+ * Configure Contiki-NG system
+ */
+#define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
+/*---------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------*/
+/*
+ * Configure IP and 6LOWPAN
+ */
+#define UIP_CONF_BUFFER_SIZE                       160 /* ksh */
+#define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
+#define SICSLOWPAN_CONF_FRAG                       0
 /*---------------------------------------------------------------------------*/
 
 
@@ -85,15 +83,6 @@
 
 /*---------------------------------------------------------------------------*/
 /*
- * Configure IP and 6LOWPAN
- */
-#define UIP_CONF_BUFFER_SIZE                       160 /* ksh */
-#define SICSLOWPAN_CONF_FRAG                       0
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
  * Configure TSCH
  */
 #define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
@@ -106,7 +95,7 @@
 #endif /* WITH_SECURITY */
 #define TSCH_NEXT_PRINT_PERIOD                     (1 * 60 * CLOCK_SECOND)
 #define TSCH_LOG_CONF_QUEUE_LEN                    128 // originally 16
-#define TSCH_TX_RX_PROCESS_PENDING                 1
+#define TSCH_SWAP_TX_RX_PROCESS_PENDING            1 /* swap order of rx_process_pending and tx_process_pending */
 /*---------------------------------------------------------------------------*/
 
 
@@ -254,6 +243,23 @@
 /* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
    m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
 #define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
+/*---------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------*/
+/*
+ * Configure log
+ */
+#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO //LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
+
+#define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
+#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
 /*---------------------------------------------------------------------------*/
 
 
