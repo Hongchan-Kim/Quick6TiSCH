@@ -9,19 +9,40 @@
 #if WITH_IOTLAB
 
 #define IOTLAB_GRENOBLE_83_CORNER                  1 /* 83 nodes */
-#define IOTLAB_LILLE_79_CORNER                     2 /* 79 nodes */
-#define IOTLAB_LILLE_79_CENTER                     3 /* 79 nodes */
+#define IOTLAB_GRENOBLE_79_CORNER                  2 /* 79 nodes */
+#define IOTLAB_LILLE_79_CORNER                     3 /* 79 nodes */
+#define IOTLAB_LILLE_79_CENTER                     4 /* 79 nodes */
+#define IOTLAB_LYON_2                              5 /* 2 nodes */
+#define IOTLAB_LYON_3                              6 /* 3 nodes */
+#define IOTLAB_LYON_10                             7 /* 10 nodes */
+#define IOTLAB_LYON_17                             8 /* 17 nodes */
+
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_CORNER
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
-#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
+//#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
+#define IOTLAB_SITE                                IOTLAB_LYON_2
+//#define IOTLAB_SITE                                IOTLAB_LYON_3
+//#define IOTLAB_SITE                                IOTLAB_LYON_10
+//#define IOTLAB_SITE                                IOTLAB_LYON_17
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_CORNER
 #define NODE_NUM                                   83
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_79_CORNER
+#define NODE_NUM                                   79
 #elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
 #define NODE_NUM                                   79
 #elif IOTLAB_SITE == IOTLAB_LILLE_79_CENTER
 #define NODE_NUM                                   79
+#elif IOTLAB_SITE == IOTLAB_LYON_2
+#define NODE_NUM                                   2
+#elif IOTLAB_SITE == IOTLAB_LYON_3
+#define NODE_NUM                                   3
+#elif IOTLAB_SITE == IOTLAB_LYON_10
+#define NODE_NUM                                   10
+#elif IOTLAB_SITE == IOTLAB_LYON_17
+#define NODE_NUM                                   17
 #endif
 
 #endif /* WITH_IOTLAB */
