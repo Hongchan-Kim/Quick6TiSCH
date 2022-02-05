@@ -87,6 +87,10 @@ typedef struct {
   uint8_t src_addr_len;    /**<  Length (in bytes) of source address field */
   uint8_t aux_sec_len;     /**<  Length (in bytes) of aux security header field */
 
+#if WITH_POLLING_PPSD
+  uint8_t ppsd_pigg1_len; /* ppsd piggyback queued/acceptable pkts */
+#endif
+
 #if WITH_OST /* OST-00-02: Add ost_pigg1_len */
   uint8_t ost_pigg1_len; /* for N or t_offseet */
 #if OST_ON_DEMAND_PROVISION
@@ -329,6 +333,10 @@ field_len(frame802154_t *p, field_length_t *flen)
     flen->dest_pid_len = 2;
   }
 
+#if WITH_POLLING_PPSD
+  flen->ppsd_pigg1_len = 2;
+#endif
+
 #if WITH_OST /* OST-03-04: Piggyback N */
   flen->ost_pigg1_len = 2; /* for N or t_offset */
 #if OST_ON_DEMAND_PROVISION
@@ -373,6 +381,15 @@ frame802154_hdrlen(frame802154_t *p)
 {
   field_length_t flen;
   field_len(p, &flen);
+
+#if WITH_POLLING_PPSD
+  return 2 + flen.seqno_len + flen.dest_pid_len + flen.dest_addr_len +
+         flen.src_pid_len + flen.src_addr_len + flen.aux_sec_len + 
+         flen.ppsd_pigg1_len;
+#else
+  return 2 + flen.seqno_len + flen.dest_pid_len + flen.dest_addr_len +
+         flen.src_pid_len + flen.src_addr_len + flen.aux_sec_len;
+#endif
 
 #if WITH_OST /* OST-03-03: Piggyback N */
 #if OST_ON_DEMAND_PROVISION
@@ -431,6 +448,13 @@ frame802154_create(frame802154_t *p, uint8_t *buf)
   /* the outgoing frame, and store it in buf */
   frame802154_create_fcf(&p->fcf, buf);
   pos = 2; // hckim: pos 0 and 1 are for fcf
+
+#if WITH_POLLING_PPSD
+  if(flen.ppsd_pigg1_len == 2) {
+    buf[pos++] = p->ppsd_pigg1 & 0xff;
+    buf[pos++] = (p->ppsd_pigg1 >> 8) & 0xff;
+  }
+#endif
 
 #if WITH_OST /* OST-03-05: Piggyback N */
   if(flen.ost_pigg1_len == 2) { /* for N or t_offset */
@@ -558,6 +582,11 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
   frame802154_parse_fcf(p, &fcf);
   memcpy(&pf->fcf, &fcf, sizeof(frame802154_fcf_t));
   p += 2;                             /* Skip first two bytes */
+
+#if WITH_POLLING_PPSD
+  pf->ppsd_pigg1 = p[0] + (p[1] << 8);
+  p +=2;
+#endif 
 
 #if WITH_OST /* OST-04-02: Parse received N */
   pf->ost_pigg1 = p[0] + (p[1] << 8);

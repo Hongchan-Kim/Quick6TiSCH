@@ -3,6 +3,19 @@
 
 /*---------------------------------------------------------------------------*/
 /*
+ * Exclusive period implementation
+ */
+#define WITH_POLLING_PPSD                   1
+#define POLLING_PPSD_DBG                    1
+
+#define PPSD_MULTIPLE_PROBING_DIO           3
+#define PPSD_MULTIPLE_PROBING_KA            2
+
+//#define TSCH_CONF_BURST_MAX_LEN             0
+//#define TSCH_LOG_CONF_QUEUE_LEN             32
+//#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG   1
+/*---------------------------------------------------------------------------*/
+/*
  * Configure testbed site, node num, topology
  */
 #define WITH_IOTLAB                                1
@@ -53,8 +66,8 @@
 /*
  * Configure App
  */
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 1)
-#define DOWNWARD_TRAFFIC                           1
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
+#define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 #define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
@@ -129,10 +142,10 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \

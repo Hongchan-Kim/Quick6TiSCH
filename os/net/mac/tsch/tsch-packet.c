@@ -98,6 +98,12 @@ tsch_packet_eackbuf_attr(uint8_t type)
 }
 /*---------------------------------------------------------------------------*/
 /* Construct enhanced ACK packet and return ACK length */
+#if WITH_POLLING_PPSD
+int
+tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
+                        const linkaddr_t *dest_addr, uint8_t seqno,
+                        int16_t drift, int nack, uint16_t ppsd_acceptable_pkts) 
+#else
 #if WITH_OST
 #if OST_ON_DEMAND_PROVISION
 int
@@ -117,6 +123,7 @@ int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
                         int16_t drift, int nack)
+#endif
 #endif
 {
   frame802154_t params;
@@ -153,6 +160,10 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 #endif /* LLSEC802154_ENABLED */
 
   framer_802154_setup_params(tsch_packet_eackbuf_attr, 0, &params);
+
+#if WITH_POLLING_PPSD
+  params.ppsd_pigg1 = ppsd_acceptable_pkts;
+#endif
 
 #if WITH_OST /* Piggyback t_offset */
   uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
