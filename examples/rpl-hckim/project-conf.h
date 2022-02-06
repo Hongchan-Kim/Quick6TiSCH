@@ -77,7 +77,7 @@
 #define APP_DOWNWARD_MAX_TX                        (APP_DATA_PERIOD / APP_DOWNWARD_SEND_INTERVAL)
 /*---------------------------------------------------------------------------*/
 
-#define WITH_VARYING_PPM                           1
+#define WITH_VARYING_PPM                           0
 #if WITH_VARYING_PPM
 #define VARY_LENGTH                                8
 #endif

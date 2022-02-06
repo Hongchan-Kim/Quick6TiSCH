@@ -2021,21 +2021,11 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 
 
     if((ppsd_rx_count + 1) < ppsd_link_pkts_to_receive) {
-#if POLLING_PPSD_DBG
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "ppsd rx slot chk1 %u %u", ppsd_rx_count, ppsd_link_pkts_to_receive));
-#endif
       ppsd_current_rx_operation_offset = ppsd_current_rx_duration
                                         + ppsd_timing[ppsd_rx_offset_2];
       TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_rx_reception_start, ppsd_current_rx_operation_offset, "ppsdRx2");
       ++ppsd_rx_count;
     } else {
-#if POLLING_PPSD_DBG
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "ppsd rx slot chk2 %u %u", ppsd_rx_count, ppsd_link_pkts_to_receive));
-#endif
       break;
     }
   }
@@ -2887,17 +2877,12 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if POLLING_PPSD_DBG
               TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),
-                  "chk ppsd pigg actb pkts %u %u", ppsd_free_input_ringbuf, ppsd_acceptable_pkts));
+                  "ppsd pigg actb pkts %u %u", ppsd_free_input_ringbuf, ppsd_acceptable_pkts));
 #endif
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
                   ppsd_acceptable_pkts);
-
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                  "ppsd chk00 %u", ppsd_acceptable_pkts));
-
 
 #else /* WITH_POLLING_PPSD */
 
@@ -2952,11 +2937,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 #endif /* WITH_POLLING_PPSD */
 
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                  "ppsd chk01 %u", ppsd_acceptable_pkts));
-
-
               if(ack_len > 0) {
 #if LLSEC802154_ENABLED
                 if(tsch_is_pan_secured) {
@@ -2972,22 +2952,12 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 TSCH_SCHEDULE_AND_YIELD(pt, t, rx_start_time,
                                         packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX, "RxBeforeAck");
 
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                  "ppsd chk02 %u", ppsd_acceptable_pkts));
-
-
-
 #if POLLING_PPSD_DBG
       timestamp_rx3 = RTIMER_NOW();
 #endif
 
                 TSCH_DEBUG_RX_EVENT();
                 NETSTACK_RADIO.transmit(ack_len);
-
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                  "ppsd chk03 %u", ppsd_acceptable_pkts));
 
 #if POLLING_PPSD_DBG
       timestamp_rx4 = RTIMER_NOW();
@@ -3000,11 +2970,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                   && ppsd_acceptable_pkts > 0) {
                   ppsd_link_scheduled = 1;
                   ppsd_link_pkts_to_receive = ppsd_acceptable_pkts;
-
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "ppsd rx slot chk0 %u %u", ppsd_acceptable_pkts, ppsd_link_pkts_to_receive));
-
                 } else {
                   ppsd_link_scheduled = 0;
                   ppsd_link_pkts_to_receive = 0;
@@ -3563,13 +3528,6 @@ ost_donothing:
 
 
 #if WITH_POLLING_PPSD
-#if POLLING_PPSD_DBG
-        if(is_ppsd_slot) {
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "after ppsd slot"));
-        }
-#endif
         if(ppsd_link_scheduled && current_link != NULL) {
           timeslot_diff = 1;
           backup_link = NULL;
@@ -3678,7 +3636,7 @@ ost_donothing:
 #if POLLING_PPSD_DBG
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "after after ppsd slot %u", timeslot_diff));
+              "after ppsd slot %u", timeslot_diff));
 #endif
         }
 #endif

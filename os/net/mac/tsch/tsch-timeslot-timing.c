@@ -83,7 +83,10 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
     128, /* CCA */
    2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
-#if WITH_OST
+#if WITH_POLLING_PPSD
+   900, /* RxAckDelay */
+   1100, /* TxAckDelay */
+#elif WITH_OST
    OST_TSCH_TS_RX_ACK_DELAY, /* RxAckDelay - 1300 */
    OST_TSCH_TS_TX_ACK_DELAY, /* TxAckDelay - 1500 */
 #else
@@ -109,9 +112,9 @@ const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
    400,  /* ppsd_rx_wait */
    2400, /* MaxAck */
    4256, /* MaxTx */
-    800, /* RxAckDelay */
+   1100,//800, /* RxAckDelay */
     400, /* AckWait */
-   1000, /* TxAckDelay */
+   1300,//1000, /* TxAckDelay */
 };
 #endif
 
