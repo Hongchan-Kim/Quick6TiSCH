@@ -133,6 +133,22 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #endif
   static char str[32];
   uip_ipaddr_t dest_ipaddr;
+
+#if WITH_VARYING_PPM
+  static int APP_DOWNWARD_SEND_VARYING_PPM[VARY_LENGTH] = {1, 8, 2, 4, 6, 8, 4, 1};
+  static int APP_DOWNWARD_SEND_VARYING_INTERVAL[VARY_LENGTH];
+  static int APP_DOWN_VARYING_INTERVAL[VARY_LENGTH];
+  static int APP_DOWNWARD_VARYING_MAX_TX[VARY_LENGTH];
+
+  for(int k = 0; k < VARY_LENGTH; k++) {
+    APP_DOWNWARD_SEND_VARYING_INTERVAL[k] = (1 * 60 * CLOCK_SECOND / APP_DOWNWARD_SEND_VARYING_PPM[k]);
+    APP_DOWNWARD_VARYING_MAX_TX[k] = (APP_DATA_PERIOD / VARY_LENGTH) / APP_DOWNWARD_SEND_VARYING_INTERVAL[k]);
+    APP_DOWN_VARYING_INTERVAL[k] = APP_DOWNWARD_SEND_VARYING_INTERVAL[k] / (NON_ROOT_NUM + 1);
+  }
+
+  static unsigned varycount = 1;
+  static int index = 0;
+#endif
 #endif
 
   PROCESS_BEGIN();
@@ -145,7 +161,11 @@ PROCESS_THREAD(udp_server_process, ev, data)
                       UDP_CLIENT_PORT, udp_rx_callback);
 
 #if DOWNWARD_TRAFFIC
+#if WITH_VARYING_PPM
+  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_DOWNWARD_SEND_VARYING_INTERVAL[0] / 2)));
+#else
   etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_DOWNWARD_SEND_INTERVAL / 2)));
+#endif
 #endif
 
   etimer_set(&print_timer, APP_PRINT_DELAY);
@@ -166,10 +186,45 @@ PROCESS_THREAD(udp_server_process, ev, data)
     }
 #if DOWNWARD_TRAFFIC
     else if(data == &start_timer || data == &periodic_timer) {
+#if WITH_VARYING_PPM
+      etimer_set(&send_timer, APP_DOWN_VARYING_INTERVAL[index]);
+      etimer_set(&periodic_timer, APP_DOWNWARD_SEND_VARYING_INTERVAL[index]);
+#else
       etimer_set(&send_timer, APP_DOWN_INTERVAL);
       etimer_set(&periodic_timer, APP_DOWNWARD_SEND_INTERVAL);
+#endif
     }
     else if(data == &send_timer) {
+#if WITH_VARYING_PPM
+      if(varycount <= APP_DOWNWARD_VARYING_MAX_TX[index]) {
+        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
+        /* Send to clients */
+        uint16_t dest_index = dest_id - 1;
+#if WITH_IOTLAB
+        LOG_INFO("HCK tx_down %u to %u %x (%u %x) | Sending message %u to ", 
+                  count, dest_id, dest_id,
+                  iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
+                  count);
+#endif
+        LOG_INFO_6ADDR(&dest_ipaddr);
+        LOG_INFO_("\n");
+        snprintf(str, sizeof(str), "hello %d", count);
+        simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+
+        dest_id++;
+        if(dest_id > NODE_NUM) { /* the last non-root node */
+          dest_id = 2;
+          varycount++;
+          count++;
+        } else { /* not the last non-root node yet */
+          etimer_reset(&send_timer);
+        }
+      }
+      else if (index < VARY_LENGTH - 1){
+        index++;
+        varycount = 1;
+      }
+#else
       if(count <= APP_DOWNWARD_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
         /* Send to clients */
@@ -193,6 +248,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
           etimer_reset(&send_timer);
         }
       }
+#endif
     }
 #endif
   }

@@ -92,13 +92,32 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static char str[32];
   uip_ipaddr_t dest_ipaddr;
 
+#if WITH_VARYING_PPM
+  static int APP_UPWARD_SEND_VARYING_PPM[VARY_LENGTH] = {1, 2, 4, 8, 6, 4, 1, 8};
+  static int APP_UPWARD_SEND_VARYING_INTERVAL[VARY_LENGTH];
+  static int APP_UPWARD_VARYING_MAX_TX[VARY_LENGTH];
+
+  for(int k = 0; k < VARY_LENGTH; k++){
+    APP_UPWARD_SEND_VARYING_INTERVAL[k] = (1 * 60 * CLOCK_SECOND / APP_UPWARD_SEND_VARYING_PPM[k]);
+    APP_UPWARD_VARYING_MAX_TX[k] = (APP_DATA_PERIOD / VARY_LENGTH) / APP_UPWARD_SEND_VARYING_INTERVAL[k];
+  }
+
+  static unsigned varycount = 1;
+  static int index = 0;
+#endif
+
   PROCESS_BEGIN();
 
   /* Initialize UDP connection */
   simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL,
                       UDP_SERVER_PORT, udp_rx_callback);
 
+#if WITH_VARYING_PPM
+  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % APP_UPWARD_SEND_VARYING_INTERVAL[0]));
+#else
   etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_UPWARD_SEND_INTERVAL)));
+#endif
+
   etimer_set(&print_timer, APP_PRINT_DELAY);
   etimer_set(&reset_log_timer, APP_START_DELAY);
 #if WITH_OST && OST_HANDLE_QUEUED_PACKETS
@@ -115,9 +134,33 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #endif
       reset_log();
     } else if(data == &start_timer || data == &periodic_timer) {
+#if WITH_VARYING_PPM
+      etimer_set(&send_timer, random_rand() % (APP_UPWARD_SEND_VARYING_INTERVAL[index] / 2));
+      etimer_set(&periodic_timer, APP_UPWARD_SEND_VARYING_INTERVAL[index]);
+#else
       etimer_set(&send_timer, random_rand() % (APP_UPWARD_SEND_INTERVAL / 2));
       etimer_set(&periodic_timer, APP_UPWARD_SEND_INTERVAL);
+#endif
     } else if(data == &send_timer) {
+#if WITH_VARYING_PPM
+      if(varycount < APP_UPWARD_VARYING_MAX_TX[index]) {
+#if WITH_IOTLAB
+        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, IOTLAB_ROOT_ID);
+#endif
+        /* Send to DAG root */
+        LOG_INFO("HCK tx_up %u | Sending message %u to ", count, count);
+        LOG_INFO_6ADDR(&dest_ipaddr);
+        LOG_INFO_("\n");
+
+        snprintf(str, sizeof(str), "hello %d", count);
+        simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+        count++;
+        varycount++;
+      } else if (index < VARY_LENGTH - 1){
+        index++;
+        varycount = 1;
+      }
+#else /* WITH_VARYING_PPM */
       if(count <= APP_UPWARD_MAX_TX) {
 #if WITH_IOTLAB
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, IOTLAB_ROOT_ID);
@@ -131,6 +174,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
         count++;
       }
+#endif /* WITH_VARYING_PPM */
     }
   }
 
