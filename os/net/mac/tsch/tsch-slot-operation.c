@@ -1563,13 +1563,6 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   ppsd_timestamp_tx0 = RTIMER_NOW();
 #endif
 
-  /* beginning of timeslot ~ start of the first tx operation */
-  ppsd_current_tx_operation_start = current_slot_start;
-  ppsd_current_tx_operation_offset = ppsd_timing[ppsd_tx_offset_0];
-
-  TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_tx_operation_start,
-      ppsd_current_tx_operation_offset, "ppsdTx0");
-
   tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
 
   ppsd_tx_count = 0;
@@ -1613,17 +1606,22 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
         if(ppsd_packet_ready && NETSTACK_RADIO.prepare(ppsd_packet, ppsd_packet_len) == 0) { /* 0 means success */
           if(ppsd_tx_count == 0) {
-            ppsd_current_tx_operation_start = ppsd_current_tx_operation_start 
-                                              + ppsd_timing[ppsd_tx_offset_0];
-            ppsd_current_tx_operation_offset = ppsd_timing[ppsd_tx_offset_1];
+            ppsd_current_tx_operation_start = current_slot_start;
+            ppsd_current_tx_operation_offset = ppsd_timing[ppsd_tx_offset_0];
           } else {
             ppsd_current_tx_operation_start = ppsd_current_tx_operation_start
-                                              + ppsd_current_tx_operation_offset;
+                                              + ppsd_current_tx_operation_offset
+                                              + ppsd_current_tx_duration;
             ppsd_current_tx_operation_offset = ppsd_timing[ppsd_tx_offset_1];
           }
 
-          TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_tx_operation_start, 
-              ppsd_current_tx_operation_offset - RADIO_DELAY_BEFORE_TX, "ppsdTx1");
+          if(ppsd_tx_count == 0) {
+            TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_tx_operation_start, 
+                ppsd_current_tx_operation_offset - RADIO_DELAY_BEFORE_TX, "ppsdTx0");
+          } else {
+            TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_tx_operation_start, 
+                ppsd_current_tx_operation_offset - RADIO_DELAY_BEFORE_TX, "ppsdTx1");
+          }
 
 #if POLLING_PPSD_DBG
           ppsd_timestamp_tx2 = RTIMER_NOW();
@@ -1680,13 +1678,6 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
     if((ppsd_tx_count + 1) < ppsd_link_pkts_to_send 
       && ppsd_prev_packet != current_packet 
       && current_packet != NULL) {
-
-      ppsd_current_tx_operation_offset = ppsd_timing[ppsd_tx_offset_1]
-                                        + ppsd_current_tx_duration
-                                        + ppsd_timing[ppsd_tx_offset_2];
-
-      TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_tx_operation_start, 
-          ppsd_current_tx_operation_offset, "ppsdTx2");
       ++ppsd_tx_count;
     } else {
       break;
@@ -1847,12 +1838,6 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
   ppsd_timestamp_rx0 = RTIMER_NOW();
 #endif
 
-  ppsd_current_rx_operation_start = current_slot_start;
-  ppsd_current_rx_operation_offset = ppsd_timing[ppsd_rx_offset_0];
-
-  TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_rx_operation_start,
-      ppsd_current_rx_operation_offset, "ppsdRx0");
-
   tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
 
   ppsd_rx_count = 0;
@@ -1881,19 +1866,21 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
       ppsd_current_input = &input_array[ppsd_input_index];
 
       if(ppsd_rx_count == 0) {
-        ppsd_current_rx_operation_start = ppsd_current_rx_operation_start
-                                          + ppsd_timing[ppsd_rx_offset_0];
-        ppsd_current_rx_operation_offset = ppsd_timing[ppsd_rx_offset_1];
+        ppsd_current_rx_operation_start = current_slot_start;
+        ppsd_current_rx_operation_offset = ppsd_timing[ppsd_rx_offset_0];
       } else {
         ppsd_current_rx_operation_start = ppsd_current_rx_reception_start
-                                          + ppsd_current_rx_operation_offset;
+                                          + ppsd_current_rx_duration;
         ppsd_current_rx_operation_offset = ppsd_timing[ppsd_rx_offset_1];
-
       }
 
-
-      TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_rx_operation_start, 
-          ppsd_current_rx_operation_offset - ppsd_timing[ppsd_rx_wait] - RADIO_DELAY_BEFORE_RX, "ppsdRx1");
+      if(ppsd_rx_count == 0) {
+        TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_rx_operation_start, 
+            ppsd_current_rx_operation_offset - ppsd_timing[ppsd_rx_wait] - RADIO_DELAY_BEFORE_RX, "ppsdRx0");
+      } else {
+        TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_rx_operation_start, 
+            ppsd_current_rx_operation_offset - ppsd_timing[ppsd_rx_wait] - RADIO_DELAY_BEFORE_RX, "ppsdRx1");
+      }
 
       packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
       if(!packet_seen) {
@@ -2021,9 +2008,6 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 
 
     if((ppsd_rx_count + 1) < ppsd_link_pkts_to_receive) {
-      ppsd_current_rx_operation_offset = ppsd_current_rx_duration
-                                        + ppsd_timing[ppsd_rx_offset_2];
-      TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_current_rx_reception_start, ppsd_current_rx_operation_offset, "ppsdRx2");
       ++ppsd_rx_count;
     } else {
       break;

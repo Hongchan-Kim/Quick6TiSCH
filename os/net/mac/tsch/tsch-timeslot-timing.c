@@ -105,8 +105,8 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
    1000, /* ppsd_tx_offset_0 */
    1000, /* ppsd_rx_offset_0 */
-   1000, /* ppsd_tx_offset_1 */
-   1000, /* ppsd_rx_offset_1 */
+   1300, /* ppsd_tx_offset_1 */
+   1300, /* ppsd_rx_offset_1 */
    1000, /* ppsd_tx_offset_2 */
    1000, /* ppsd_rx_offset_2 */
    400,  /* ppsd_rx_wait */
