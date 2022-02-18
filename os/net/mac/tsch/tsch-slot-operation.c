@@ -2149,6 +2149,13 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         ((uint8_t *)(packet))[2] = (ppsd_queued_pkts - 1) & 0xff;
         ((uint8_t *)(packet))[3] = ((ppsd_queued_pkts - 1) >> 8) & 0xff;
 
+#if PPSD_WITH_IE_DATA
+        frame802154_t exclusive_frame;
+        int exclusive_hdr_len;
+        exclusive_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &exclusive_frame);
+        ((uint8_t *)(packet))[exclusive_hdr_len + 2] = (uint8_t)ppsd_queued_pkts - 1;      
+#endif
+
 #if POLLING_PPSD_DBG
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
@@ -2333,6 +2340,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #else
           tx_duration = tsch_timing[tsch_ts_max_tx];
 #endif
+#if PPSD_WITH_IE_DATA
+          tx_duration = tsch_timing[tsch_ts_max_tx];
+#endif
           /* turn tadio off -- will turn on again to wait for ACK if needed */
           tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
 
@@ -2415,6 +2425,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                     ppsd_link_scheduled = 0;
                     ppsd_link_pkts_to_send = 0;
                   }
+#if PPSD_WITH_IE_ACK
+                TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                    "ppsd ie alwd pkts %u", ack_ies.ie_exclusive_period_packets));
+#endif
                 }
 #endif
 
@@ -2780,6 +2795,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #else
         packet_duration = tsch_timing[tsch_ts_max_tx];
 #endif
+#if PPSD_WITH_IE_DATA
+        packet_duration = tsch_timing[tsch_ts_max_tx];
+#endif
 
         if(!frame_valid) {
           TSCH_LOG_ADD(tsch_log_message,
@@ -2847,6 +2865,15 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               static uint8_t ack_buf[TSCH_PACKET_MAX_LEN];
               static int ack_len;
 
+#if PPSD_WITH_IE_DATA
+              if(frame.fcf.ie_list_present) {
+                struct ieee802154_ies data_ies;
+                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &data_ies);
+                TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                    "ppsd ie rqsted pkts %u", data_ies.ie_exclusive_period_packets));
+              }
+#endif
 #if WITH_POLLING_PPSD
               uint16_t ppsd_requested_pkts = frame.ppsd_pigg1;
 #if POLLING_PPSD_DBG

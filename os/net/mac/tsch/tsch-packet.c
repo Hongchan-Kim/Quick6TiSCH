@@ -130,6 +130,10 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   struct ieee802154_ies ies;
   int hdr_len;
   int ack_len;
+#if PPSD_WITH_IE_ACK
+  int ies_len;
+  int current_ie_len;
+#endif
 
   if(buf == NULL) {
     return -1;
@@ -199,6 +203,32 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   ies.ie_time_correction = drift;
   ies.ie_is_nack = nack;
 
+#if PPSD_WITH_IE_ACK
+  ies.ie_exclusive_period_packets = ppsd_acceptable_pkts;
+  ies_len = 0;
+  
+  current_ie_len = 0;
+  current_ie_len =
+    frame80215e_create_ie_header_exclusive_period_packets(buf + hdr_len + ies_len, 
+                                                          buf_len - hdr_len - ies_len, &ies);
+  if(current_ie_len < 0) {
+    return -1;
+  }
+  ies_len += current_ie_len;
+
+  current_ie_len = 0;
+  current_ie_len =
+    frame80215e_create_ie_header_ack_nack_time_correction(buf + hdr_len + ies_len,
+                                                          buf_len - hdr_len - ies_len, &ies);
+  if(current_ie_len < 0) {
+    return -1;
+  }
+  ies_len += current_ie_len;
+
+  ack_len = hdr_len + ies_len;
+
+#else
+
   ack_len =
     frame80215e_create_ie_header_ack_nack_time_correction(buf + hdr_len,
                                                           buf_len - hdr_len, &ies);
@@ -206,6 +236,8 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
     return -1;
   }
   ack_len += hdr_len;
+
+#endif
 
   frame802154_create(&params, buf);
 

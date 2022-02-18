@@ -1665,6 +1665,11 @@ send_packet(mac_callback_t sent, void *ptr)
     }
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, tsch_packet_seqno);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, 1);
+
+#if PPSD_WITH_IE_DATA
+    packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
+#endif
+
   } else {
     /* Broadcast packets shall be added to broadcast queue
      * The broadcast address in Contiki is linkaddr_null which is equal

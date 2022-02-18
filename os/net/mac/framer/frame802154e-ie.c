@@ -47,6 +47,9 @@
 
 /* c.f. IEEE 802.15.4e Table 4b */
 enum ieee802154e_header_ie_id {
+#if PPSD_WITH_IE_ACK || PPSD_WITH_IE_DATA
+  HEADER_IE_EXCLUSIVE_PERIOD_PACKETS = 0x01,
+#endif
   HEADER_IE_LE_CSL = 0x1a,
   HEADER_IE_LE_RIT,
   HEADER_IE_DSME_PAN_DESCRIPTOR,
@@ -86,6 +89,14 @@ enum ieee802154e_mlme_long_subie_id {
 enum ieee802154e_ietf_subie_id {
   IETF_IE_6TOP = SIXTOP_SUBIE_ID,
 };
+
+#if PPSD_WITH_IE_ACK || PPSD_WITH_IE_DATA
+#define WRITE8(buf, val) \
+  do { ((uint8_t *)(buf))[0] = (val) & 0xff;} while(0);
+
+#define READ8(buf, var) \
+  (var) = ((uint8_t *)(buf))[0]
+#endif
 
 #define WRITE16(buf, val) \
   do { ((uint8_t *)(buf))[0] = (val) & 0xff; \
@@ -133,6 +144,23 @@ create_mlme_long_ie_descriptor(uint8_t *buf, uint8_t sub_id, int ie_len)
   ie_desc = (ie_len & 0x07ff) + ((sub_id & 0x0f) << 11) + (1 << 15);
   WRITE16(buf, ie_desc);
 }
+
+#if PPSD_WITH_IE_ACK || PPSD_WITH_IE_DATA
+int
+frame80215e_create_ie_header_exclusive_period_packets(uint8_t *buf, int len,
+    struct ieee802154_ies *ies)
+{
+  int ie_len = 1;
+  if(len >= 2 + ie_len && ies != NULL) {
+    uint8_t exclusive_period_packets = ies->ie_exclusive_period_packets;
+    WRITE8(buf+2, exclusive_period_packets);
+    create_header_ie_descriptor(buf, HEADER_IE_EXCLUSIVE_PERIOD_PACKETS, ie_len);
+    return 2 + ie_len;
+  } else {
+    return -1;
+  }
+}
+#endif
 
 /* Header IE. ACK/NACK time correction. Used in enhanced ACKs */
 int
@@ -346,6 +374,18 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
     uint8_t element_id, struct ieee802154_ies *ies)
 {
   switch(element_id) {
+#if PPSD_WITH_IE_ACK || PPSD_WITH_IE_DATA
+    case HEADER_IE_EXCLUSIVE_PERIOD_PACKETS:
+      if(len == 1) {
+        if(ies != NULL) {
+          uint8_t exclusive_period_packets = 0;
+          READ8(buf, exclusive_period_packets);
+          ies->ie_exclusive_period_packets = exclusive_period_packets;
+        }
+        return len;
+      }
+      break;
+#endif
     case HEADER_IE_ACK_NACK_TIME_CORRECTION:
       if(len == 2) {
         if(ies != NULL) {

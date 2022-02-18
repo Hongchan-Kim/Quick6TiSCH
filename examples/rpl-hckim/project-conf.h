@@ -7,6 +7,10 @@
  */
 #define WITH_POLLING_PPSD                   1
 #define POLLING_PPSD_DBG                    1
+#define PPSD_WITH_IE_ACK                    1
+#define PPSD_WITH_IE_DATA                   1
+#define PPSD_DISABLE_CHECKSUM               1
+#define PPSD_TEMP                            1
 
 #define PPSD_MULTIPLE_PROBING_DIO           3
 #define PPSD_MULTIPLE_PROBING_KA            2
@@ -69,8 +73,8 @@
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (5 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
