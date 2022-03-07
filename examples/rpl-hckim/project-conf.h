@@ -9,8 +9,7 @@
 #define POLLING_PPSD_DBG                    1
 #define PPSD_WITH_IE_ACK                    1
 #define PPSD_WITH_IE_DATA                   1
-#define PPSD_DISABLE_CHECKSUM               1
-#define PPSD_TEMP                            1
+#define PPSD_TEMP                           1
 
 #define PPSD_MULTIPLE_PROBING_DIO           3
 #define PPSD_MULTIPLE_PROBING_KA            2

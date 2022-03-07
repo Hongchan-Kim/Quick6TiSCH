@@ -151,6 +151,7 @@ create_frame(int do_create)
       ies.ie_exclusive_period_packets = 0;
 
       if(packetbuf_hdralloc(2)) {
+        /* hckim: the second parameter must be revised */
         if(frame80215e_create_ie_header_list_termination_2((uint8_t *)packetbuf_hdrptr() + hdr_len,
                                                           PACKETBUF_SIZE - hdr_len, &ies) < 0) {
           return FRAMER_FAILED;
@@ -160,6 +161,7 @@ create_frame(int do_create)
         return FRAMER_FAILED;
       }
       if(packetbuf_hdralloc(3)) {
+        /* hckim: the second parameter must be revised */
         if(frame80215e_create_ie_header_exclusive_period_packets((uint8_t *)packetbuf_hdrptr() + hdr_len,
                                                                 PACKETBUF_SIZE - hdr_len, &ies) < 0) {
           return FRAMER_FAILED;
@@ -304,7 +306,11 @@ parse(void)
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, frame.fcf.ack_required);
 
 #if PPSD_WITH_IE_DATA
-    packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, frame.fcf.ie_list_present);
+    if(frame.fcf.ie_list_present) {
+      /* hckim: must be revised */
+      packetbuf_hdrreduce(5);
+      packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, frame.fcf.ie_list_present);
+    }
 #endif
 
     if(frame.fcf.dest_addr_mode) {

@@ -1891,30 +1891,11 @@ input(void)
   packetbuf_hdr_len = 0;
 
   /* The MAC puts the 15.4 payload inside the packetbuf data buffer */
-#if PPSD_WITH_IE_DATA
-  if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA)) { 
-    packetbuf_ptr = (uint8_t *)packetbuf_dataptr() + 5;
-  } else {
-    packetbuf_ptr = packetbuf_dataptr();
-  }
-  if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA)) { 
-    if(packetbuf_datalen() - 5 == 0) {
-      LOG_WARN("input: empty packet\n");
-      return;
-    }
-  } else {
-    if(packetbuf_datalen() == 0) {
-      LOG_WARN("input: empty packet\n");
-      return;
-    }
-  }
-#else
   packetbuf_ptr = packetbuf_dataptr();
   if(packetbuf_datalen() == 0) {
     LOG_WARN("input: empty packet\n");
     return;
   }
-#endif
 
   /* Clear uipbuf and set default attributes */
   uipbuf_clear();
@@ -2034,30 +2015,11 @@ input(void)
    * and packetbuf_hdr_len are non 0, frag_offset is.
    * If this is a subsequent fragment, this is the contrary.
    */
-#if PPSD_WITH_IE_DATA
-  if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA)) { 
-    if(packetbuf_datalen() - 5 < packetbuf_hdr_len) {
-      LOG_ERR("input: packet dropped due to header > total packet\n");
-      return;
-    }
-  } else {
-    if(packetbuf_datalen() < packetbuf_hdr_len) {
-      LOG_ERR("input: packet dropped due to header > total packet\n");
-      return;
-    }
-  }
-  if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA)) {
-    packetbuf_payload_len = packetbuf_datalen() - 5 - packetbuf_hdr_len;
-  } else {
-    packetbuf_payload_len = packetbuf_datalen() - packetbuf_hdr_len;
-  }
-#else
   if(packetbuf_datalen() < packetbuf_hdr_len) {
     LOG_ERR("input: packet dropped due to header > total packet\n");
     return;
   }
   packetbuf_payload_len = packetbuf_datalen() - packetbuf_hdr_len;
-#endif
 
 #if SICSLOWPAN_CONF_FRAG
   if(is_fragment) {

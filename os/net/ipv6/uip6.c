@@ -1451,9 +1451,7 @@ uip_process(uint8_t flag)
     UIP_STAT(++uip_stat.icmp.drop);
     UIP_STAT(++uip_stat.icmp.chkerr);
     LOG_ERR("icmpv6 bad checksum\n");
-#if !PPSD_DISABLE_CHECKSUM
     goto drop;
-#endif
   }
 #endif /*UIP_CONF_IPV6_CHECKS*/
 
@@ -1514,9 +1512,7 @@ uip_process(uint8_t flag)
     UIP_STAT(++uip_stat.udp.chkerr);
     LOG_ERR("udp: bad checksum 0x%04x 0x%04x\n", UIP_UDP_BUF->udpchksum,
            uip_udpchksum());
-#if !PPSD_DISABLE_CHECKSUM
     goto drop;
-#endif
   }
 #endif /* UIP_UDP_CHECKSUMS */
 
