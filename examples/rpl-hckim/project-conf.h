@@ -7,8 +7,6 @@
  */
 #define WITH_POLLING_PPSD                   1
 #define POLLING_PPSD_DBG                    1
-#define PPSD_WITH_IE_ACK                    1
-#define PPSD_WITH_IE_DATA                   1
 #define PPSD_TEMP                           1
 
 #define PPSD_MULTIPLE_PROBING_DIO           3

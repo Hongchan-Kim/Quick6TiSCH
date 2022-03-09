@@ -1666,7 +1666,7 @@ send_packet(mac_callback_t sent, void *ptr)
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, tsch_packet_seqno);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, 1);
 
-#if PPSD_WITH_IE_DATA
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (Data) */
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
 #endif
 

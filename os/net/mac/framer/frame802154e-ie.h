@@ -68,8 +68,8 @@ struct tsch_slotframe_and_links {
 /* The information elements that we currently support */
 struct ieee802154_ies {
   /* Header IEs */
-#if PPSD_WITH_IE_ACK || PPSD_WITH_IE_DATA
-  uint8_t ie_exclusive_period_packets;
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+  uint8_t ie_ppsd_info;
 #endif
   int16_t ie_time_correction;
   uint8_t ie_is_nack;
@@ -96,8 +96,8 @@ struct ieee802154_ies {
 };
 
 /** Insert various Information Elements **/
-#if PPSD_WITH_IE_ACK || PPSD_WITH_IE_DATA
-int frame80215e_create_ie_header_exclusive_period_packets(uint8_t *buf, int len,
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+int frame80215e_create_ie_header_ppsd_info(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #endif
 /* Header IE. ACK/NACK time correction. Used in enhanced ACKs */
