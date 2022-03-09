@@ -165,10 +165,6 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 
   framer_802154_setup_params(tsch_packet_eackbuf_attr, 0, &params);
 
-#if WITH_POLLING_PPSD
-  params.ppsd_pigg1 = ppsd_acceptable_pkts;
-#endif
-
 #if WITH_OST /* Piggyback t_offset */
   uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
   if(ds6_nbr != NULL

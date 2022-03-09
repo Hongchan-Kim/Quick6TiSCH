@@ -206,10 +206,6 @@ typedef struct {
   uint16_t dest_pid;              /**< Destination PAN ID */
   uint16_t src_pid;               /**< Source PAN ID */
 
-#if WITH_POLLING_PPSD
-  uint16_t ppsd_pigg1; /* ppsd piggyback queued/acceptable pkts */
-#endif
-
 #if WITH_OST /* OST-00-01: Add ost_pigg1 */
   uint16_t ost_pigg1; /* for N or t_offset */
 #if OST_ON_DEMAND_PROVISION
