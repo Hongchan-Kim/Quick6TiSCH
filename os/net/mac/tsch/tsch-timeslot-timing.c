@@ -103,18 +103,16 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 
 #if WITH_POLLING_PPSD
 const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
-   1000, /* ppsd_tx_offset_0 */
-   1000, /* ppsd_rx_offset_0 */
-   1300, /* ppsd_tx_offset_1 */
-   1300, /* ppsd_rx_offset_1 */
-   1000, /* ppsd_tx_offset_2 */
-   1000, /* ppsd_rx_offset_2 */
-   400,  /* ppsd_rx_wait */
+   1000, /* ppsd_tx_offset_1 */
+   1000, /* ppsd_rx_offset_1 */
+   1500, /* ppsd_tx_offset_2 */
+   1500, /* ppsd_rx_offset_2 */
+   1100,//800, /* RxAckDelay */
+   1300,//1000, /* TxAckDelay */
+    400, /* RxWait */
+    400, /* AckWait */
    2400, /* MaxAck */
    4256, /* MaxTx */
-   1100,//800, /* RxAckDelay */
-    400, /* AckWait */
-   1300,//1000, /* TxAckDelay */
 };
 #endif
 

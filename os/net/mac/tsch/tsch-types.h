@@ -154,18 +154,16 @@ enum tsch_timeslot_timing_elements {
 
 #if WITH_POLLING_PPSD
 enum ppsd_timeslot_timing_elements {
-  ppsd_tx_offset_0,
-  ppsd_rx_offset_0,
   ppsd_tx_offset_1,
   ppsd_rx_offset_1,
   ppsd_tx_offset_2,
   ppsd_rx_offset_2,
-  ppsd_rx_wait,
+  ppsd_ts_rx_ack_delay,
+  ppsd_ts_tx_ack_delay,
+  ppsd_ts_rx_wait,
+  ppsd_ts_ack_wait,
   ppsd_ts_max_ack,
   ppsd_ts_max_tx,
-  ppsd_ts_rx_ack_delay,
-  ppsd_ts_ack_wait,
-  ppsd_ts_tx_ack_delay,
   ppsd_ts_elements_count, /* Not a timing element */
 };
 #endif

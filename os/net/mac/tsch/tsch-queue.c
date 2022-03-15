@@ -591,9 +591,11 @@ tsch_queue_is_empty(const struct tsch_neighbor *n)
 /*---------------------------------------------------------------------------*/
 #if WITH_POLLING_PPSD
 struct tsch_packet *
-tsch_queue_ppsd_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *link, uint8_t offset)
+tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *link, uint8_t ppsd_last_tx_seq)
 {
   if(!tsch_is_locked()) {
+    uint8_t offset = ppsd_last_tx_seq;
+    
     int is_shared_link = link != NULL && link->link_options & LINK_OPTION_SHARED;
     if(n != NULL) {
       int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
