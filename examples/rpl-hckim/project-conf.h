@@ -9,6 +9,8 @@
 #define POLLING_PPSD_DBG                    1
 #define PPSD_TEMP                           1
 
+//#define PPSD_CONF_RX_WAIT                    800
+
 #define PPSD_MULTIPLE_PROBING_DIO           3
 #define PPSD_MULTIPLE_PROBING_KA            2
 

@@ -1636,7 +1636,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
           tx_count++;
 
           ppsd_tx_slot_curr_duration = TSCH_PACKET_DURATION(ppsd_packet_len);
-          ppsd_tx_slot_curr_duration = MIN(ppsd_tx_slot_curr_duration, ppsd_timing[ppsd_ts_max_tx]);
+          ppsd_tx_slot_curr_duration = MIN(ppsd_tx_slot_curr_duration, tsch_timing[tsch_ts_max_tx]);
 
           if(ppsd_mac_tx_status == RADIO_TX_OK) {
             ppsd_mac_tx_status = MAC_TX_NOACK; /* Not yet ACK received */
@@ -1880,7 +1880,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
                                   + (ppsd_timing[ppsd_tx_offset_2] + tsch_timing[tsch_ts_max_tx]) * (ppsd_link_pkts_to_receive - 1);
 
         TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_rx_slot_curr_start, 
-                              ppsd_rx_slot_curr_offset - ppsd_timing[ppsd_ts_rx_wait] - RADIO_DELAY_BEFORE_RX, "ppsdRx1");
+                              ppsd_rx_slot_curr_offset - RADIO_DELAY_BEFORE_RX, "ppsdRx1");
 
       } else {
         ppsd_rx_slot_last_reception_start = ppsd_rx_slot_curr_reception_start;
@@ -1892,7 +1892,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
                                   + (ppsd_timing[ppsd_tx_offset_2] + tsch_timing[tsch_ts_max_tx]) * (ppsd_link_pkts_to_receive - ppsd_last_rx_seq - 1);
 
         TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_rx_slot_curr_start, 
-                              ppsd_rx_slot_curr_offset - ppsd_timing[ppsd_ts_rx_wait] - RADIO_DELAY_BEFORE_RX, "ppsdRx2");
+                              ppsd_rx_slot_curr_offset - RADIO_DELAY_BEFORE_RX, "ppsdRx2");
       }
 
       packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
@@ -1917,7 +1917,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
         RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
-            ppsd_rx_slot_curr_reception_start, ppsd_timing[ppsd_ts_max_tx]);
+            ppsd_rx_slot_curr_reception_start, tsch_timing[tsch_ts_max_tx]);
 
 #if POLLING_PPSD_DBG
         ppsd_rx_slot_timestamp_t3 = RTIMER_NOW();
