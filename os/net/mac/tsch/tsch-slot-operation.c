@@ -1737,23 +1737,28 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
     if(tsch_packet_parse_eack(ackbuf, ack_len, 0,
         &frame, &ack_ies, &ack_hdrlen) == 0) {
       ack_len = 0;
-
-#if POLLING_PPSD_DBG
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "ppsd b-ack fail"));
-#endif
-
     }
   }
 
-  /* HCK: ppsd header id implementation (ACK) */
-  uint8_t ppsd_rcvd_bitmap = ack_ies.ie_ppsd_info;
+  uint8_t ppsd_rcvd_bitmap = 0;
+  if(ack_len > 0) {
+    /* HCK: ppsd header id implementation (ACK) */
+    ppsd_rcvd_bitmap = ack_ies.ie_ppsd_info;
+
 #if POLLING_PPSD_DBG
-  TSCH_LOG_ADD(tsch_log_message,
-      snprintf(log->message, sizeof(log->message),
-      "ppsd b-ack %u (<- %u)", ppsd_rcvd_bitmap, ack_ies.ie_ppsd_info));
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "ppsd b-ack %u (<- %u)", ppsd_rcvd_bitmap, ack_ies.ie_ppsd_info));
 #endif
+  } else {
+    ppsd_rcvd_bitmap = 0;
+
+#if POLLING_PPSD_DBG
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "ppsd b-ack fail"));
+#endif
+  }
 
   uint8_t ppsd_seq = 0;
   for(ppsd_seq = 0; ppsd_seq < ppsd_tx_seq; ppsd_seq++) {
@@ -2029,6 +2034,18 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
     if(ppsd_last_rx_seq >= ppsd_link_pkts_to_receive
       || !RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start + ppsd_timing[ppsd_rx_offset_1] + ppsd_timing[ppsd_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]
                                             + (ppsd_timing[ppsd_tx_offset_2] + tsch_timing[tsch_ts_max_tx]) * (ppsd_link_pkts_to_receive - 1))) {
+      if(ppsd_last_rx_seq >= ppsd_link_pkts_to_receive) {
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "ppsd rx last seq"));
+      }
+      if(!RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start + ppsd_timing[ppsd_rx_offset_1] + ppsd_timing[ppsd_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]
+                                            + (ppsd_timing[ppsd_tx_offset_2] + tsch_timing[tsch_ts_max_tx]) * (ppsd_link_pkts_to_receive - 1))) {
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "ppsd rx timeout"));
+
+      }
       break;
     }
   }
