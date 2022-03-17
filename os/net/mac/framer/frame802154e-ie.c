@@ -47,7 +47,7 @@
 
 /* c.f. IEEE 802.15.4e Table 4b */
 enum ieee802154e_header_ie_id {
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+#if WITH_POLLING_PPSD /* HCK: ppsd header ie implementation */
   HEADER_IE_PPSD_INFO = 0x01,
 #endif
   HEADER_IE_LE_CSL = 0x1a,
@@ -90,7 +90,7 @@ enum ieee802154e_ietf_subie_id {
   IETF_IE_6TOP = SIXTOP_SUBIE_ID,
 };
 
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+#if WITH_POLLING_PPSD /* HCK: ppsd header ie implementation */
 #define WRITE8(buf, val) \
   do { ((uint8_t *)(buf))[0] = (val) & 0xff;} while(0);
 
@@ -145,7 +145,7 @@ create_mlme_long_ie_descriptor(uint8_t *buf, uint8_t sub_id, int ie_len)
   WRITE16(buf, ie_desc);
 }
 
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+#if WITH_POLLING_PPSD /* HCK: ppsd header ie implementation */
 int
 frame80215e_create_ie_header_ppsd_info(uint8_t *buf, int len,
     struct ieee802154_ies *ies)
@@ -374,7 +374,7 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
     uint8_t element_id, struct ieee802154_ies *ies)
 {
   switch(element_id) {
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+#if WITH_POLLING_PPSD /* HCK: ppsd header ie implementation */
     case HEADER_IE_PPSD_INFO:
       if(len == 1) {
         if(ies != NULL) {

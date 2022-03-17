@@ -1589,7 +1589,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
         ppsd_packet = queuebuf_dataptr(current_packet->qb);
         ppsd_packet_len = queuebuf_datalen(current_packet->qb);
 
-        /* HCK: ppsd header id implementation (Data) */
+        /* HCK: ppsd header ie implementation (Data) */
         frame802154_t exclusive_frame;
         int exclusive_hdr_len;
         exclusive_hdr_len = frame802154_parse((uint8_t *)ppsd_packet, ppsd_packet_len, &exclusive_frame);
@@ -1729,7 +1729,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
   uint8_t ppsd_rcvd_bitmap = 0;
   if(ack_len > 0) {
-    /* HCK: ppsd header id implementation (ACK) */
+    /* HCK: ppsd header ie implementation (ACK) */
     ppsd_rcvd_bitmap = ack_ies.ie_ppsd_info;
 
 #if POLLING_PPSD_DBG
@@ -1963,7 +1963,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
               && !linkaddr_cmp(&ppsd_source_address, &linkaddr_node_addr)) {
               rx_count++;
 
-              /* HCK: ppsd header id implementation (Data) */
+              /* HCK: ppsd header ie implementation (Data) */
               struct ieee802154_ies exclusive_ies;
               frame802154e_parse_information_elements(ppsd_frame.payload, ppsd_frame.payload_len, &exclusive_ies);
               uint8_t received_ppsd_seq = exclusive_ies.ie_ppsd_info;
@@ -2192,7 +2192,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         ppsd_link_requested = 1;
         tsch_packet_set_frame_pending(packet, packet_len);
 
-        /* HCK: ppsd header id implementation (Data) */
+        /* HCK: ppsd header ie implementation (Data) */
         frame802154_t exclusive_frame;
         int exclusive_hdr_len;
         exclusive_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &exclusive_frame);
@@ -2376,7 +2376,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #else
           tx_duration = tsch_timing[tsch_ts_max_tx];
 #endif
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+#if WITH_POLLING_PPSD /* HCK: ppsd header ie implementation */
           tx_duration = tsch_timing[tsch_ts_max_tx];
 #endif
           /* turn tadio off -- will turn on again to wait for ACK if needed */
@@ -2448,7 +2448,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if WITH_POLLING_PPSD
                 uint8_t ppsd_allowed_pkts = 0;
                 if(ack_len != 0) {
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (ACK) */
+#if WITH_POLLING_PPSD /* HCK: ppsd header ie implementation (ACK) */
                   ppsd_allowed_pkts = ack_ies.ie_ppsd_info;
 #if POLLING_PPSD_DBG
                   TSCH_LOG_ADD(tsch_log_message,
@@ -2827,7 +2827,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #else
         packet_duration = tsch_timing[tsch_ts_max_tx];
 #endif
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+#if WITH_POLLING_PPSD /* HCK: ppsd header ie implementation */
         packet_duration = tsch_timing[tsch_ts_max_tx];
 #endif
 
@@ -2898,7 +2898,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               static int ack_len;
 
 #if WITH_POLLING_PPSD
-              /* HCK: ppsd header id implementation (Data) */
+              /* HCK: ppsd header ie implementation (Data) */
               uint8_t ppsd_requested_pkts = 0;
               if(frame.fcf.ie_list_present) {
                 struct ieee802154_ies exclusive_ies;
