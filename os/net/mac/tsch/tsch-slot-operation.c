@@ -1803,8 +1803,8 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
   static rtimer_clock_t ppsd_rx_slot_curr_deadline;
 
   /* last operation timing */
-  static rtimer_clock_t ppsd_rx_slot_last_reception_start;
-  static rtimer_clock_t ppsd_rx_slot_last_duration;
+  static rtimer_clock_t ppsd_rx_slot_last_valid_reception_start;
+  static rtimer_clock_t ppsd_rx_slot_last_valid_duration;
 
   /* reception end timing */
   static rtimer_clock_t ppsd_rx_slot_all_reception_end;
@@ -1883,10 +1883,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
                               ppsd_rx_slot_curr_offset - RADIO_DELAY_BEFORE_RX, "ppsdRx1");
 
       } else {
-        ppsd_rx_slot_last_reception_start = ppsd_rx_slot_curr_reception_start;
-        ppsd_rx_slot_last_duration = ppsd_rx_slot_curr_duration;
-
-        ppsd_rx_slot_curr_start = ppsd_rx_slot_last_reception_start + ppsd_rx_slot_last_duration;
+        ppsd_rx_slot_curr_start = ppsd_rx_slot_last_valid_reception_start + ppsd_rx_slot_last_valid_duration;
         ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_rx_offset_2];
         ppsd_rx_slot_curr_deadline = ppsd_timing[ppsd_rx_offset_2] + ppsd_timing[ppsd_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]
                                   + (ppsd_timing[ppsd_tx_offset_2] + tsch_timing[tsch_ts_max_tx]) * (ppsd_link_pkts_to_receive - ppsd_last_rx_seq - 1);
@@ -1902,10 +1899,14 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
       }
 
       if(!packet_seen) {
-#if ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG
+#if POLLING_PPSD_DBG
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "!ppsd no packet seen"));
+
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "ppsd rx timeout 1"));
 #endif
         break; /* finish while loop of this ppsd_rx_slot */
 
@@ -1974,7 +1975,10 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
                   "ppsd r_seq %u (-> %u)", received_ppsd_seq, ppsd_ack_bitmap));
 #endif
 
+              /* update ppsd seq and timing only if ppsd_frame_valid == 1 */
               ppsd_last_rx_seq = received_ppsd_seq;
+              ppsd_rx_slot_last_valid_reception_start = ppsd_rx_slot_curr_reception_start;
+              ppsd_rx_slot_last_valid_duration = ppsd_rx_slot_curr_duration;
 
               n = tsch_queue_get_nbr(&ppsd_source_address);
 
@@ -2000,7 +2004,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
           }
         }
 
-#if ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG
+#if POLLING_PPSD_DBG
         else {
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
@@ -2008,6 +2012,13 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
         }
 #endif
       }
+    } else { /* ppsd_input_index == -1 */
+#if POLLING_PPSD_DBG
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "ppsd rx no space in input buffer"));
+#endif
+      break;
     }
 
 #if POLLING_PPSD_DBG
@@ -2028,17 +2039,20 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
       || !RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start + ppsd_timing[ppsd_rx_offset_1] + ppsd_timing[ppsd_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]
                                             + (ppsd_timing[ppsd_tx_offset_2] + tsch_timing[tsch_ts_max_tx]) * (ppsd_link_pkts_to_receive - 1))) {
       if(ppsd_last_rx_seq >= ppsd_link_pkts_to_receive) {
+#if POLLING_PPSD_DBG
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
             "ppsd rx last seq"));
+#endif
       }
 
       if(!RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start + ppsd_timing[ppsd_rx_offset_1] + ppsd_timing[ppsd_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]
                                             + (ppsd_timing[ppsd_tx_offset_2] + tsch_timing[tsch_ts_max_tx]) * (ppsd_link_pkts_to_receive - 1))) {
+#if POLLING_PPSD_DBG
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-            "ppsd rx timeout"));
-
+            "ppsd rx timeout 2"));
+#endif
       }
       break;
     }
