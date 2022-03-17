@@ -527,6 +527,14 @@ handle_probing_timer(void *ptr)
 
     /* Send probe, e.g. unicast DIO or DIS */
     RPL_PROBING_SEND_FUNC(instance, target_ipaddr);
+
+#if PPSD_MULTIPLE_PROBING_DIO
+    uint8_t i;
+    for(i = 0; i < PPSD_MULTIPLE_PROBING_DIO; i++) {
+      LOG_INFO("probing %u\n", i + 1);
+      RPL_PROBING_SEND_FUNC(instance, target_ipaddr);
+    }
+#endif
   }
 
   /* Schedule next probing */

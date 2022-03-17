@@ -464,6 +464,12 @@ uint16_t tsch_timing_us[tsch_ts_elements_count];
 /* TSCH timeslot timing (in rtimer ticks) */
 rtimer_clock_t tsch_timing[tsch_ts_elements_count];
 
+#if WITH_POLLING_PPSD
+static const uint16_t *ppsd_default_timing_us;
+uint16_t ppsd_timing_us[ppsd_ts_elements_count];
+rtimer_clock_t ppsd_timing[ppsd_ts_elements_count];
+#endif
+
 #if LINKADDR_SIZE == 8
 /* 802.15.4 broadcast MAC address  */
 const linkaddr_t tsch_broadcast_address = { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff } };
@@ -609,6 +615,15 @@ tsch_reset(void)
     tsch_timing_us[i] = tsch_default_timing_us[i];
     tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
   }
+
+#if WITH_POLLING_PPSD
+  ppsd_default_timing_us = PPSD_DEFAULT_TIMESLOT_TIMING;
+  for(i = 0; i < ppsd_ts_elements_count; i++) {
+    ppsd_timing_us[i] = ppsd_default_timing_us[i];
+    ppsd_timing[i] = US_TO_RTIMERTICKS(ppsd_timing_us[i]);
+  }
+#endif
+
 #ifdef TSCH_CALLBACK_LEAVING_NETWORK
   TSCH_CALLBACK_LEAVING_NETWORK();
 #endif
@@ -715,6 +730,18 @@ keepalive_send(void *ptr)
         packetbuf_clear();
         packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, destination);
         NETSTACK_MAC.send(keepalive_packet_sent, NULL);
+
+#if PPSD_MULTIPLE_PROBING_KA
+        uint8_t i;
+        for(i = 0; i < PPSD_MULTIPLE_PROBING_KA; i++) {
+          packetbuf_clear();
+          packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, destination);
+          NETSTACK_MAC.send(keepalive_packet_sent, NULL);
+          LOG_INFO("sending KA %u to ", i + 1);
+          LOG_INFO_LLADDR(destination);
+          LOG_INFO_("\n");
+        }
+#endif
     } else {
         LOG_ERR("no timesource - KA not sent\n");
     }
@@ -1638,6 +1665,11 @@ send_packet(mac_callback_t sent, void *ptr)
     }
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, tsch_packet_seqno);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, 1);
+
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (Data) */
+    packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
+#endif
+
   } else {
     /* Broadcast packets shall be added to broadcast queue
      * The broadcast address in Contiki is linkaddr_null which is equal

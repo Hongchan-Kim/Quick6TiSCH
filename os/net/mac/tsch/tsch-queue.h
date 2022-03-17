@@ -145,6 +145,11 @@ void tsch_queue_free_unused_neighbors(void);
  * \return 1 if empty, 0 otherwise
  */
 int tsch_queue_is_empty(const struct tsch_neighbor *n);
+
+#if WITH_POLLING_PPSD
+struct tsch_packet *tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *link, uint8_t ppsd_last_tx_seq);
+#endif
+
 /**
  * \brief Returns the first packet that can be sent from a queue on a given link
  * \param n The neighbor queue

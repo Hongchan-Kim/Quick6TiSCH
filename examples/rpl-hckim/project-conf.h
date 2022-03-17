@@ -3,6 +3,22 @@
 
 /*---------------------------------------------------------------------------*/
 /*
+ * Exclusive period implementation
+ */
+#define WITH_POLLING_PPSD                   1
+#define POLLING_PPSD_DBG                    1
+#define PPSD_TEMP                           1
+
+//#define PPSD_CONF_RX_WAIT                    800
+
+#define PPSD_MULTIPLE_PROBING_DIO           3
+#define PPSD_MULTIPLE_PROBING_KA            2
+
+//#define TSCH_CONF_BURST_MAX_LEN             0
+//#define TSCH_LOG_CONF_QUEUE_LEN             32
+//#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG   1
+/*---------------------------------------------------------------------------*/
+/*
  * Configure testbed site, node num, topology
  */
 #define WITH_IOTLAB                                1
@@ -53,17 +69,21 @@
 /*
  * Configure App
  */
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 1)
-#define DOWNWARD_TRAFFIC                           1
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
+#define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (5 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
 #define APP_DOWNWARD_MAX_TX                        (APP_DATA_PERIOD / APP_DOWNWARD_SEND_INTERVAL)
 /*---------------------------------------------------------------------------*/
 
+#define WITH_VARYING_PPM                           0
+#if WITH_VARYING_PPM
+#define VARY_LENGTH                                8
+#endif
 
 /*---------------------------------------------------------------------------*/
 /* 
@@ -129,10 +149,10 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -156,6 +176,7 @@
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
+#define TSCH_CONF_BURST_MAX_LEN                    0
 /* for log messages */
 #define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
 #define ORCHESTRA_UNICAST_SF_ID                    1 //slotframe handle of unicast slotframe
@@ -166,6 +187,7 @@
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define TSCH_CONF_BURST_MAX_LEN                    0
 /* for log messages */
 #define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
 #define ORCHESTRA_UNICAST_SF_ID                    1 //slotframe handle of unicast slotframe
@@ -282,86 +304,5 @@
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
 #define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
 /*---------------------------------------------------------------------------*/
-
-
-/* Backup settings */
-
-/*
-#define IOTLAB_LYON_2                             1
-#define IOTLAB_LYON_3                             2
-#define IOTLAB_LYON_10                            3
-#define IOTLAB_LYON_17                            4
-#define IOTLAB_LILLE_24                           5
-#define IOTLAB_LILLE_40                           6
-#define IOTLAB_LILLE_46                           7
-#define IOTLAB_LILLE_50                           8
-#define IOTLAB_LILLE_79                           9
-#define IOTLAB_GRENOBLE_R_43                      10
-#define IOTLAB_GRENOBLE_R_63                      11
-#define IOTLAB_GRENOBLE_R_83                      12
-#define IOTLAB_GRENOBLE_R_2                       13
-#define IOTLAB_GRENOBLE_R_3                       14
-#define IOTLAB_GRENOBLE_L_43                      15
-#define IOTLAB_GRENOBLE_L_63                      16
-#define IOTLAB_GRENOBLE_L_79                      17
-#define IOTLAB_GRENOBLE_R_83_2                    18
-
-//#define IOTLAB_SITE                                IOTLAB_LYON_2
-//#define IOTLAB_SITE                                IOTLAB_LYON_3
-//#define IOTLAB_SITE                                IOTLAB_LYON_10
-//#define IOTLAB_SITE                                IOTLAB_LYON_17
-//#define IOTLAB_SITE                                IOTLAB_LILLE_24 // z = 9.6
-//#define IOTLAB_SITE                                IOTLAB_LILLE_40 // z = 6.1
-//#define IOTLAB_SITE                                IOTLAB_LILLE_46 // z = 9.6
-//#define IOTLAB_SITE                                IOTLAB_LILLE_50 // z = 6.1
-//#define IOTLAB_SITE                                IOTLAB_LILLE_79 // z = 9.6 or 9.4
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_43 // 4~5 hop
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_63
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83 // 9~10 hop
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_2
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_3
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_43
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_63
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_R_83_2 
-
-#if IOTLAB_SITE == IOTLAB_LYON_2
-#define NODE_NUM                                   2
-#elif IOTLAB_SITE == IOTLAB_LYON_3
-#define NODE_NUM                                   3
-#elif IOTLAB_SITE == IOTLAB_LYON_10
-#define NODE_NUM                                   10
-#elif IOTLAB_SITE == IOTLAB_LYON_17
-#define NODE_NUM                                   17
-#elif IOTLAB_SITE == IOTLAB_LILLE_24
-#define NODE_NUM                                   24
-#elif IOTLAB_SITE == IOTLAB_LILLE_40
-#define NODE_NUM                                   40
-#elif IOTLAB_SITE == IOTLAB_LILLE_46
-#define NODE_NUM                                   46
-#elif IOTLAB_SITE == IOTLAB_LILLE_50
-#define NODE_NUM                                   50
-#elif IOTLAB_SITE == IOTLAB_LILLE_79
-#define NODE_NUM                                   79
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_43
-#define NODE_NUM                                   43
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_63
-#define NODE_NUM                                   63
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_83
-#define NODE_NUM                                   83
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_2
-#define NODE_NUM                                   2
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_3
-#define NODE_NUM                                   3
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_43
-#define NODE_NUM                                   43
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_63
-#define NODE_NUM                                   63
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_79
-#define NODE_NUM                                   79
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_R_83_2
-#define NODE_NUM                                   83
-#endif
-*/
 
 #endif /* PROJECT_CONF_H_ */ 

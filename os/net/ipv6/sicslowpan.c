@@ -1892,7 +1892,6 @@ input(void)
 
   /* The MAC puts the 15.4 payload inside the packetbuf data buffer */
   packetbuf_ptr = packetbuf_dataptr();
-
   if(packetbuf_datalen() == 0) {
     LOG_WARN("input: empty packet\n");
     return;

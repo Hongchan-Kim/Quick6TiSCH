@@ -589,6 +589,42 @@ tsch_queue_is_empty(const struct tsch_neighbor *n)
   return !tsch_is_locked() && n != NULL && ringbufindex_empty(&n->tx_ringbuf);
 }
 /*---------------------------------------------------------------------------*/
+#if WITH_POLLING_PPSD
+struct tsch_packet *
+tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *link, uint8_t ppsd_last_tx_seq)
+{
+  if(!tsch_is_locked()) {
+    uint8_t offset = ppsd_last_tx_seq;
+    
+    int is_shared_link = link != NULL && link->link_options & LINK_OPTION_SHARED;
+    if(n != NULL) {
+      int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
+
+      if(get_index != -1 &&
+          !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
+                                                                    make sure the backoff has expired */
+
+        int16_t get_index_with_offset = get_index + offset < TSCH_QUEUE_NUM_PER_NEIGHBOR ? 
+                                      get_index + offset : get_index + offset - TSCH_QUEUE_NUM_PER_NEIGHBOR;
+
+#if TSCH_WITH_LINK_SELECTOR
+        int packet_attr_slotframe = queuebuf_attr(n->tx_array[get_index_with_offset]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
+        int packet_attr_timeslot = queuebuf_attr(n->tx_array[get_index_with_offset]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
+        if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
+          return NULL;
+        }
+        if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
+          return NULL;
+        }
+#endif
+        return n->tx_array[get_index_with_offset];
+      }
+    }
+  }
+  return NULL;
+}
+#endif
+/*---------------------------------------------------------------------------*/
 /* Returns the first packet from a neighbor queue */
 struct tsch_packet *
 tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *link)

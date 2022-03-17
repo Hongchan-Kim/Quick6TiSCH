@@ -43,6 +43,10 @@
 #include "lib/random.h"
 #include <string.h>
 
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (Data) */
+#include "net/mac/framer/frame802154e-ie.h"
+#endif
+
 #if WITH_OST /* OST: Include header files */
 #include <stdio.h>
 #include "contiki.h"
@@ -139,6 +143,38 @@ create_frame(int do_create)
     /* Only calculate header length */
     return hdr_len;
   } else if(packetbuf_hdralloc(hdr_len)) {
+
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (Data) */
+    int hdr_len_increment = 0;
+    if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA) == 1 && !packetbuf_holds_broadcast()) {
+      struct ieee802154_ies ppsd_ies;
+      memset(&ppsd_ies, 0, sizeof(ppsd_ies));
+      ppsd_ies.ie_ppsd_info = 0;
+
+      if(packetbuf_hdralloc(2)) {
+        /* HCK: the second parameter must be revised */
+        if(frame80215e_create_ie_header_list_termination_2((uint8_t *)packetbuf_hdrptr() + hdr_len,
+                                                          PACKETBUF_SIZE - hdr_len, &ppsd_ies) < 0) {
+          return FRAMER_FAILED;
+        }
+        hdr_len_increment += 2;
+      } else {
+        return FRAMER_FAILED;
+      }
+      if(packetbuf_hdralloc(3)) {
+        /* HCK: the second parameter must be revised */
+        if(frame80215e_create_ie_header_ppsd_info((uint8_t *)packetbuf_hdrptr() + hdr_len,
+                                                                PACKETBUF_SIZE - hdr_len, &ppsd_ies) < 0) {
+          return FRAMER_FAILED;
+        }
+        hdr_len_increment += 3;
+      } else {
+        return FRAMER_FAILED;
+      }
+    }
+    hdr_len += hdr_len_increment;
+#endif
+
     frame802154_create(&params, packetbuf_hdrptr());
 
     LOG_INFO("Out: %2X ", params.fcf.frame_type);
@@ -270,6 +306,14 @@ parse(void)
   if(hdr_len && packetbuf_hdrreduce(hdr_len)) {
     packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, frame.fcf.frame_type);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, frame.fcf.ack_required);
+
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (Data) */
+    if(frame.fcf.ie_list_present) {
+      /* hckim: must be revised */
+      packetbuf_hdrreduce(5);
+      packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, frame.fcf.ie_list_present);
+    }
+#endif
 
     if(frame.fcf.dest_addr_mode) {
       if(frame.dest_pid != frame802154_get_pan_id() &&

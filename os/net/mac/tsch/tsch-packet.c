@@ -98,6 +98,12 @@ tsch_packet_eackbuf_attr(uint8_t type)
 }
 /*---------------------------------------------------------------------------*/
 /* Construct enhanced ACK packet and return ACK length */
+#if WITH_POLLING_PPSD
+int
+tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
+                        const linkaddr_t *dest_addr, uint8_t seqno,
+                        int16_t drift, int nack, uint16_t ppsd_acceptable_pkts) 
+#else
 #if WITH_OST
 #if OST_ON_DEMAND_PROVISION
 int
@@ -118,11 +124,16 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
                         int16_t drift, int nack)
 #endif
+#endif
 {
   frame802154_t params;
   struct ieee802154_ies ies;
   int hdr_len;
   int ack_len;
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (ACK) */
+  int ies_len;
+  int current_ie_len;
+#endif
 
   if(buf == NULL) {
     return -1;
@@ -188,6 +199,32 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   ies.ie_time_correction = drift;
   ies.ie_is_nack = nack;
 
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (ACK) */
+  ies.ie_ppsd_info = ppsd_acceptable_pkts;
+  ies_len = 0;
+  
+  current_ie_len = 0;
+  current_ie_len =
+    frame80215e_create_ie_header_ppsd_info(buf + hdr_len + ies_len, 
+                                                          buf_len - hdr_len - ies_len, &ies);
+  if(current_ie_len < 0) {
+    return -1;
+  }
+  ies_len += current_ie_len;
+
+  current_ie_len = 0;
+  current_ie_len =
+    frame80215e_create_ie_header_ack_nack_time_correction(buf + hdr_len + ies_len,
+                                                          buf_len - hdr_len - ies_len, &ies);
+  if(current_ie_len < 0) {
+    return -1;
+  }
+  ies_len += current_ie_len;
+
+  ack_len = hdr_len + ies_len;
+
+#else
+
   ack_len =
     frame80215e_create_ie_header_ack_nack_time_correction(buf + hdr_len,
                                                           buf_len - hdr_len, &ies);
@@ -195,6 +232,8 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
     return -1;
   }
   ack_len += hdr_len;
+
+#endif
 
   frame802154_create(&params, buf);
 

@@ -47,6 +47,9 @@
 
 /* c.f. IEEE 802.15.4e Table 4b */
 enum ieee802154e_header_ie_id {
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+  HEADER_IE_PPSD_INFO = 0x01,
+#endif
   HEADER_IE_LE_CSL = 0x1a,
   HEADER_IE_LE_RIT,
   HEADER_IE_DSME_PAN_DESCRIPTOR,
@@ -86,6 +89,14 @@ enum ieee802154e_mlme_long_subie_id {
 enum ieee802154e_ietf_subie_id {
   IETF_IE_6TOP = SIXTOP_SUBIE_ID,
 };
+
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+#define WRITE8(buf, val) \
+  do { ((uint8_t *)(buf))[0] = (val) & 0xff;} while(0);
+
+#define READ8(buf, var) \
+  (var) = ((uint8_t *)(buf))[0]
+#endif
 
 #define WRITE16(buf, val) \
   do { ((uint8_t *)(buf))[0] = (val) & 0xff; \
@@ -133,6 +144,23 @@ create_mlme_long_ie_descriptor(uint8_t *buf, uint8_t sub_id, int ie_len)
   ie_desc = (ie_len & 0x07ff) + ((sub_id & 0x0f) << 11) + (1 << 15);
   WRITE16(buf, ie_desc);
 }
+
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+int
+frame80215e_create_ie_header_ppsd_info(uint8_t *buf, int len,
+    struct ieee802154_ies *ies)
+{
+  int ie_len = 1;
+  if(len >= 2 + ie_len && ies != NULL) {
+    uint8_t ppsd_info = ies->ie_ppsd_info;
+    WRITE8(buf+2, ppsd_info);
+    create_header_ie_descriptor(buf, HEADER_IE_PPSD_INFO, ie_len);
+    return 2 + ie_len;
+  } else {
+    return -1;
+  }
+}
+#endif
 
 /* Header IE. ACK/NACK time correction. Used in enhanced ACKs */
 int
@@ -346,6 +374,18 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
     uint8_t element_id, struct ieee802154_ies *ies)
 {
   switch(element_id) {
+#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation */
+    case HEADER_IE_PPSD_INFO:
+      if(len == 1) {
+        if(ies != NULL) {
+          uint8_t ppsd_info = 0;
+          READ8(buf, ppsd_info);
+          ies->ie_ppsd_info = ppsd_info;
+        }
+        return len;
+      }
+      break;
+#endif
     case HEADER_IE_ACK_NACK_TIME_CORRECTION:
       if(len == 2) {
         if(ies != NULL) {
