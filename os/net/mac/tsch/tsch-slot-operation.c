@@ -1571,6 +1571,11 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   ppsd_curr_packet = current_packet;
   ppsd_tx_seq = 1;
 
+  uint8_t i = 0;
+  for(i = 0; i < TSCH_DEQUEUED_ARRAY_SIZE; i++) {
+    ppsd_array[i] = NULL;
+  }
+
   while(1) {
 #if POLLING_PPSD_DBG
     ppsd_tx_slot_timestamp_t1 = 0;
@@ -1675,10 +1680,18 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
     } else {
       ppsd_curr_packet = NULL;
     }
-
+#if PPSD_TEMP
+    printf("yyy1 %u %u\n", ppsd_tx_seq, ppsd_curr_packet != NULL);
+#endif
     if(ppsd_tx_seq < ppsd_link_pkts_to_send && ppsd_prev_packet != ppsd_curr_packet && ppsd_curr_packet != NULL) {
+#if PPSD_TEMP
+      printf("yyy2\n");
+#endif
       ++ppsd_tx_seq;
     } else {
+#if PPSD_TEMP
+      printf("yyy3\n");
+#endif
       break;
     }
   }
@@ -1753,17 +1766,32 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
   uint8_t ppsd_seq = 0;
   for(ppsd_seq = 0; ppsd_seq < ppsd_link_pkts_to_send; ppsd_seq++) {
+    
+    if(ppsd_array[ppsd_seq] != NULL) {
+#if PPSD_TEMP
+    printf("zzz1 %u\n", ppsd_seq);
+#endif
+
     uint8_t ppsd_result = (ppsd_b_ack_received & (1 << ppsd_seq)) >> ppsd_seq;
 #if POLLING_PPSD_DBG
     TSCH_LOG_ADD(tsch_log_message,
         snprintf(log->message, sizeof(log->message),
         "ppsd result %u -> %u", (ppsd_seq + 1), ppsd_result));
 #endif
+
+#if PPSD_TEMP
+    printf("zzz2 %u %u\n", ppsd_seq, (ppsd_array[ppsd_seq] != NULL));
+#endif
+
     if(ppsd_result == 1) {
       ppsd_array[ppsd_seq]->ret = MAC_TX_OK;
     } else {
       ppsd_array[ppsd_seq]->ret = MAC_TX_NOACK;
     }
+
+#if PPSD_TEMP
+    printf("zzz3 %u\n", ppsd_seq);
+#endif
 
     TSCH_LOG_ADD(tsch_log_tx,
         log->tx.mac_tx_status = ppsd_array[ppsd_seq]->ret;
@@ -1777,6 +1805,10 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
         log->tx.seqno = queuebuf_attr(ppsd_array[ppsd_seq]->qb, PACKETBUF_ATTR_MAC_SEQNO);
     );
 
+#if PPSD_TEMP
+    printf("zzz4 %u\n", ppsd_seq);
+#endif
+
     uint8_t in_queue;
     in_queue = tsch_queue_packet_sent(current_neighbor, ppsd_array[ppsd_seq], current_link, ppsd_array[ppsd_seq]->ret);
 
@@ -1784,6 +1816,13 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
     if(in_queue == 0) {
       dequeued_array[ppsd_dequeued_index] = ppsd_array[ppsd_seq];
       ringbufindex_put(&dequeued_ringbuf);
+    }
+
+#if PPSD_TEMP
+    printf("zzz5 %u\n", ppsd_seq);
+#endif
+    } else {
+      /* pass this ppsd_array[ppsd_seq] */
     }
   }
 
@@ -3329,7 +3368,17 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       drift_correction = 0;
       is_drift_correction_used = 0;
       /* Get a packet ready to be sent */
+#if WITH_POLLING_PPSD /* hold current_neigbor in ppsd slot */
+      if(ppsd_link_scheduled && ppsd_link_pkts_to_send > 0) {
+        current_packet = tsch_queue_get_packet_for_nbr(current_neighbor, current_link);
+      } else if(ppsd_link_scheduled && ppsd_link_pkts_to_receive > 0) {
+        current_packet = NULL;
+      } else {
+        current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+      }
+#else
       current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+#endif
 
 #if WITH_OST && OST_ON_DEMAND_PROVISION
       if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET 
@@ -3344,12 +3393,18 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
 #endif
 
+#if WITH_POLLING_PPSD /* hold current_neighbor in ppsd slot */
+      if(!ppsd_link_scheduled) {
+#endif
       /* There is no packet to send, and this link does not have Rx flag. Instead of doing
        * nothing, switch to the backup link (has Rx flag) if any. */
       if(current_packet == NULL && !(current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         current_link = backup_link;
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
+#if WITH_POLLING_PPSD /* hold current_neighbor in ppsd slot */
+      }
+#endif
 
 #if OST_JSB_ADD
       /* Seungbeom Jeong added this else if block */

@@ -9,6 +9,9 @@
 #define POLLING_PPSD_DBG                    1
 #define PPSD_TEMP                           0
 
+#define PPSD_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
+#define PPSD_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
+
 //#define PPSD_CONF_RX_WAIT                    800
 
 #define PPSD_MULTIPLE_PROBING_DIO           0
