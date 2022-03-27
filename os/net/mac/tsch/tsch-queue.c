@@ -601,21 +601,11 @@ tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, struct ts
       int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
 
       if(get_index != -1 &&
-          !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
-                                                                    make sure the backoff has expired */
-
+          !(is_shared_link && !tsch_queue_backoff_expired(n))) {    
+            /* Even if this is a shared slot,
+            backoff is already reset in the regular slot that triggered current ppsd slot */
         int16_t get_index_with_offset = get_index + offset < TSCH_QUEUE_NUM_PER_NEIGHBOR ? 
                                       get_index + offset : get_index + offset - TSCH_QUEUE_NUM_PER_NEIGHBOR;
-#if 0//TSCH_WITH_LINK_SELECTOR
-        int packet_attr_slotframe = queuebuf_attr(n->tx_array[get_index_with_offset]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
-        int packet_attr_timeslot = queuebuf_attr(n->tx_array[get_index_with_offset]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
-        if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
-          return NULL;
-        }
-        if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
-          return NULL;
-        }
-#endif
         return n->tx_array[get_index_with_offset];
       }
     }
