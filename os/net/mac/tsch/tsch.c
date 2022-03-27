@@ -464,7 +464,7 @@ uint16_t tsch_timing_us[tsch_ts_elements_count];
 /* TSCH timeslot timing (in rtimer ticks) */
 rtimer_clock_t tsch_timing[tsch_ts_elements_count];
 
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
 static const uint16_t *ppsd_default_timing_us;
 uint16_t ppsd_timing_us[ppsd_ts_elements_count];
 rtimer_clock_t ppsd_timing[ppsd_ts_elements_count];
@@ -616,7 +616,7 @@ tsch_reset(void)
     tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
   }
 
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
   ppsd_default_timing_us = PPSD_DEFAULT_TIMESLOT_TIMING;
   for(i = 0; i < ppsd_ts_elements_count; i++) {
     ppsd_timing_us[i] = ppsd_default_timing_us[i];
@@ -1666,7 +1666,7 @@ send_packet(mac_callback_t sent, void *ptr)
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, tsch_packet_seqno);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, 1);
 
-#if WITH_POLLING_PPSD /* HCK: ppsd header ie implementation (Data) */
+#if WITH_PPSD /* HCK: ppsd header ie implementation (Data) */
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
 #endif
 

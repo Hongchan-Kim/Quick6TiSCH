@@ -83,7 +83,7 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
     128, /* CCA */
    2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
    1300,
    1500,
 #elif WITH_OST
@@ -107,7 +107,7 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 #define PPSD_RX_WAIT 400
 #endif
 
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
 const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
    1000, /* ppsd_tx_offset_1 */
    (1000 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_1 */

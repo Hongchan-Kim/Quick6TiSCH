@@ -5,9 +5,8 @@
 /*
  * Exclusive period implementation
  */
-#define WITH_POLLING_PPSD                   1
-#define POLLING_PPSD_DBG                    1
-#define PPSD_TEMP                           0
+#define WITH_PPSD                   1
+#define PPSD_DBG                    1
 
 #define PPSD_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define PPSD_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 

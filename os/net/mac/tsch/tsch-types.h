@@ -152,7 +152,7 @@ enum tsch_timeslot_timing_elements {
   tsch_ts_elements_count, /* Not a timing element */
 };
 
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
 enum ppsd_timeslot_timing_elements {
   ppsd_tx_offset_1,
   ppsd_rx_offset_1,
@@ -175,7 +175,7 @@ typedef rtimer_clock_t tsch_timeslot_timing_ticks[tsch_ts_elements_count];
 /** \brief TSCH timeslot timing elements in micro-seconds */
 typedef uint16_t tsch_timeslot_timing_usec[tsch_ts_elements_count];
 
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
 typedef rtimer_clock_t ppsd_timeslot_timing_ticks[ppsd_ts_elements_count];
 typedef uint16_t ppsd_timeslot_timing_usec[ppsd_ts_elements_count];
 #endif

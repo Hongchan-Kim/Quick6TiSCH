@@ -589,7 +589,7 @@ tsch_queue_is_empty(const struct tsch_neighbor *n)
   return !tsch_is_locked() && n != NULL && ringbufindex_empty(&n->tx_ringbuf);
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
 struct tsch_packet *
 tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *link, uint8_t ppsd_last_tx_seq)
 {
@@ -606,32 +606,13 @@ tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, struct ts
 
         int16_t get_index_with_offset = get_index + offset < TSCH_QUEUE_NUM_PER_NEIGHBOR ? 
                                       get_index + offset : get_index + offset - TSCH_QUEUE_NUM_PER_NEIGHBOR;
-
-#if PPSD_TEMP
-        printf("xxx2 %u [%u %u] (%u->%u) %u\n", PPSD_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(n)),
-                                      get_index, 
-                                      ringbufindex_peek_put(&n->tx_ringbuf),
-                                      offset,
-                                      get_index_with_offset,
-                                      ringbufindex_elements(&n->tx_ringbuf));
-#endif
-
 #if 0//TSCH_WITH_LINK_SELECTOR
         int packet_attr_slotframe = queuebuf_attr(n->tx_array[get_index_with_offset]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
         int packet_attr_timeslot = queuebuf_attr(n->tx_array[get_index_with_offset]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
-#if PPSD_TEMP
-        printf("xxx3\n");
-#endif
         if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
-#if PPSD_TEMP
-          printf("xxx4 %u %u\n", packet_attr_slotframe, link->slotframe_handle);
-#endif
           return NULL;
         }
         if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
-#if PPSD_TEMP
-          printf("xxx5 %u %u\n", packet_attr_timeslot, link->timeslot);
-#endif
           return NULL;
         }
 #endif
@@ -639,9 +620,6 @@ tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, struct ts
       }
     }
   }
-#if PPSD_TEMP
-  printf("xxx6\n");
-#endif
   return NULL;
 }
 #endif
@@ -657,12 +635,6 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
       if(get_index != -1 &&
           !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
                                                                     make sure the backoff has expired */
-#if PPSD_TEMP
-        printf("xxx1 %u [%u %u] %u\n", PPSD_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(n)),
-                                      get_index, 
-                                      ringbufindex_peek_put(&n->tx_ringbuf),
-                                      ringbufindex_elements(&n->tx_ringbuf));
-#endif
 
 #if TSCH_WITH_LINK_SELECTOR
 #if WITH_OST && OST_ON_DEMAND_PROVISION
