@@ -54,6 +54,7 @@
 #include "net/mac/tsch/tsch.h"
 #include "sys/critical.h"
 
+
 #if WITH_OST /* OST: Include header files */
 #include "node-info.h"
 #include "orchestra.h"
@@ -1699,10 +1700,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       if(packet_ready && NETSTACK_RADIO.prepare(packet, packet_len) == 0) { /* 0 means success */
         static rtimer_clock_t tx_duration;
 
+
 #if TSCH_CCA_ENABLED
         cca_status = 1;
         /* delay before CCA */
-        TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
+        TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca"); 
         TSCH_DEBUG_TX_EVENT();
         tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
         /* CCA */
@@ -1714,7 +1716,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         if(cca_status == 0) {
           mac_tx_status = MAC_TX_COLLISION;
         } else
-#endif /* TSCH_CCA_ENABLED */
+#endif/* TSCH_CCA_ENABLED */
         {
           /* delay before TX */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
