@@ -51,7 +51,9 @@
 
 #include "net/routing/rpl-classic/rpl.h"
 #include "net/routing/rpl-classic/rpl-private.h"
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include "sys/log.h"
 #define LOG_MODULE "ALICE"
 #define LOG_LEVEL  LOG_LEVEL_MAC
@@ -81,8 +83,10 @@ static uint16_t
 get_node_timeslot(const linkaddr_t *addr1, const linkaddr_t *addr2)
 {
   if(addr1 != NULL && addr2 != NULL && ORCHESTRA_UNICAST_PERIOD > 0) {
+    /*return alice_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2) + (uint32_t)alice_asfn_for_schedule), 
+                              (ORCHESTRA_UNICAST_PERIOD)); //link-based timeslot determination*/
     return alice_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2) + (uint32_t)alice_asfn_for_schedule), 
-                              (ORCHESTRA_UNICAST_PERIOD)); //link-based timeslot determination
+                              5); //link-based timeslot determination                          
   } else {
     return 0xffff;
   }
@@ -91,10 +95,9 @@ get_node_timeslot(const linkaddr_t *addr1, const linkaddr_t *addr2)
 static uint16_t
 get_node_channel_offset(const linkaddr_t *addr1, const linkaddr_t *addr2)
 {
-  int num_ch = (sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE) / sizeof(uint8_t)) - 1; //except for EB channel offset (1)
-  if(addr1 != NULL && addr2 != NULL  && num_ch > 0) {
+  if(addr1 != NULL && addr2 != NULL  /*&& num_ch > 0*/) {
     return 1 + alice_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2)
-            + (uint32_t)alice_asfn_for_schedule), num_ch); //link-based, except for EB channel offset (1)
+            + (uint32_t)alice_asfn_for_schedule), 3/*num_ch*/); //link-based, except for EB channel offset (1)
   } else {
     // alice final check: should this be 0xffff????
     return 1 + 0; //same with common shared channel offset

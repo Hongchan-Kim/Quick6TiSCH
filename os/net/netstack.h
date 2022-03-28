@@ -95,7 +95,7 @@
 #ifdef NETSTACK_CONF_RADIO
 #define NETSTACK_RADIO NETSTACK_CONF_RADIO
 #else /* NETSTACK_CONF_RADIO */
-#define NETSTACK_RADIO   nullradio_driver
+#define NETSTACK_RADIO   rf2xx_driver /*nullradio_driver modified*/
 #endif /* NETSTACK_CONF_RADIO */
 
 /* Framer selection. The framer is used by the MAC implementation

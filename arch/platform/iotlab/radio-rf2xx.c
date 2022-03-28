@@ -53,10 +53,10 @@ extern rf2xx_t RF2XX_DEVICE;
 #define RF2XX_CHANNEL   11
 #endif
 #ifndef RF2XX_TX_POWER
-#define RF2XX_TX_POWER  PHY_POWER_3dBm
+#define RF2XX_TX_POWER  PHY_POWER_m17dBm /*default: PHY_POWER_3dBm*/
 #endif
 #ifndef RF2XX_RX_RSSI_THRESHOLD
-#define RF2XX_RX_RSSI_THRESHOLD  RF2XX_PHY_RX_THRESHOLD__m101dBm
+#define RF2XX_RX_RSSI_THRESHOLD  RF2XX_PHY_RX_THRESHOLD__m87dBm /*101dBm default*/
 #endif
 #ifndef RF2XX_SOFT_PREPARE
 /* The RF2xx has a single FIFO for Tx and Rx.
@@ -166,7 +166,8 @@ rf2xx_wr_hard_prepare(const void *payload, unsigned short payload_le, int async)
 			break;
 		default:
 			platform_exit_critical();
-			return RADIO_TX_COLLISION;
+			//return RADIO_TX_COLLISION; /*왜?*/
+            break; /*added*/
 	}
 	platform_exit_critical();
 
@@ -344,17 +345,18 @@ rf2xx_wr_read(void *buf, unsigned short buf_len)
 /** Perform a Clear-Channel Assessment (CCA) to find out if there is
     a packet in the air or not. */
 static int
-rf2xx_wr_channel_clear(void)
+rf2xx_wr_channel_clear(void) /*수정 필요!!*/
 {
     int clear = 1;
     log_debug("radio-rf2xx: rf2xx_wr_channel_clear");
-
+    /*printf("\nCCA TEST\n"); ADDED*/
     // critical section is necessary
     // to avoid spi access conflicts
     // with irq_handler
     switch (rf2xx_state)
     {
         uint8_t reg;
+        uint8_t original_status; /*ADDED*/
         case RF_LISTEN:
             //initiate a cca request
             platform_enter_critical();
@@ -379,7 +381,34 @@ rf2xx_wr_channel_clear(void)
                 clear = 0;
             }
             break;
+        case RF_TX:
+            original_status =  rf2xx_get_status(RF2XX_DEVICE); //original state storing_jjpark
+            rf2xx_set_state(RF2XX_DEVICE, RF2XX_TRX_STATUS__RX_ON); //pretending it is receiving state_jjpark
+            platform_enter_critical();
+            rf2xx_irq_enable(RF2XX_DEVICE); //enabling irq_jjpark
+            reg = RF2XX_PHY_CC_CCA_DEFAULT__CCA_MODE |
+                (rf2xx_current_channel & RF2XX_PHY_CC_CCA_MASK__CHANNEL) |
+                RF2XX_PHY_CC_CCA_MASK__CCA_REQUEST;
+            rf2xx_reg_write(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA, reg);
+            platform_exit_critical();
 
+            // wait cca to be done
+            do
+            {
+                platform_enter_critical();
+                reg = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__TRX_STATUS);
+                platform_exit_critical();
+            }
+            while (rf2xx_state == RF_TX && !(reg & RF2XX_TRX_STATUS_MASK__CCA_DONE)); //jjpark
+            
+            // get result
+            if (!(reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS))
+            {
+                clear = 0;
+            }
+            //rf2xx_set_state(RF2XX_DEVICE, RF2XX_TRX_STATUS__PLL_ON); //state return_jjpark
+            rf2xx_set_state(RF2XX_DEVICE, original_status); //state return_jjpark
+            break;
         case RF_RX:
             clear = 0;
             break;
@@ -809,8 +838,8 @@ static void reset(void)
 
     // Set IRQ to TRX END/RX_START/CCA_DONE
     rf2xx_reg_write(RF2XX_DEVICE, RF2XX_REG__IRQ_MASK,
-            RF2XX_IRQ_STATUS_MASK__TRX_END |
-            RF2XX_IRQ_STATUS_MASK__RX_START);
+            RF2XX_IRQ_STATUS_MASK__CCA_ED_DONE | 
+            RF2XX_IRQ_STATUS_MASK__TRX_END | RF2XX_IRQ_STATUS_MASK__RX_START); //add CCA_ED_DONE_jjpark
     set_poll_mode(poll_mode);
 
     reg = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__RX_SYN);

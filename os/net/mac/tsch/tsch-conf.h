@@ -411,7 +411,7 @@
 #ifdef TSCH_CONF_CCA_ENABLED
 #define TSCH_CCA_ENABLED TSCH_CONF_CCA_ENABLED
 #else
-#define TSCH_CCA_ENABLED 0
+#define TSCH_CCA_ENABLED 1 /*test added ghlee*/
 #endif
 
 /* Include destination address in ACK? */

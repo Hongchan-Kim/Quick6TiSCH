@@ -14,7 +14,7 @@
 #define IOTLAB_LILLE_79_CENTER                     4 /* 79 nodes */
 #define IOTLAB_LYON_2                              5 /* 2 nodes */
 #define IOTLAB_LYON_3                              6 /* 3 nodes */
-#define IOTLAB_LYON_10                             7 /* 10 nodes */
+#define IOTLAB_LYON_8                             7 /* 8 nodes */
 #define IOTLAB_LYON_17                             8 /* 17 nodes */
 
 
@@ -22,9 +22,9 @@
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
-#define IOTLAB_SITE                                IOTLAB_LYON_2
-//#define IOTLAB_SITE                                IOTLAB_LYON_3
-//#define IOTLAB_SITE                                IOTLAB_LYON_10
+//#define IOTLAB_SITE                                IOTLAB_LYON_2
+#define IOTLAB_SITE                                IOTLAB_LYON_3
+//#define IOTLAB_SITE                                IOTLAB_LYON_8
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_CORNER
@@ -39,8 +39,8 @@
 #define NODE_NUM                                   2
 #elif IOTLAB_SITE == IOTLAB_LYON_3
 #define NODE_NUM                                   3
-#elif IOTLAB_SITE == IOTLAB_LYON_10
-#define NODE_NUM                                   10
+#elif IOTLAB_SITE == IOTLAB_LYON_8
+#define NODE_NUM                                   8
 #elif IOTLAB_SITE == IOTLAB_LYON_17
 #define NODE_NUM                                   17
 #endif
@@ -53,11 +53,11 @@
 /*
  * Configure App
  */
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 1)
-#define DOWNWARD_TRAFFIC                           1
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 8)
+#define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (25 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
@@ -129,10 +129,10 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -152,10 +152,10 @@
 
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              71 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
 /* for log messages */
 #define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
 #define ORCHESTRA_UNICAST_SF_ID                    1 //slotframe handle of unicast slotframe
@@ -187,7 +187,7 @@
 #define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
-#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
+#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
 /* for log messages */
 #define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
 #define ORCHESTRA_BROADCAST_SF_ID                  1 //slotframe handle of broadcast/default slotframe
