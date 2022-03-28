@@ -1691,6 +1691,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
       ppsd_curr_packet = tsch_queue_ppsd_get_next_packet_for_nbr(current_neighbor, current_link, ppsd_tx_seq);
       ++ppsd_tx_seq;
     } else {
+      ppsd_curr_packet = NULL;
       break; /* Transmitted all the allowed packets */
     }
   }
@@ -2095,11 +2096,11 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_DBG
     ppsd_rx_slot_timestamp_t5 = RTIMER_NOW();
 
-  TSCH_LOG_ADD(tsch_log_message,
-      snprintf(log->message, sizeof(log->message),
-      "ppsd rx_t %u %u", 
-      ppsd_rx_slot_timestamp_t4 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_rx_slot_timestamp_t4, ppsd_rx_slot_timestamp_t0)) : 0,
-      ppsd_rx_slot_timestamp_t5 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_rx_slot_timestamp_t5, ppsd_rx_slot_timestamp_t0)) : 0));
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "ppsd rx_t %u %u", 
+        ppsd_rx_slot_timestamp_t4 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_rx_slot_timestamp_t4, ppsd_rx_slot_timestamp_t0)) : 0,
+        ppsd_rx_slot_timestamp_t5 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_rx_slot_timestamp_t5, ppsd_rx_slot_timestamp_t0)) : 0));
 #endif
   }
 
@@ -2477,8 +2478,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 }
 
 #if WITH_PPSD
-                uint8_t ppsd_pkts_allowed = 0;
                 if(ack_len != 0) {
+                  uint8_t ppsd_pkts_allowed = 0;
                   ppsd_pkts_allowed = ack_ies.ie_ppsd_info;
 #if PPSD_DBG
                   if(ppsd_link_requested) {
@@ -2489,7 +2490,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
                   if(ppsd_link_requested && ppsd_pkts_allowed > 0) {
                     ppsd_link_scheduled = 1;
-                    ppsd_pkts_to_send = ppsd_pkts_allowed;
+                    ppsd_pkts_to_send = (int)ppsd_pkts_allowed;
                   } else {
                     ppsd_link_scheduled = 0;
                     ppsd_pkts_to_send = 0;
@@ -3064,7 +3065,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 if(tsch_packet_get_frame_pending(current_input->payload, current_input->len)
                   && ppsd_pkts_acceptable > 0) {
                   ppsd_link_scheduled = 1;
-                  ppsd_pkts_to_receive = ppsd_pkts_acceptable;
+                  ppsd_pkts_to_receive = (int)ppsd_pkts_acceptable;
                 } else {
                   ppsd_link_scheduled = 0;
                   ppsd_pkts_to_receive = 0;
