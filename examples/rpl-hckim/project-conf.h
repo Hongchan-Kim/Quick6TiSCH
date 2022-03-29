@@ -1,6 +1,13 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+#define PPSD_CCA                                   1 /* ghlee CCA implementation */
+#define PPSD_CCA_DBG                               0
+#if PPSD_CCA
+#define TSCH_CONF_CCA_ENABLED                      1
+#endif
+
+
 /*---------------------------------------------------------------------------*/
 /*
  * Configure testbed site, node num, topology

@@ -78,10 +78,10 @@
  * (TxOffset - (RxWait / 2)) instead
  */
 
-const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = { 
+const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
    1800, /* CCAOffset */
     128, /* CCA */
-   2120, /* TxOffset */ 
+   2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
 #if WITH_OST
    OST_TSCH_TS_RX_ACK_DELAY, /* RxAckDelay - 1300 */
@@ -97,6 +97,5 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
    4256, /* MaxTx */
   10000, /* TimeslotLength */
 };
-
 
 /** @} */
