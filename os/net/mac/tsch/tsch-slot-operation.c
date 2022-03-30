@@ -1793,7 +1793,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
     );
 
     uint8_t in_queue;
-    in_queue = tsch_queue_packet_sent(current_neighbor, ppsd_array[ppsd_seq], current_link, ppsd_array[ppsd_seq]->ret);
+    in_queue = tsch_queue_ppsd_packet_sent(current_neighbor, ppsd_array[ppsd_seq], current_link, ppsd_array[ppsd_seq]->ret);
 
     int ppsd_dequeued_index = ringbufindex_peek_put(&dequeued_ringbuf);
     if(in_queue == 0) {
