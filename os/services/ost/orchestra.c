@@ -52,6 +52,10 @@
 #define LOG_MODULE "Orchestra"
 #define LOG_LEVEL  LOG_LEVEL_MAC
 
+#ifndef WITH_OST
+#error "Mismatched scheduler configuration. See Makefile and project-conf.h"
+#endif
+
 /* A net-layer sniffer for packets sent and received */
 static void orchestra_packet_received(void);
 static void orchestra_packet_sent(int mac_status);
