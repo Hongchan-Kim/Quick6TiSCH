@@ -730,18 +730,6 @@ keepalive_send(void *ptr)
         packetbuf_clear();
         packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, destination);
         NETSTACK_MAC.send(keepalive_packet_sent, NULL);
-
-#if PPSD_MULTIPLE_PROBING_KA
-        uint8_t i;
-        for(i = 0; i < PPSD_MULTIPLE_PROBING_KA; i++) {
-          packetbuf_clear();
-          packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, destination);
-          NETSTACK_MAC.send(keepalive_packet_sent, NULL);
-          LOG_INFO("sending KA %u to ", i + 1);
-          LOG_INFO_LLADDR(destination);
-          LOG_INFO_("\n");
-        }
-#endif
     } else {
         LOG_ERR("no timesource - KA not sent\n");
     }
