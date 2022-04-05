@@ -8,17 +8,11 @@
 #define WITH_PPSD                   1
 #define PPSD_DBG                    1
 
+//#define PPSD_CONF_RX_WAIT                    800
 #define PPSD_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define PPSD_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
+/*---------------------------------------------------------------------------*/
 
-//#define PPSD_CONF_RX_WAIT                    800
-
-#define PPSD_MULTIPLE_PROBING_DIO           0
-#define PPSD_MULTIPLE_PROBING_KA            0
-
-//#define TSCH_CONF_BURST_MAX_LEN             0
-//#define TSCH_LOG_CONF_QUEUE_LEN             32
-//#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG   1
 /*---------------------------------------------------------------------------*/
 /*
  * Configure testbed site, node num, topology
@@ -34,16 +28,17 @@
 #define IOTLAB_LYON_3                              6 /* 3 nodes */
 #define IOTLAB_LYON_10                             7 /* 10 nodes */
 #define IOTLAB_LYON_17                             8 /* 17 nodes */
-
+#define IOTLAB_GRENOBLE_L_79                       9 /* 79 nodes */
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_CORNER
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_CORNER
-#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
+//#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_10
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_CORNER
 #define NODE_NUM                                   83
@@ -61,9 +56,28 @@
 #define NODE_NUM                                   10
 #elif IOTLAB_SITE == IOTLAB_LYON_17
 #define NODE_NUM                                   17
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_79
+#define NODE_NUM                                   79
 #endif
 
 #endif /* WITH_IOTLAB */
+/*---------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------*/
+/*
+ * Configure log
+ */
+#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO //LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
+
+#define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
+#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
 /*---------------------------------------------------------------------------*/
 
 
@@ -74,18 +88,18 @@
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (60 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
 #define APP_DOWNWARD_MAX_TX                        (APP_DATA_PERIOD / APP_DOWNWARD_SEND_INTERVAL)
-/*---------------------------------------------------------------------------*/
 
 #define WITH_VARYING_PPM                           0
 #if WITH_VARYING_PPM
 #define VARY_LENGTH                                8
 #endif
+/*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
 /* 
@@ -112,8 +126,8 @@
 #define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST
 #define RPL_CONF_WITH_DAO_ACK                      1
 #define RPL_CONF_WITH_PROBING                      1
-//#define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
-//#define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND) /* originally 5 seconds */
+#define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
+#define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND) /* originally 5 seconds */
 #define RPL_FIRST_MEASURE_PERIOD                   (1 * 60)
 #define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
@@ -288,23 +302,6 @@
 /* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
    m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
 #define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * Configure log
- */
-#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO //LOG_LEVEL_DBG
-#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
-#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
-
-#define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
-#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
 /*---------------------------------------------------------------------------*/
 
 #endif /* PROJECT_CONF_H_ */ 
