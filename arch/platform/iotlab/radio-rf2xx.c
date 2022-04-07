@@ -914,9 +914,9 @@ static int read(uint8_t *buf, uint8_t buf_len)
 #if WITH_IOTLAB
     uint8_t rssi = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_ED_LEVEL); //See datasheet p.91
     if(rssi == 0) {
-        last_rssi_dbm = -90;
+        last_rssi_dbm = -91;
     } else {
-        last_rssi_dbm = -90 + rssi;
+        last_rssi_dbm = -91 + rssi;
     }
 #endif
 
