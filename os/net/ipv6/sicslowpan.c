@@ -1505,6 +1505,14 @@ packet_sent(void *ptr, int status, int transmissions)
     return;
   }
 
+#if WITH_PPSD
+  uint8_t ppsd_sent_in_ep = 0;
+  if(transmissions >= 0xff) {
+    ppsd_sent_in_ep = 1;
+    transmissions = transmissions - 0xff;
+  }
+#endif
+
   /* unicast only */
   if(status == MAC_TX_NOACK || status == MAC_TX_OK) {
     ip_ucast_transmission_count += transmissions;
@@ -1539,8 +1547,16 @@ packet_sent(void *ptr, int status, int transmissions)
     }
   }
 
+#if WITH_PPSD
+  /* call link_stats_packet_sent only for packets sent in regular schedule */
+  if(ppsd_sent_in_ep == 0) {
+    /* Update neighbor link statistics */
+    link_stats_packet_sent(dest, status, transmissions);
+  }
+#else
   /* Update neighbor link statistics */
   link_stats_packet_sent(dest, status, transmissions);
+#endif
 
   /* Call routing protocol link callback */
   NETSTACK_ROUTING.link_callback(dest, status, transmissions);

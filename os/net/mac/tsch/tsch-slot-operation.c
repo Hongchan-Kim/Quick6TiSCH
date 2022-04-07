@@ -1656,6 +1656,8 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
       ppsd_curr_packet->transmissions++;
       ppsd_curr_packet->ret = ppsd_mac_tx_status;
+      ppsd_curr_packet->ppsd_sent_in_ep = 1;
+
       /* temporarily store ppsd_curr_packet in ppsd_array until block ACK received */
       ppsd_array[ppsd_tx_seq - 1] = ppsd_curr_packet;
 
@@ -2607,6 +2609,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
     current_packet->transmissions++;
     current_packet->ret = mac_tx_status;
+#if WITH_PPSD
+    current_packet->ppsd_sent_in_ep = 0;
+#endif
 
     /* Post TX: Update neighbor queue state */
     in_queue = tsch_queue_packet_sent(current_neighbor, current_packet, current_link, mac_tx_status);
@@ -3177,7 +3182,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           }
 #endif
 #endif
-
 
           /* Poll process for processing of pending input and logs */
           process_poll(&tsch_pending_events_process);

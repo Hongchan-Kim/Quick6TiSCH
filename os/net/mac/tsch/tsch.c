@@ -995,8 +995,18 @@ tsch_tx_process_pending(void)
       }
     }
 
+#if WITH_PPSD
+    if(p->ppsd_sent_in_ep == 1) { /* sent in exclusive period */
+      /* Call packet_sent callback */
+      mac_call_sent_callback(p->sent, p->ptr, p->ret, 0xff + p->transmissions);
+    } else { /* sent in regular schedule */
+      /* Call packet_sent callback */
+      mac_call_sent_callback(p->sent, p->ptr, p->ret, p->transmissions);
+    }
+#else
     /* Call packet_sent callback */
     mac_call_sent_callback(p->sent, p->ptr, p->ret, p->transmissions);
+#endif
     /* Free packet queuebuf */
     tsch_queue_free_packet(p);
     /* Free all unused neighbors */
