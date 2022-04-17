@@ -464,7 +464,7 @@ uint16_t tsch_timing_us[tsch_ts_elements_count];
 /* TSCH timeslot timing (in rtimer ticks) */
 rtimer_clock_t tsch_timing[tsch_ts_elements_count];
 
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
 static const uint16_t *ppsd_default_timing_us;
 uint16_t ppsd_timing_us[ppsd_ts_elements_count];
 rtimer_clock_t ppsd_timing[ppsd_ts_elements_count];
@@ -616,7 +616,7 @@ tsch_reset(void)
     tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
   }
 
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
   ppsd_default_timing_us = PPSD_DEFAULT_TIMESLOT_TIMING;
   for(i = 0; i < ppsd_ts_elements_count; i++) {
     ppsd_timing_us[i] = ppsd_default_timing_us[i];
@@ -730,18 +730,6 @@ keepalive_send(void *ptr)
         packetbuf_clear();
         packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, destination);
         NETSTACK_MAC.send(keepalive_packet_sent, NULL);
-
-#if PPSD_MULTIPLE_PROBING_KA
-        uint8_t i;
-        for(i = 0; i < PPSD_MULTIPLE_PROBING_KA; i++) {
-          packetbuf_clear();
-          packetbuf_set_addr(PACKETBUF_ADDR_RECEIVER, destination);
-          NETSTACK_MAC.send(keepalive_packet_sent, NULL);
-          LOG_INFO("sending KA %u to ", i + 1);
-          LOG_INFO_LLADDR(destination);
-          LOG_INFO_("\n");
-        }
-#endif
     } else {
         LOG_ERR("no timesource - KA not sent\n");
     }
@@ -1007,8 +995,18 @@ tsch_tx_process_pending(void)
       }
     }
 
+#if WITH_PPSD
+    if(p->ppsd_sent_in_ep == 1) { /* sent in exclusive period */
+      /* Call packet_sent callback */
+      mac_call_sent_callback(p->sent, p->ptr, p->ret, 0xff + p->transmissions);
+    } else { /* sent in regular schedule */
+      /* Call packet_sent callback */
+      mac_call_sent_callback(p->sent, p->ptr, p->ret, p->transmissions);
+    }
+#else
     /* Call packet_sent callback */
     mac_call_sent_callback(p->sent, p->ptr, p->ret, p->transmissions);
+#endif
     /* Free packet queuebuf */
     tsch_queue_free_packet(p);
     /* Free all unused neighbors */
@@ -1666,7 +1664,7 @@ send_packet(mac_callback_t sent, void *ptr)
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, tsch_packet_seqno);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, 1);
 
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (Data) */
+#if WITH_PPSD /* HCK: ppsd header ie implementation (Data) */
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
 #endif
 

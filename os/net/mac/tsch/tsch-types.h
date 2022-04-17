@@ -108,6 +108,10 @@ struct tsch_packet {
   uint8_t header_len; /* length of header and header IEs (needed for link-layer security) */
   uint8_t tsch_sync_ie_offset; /* Offset within the frame used for quick update of EB ASN and join priority */
 
+#if WITH_PPSD
+  uint8_t ppsd_sent_in_ep;
+#endif
+
 #if WITH_OST
   uip_ds6_nbr_t *ost_prt_nbr;
   uint16_t ost_prt_new_t_offset;
@@ -152,7 +156,7 @@ enum tsch_timeslot_timing_elements {
   tsch_ts_elements_count, /* Not a timing element */
 };
 
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
 enum ppsd_timeslot_timing_elements {
   ppsd_tx_offset_1,
   ppsd_rx_offset_1,
@@ -175,7 +179,7 @@ typedef rtimer_clock_t tsch_timeslot_timing_ticks[tsch_ts_elements_count];
 /** \brief TSCH timeslot timing elements in micro-seconds */
 typedef uint16_t tsch_timeslot_timing_usec[tsch_ts_elements_count];
 
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
 typedef rtimer_clock_t ppsd_timeslot_timing_ticks[ppsd_ts_elements_count];
 typedef uint16_t ppsd_timeslot_timing_usec[ppsd_ts_elements_count];
 #endif

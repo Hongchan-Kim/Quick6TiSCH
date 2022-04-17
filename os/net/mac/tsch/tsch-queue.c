@@ -501,6 +501,68 @@ tsch_queue_free_packet(struct tsch_packet *p)
   }
 }
 /*---------------------------------------------------------------------------*/
+#if WITH_PPSD
+/* Updates neighbor queue state after a transmission */
+int
+tsch_queue_ppsd_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
+                      struct tsch_link *link, uint8_t mac_tx_status)
+{
+  int in_queue = 1;
+  //int is_shared_link = link->link_options & LINK_OPTION_SHARED;
+  int is_unicast = !n->is_broadcast;
+
+  if(mac_tx_status == MAC_TX_OK) {
+    /* Successful transmission */
+    tsch_queue_remove_packet_from_queue(n);
+    in_queue = 0;
+
+    /* Update CSMA state in the unicast case */
+    if(is_unicast) {
+      /* Actually, we do not need to check 'is_shard_link'.
+       * If this is shared slot,
+       * then the regular slot that triggered current ppsd slot is also shared.
+       * Also, being in the ppsd slot means that the transmission of unicast packet
+       * in the previous 'shared' regular slot was successful.
+       * Therefore, backoff must be reset in the previous regular slot.
+       * So, we only need to check tsch_queue_is_empty(n) for dedicated links. */
+      if(/* is_shared_link || */tsch_queue_is_empty(n)) {
+        /* If this is a shared link, reset backoff on success.
+         * Otherwise, do so only is the queue is empty */
+        tsch_queue_backoff_reset(n);
+      }
+    }
+  } else {
+    /* Failed transmission */
+    if(p->transmissions >= p->max_transmissions) {
+      /* Drop packet */
+      tsch_queue_remove_packet_from_queue(n);
+      in_queue = 0;
+    }
+    /* Even if this packet is not successfully sent in current ppsd slot,
+     * do not increase backoff because of following reasons.
+     * First, being in the ppsd slot means that the transmission of unicast packet
+     * in the regular slot that triggered current ppsd slot was successful. 
+     * Second, if we increaase backoff during ppsd slot,
+     * then, backoff window will be non-zero and
+     * consecutive transmission will be stopped.
+     * Therefore, we disable tsch_queue_backoff_inc in ppsd slot. */
+#if 0
+    /* Update CSMA state in the unicast case */
+    if(is_unicast) {
+      /* Failures on dedicated (== non-shared) leave the backoff
+       * window nor exponent unchanged */
+      if(is_shared_link) {
+        /* Shared link: increment backoff exponent, pick a new window */
+        tsch_queue_backoff_inc(n);
+      }
+    }
+#endif
+  }
+
+  return in_queue;
+}
+#endif
+/*---------------------------------------------------------------------------*/
 /* Updates neighbor queue state after a transmission */
 int
 tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
@@ -589,34 +651,24 @@ tsch_queue_is_empty(const struct tsch_neighbor *n)
   return !tsch_is_locked() && n != NULL && ringbufindex_empty(&n->tx_ringbuf);
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
 struct tsch_packet *
 tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *link, uint8_t ppsd_last_tx_seq)
 {
   if(!tsch_is_locked()) {
     uint8_t offset = ppsd_last_tx_seq;
-    
-    int is_shared_link = link != NULL && link->link_options & LINK_OPTION_SHARED;
     if(n != NULL) {
       int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
 
-      if(get_index != -1 &&
-          !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
-                                                                    make sure the backoff has expired */
-
+      if(get_index != -1) {
+        /* Even if this is a shared slot,
+         * backoff exponent and window are already reset 
+         * in the regular slot that triggered current ppsd slot */
+        /* Disable TSCH_WITH_LINK_SELECTOR in ppsd slot 
+         * because packets with predefined slotframe handle and timeoffset
+         * can be sent in ppsd slot with different slotframe handle and timeoffset */
         int16_t get_index_with_offset = get_index + offset < TSCH_QUEUE_NUM_PER_NEIGHBOR ? 
                                       get_index + offset : get_index + offset - TSCH_QUEUE_NUM_PER_NEIGHBOR;
-
-#if TSCH_WITH_LINK_SELECTOR
-        int packet_attr_slotframe = queuebuf_attr(n->tx_array[get_index_with_offset]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
-        int packet_attr_timeslot = queuebuf_attr(n->tx_array[get_index_with_offset]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
-        if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
-          return NULL;
-        }
-        if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
-          return NULL;
-        }
-#endif
         return n->tx_array[get_index_with_offset];
       }
     }
@@ -636,6 +688,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
       if(get_index != -1 &&
           !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
                                                                     make sure the backoff has expired */
+
 #if TSCH_WITH_LINK_SELECTOR
 #if WITH_OST && OST_ON_DEMAND_PROVISION
         if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {

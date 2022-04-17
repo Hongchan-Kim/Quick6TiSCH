@@ -43,7 +43,7 @@
 #include "lib/random.h"
 #include <string.h>
 
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (Data) */
+#if WITH_PPSD /* HCK: ppsd header ie implementation (Data) */
 #include "net/mac/framer/frame802154e-ie.h"
 #endif
 
@@ -144,7 +144,7 @@ create_frame(int do_create)
     return hdr_len;
   } else if(packetbuf_hdralloc(hdr_len)) {
 
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (Data) */
+#if WITH_PPSD /* HCK: ppsd header ie implementation (Data) */
     int hdr_len_increment = 0;
     if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA) == 1 && !packetbuf_holds_broadcast()) {
       struct ieee802154_ies ppsd_ies;
@@ -307,7 +307,7 @@ parse(void)
     packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, frame.fcf.frame_type);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, frame.fcf.ack_required);
 
-#if WITH_POLLING_PPSD /* HCK: ppsd header id implementation (Data) */
+#if WITH_PPSD /* HCK: ppsd header ie implementation (Data) */
     if(frame.fcf.ie_list_present) {
       /* hckim: must be revised */
       packetbuf_hdrreduce(5);

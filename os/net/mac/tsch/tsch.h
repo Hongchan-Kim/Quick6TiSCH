@@ -245,7 +245,7 @@ extern int32_t max_drift_seen;
 /* The TSCH standard 10ms timeslot timing */
 extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000;
 
-#if WITH_POLLING_PPSD
+#if WITH_PPSD
 extern ppsd_timeslot_timing_usec ppsd_timing_us;
 extern ppsd_timeslot_timing_ticks ppsd_timing;
 extern const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000;
