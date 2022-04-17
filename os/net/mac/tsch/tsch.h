@@ -69,6 +69,19 @@ frequency hopping for enhanced reliability.
 extern uint16_t alice_early_packet_drop_count;
 #endif
 
+#if PPSD_CCA_DBG
+extern uint8_t global_rf2xx_on;
+extern uint8_t global_rf2xx_state;
+extern uint8_t global_rf2xx_status;
+extern uint8_t global_phy_cc_cca;
+extern uint8_t global_rf2xx_pa;
+extern uint8_t global_rf2xx_dig2;
+extern uint8_t global_trx_status;
+extern uint8_t global_cca_done;
+extern uint8_t global_cca_status;
+extern uint8_t global_phy_cc_cca_2;
+#endif
+
 extern uint16_t tsch_input_ringbuf_full_count;
 extern uint16_t tsch_input_ringbuf_available_count;
 extern uint16_t tsch_dequeued_ringbuf_full_count;
@@ -225,6 +238,7 @@ extern const linkaddr_t tsch_eb_address;
 extern struct tsch_asn_t tsch_current_asn;
 extern uint8_t tsch_join_priority;
 extern struct tsch_link *current_link;
+
 /* If we are inside a slot, these tell the current channel and channel offset */
 extern uint8_t tsch_current_channel;
 extern uint8_t tsch_current_channel_offset;

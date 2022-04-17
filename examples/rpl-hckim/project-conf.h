@@ -1,10 +1,18 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
-#define PPSD_CCA                                   1 /* ghlee CCA implementation */
-#define PPSD_CCA_DBG                               0
-#if PPSD_CCA
-#define TSCH_CONF_CCA_ENABLED                      1
+#define PPSD_CCA_JJP    0
+#define PPSD_CCA_RX     0
+#define PPSD_CCA_HCK    0
+#define PPSD_CCA_HCK_2  0
+
+#define CCA_DBG_EARLY_TX_NODE      1
+
+#define PPSD_CCA_DBG    1
+#define PPSD_DBG        1
+
+#if PPSD_CCA_HCK || PPSD_CCA_JJP || PPSD_CCA_HCK_2
+#define TSCH_CONF_CCA_ENABLED  1
 #endif
 
 
@@ -21,7 +29,7 @@
 #define IOTLAB_LILLE_79_CENTER                     4 /* 79 nodes */
 #define IOTLAB_LYON_2                              5 /* 2 nodes */
 #define IOTLAB_LYON_3                              6 /* 3 nodes */
-#define IOTLAB_LYON_8                             7 /* 8 nodes */
+#define IOTLAB_LYON_8                              7 /* 8 nodes */
 #define IOTLAB_LYON_17                             8 /* 17 nodes */
 
 
