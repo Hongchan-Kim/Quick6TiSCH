@@ -459,19 +459,15 @@ rf2xx_wr_channel_clear(void)
              * Returns the status of RF2XX_DEVICE
              * to before the listen() function is executed by rf2xx_wr_on().
              * Do in a way similar to rf2xx_wr_off() and idle().
+             * The followings must be set after CCA finished.
+             * - The status of RF2XX_DEVICE: RX_ON -> PLL_ON
+             * - rf2xx_state: RF_TX (do not change)
+             * - ENEGREST_OFF(ENERGEST_TYPE_LISTEN)
              */
-            //idle();
+            platform_enter_critical();
             rf2xx_on  = 0;
-
-            // Disable the interrupts
-            rf2xx_irq_disable(RF2XX_DEVICE);
-            
-            // Read IRQ to clear it
-            rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__IRQ_STATUS);
-
-            rf2xx_set_state(RF2XX_DEVICE, RF2XX_TRX_STATE__PLL_ON);
-
-            ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
+            platform_exit_critical();
+            idle();
 
             if(clear == 0) {
                 rf2xx_state = RF_IDLE;
@@ -544,12 +540,16 @@ rf2xx_wr_on(void)
          * rf2xx_wr_hard_prepare() is called in advance by tsch_tx_slot().
          * Therefore, at this moment, rf2xx_state is RF_TX, 
          * and the status of RF2XX_DEVICE is PLL_ON. 
-         * Meanwhile, to perform CCA by executing the rf2xx_wr_channel_clear() function later,
+         * To perform CCA by executing the rf2xx_wr_channel_clear() function later,
          * (see tsch_tx_slot() in tsch-slot-operation.c)
          * the status of RF2XX_DEVICE must be RX_ON.
-         * Therefore, make listen() be called even when rf2xx_state is RF_TX. 
+         * Therefore, call listen() even when rf2xx_state is RF_TX. 
          * At the same time, set the flag to 2
          * to maintain rf2xx_state as RF_TX even after listen() is executed.
+         * The followings must be set before starting CCA.
+         * - The status of RF2XX_DEVICE: PLL_ON -> RX_ON
+         * - rf2xx_state: RF_TX (do not change)
+         * - ENEGREST_ON(ENERGEST_TYPE_LISTEN)
          */
         else if(rf2xx_state == RF_TX)
         {
@@ -567,6 +567,10 @@ rf2xx_wr_on(void)
         /*
          * A flag of 2 means that we are in the Tx CCA routine.
          * Maintain rf2xx_state as RF_TX even after listen() is executed.
+         * The followings must be set before starting CCA.
+         * - The status of RF2XX_DEVICE: PLL_ON -> RX_ON
+         * - rf2xx_state: RF_TX (do not change)
+         * - ENEGREST_ON(ENERGEST_TYPE_LISTEN)
          */
         if(flag == 2) {
             rf2xx_state = RF_TX;
