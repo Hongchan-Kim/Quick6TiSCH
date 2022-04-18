@@ -1,22 +1,19 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
-#define PPSD_CCA_TX                    0
-#define PPSD_CCA_DBG_EARLY_TX_NODE     1
-#if PPSD_CCA_TX
-#define TSCH_CONF_CCA_ENABLED          1
-#define PPSD_CCA_DBG_STATUS            1
-#endif
-
-#define PPSD_DBG                       1
-
-
 /*---------------------------------------------------------------------------*/
 /*
  * Exclusive period implementation
  */
-#define WITH_PPSD                   1
-#define PPSD_DBG                    1
+#define WITH_PPSD                   0
+#define PPSD_DBG                    0
+
+#define PPSD_CCA_TX                    0
+#define PPSD_CCA_DBG_EARLY_TX_NODE     0
+#if PPSD_CCA_TX
+#define TSCH_CONF_CCA_ENABLED          1
+#define PPSD_CCA_DBG_STATUS            1
+#endif
 
 //#define PPSD_CONF_RX_WAIT                    800
 #define PPSD_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
