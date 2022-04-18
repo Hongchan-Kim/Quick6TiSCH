@@ -1,19 +1,14 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
-#define PPSD_CCA_JJP    0
-#define PPSD_CCA_RX     0
-#define PPSD_CCA_HCK    0
-#define PPSD_CCA_HCK_2  0
-
-#define CCA_DBG_EARLY_TX_NODE      1
-
-#define PPSD_CCA_DBG    1
-#define PPSD_DBG        1
-
-#if PPSD_CCA_HCK || PPSD_CCA_JJP || PPSD_CCA_HCK_2
-#define TSCH_CONF_CCA_ENABLED  1
+#define PPSD_CCA_TX                    0
+#define PPSD_CCA_DBG_EARLY_TX_NODE     1
+#if PPSD_CCA_TX
+#define TSCH_CONF_CCA_ENABLED          1
+#define PPSD_CCA_DBG_STATUS            1
 #endif
+
+#define PPSD_DBG                       1
 
 
 /*---------------------------------------------------------------------------*/

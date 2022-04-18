@@ -79,7 +79,7 @@ static uint8_t tx_buf[RF2XX_MAX_PAYLOAD];
 #endif /* RF2XX_SOFT_PREPARE */
 static uint8_t tx_len;
 
-#if PPSD_CCA_DBG
+#if PPSD_CCA_DBG_STATUS
 uint8_t global_rf2xx_on;
 uint8_t global_rf2xx_state;
 uint8_t global_rf2xx_status;
@@ -179,11 +179,7 @@ rf2xx_wr_hard_prepare(const void *payload, unsigned short payload_le, int async)
 			break;
 		default:
 			platform_exit_critical();
-#if PPSD_CCA_JJP
-            break;
-#else
 			return RADIO_TX_COLLISION;
-#endif
 	}
 	platform_exit_critical();
 
@@ -363,10 +359,6 @@ rf2xx_wr_read(void *buf, unsigned short buf_len)
 static int
 rf2xx_wr_channel_clear(void)
 {
-#if PPSD_CCA_HCK
-    rtimer_clock_t time;
-#endif
-
     int clear = 1;
     log_debug("radio-rf2xx: rf2xx_wr_channel_clear");
 
@@ -377,19 +369,8 @@ rf2xx_wr_channel_clear(void)
     {
         uint8_t reg;
 
-#if PPSD_CCA_JJP
-        uint8_t original_status;
-#endif
         case RF_LISTEN:
-            //initiate a cca request
-            platform_enter_critical();
-            reg = RF2XX_PHY_CC_CCA_DEFAULT__CCA_MODE |
-                (rf2xx_current_channel & RF2XX_PHY_CC_CCA_MASK__CHANNEL) |
-                RF2XX_PHY_CC_CCA_MASK__CCA_REQUEST;
-            rf2xx_reg_write(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA, reg);
-            platform_exit_critical();
-
-#if PPSD_CCA_DBG
+#if PPSD_CCA_DBG_STATUS
             global_rf2xx_on = rf2xx_on;
             global_rf2xx_state = rf2xx_state;
             global_rf2xx_status = rf2xx_get_status(RF2XX_DEVICE);
@@ -397,6 +378,14 @@ rf2xx_wr_channel_clear(void)
             global_rf2xx_pa = rf2xx_has_pa(RF2XX_DEVICE);
             global_rf2xx_dig2 = rf2xx_has_dig2(RF2XX_DEVICE);
 #endif
+
+            //initiate a cca request
+            platform_enter_critical();
+            reg = RF2XX_PHY_CC_CCA_DEFAULT__CCA_MODE |
+                (rf2xx_current_channel & RF2XX_PHY_CC_CCA_MASK__CHANNEL) |
+                RF2XX_PHY_CC_CCA_MASK__CCA_REQUEST;
+            rf2xx_reg_write(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA, reg);
+            platform_exit_critical();
 
             // wait cca to be done
             do
@@ -407,7 +396,7 @@ rf2xx_wr_channel_clear(void)
             }
             while (rf2xx_state == RF_LISTEN && !(reg & RF2XX_TRX_STATUS_MASK__CCA_DONE));
 
-#if PPSD_CCA_DBG
+#if PPSD_CCA_DBG_STATUS
             global_trx_status = reg;
             global_cca_done = reg & RF2XX_TRX_STATUS_MASK__CCA_DONE;
             global_cca_status = reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS;
@@ -421,40 +410,12 @@ rf2xx_wr_channel_clear(void)
             }
             break;
             
-#if PPSD_CCA_JJP
+#if PPSD_CCA_TX
+        /* 
+         * Perform CCA in a way similar to the case of RF_LISTEN.
+         */
         case RF_TX:
-            original_status =  rf2xx_get_status(RF2XX_DEVICE);
-            rf2xx_set_state(RF2XX_DEVICE, RF2XX_TRX_STATUS__RX_ON);
-            platform_enter_critical();
-            rf2xx_irq_enable(RF2XX_DEVICE); //enabling irq_jjpark
-            reg = RF2XX_PHY_CC_CCA_DEFAULT__CCA_MODE |
-                (rf2xx_current_channel & RF2XX_PHY_CC_CCA_MASK__CHANNEL) |
-                RF2XX_PHY_CC_CCA_MASK__CCA_REQUEST;
-            rf2xx_reg_write(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA, reg);
-            platform_exit_critical();
-
-            // wait cca to be done
-            do
-            {
-                platform_enter_critical();
-                reg = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__TRX_STATUS);
-                platform_exit_critical();
-            }
-            while (rf2xx_state == RF_TX && !(reg & RF2XX_TRX_STATUS_MASK__CCA_DONE)); //jjpark
-            
-            // get result
-            if (!(reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS))
-            {
-                clear = 0;
-            }
-            //rf2xx_set_state(RF2XX_DEVICE, RF2XX_TRX_STATUS__PLL_ON); //state return_jjpark
-            rf2xx_set_state(RF2XX_DEVICE, original_status); //state return_jjpark
-            break;
-#endif
-
-#if PPSD_CCA_HCK_2
-        case RF_TX:
-#if PPSD_CCA_DBG
+#if PPSD_CCA_DBG_STATUS
             global_rf2xx_on = rf2xx_on;
             global_rf2xx_state = rf2xx_state;
             global_rf2xx_status = rf2xx_get_status(RF2XX_DEVICE);
@@ -480,7 +441,7 @@ rf2xx_wr_channel_clear(void)
             }
             while (rf2xx_state == RF_TX && !(reg & RF2XX_TRX_STATUS_MASK__CCA_DONE));
 
-#if PPSD_CCA_DBG
+#if PPSD_CCA_DBG_STATUS
             global_trx_status = reg;
             global_cca_done = reg & RF2XX_TRX_STATUS_MASK__CCA_DONE;
             global_cca_status = reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS;
@@ -493,7 +454,15 @@ rf2xx_wr_channel_clear(void)
                 clear = 0;
             }
 
+            /* 
+             * Now CCA operation is finished.
+             * Returns the status of RF2XX_DEVICE
+             * to before the listen() function is executed by rf2xx_wr_on().
+             * Do in a way similar to rf2xx_wr_off() and idle().
+             */
             //idle();
+            rf2xx_on  = 0;
+
             // Disable the interrupts
             rf2xx_irq_disable(RF2XX_DEVICE);
             
@@ -502,91 +471,12 @@ rf2xx_wr_channel_clear(void)
 
             rf2xx_set_state(RF2XX_DEVICE, RF2XX_TRX_STATE__PLL_ON);
 
-            rf2xx_on  = 0;
+            ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
 
             if(clear == 0) {
                 rf2xx_state = RF_IDLE;
             }
 
-            break;
-
-#endif
-
-#if PPSD_CCA_HCK
-        case RF_TX:
-#if 1
-            rf2xx_set_state(RF2XX_DEVICE, RF2XX_TRX_STATE__RX_ON);
-#else
-            /* Mimic listen() */
-            listen();
-            rf2xx_state = RF_TX;
-
-            // Wait until RX_ON state
-            time = RTIMER_NOW() + RTIMER_SECOND / 1000;
-            do {
-                reg = rf2xx_get_status(RF2XX_DEVICE);
-                
-                // Check for block
-                if (RTIMER_CLOCK_LT(time, RTIMER_NOW())) {
-                    log_error("radio-rf2xx: Failed to enter rx");
-                    restart();
-                    return RADIO_TX_ERR;
-                }
-            } while (reg != RF2XX_TRX_STATUS__RX_ON);
-
-#endif
-            //initiate a cca request
-            platform_enter_critical();
-            reg = RF2XX_PHY_CC_CCA_DEFAULT__CCA_MODE |
-                (rf2xx_current_channel & RF2XX_PHY_CC_CCA_MASK__CHANNEL) |
-                RF2XX_PHY_CC_CCA_MASK__CCA_REQUEST;
-            rf2xx_reg_write(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA, reg);
-            platform_exit_critical();
-
-#if PPSD_CCA_DBG
-            global_rf2xx_on = rf2xx_on;
-            global_rf2xx_state = rf2xx_state;
-            global_rf2xx_status = rf2xx_get_status(RF2XX_DEVICE);
-            global_phy_cc_cca = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA);
-            global_rf2xx_pa = rf2xx_has_pa(RF2XX_DEVICE);
-            global_rf2xx_dig2 = rf2xx_has_dig2(RF2XX_DEVICE);
-#endif
-
-            // wait cca to be done
-            do
-            {
-                platform_enter_critical();
-                reg = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__TRX_STATUS);
-                platform_exit_critical();
-            }
-            while (rf2xx_state == RF_TX && !(reg & RF2XX_TRX_STATUS_MASK__CCA_DONE));
-
-#if PPSD_CCA_DBG
-            global_trx_status = reg;
-            global_cca_done = reg & RF2XX_TRX_STATUS_MASK__CCA_DONE;
-            global_cca_status = reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS;
-            global_phy_cc_cca_2 = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA);
-#endif
-
-            // get result
-            if (!(reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS))
-            {
-                clear = 0;
-            }
-
-#if 1
-            rf2xx_set_state(RF2XX_DEVICE, RF2XX_TRX_STATE__PLL_ON);
-            rf2xx_on = 0;
-#else
-            /* Mimic idle() */
-            idle();
-            rf2xx_state = RF_TX;
-            rf2xx_on = 0;
-#endif
-
-            if(clear == 0) {
-                rf2xx_state = RF_IDLE;
-            }
             break;
 #endif
 
@@ -648,7 +538,19 @@ rf2xx_wr_on(void)
             flag = 1;
             rf2xx_state = RF_BUSY;
         }
-#if PPSD_CCA_HCK_2
+#if PPSD_CCA_TX
+        /*
+         * When performing CCA in the tx slot of TSCH, 
+         * rf2xx_wr_hard_prepare() is called in advance by tsch_tx_slot().
+         * Therefore, at this moment, rf2xx_state is RF_TX, 
+         * and the status of RF2XX_DEVICE is PLL_ON. 
+         * Meanwhile, to perform CCA by executing the rf2xx_wr_channel_clear() function later,
+         * (see tsch_tx_slot() in tsch-slot-operation.c)
+         * the status of RF2XX_DEVICE must be RX_ON.
+         * Therefore, make listen() be called even when rf2xx_state is RF_TX. 
+         * At the same time, set the flag to 2
+         * to maintain rf2xx_state as RF_TX even after listen() is executed.
+         */
         else if(rf2xx_state == RF_TX)
         {
             flag = 2;
@@ -661,7 +563,11 @@ rf2xx_wr_on(void)
     if (flag)
     {
         listen();
-#if PPSD_CCA_HCK_2
+#if PPSD_CCA_TX
+        /*
+         * A flag of 2 means that we are in the Tx CCA routine.
+         * Maintain rf2xx_state as RF_TX even after listen() is executed.
+         */
         if(flag == 2) {
             rf2xx_state = RF_TX;
         }
@@ -1031,9 +937,6 @@ static void reset(void)
 
     // Set IRQ to TRX END/RX_START/CCA_DONE
     rf2xx_reg_write(RF2XX_DEVICE, RF2XX_REG__IRQ_MASK,
-#if PPSD_CCA_JJP
-            RF2XX_IRQ_STATUS_MASK__CCA_ED_DONE | 
-#endif
             RF2XX_IRQ_STATUS_MASK__TRX_END | RF2XX_IRQ_STATUS_MASK__RX_START);
     set_poll_mode(poll_mode);
 
@@ -1201,13 +1104,6 @@ static void irq_handler(handler_arg_t arg)
         rf2xx_state = state = RF_RX;
         sfd_start_time = RTIMER_NOW();
     }
-
-#if PPSD_CCA_JJP
-    /* implementing IRQ_HANDLER for CCA when it is receive state*/
-    if(reg & RF2XX_IRQ_STATUS_MASK__CCA_ED_DONE) {
-        rf2xx_set_state(RF2XX_DEVICE, RF2XX_TRX_STATE__PLL_ON);
-    }
-#endif
     
     // rx/tx end
     if (reg & RF2XX_IRQ_STATUS_MASK__TRX_END)

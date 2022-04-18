@@ -198,10 +198,6 @@ static struct pt slot_operation_pt;
 static PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t));
 static PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t));
 
-#if PPSD_CCA_RX
-static PT_THREAD(tsch_rx_cca_slot(struct pt *pt, struct rtimer *t));
-#endif
-
 #if WITH_OST /* OST-00-03: struct for t_offset */
 typedef struct ost_t_offset_candidate {
   uint8_t installable;
@@ -1535,7 +1531,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
   static rtimer_clock_t timestamp_tx5 = 0;
 #endif
 
-#if CCA_DBG_EARLY_TX_NODE
+#if PPSD_CCA_DBG_EARLY_TX_NODE
   static rtimer_clock_t tx_cca_offset = 0;
 #endif
 
@@ -1548,7 +1544,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
   PT_BEGIN(pt);
 
-#if CCA_DBG_EARLY_TX_NODE
+#if PPSD_CCA_DBG_EARLY_TX_NODE
   tx_cca_offset = tsch_timing[tsch_ts_ack_wait] * 2;
 #endif
 
@@ -1768,7 +1764,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               snprintf(log->message, sizeof(log->message),
               "tx cca busy"));
 #endif
-#if PPSD_CCA_DBG
+#if PPSD_CCA_DBG_STATUS
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca %u %u %u %u %u %u", global_rf2xx_on, global_rf2xx_state, global_rf2xx_status, 
@@ -1779,21 +1775,16 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
           mac_tx_status = MAC_TX_COLLISION;
-
-#if PPSD_CCA_JJP
-          tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
-#endif
         } else
 #endif /* TSCH_CCA_ENABLED */
         {
-#if PPSD_CCA_HCK || PPSD_CCA_JJP || PPSD_CCA_HCK_2
+#if PPSD_CCA_TX
 #if PPSD_DBG
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca idle"));
 #endif
-
-#if PPSD_CCA_DBG
+#if PPSD_CCA_DBG_STATUS
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca %u %u %u %u %u %u", global_rf2xx_on, global_rf2xx_state, global_rf2xx_status, 
@@ -1804,7 +1795,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 #endif
 
-#if CCA_DBG_EARLY_TX_NODE
+#if PPSD_CCA_DBG_EARLY_TX_NODE
           /* delay before TX */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
                 tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX - tx_cca_offset, "TxBeforeTxU");
@@ -1827,7 +1818,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
           tx_count++;
           /* Save tx timestamp */
-#if CCA_DBG_EARLY_TX_NODE
+#if PPSD_CCA_DBG_EARLY_TX_NODE
           tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset] - tx_cca_offset;
 #else
           tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
@@ -1860,7 +1851,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode & (~RADIO_RX_MODE_ADDRESS_FILTER));
 #endif /* TSCH_HW_FRAME_FILTERING */
               /* Unicast: wait for ack after tx: sleep until ack time */
-#if CCA_DBG_EARLY_TX_NODE
+#if PPSD_CCA_DBG_EARLY_TX_NODE
               TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
                   tsch_timing[tsch_ts_tx_offset] - tx_cca_offset + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
 #else
@@ -1945,7 +1936,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               }
               if(ack_len != 0) {
                 if(is_time_source) {
-#if CCA_DBG_EARLY_TX_NODE
+#if PPSD_CCA_DBG_EARLY_TX_NODE
                   int32_t eack_time_correction = US_TO_RTIMERTICKS(ack_ies.ie_time_correction) - tx_cca_offset;
 #else
                   int32_t eack_time_correction = US_TO_RTIMERTICKS(ack_ies.ie_time_correction);
@@ -2151,102 +2142,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
   PT_END(pt);
 }
-/*---------------------------------------------------------------------------*/
-#if PPSD_CCA_RX
-static
-PT_THREAD(tsch_rx_cca_slot(struct pt *pt, struct rtimer *t))
-{
-  static uint8_t rx_cca_status;
-
-#if PPSD_DBG
-  static rtimer_clock_t timestamp_rx_cca0 = 0;
-  static rtimer_clock_t timestamp_rx_cca1_0 = 0;
-  static rtimer_clock_t timestamp_rx_cca1_1 = 0;
-  static rtimer_clock_t timestamp_rx_cca1_2 = 0;
-#endif
-
-  static rtimer_clock_t rx_cca_offset = 0;
-
-  PT_BEGIN(pt);
-
-#if PPSD_DBG
-  timestamp_rx_cca0 = 0;
-  timestamp_rx_cca1_0 = 0;
-  timestamp_rx_cca1_1 = 0;
-  timestamp_rx_cca1_2 = 0;
-
-  timestamp_rx_cca0 = RTIMER_NOW();
-#endif
-  rx_cca_offset = tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX + tsch_timing[tsch_ts_ack_wait] * 3;
-
-  /* Wait before starting to listen */
-  TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, rx_cca_offset, "RX_CCA");
-
-#if PPSD_DBG
-  timestamp_rx_cca1_0 = RTIMER_NOW();
-#endif
-
-  TSCH_DEBUG_RX_EVENT();
-
-  rx_cca_status = 1;
-  /* Start radio for at least guard time */
-  tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
-
-#if PPSD_DBG
-  timestamp_rx_cca1_1 = RTIMER_NOW();
-#endif
-
-  RTIMER_BUSYWAIT_UNTIL_ABS(!(rx_cca_status &= NETSTACK_RADIO.channel_clear()),
-                     current_slot_start, rx_cca_offset + tsch_timing[tsch_ts_cca]);
-
-#if PPSD_DBG
-  timestamp_rx_cca1_2 = RTIMER_NOW();
-#endif
-
-  if(rx_cca_status == 0) {
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "rx cca busy"));
-
-#if PPSD_CCA_DBG
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "rx cca %u %u %u %u %u %u", global_rf2xx_on, global_rf2xx_state, global_rf2xx_status, 
-                                    global_phy_cc_cca, global_rf2xx_pa, global_rf2xx_dig2));
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "rx cca %u %u %u %u", global_trx_status, global_cca_done, global_cca_status, global_phy_cc_cca_2));
-#endif
-  } else {
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "rx cca idle"));
-
-#if PPSD_CCA_DBG
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "rx cca %u %u %u %u %u %u", global_rf2xx_on, global_rf2xx_state, global_rf2xx_status, 
-                                    global_phy_cc_cca, global_rf2xx_pa, global_rf2xx_dig2));
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "rx cca %u %u %u %u", global_trx_status, global_cca_done, global_cca_status, global_phy_cc_cca_2));
-#endif
-  }
-
-  tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
-
-#if PPSD_DBG
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "rx_cca_t %u %u %u",
-              timestamp_rx_cca1_0 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(timestamp_rx_cca1_0, timestamp_rx_cca0)) : 0,
-              timestamp_rx_cca1_1 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(timestamp_rx_cca1_1, timestamp_rx_cca0)) : 0,
-              timestamp_rx_cca1_2 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(timestamp_rx_cca1_2, timestamp_rx_cca0)) : 0));
-#endif
-
-  PT_END(pt);
-}
-#endif
 /*---------------------------------------------------------------------------*/
 static
 PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
@@ -2984,20 +2879,9 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           static struct pt slot_tx_pt;
           PT_SPAWN(&slot_operation_pt, &slot_tx_pt, tsch_tx_slot(&slot_tx_pt, t));
         } else {
-#if PPSD_CCA_RX
-          if(tsch_current_asn.ls4b % 2 == 0) {
-            /* Listen */
-            static struct pt slot_rx_pt;
-            PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
-          } else {
-            static struct pt slot_rx_cca_pt;
-            PT_SPAWN(&slot_operation_pt, &slot_rx_cca_pt, tsch_rx_cca_slot(&slot_rx_cca_pt, t));
-          }
-#else
           /* Listen */
           static struct pt slot_rx_pt;
           PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
-#endif
         }
 #if WITH_OST && TSCH_DEFAULT_BURST_TRANSMISSION
         if(is_burst_slot) {
