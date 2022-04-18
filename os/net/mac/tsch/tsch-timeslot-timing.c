@@ -80,9 +80,15 @@
 
 const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
    1800, /* CCAOffset */
+#if TSCH_CONF_CCA_ENABLED
+    150, /* CCA */
+   2500, /* TxOffset */
+  (2500 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
+#else
     128, /* CCA */
    2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
+#endif
 #if WITH_PPSD
    1300,
    1500,

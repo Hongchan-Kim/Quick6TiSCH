@@ -1,6 +1,16 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+#define PPSD_CCA_TX                    0
+#define PPSD_CCA_DBG_EARLY_TX_NODE     1
+#if PPSD_CCA_TX
+#define TSCH_CONF_CCA_ENABLED          1
+#define PPSD_CCA_DBG_STATUS            1
+#endif
+
+#define PPSD_DBG                       1
+
+
 /*---------------------------------------------------------------------------*/
 /*
  * Exclusive period implementation
@@ -26,7 +36,7 @@
 #define IOTLAB_LILLE_79_CENTER                     4 /* 79 nodes */
 #define IOTLAB_LYON_2                              5 /* 2 nodes */
 #define IOTLAB_LYON_3                              6 /* 3 nodes */
-#define IOTLAB_LYON_10                             7 /* 10 nodes */
+#define IOTLAB_LYON_8                              7 /* 8 nodes */
 #define IOTLAB_LYON_17                             8 /* 17 nodes */
 #define IOTLAB_GRENOBLE_L_79                       9 /* 79 nodes */
 
@@ -35,10 +45,10 @@
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
-//#define IOTLAB_SITE                                IOTLAB_LYON_3
-//#define IOTLAB_SITE                                IOTLAB_LYON_10
+#define IOTLAB_SITE                                IOTLAB_LYON_3
+//#define IOTLAB_SITE                                IOTLAB_LYON_8
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_CORNER
 #define NODE_NUM                                   83
@@ -52,8 +62,8 @@
 #define NODE_NUM                                   2
 #elif IOTLAB_SITE == IOTLAB_LYON_3
 #define NODE_NUM                                   3
-#elif IOTLAB_SITE == IOTLAB_LYON_10
-#define NODE_NUM                                   10
+#elif IOTLAB_SITE == IOTLAB_LYON_8
+#define NODE_NUM                                   8
 #elif IOTLAB_SITE == IOTLAB_LYON_17
 #define NODE_NUM                                   17
 #elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_79
@@ -189,7 +199,7 @@
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define WITH_ORCHESTRA                             1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
