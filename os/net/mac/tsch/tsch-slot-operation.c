@@ -1786,8 +1786,8 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
         log->tx.mac_tx_status = ppsd_array[ppsd_seq]->ret;
         log->tx.num_tx = ppsd_array[ppsd_seq]->transmissions;
         log->tx.datalen = queuebuf_datalen(ppsd_array[ppsd_seq]->qb);
-        log->tx.drift = drift_correction;
-        log->tx.drift_used = is_drift_correction_used;
+        log->tx.drift = 0;
+        log->tx.drift_used = 0;
         log->tx.is_data = ((((uint8_t *)(queuebuf_dataptr(ppsd_array[ppsd_seq]->qb)))[0]) & 7) == FRAME802154_DATAFRAME;
         log->tx.sec_level = 0;
         linkaddr_copy(&log->tx.dest, queuebuf_addr(ppsd_array[ppsd_seq]->qb, PACKETBUF_ADDR_RECEIVER));
@@ -1803,6 +1803,10 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
       ringbufindex_put(&dequeued_ringbuf);
     }
   }
+
+  /* do not proceed to clock drif compensation in exclusive period */
+  drift_correction = 0;
+  is_drift_correction_used = 0;
 
   process_poll(&tsch_pending_events_process);
 
@@ -1837,7 +1841,6 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
   static uint16_t ppsd_ack_bitmap = 0;
 
   static struct input_packet *ppsd_current_input;
-  //static int32_t ppsd_estimated_drift;
 
   static int ppsd_frame_valid;
   static int ppsd_header_len;
@@ -2012,11 +2015,11 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
                 linkaddr_copy(&log->rx.src, (linkaddr_t *)&ppsd_frame.src_addr);
                 log->rx.is_unicast = ppsd_frame.fcf.ack_required;
                 log->rx.datalen = ppsd_current_input->len;
-                log->rx.drift = drift_correction;
-                log->rx.drift_used = is_drift_correction_used;
+                log->rx.drift = 0;
+                log->rx.drift_used = 0;
                 log->rx.is_data = ppsd_frame.fcf.frame_type == FRAME802154_DATAFRAME;
                 log->rx.sec_level = ppsd_frame.aux_hdr.security_control.security_level;
-//                log->rx.estimated_drift = ppsd_estimated_drift;
+                log->rx.estimated_drift = 0;
                 log->rx.seqno = ppsd_frame.seq;
               );
             }
@@ -2081,7 +2084,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
   ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_ts_tx_ack_delay];
 
   ppsd_ack_len = tsch_packet_create_eack(ppsd_ack_buf, sizeof(ppsd_ack_buf),
-      &ppsd_source_address, 0, 0, 0, ppsd_ack_bitmap);
+      &ppsd_source_address, /* frame.seq */0, /* estimated_drift */0, /* do_nack */0, ppsd_ack_bitmap);
 
   if(ppsd_ack_len > 0) {
     NETSTACK_RADIO.prepare((const void *)ppsd_ack_buf, ppsd_ack_len);
@@ -2107,6 +2110,10 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
   }
 
   tsch_radio_off(TSCH_RADIO_CMD_ON_FORCE);
+
+  /* do not proceed to clock drif compensation in exclusive period */
+  drift_correction = 0;
+  is_drift_correction_used = 0;
 
   process_poll(&tsch_pending_events_process);
 
@@ -3844,10 +3851,19 @@ ost_donothing:
 #if PPSD_DBG
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "after ppsd slot: timeslot to next wake up %u", timeslot_diff));
+              "after ppsd slot: ts to next %u dr %ld", timeslot_diff, drift_correction));
 #endif
         }
+#if PPSD_DBG
+        else {
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "after regular slot: ts to next %u dr %ld", timeslot_diff, drift_correction));
+        }
 #endif
+
+#endif
+
 
 #if WITH_OST && OST_ON_DEMAND_PROVISION
         if(current_link == NULL && tsch_is_locked() 
