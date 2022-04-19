@@ -3858,15 +3858,16 @@ ost_donothing:
         }
 #endif        
         if(tsch_current_asn.ls4b > 0x0000afc8 && current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID && lengthchanged == 0){
-          printf("\ntimeslot length changed\n"); /*test*/
+          printf("\ntimeslot length changed into 8.5ms : current ASN %02x.%08lx \n", tsch_current_asn.ms1b, tsch_current_asn.ls4b); 
           tsch_change_timeslot_length(0);
           lengthchanged = 1;
         }
         /*if(tsch_current_asn.ls4b > 0x00124f80 && current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID && lengthchanged == 1){
+          printf("\ntimeslot length changed into 10ms : current ASN %02x.%08lx \n", tsch_current_asn.ms1b, tsch_current_asn.ls4b); 
           tsch_change_timeslot_length(1);
           lengthchanged = 2;
         } */
-        
+
         /* Time to next wake up */
         time_to_next_active_slot = timeslot_diff * tsch_timing[tsch_ts_timeslot_length] + drift_correction;
         time_to_next_active_slot += tsch_timesync_adaptive_compensate(time_to_next_active_slot);
