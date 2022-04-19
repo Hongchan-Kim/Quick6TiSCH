@@ -69,7 +69,7 @@ frequency hopping for enhanced reliability.
 extern uint16_t alice_early_packet_drop_count;
 #endif
 
-#if PPSD_CCA_DBG_STATUS
+#if PPSD_DBG_CCA_STATUS
 extern uint8_t global_rf2xx_on;
 extern uint8_t global_rf2xx_state;
 extern uint8_t global_rf2xx_status;

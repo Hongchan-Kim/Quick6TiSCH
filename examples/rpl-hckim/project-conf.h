@@ -5,18 +5,18 @@
 /*
  * Exclusive period implementation
  */
-#define WITH_PPSD                   1
+#define WITH_PPSD                      1
+#define PPSD_TX_CCA                    1
 
 #define PPSD_DBG_SLOT_TIMING           1
 #define PPSD_DBG_EP_ESSENTIAL          1
 #define PPSD_DBG_EP_OPERATION          1
 #define PPSD_DBG                       1
 
-#define PPSD_CCA_TX                    1
-#define PPSD_CCA_DBG_EARLY_TX_NODE     0
-#if PPSD_CCA_TX
+#if PPSD_TX_CCA
 #define TSCH_CONF_CCA_ENABLED          1
-#define PPSD_CCA_DBG_STATUS            1
+#define PPSD_DBG_CCA_STATUS            0
+#define PPSD_CCA_EARLY_TX_NODE         0
 #endif
 
 //#define PPSD_CONF_RX_WAIT                    800
