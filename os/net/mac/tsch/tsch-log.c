@@ -167,6 +167,7 @@ tsch_log_process_pending(void)
         printf(", len %3u, seq %3u",
                 log->rx.datalen, log->rx.seqno);
         printf(", edr %3d", (int)log->rx.estimated_drift);
+        printf(", rssi %3d", log->rx.rssi);
         if(log->rx.drift_used) {
           printf(", dr %3d\n", log->rx.drift);
         } else {

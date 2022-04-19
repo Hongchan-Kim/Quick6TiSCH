@@ -96,6 +96,7 @@ struct tsch_log_t {
       uint8_t sec_level;
       uint8_t drift_used;
       uint8_t seqno;
+      int16_t rssi; // hckim added
     } tx;
     struct {
       linkaddr_t  src;
@@ -107,6 +108,7 @@ struct tsch_log_t {
       uint8_t sec_level;
       uint8_t drift_used;
       uint8_t seqno;
+      int16_t rssi; // hckim added
     } rx;
   };
 };

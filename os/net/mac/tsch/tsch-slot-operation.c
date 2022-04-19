@@ -2931,12 +2931,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         current_input->rssi = (signed)radio_last_rssi;
         current_input->channel = tsch_current_channel;
 
-#if PPSD_DBG
-        TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-            "rssi %d", current_input->rssi));
-#endif
-
         /* OST-04-01: Parse received N */
         header_len = frame802154_parse((uint8_t *)current_input->payload, current_input->len, &frame);
         frame_valid = header_len > 0 &&
@@ -3216,6 +3210,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.sec_level = frame.aux_hdr.security_control.security_level;
               log->rx.estimated_drift = estimated_drift;
               log->rx.seqno = frame.seq;
+              log->rx.rssi = current_input->rssi;
             );
           }
 
