@@ -6,11 +6,13 @@
  * Exclusive period implementation
  */
 #define WITH_PPSD                   1
-#define PPSD_DBG                    0
 
 #define PPSD_DBG_SLOT_TIMING           1
+#define PPSD_DBG_EP_ESSENTIAL          1
+#define PPSD_DBG_EP_OPERATION          1
+#define PPSD_DBG                       1
 
-#define PPSD_CCA_TX                    0
+#define PPSD_CCA_TX                    1
 #define PPSD_CCA_DBG_EARLY_TX_NODE     0
 #if PPSD_CCA_TX
 #define TSCH_CONF_CCA_ENABLED          1
