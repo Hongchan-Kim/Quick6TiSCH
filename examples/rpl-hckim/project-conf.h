@@ -5,8 +5,10 @@
 /*
  * Exclusive period implementation
  */
-#define WITH_PPSD                   0
+#define WITH_PPSD                   1
 #define PPSD_DBG                    0
+
+#define PPSD_DBG_SLOT_TIMING           1
 
 #define PPSD_CCA_TX                    0
 #define PPSD_CCA_DBG_EARLY_TX_NODE     0
@@ -16,8 +18,6 @@
 #endif
 
 //#define PPSD_CONF_RX_WAIT                    800
-#define PPSD_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
-#define PPSD_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
