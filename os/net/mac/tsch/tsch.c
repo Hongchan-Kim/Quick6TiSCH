@@ -593,10 +593,38 @@ tsch_set_eb_period(uint32_t period)
   tsch_current_eb_period = MIN(period, TSCH_MAX_EB_PERIOD);
 }
 /*---------------------------------------------------------------------------*/
+void
+tsch_change_timeslot_length(uint8_t flag) /*test*/
+{
+  int i;
+  if(flag == 1){
+  tsch_default_timing_us = TSCH_DEFAULT_TIMESLOT_TIMING;
+  printf("\nGHLEE timeslot length adaptation: timeslot length is now 10ms\n");
+  for(i = 0; i < tsch_ts_elements_count; i++) {
+    tsch_timing_us[i] = tsch_default_timing_us[i];
+    tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
+  }
+  }
+  else if (flag == 2){
+  tsch_default_timing_us = TSCH_9000_TIMESLOT_TIMING;
+  printf("\nGHLEE timeslot length adaptation: timeslot length is now 9ms\n");
+  for(i = 0; i < tsch_ts_elements_count; i++) {
+    tsch_timing_us[i] = tsch_default_timing_us[i];
+    tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
+  }
+  }
+  else{
+  tsch_default_timing_us = TSCH_8500_TIMESLOT_TIMING;
+  printf("\nGHLEE timeslot length adaptation: timeslot length is now 8.5ms\n");
+  for(i = 0; i < tsch_ts_elements_count; i++) {
+    tsch_timing_us[i] = tsch_default_timing_us[i];
+    tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
+  }
+  }
+}
 static void
 tsch_reset(void)
 {
-  int i;
   frame802154_set_pan_id(0xffff);
   /* First make sure pending packet callbacks are sent etc */
   process_post_synch(&tsch_pending_events_process, PROCESS_EVENT_POLL, NULL);
@@ -610,12 +638,7 @@ tsch_reset(void)
   TSCH_ASN_INIT(tsch_current_asn, 0, 0);
   current_link = NULL;
   /* Reset timeslot timing to defaults */
-  tsch_default_timing_us = TSCH_DEFAULT_TIMESLOT_TIMING;
-  for(i = 0; i < tsch_ts_elements_count; i++) {
-    tsch_timing_us[i] = tsch_default_timing_us[i];
-    tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
-  }
-
+  tsch_change_timeslot_length(1);
 #if WITH_PPSD
   ppsd_default_timing_us = PPSD_DEFAULT_TIMESLOT_TIMING;
   for(i = 0; i < ppsd_ts_elements_count; i++) {

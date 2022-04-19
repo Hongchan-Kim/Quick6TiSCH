@@ -187,6 +187,8 @@ static int is_burst_slot = 0;
 #endif
 /* Counts the length of the current burst */
 int tsch_current_burst_count = 0;
+/*timeslot length test param */
+int lengthchanged = 0;
 
 /* Protothread for association */
 PT_THREAD(tsch_scan(struct pt *pt));
@@ -3855,7 +3857,16 @@ ost_donothing:
           ost_remove_matching_slot();
         }
 #endif        
-
+        if(tsch_current_asn.ls4b > 0x0000afc8 && current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID && lengthchanged == 0){
+          printf("\ntimeslot length changed\n"); /*test*/
+          tsch_change_timeslot_length(0);
+          lengthchanged = 1;
+        }
+        /*if(tsch_current_asn.ls4b > 0x00124f80 && current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID && lengthchanged == 1){
+          tsch_change_timeslot_length(1);
+          lengthchanged = 2;
+        } */
+        
         /* Time to next wake up */
         time_to_next_active_slot = timeslot_diff * tsch_timing[tsch_ts_timeslot_length] + drift_correction;
         time_to_next_active_slot += tsch_timesync_adaptive_compensate(time_to_next_active_slot);
