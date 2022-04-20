@@ -2033,6 +2033,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
                 log->rx.sec_level = ppsd_frame.aux_hdr.security_control.security_level;
                 log->rx.estimated_drift = 0;
                 log->rx.seqno = ppsd_frame.seq;
+                log->rx.rssi = ppsd_current_input->rssi;
               );
             }
           }
