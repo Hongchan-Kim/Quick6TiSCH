@@ -1542,6 +1542,8 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   static void *ppsd_packet_payload;
   static uint8_t ppsd_packet_len;
 
+  static uint8_t current_ep_tx_ok_count = 0;
+
 #if PPSD_DBG_SLOT_TIMING
   static rtimer_clock_t ppsd_tx_slot_timestamp_t0 = 0;
   static rtimer_clock_t ppsd_tx_slot_timestamp_t1 = 0;
@@ -1766,12 +1768,15 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
   tsch_radio_off(TSCH_RADIO_CMD_ON_FORCE);
 
+  current_ep_tx_ok_count = 0;
+
   uint8_t ppsd_seq = 0;
   for(ppsd_seq = 0; ppsd_seq < ppsd_pkts_to_send; ppsd_seq++) {
     
     uint8_t ppsd_result = (ppsd_b_ack_received & (1 << ppsd_seq)) >> ppsd_seq;
     if(ppsd_result == 1) {
       ppsd_array[ppsd_seq]->ret = MAC_TX_OK;
+      ++current_ep_tx_ok_count;
     } else {
       ppsd_array[ppsd_seq]->ret = MAC_TX_NOACK;
     }
@@ -1797,6 +1802,15 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
       ringbufindex_put(&dequeued_ringbuf);
     }
   }
+
+  if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+    tsch_any_sf_ep_tx_ok_count += current_ep_tx_ok_count;
+    tsch_bc_sf_ep_tx_ok_count += current_ep_tx_ok_count;
+  } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+    tsch_any_sf_ep_tx_ok_count += current_ep_tx_ok_count;
+    tsch_uc_sf_ep_tx_ok_count += current_ep_tx_ok_count;
+  }
+  current_ep_tx_ok_count = 0;
 
   /* do not proceed to clock drif compensation in exclusive period */
   drift_correction = 0;
@@ -1842,6 +1856,8 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
   static uint8_t ppsd_ack_buf[TSCH_PACKET_MAX_LEN];
   static int ppsd_ack_len;
 
+  static uint8_t current_ep_rx_ok_count = 0;
+
 #if PPSD_DBG_SLOT_TIMING
   static rtimer_clock_t ppsd_rx_slot_timestamp_t0 = 0;
   static rtimer_clock_t ppsd_rx_slot_timestamp_t1 = 0;
@@ -1863,6 +1879,8 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 
   ppsd_rx_slot_timestamp_t0 = RTIMER_NOW();
 #endif
+
+  current_ep_rx_ok_count = 0;
 
   tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
 
@@ -1989,6 +2007,8 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
                   "ep rx seq %u -> %u", received_ppsd_seq, ppsd_ack_bitmap));
 #endif
 
+              ++current_ep_rx_ok_count;
+
               /* update ppsd seq and timing only if ppsd_frame_valid == 1 */
               ppsd_last_rx_seq = received_ppsd_seq;
               ppsd_rx_slot_last_valid_reception_start = ppsd_rx_slot_curr_reception_start;
@@ -2103,6 +2123,15 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
   }
 
   tsch_radio_off(TSCH_RADIO_CMD_ON_FORCE);
+
+  if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+    tsch_any_sf_ep_rx_ok_count += current_ep_rx_ok_count;
+    tsch_bc_sf_ep_rx_ok_count += current_ep_rx_ok_count;
+  } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+    tsch_any_sf_ep_rx_ok_count += current_ep_rx_ok_count;
+    tsch_uc_sf_ep_rx_ok_count += current_ep_rx_ok_count;
+  }
+  current_ep_rx_ok_count = 0;
 
   /* do not proceed to clock drif compensation in exclusive period */
   drift_correction = 0;
@@ -3329,6 +3358,61 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif 
 
     } else {
+#if WITH_PPSD
+      if(!ppsd_link_scheduled) {
+        ++tsch_unlocked_scheduled_any_cell_count; //hckim
+
+        if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
+          if(current_link->link_options & LINK_OPTION_TX) {
+            ++tsch_unlocked_scheduled_eb_tx_cell_count;
+          } else if(current_link->link_options & LINK_OPTION_RX) {
+            ++tsch_unlocked_scheduled_eb_rx_cell_count;
+          }
+        } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+          ++tsch_unlocked_scheduled_broadcast_cell_count;
+        } else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+          if(current_link->link_options & LINK_OPTION_TX) {
+            ++tsch_unlocked_scheduled_unicast_tx_cell_count;
+          } else if(current_link->link_options & LINK_OPTION_RX) {
+            ++tsch_unlocked_scheduled_unicast_rx_cell_count;
+          }
+        }
+
+      } else { /* ep link */
+        ++tsch_unlocked_scheduled_any_ep_cell_count;
+
+        if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+          if(ppsd_pkts_to_send > 0) { /* Tx ep cell */
+            ++tsch_unlocked_scheduled_broadcast_ep_tx_cell_count;
+
+            tsch_any_sf_ep_tx_reserved_count += ppsd_pkts_to_send;
+            tsch_bc_sf_ep_tx_reserved_count += ppsd_pkts_to_send;
+          } else { /* Rx ep cell */
+            ++tsch_unlocked_scheduled_broadcast_ep_rx_cell_count;
+
+            tsch_any_sf_ep_rx_reserved_count += ppsd_pkts_to_receive;
+            tsch_bc_sf_ep_rx_reserved_count += ppsd_pkts_to_receive;
+          }
+        }
+
+        else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+          if(ppsd_pkts_to_send > 0) { /* Tx ep cell */
+            ++tsch_unlocked_scheduled_unicast_ep_tx_cell_count;
+
+            tsch_any_sf_ep_tx_reserved_count += ppsd_pkts_to_send;
+            tsch_uc_sf_ep_tx_reserved_count += ppsd_pkts_to_send;
+          } else { /* Rx ep cell */
+            ++tsch_unlocked_scheduled_unicast_ep_rx_cell_count;
+
+            tsch_any_sf_ep_rx_reserved_count += ppsd_pkts_to_receive;
+            tsch_uc_sf_ep_rx_reserved_count += ppsd_pkts_to_receive;
+          }
+        }
+
+      }
+
+#else /* WITH_PPSD */
+
       /* hckim measure cell utilization from current_link */
       ++tsch_unlocked_scheduled_any_cell_count; //hckim
 
@@ -3348,7 +3432,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           ++tsch_unlocked_scheduled_unicast_rx_cell_count;
         }
       } 
-#else /* WITH_OST */
+#else /* !WITH_OST */
 #if !TSCH_DEFAULT_BURST_TRANSMISSION
       if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
         if(current_link->link_options & LINK_OPTION_TX) {
@@ -3420,8 +3504,9 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           }
         }        
       }
-#endif
-#endif
+#endif /* !TSCH_DEFAULT_BURST_TRANSMISSION */
+#endif /* !WITH_OST */
+#endif /* WITH_PPSD */
 
       int is_active_slot;
       TSCH_DEBUG_SLOT_START();
@@ -3548,6 +3633,28 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         ppsd_passed_timeslots = ((ppsd_slot_end - current_slot_start + tsch_timing[tsch_ts_timeslot_length] - 1) 
                                 / tsch_timing[tsch_ts_timeslot_length]);
         TSCH_ASN_INC(tsch_current_asn, (ppsd_passed_timeslots - 1));
+
+        if(current_packet != NULL) {
+          tsch_any_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+
+          if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+            tsch_bc_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+          }
+          else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+            tsch_uc_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+          }
+        } else {
+          tsch_any_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+
+          if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
+            tsch_bc_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+          }
+          else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
+            tsch_uc_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+          }
+        }
+
+
 #if PPSD_DBG_EP_ESSENTIAL
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),

@@ -94,6 +94,15 @@ extern uint32_t tsch_unlocked_scheduled_eb_rx_cell_count;
 extern uint32_t tsch_unlocked_scheduled_broadcast_cell_count;
 extern uint32_t tsch_unlocked_scheduled_unicast_tx_cell_count;
 extern uint32_t tsch_unlocked_scheduled_unicast_rx_cell_count;
+
+#if WITH_PPSD
+extern uint32_t tsch_unlocked_scheduled_any_ep_cell_count;
+extern uint32_t tsch_unlocked_scheduled_broadcast_ep_tx_cell_count;
+extern uint32_t tsch_unlocked_scheduled_broadcast_ep_rx_cell_count;
+extern uint32_t tsch_unlocked_scheduled_unicast_ep_tx_cell_count;
+extern uint32_t tsch_unlocked_scheduled_unicast_ep_rx_cell_count;
+#endif
+
 #if WITH_OST
 extern uint32_t tsch_ost_unlocked_scheduled_periodic_tx_cell_count;
 extern uint32_t tsch_ost_unlocked_scheduled_periodic_rx_cell_count;
@@ -117,6 +126,30 @@ extern uint32_t tsch_broadcast_slotframe_tx_operation_count;
 extern uint32_t tsch_broadcast_slotframe_rx_operation_count;
 extern uint32_t tsch_unicast_slotframe_tx_operation_count;
 extern uint32_t tsch_unicast_slotframe_rx_operation_count;
+
+#if WITH_PPSD
+extern uint32_t tsch_any_sf_ep_tx_reserved_count;
+extern uint32_t tsch_any_sf_ep_rx_reserved_count;
+extern uint32_t tsch_bc_sf_ep_tx_reserved_count;
+extern uint32_t tsch_bc_sf_ep_rx_reserved_count;
+extern uint32_t tsch_uc_sf_ep_tx_reserved_count;
+extern uint32_t tsch_uc_sf_ep_rx_reserved_count;
+
+extern uint32_t tsch_any_sf_ep_tx_ok_count;
+extern uint32_t tsch_any_sf_ep_rx_ok_count;
+extern uint32_t tsch_bc_sf_ep_tx_ok_count;
+extern uint32_t tsch_bc_sf_ep_rx_ok_count;
+extern uint32_t tsch_uc_sf_ep_tx_ok_count;
+extern uint32_t tsch_uc_sf_ep_rx_ok_count;
+
+extern uint32_t tsch_any_sf_ep_tx_timeslots;
+extern uint32_t tsch_any_sf_ep_rx_timeslots;
+extern uint32_t tsch_bc_sf_ep_tx_timeslots;
+extern uint32_t tsch_bc_sf_ep_rx_timeslots;
+extern uint32_t tsch_uc_sf_ep_tx_timeslots;
+extern uint32_t tsch_uc_sf_ep_rx_timeslots;
+#endif
+
 #if WITH_OST
 extern uint32_t tsch_ost_periodic_provisioning_tx_operation_count;
 extern uint32_t tsch_ost_periodic_provisioning_rx_operation_count;

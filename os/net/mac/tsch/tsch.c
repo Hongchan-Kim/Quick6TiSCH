@@ -128,6 +128,15 @@ uint32_t tsch_unlocked_scheduled_eb_rx_cell_count;
 uint32_t tsch_unlocked_scheduled_broadcast_cell_count;
 uint32_t tsch_unlocked_scheduled_unicast_tx_cell_count;
 uint32_t tsch_unlocked_scheduled_unicast_rx_cell_count;
+
+#if WITH_PPSD
+uint32_t tsch_unlocked_scheduled_any_ep_cell_count;
+uint32_t tsch_unlocked_scheduled_broadcast_ep_tx_cell_count;
+uint32_t tsch_unlocked_scheduled_broadcast_ep_rx_cell_count;
+uint32_t tsch_unlocked_scheduled_unicast_ep_tx_cell_count;
+uint32_t tsch_unlocked_scheduled_unicast_ep_rx_cell_count;
+#endif
+
 #if WITH_OST
 uint32_t tsch_ost_unlocked_scheduled_periodic_tx_cell_count;
 uint32_t tsch_ost_unlocked_scheduled_periodic_rx_cell_count;
@@ -151,6 +160,30 @@ uint32_t tsch_broadcast_slotframe_tx_operation_count;
 uint32_t tsch_broadcast_slotframe_rx_operation_count;
 uint32_t tsch_unicast_slotframe_tx_operation_count;
 uint32_t tsch_unicast_slotframe_rx_operation_count;
+
+#if WITH_PPSD
+uint32_t tsch_any_sf_ep_tx_reserved_count;
+uint32_t tsch_any_sf_ep_rx_reserved_count;
+uint32_t tsch_bc_sf_ep_tx_reserved_count;
+uint32_t tsch_bc_sf_ep_rx_reserved_count;
+uint32_t tsch_uc_sf_ep_tx_reserved_count;
+uint32_t tsch_uc_sf_ep_rx_reserved_count;
+
+uint32_t tsch_any_sf_ep_tx_ok_count;
+uint32_t tsch_any_sf_ep_rx_ok_count;
+uint32_t tsch_bc_sf_ep_tx_ok_count;
+uint32_t tsch_bc_sf_ep_rx_ok_count;
+uint32_t tsch_uc_sf_ep_tx_ok_count;
+uint32_t tsch_uc_sf_ep_rx_ok_count;
+
+uint32_t tsch_any_sf_ep_tx_timeslots;
+uint32_t tsch_any_sf_ep_rx_timeslots;
+uint32_t tsch_bc_sf_ep_tx_timeslots;
+uint32_t tsch_bc_sf_ep_rx_timeslots;
+uint32_t tsch_uc_sf_ep_tx_timeslots;
+uint32_t tsch_uc_sf_ep_rx_timeslots;
+#endif
+
 #if WITH_OST
 uint32_t tsch_ost_periodic_provisioning_tx_operation_count;
 uint32_t tsch_ost_periodic_provisioning_rx_operation_count;
@@ -241,6 +274,16 @@ void reset_log_tsch()
           tsch_unlocked_scheduled_broadcast_cell_count, 
           tsch_unlocked_scheduled_unicast_tx_cell_count, 
           tsch_unlocked_scheduled_unicast_rx_cell_count);
+
+#if WITH_PPSD
+  LOG_INFO("HCK sch_any_ep %lu sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu |\n", 
+          tsch_unlocked_scheduled_any_ep_cell_count,
+          tsch_unlocked_scheduled_broadcast_ep_tx_cell_count,
+          tsch_unlocked_scheduled_broadcast_ep_rx_cell_count,
+          tsch_unlocked_scheduled_unicast_ep_tx_cell_count,
+          tsch_unlocked_scheduled_unicast_ep_rx_cell_count);
+#endif
+
   LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
           tsch_any_slotframe_tx_operation_count, 
           tsch_any_slotframe_rx_operation_count, 
@@ -250,6 +293,32 @@ void reset_log_tsch()
           tsch_broadcast_slotframe_rx_operation_count, 
           tsch_unicast_slotframe_tx_operation_count, 
           tsch_unicast_slotframe_rx_operation_count);
+
+#if WITH_PPSD
+  LOG_INFO("HCK any_ep_tx_rs %lu any_ep_rx_rs %lu bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu |\n", 
+          tsch_any_sf_ep_tx_reserved_count,
+          tsch_any_sf_ep_rx_reserved_count,
+          tsch_bc_sf_ep_tx_reserved_count,
+          tsch_bc_sf_ep_rx_reserved_count,
+          tsch_uc_sf_ep_tx_reserved_count,
+          tsch_uc_sf_ep_rx_reserved_count);
+
+  LOG_INFO("HCK any_ep_tx_ok %lu any_ep_rx_ok %lu bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu |\n", 
+          tsch_any_sf_ep_tx_ok_count,
+          tsch_any_sf_ep_rx_ok_count,
+          tsch_bc_sf_ep_tx_ok_count,
+          tsch_bc_sf_ep_rx_ok_count,
+          tsch_uc_sf_ep_tx_ok_count,
+          tsch_uc_sf_ep_rx_ok_count);
+
+  LOG_INFO("HCK any_ep_tx_ts %lu any_ep_rx_ts %lu bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu |\n", 
+          tsch_any_sf_ep_tx_timeslots,
+          tsch_any_sf_ep_rx_timeslots,
+          tsch_bc_sf_ep_tx_timeslots,
+          tsch_bc_sf_ep_rx_timeslots,
+          tsch_uc_sf_ep_tx_timeslots,
+          tsch_uc_sf_ep_rx_timeslots);
+#endif
 #endif
 
   tsch_timeslots_until_last_session = 0;
@@ -308,6 +377,15 @@ void reset_log_tsch()
   tsch_unlocked_scheduled_broadcast_cell_count = 0;
   tsch_unlocked_scheduled_unicast_tx_cell_count = 0;
   tsch_unlocked_scheduled_unicast_rx_cell_count = 0;
+
+#if WITH_PPSD
+  tsch_unlocked_scheduled_any_ep_cell_count = 0;
+  tsch_unlocked_scheduled_broadcast_ep_tx_cell_count = 0;
+  tsch_unlocked_scheduled_broadcast_ep_rx_cell_count = 0;
+  tsch_unlocked_scheduled_unicast_ep_tx_cell_count = 0;
+  tsch_unlocked_scheduled_unicast_ep_rx_cell_count = 0;
+#endif
+
 #if WITH_OST
   tsch_ost_unlocked_scheduled_periodic_tx_cell_count = 0;
   tsch_ost_unlocked_scheduled_periodic_rx_cell_count = 0;
@@ -331,6 +409,30 @@ void reset_log_tsch()
   tsch_broadcast_slotframe_rx_operation_count = 0;
   tsch_unicast_slotframe_tx_operation_count = 0;
   tsch_unicast_slotframe_rx_operation_count = 0;
+
+#if WITH_PPSD
+  tsch_any_sf_ep_tx_reserved_count = 0;
+  tsch_any_sf_ep_rx_reserved_count = 0;
+  tsch_bc_sf_ep_tx_reserved_count = 0;
+  tsch_bc_sf_ep_rx_reserved_count = 0;
+  tsch_uc_sf_ep_tx_reserved_count = 0;
+  tsch_uc_sf_ep_rx_reserved_count = 0;
+
+  tsch_any_sf_ep_tx_ok_count = 0;
+  tsch_any_sf_ep_rx_ok_count = 0;
+  tsch_bc_sf_ep_tx_ok_count = 0;
+  tsch_bc_sf_ep_rx_ok_count = 0;
+  tsch_uc_sf_ep_tx_ok_count = 0;
+  tsch_uc_sf_ep_rx_ok_count = 0;
+
+  tsch_any_sf_ep_tx_timeslots = 0;
+  tsch_any_sf_ep_rx_timeslots = 0;
+  tsch_bc_sf_ep_tx_timeslots = 0;
+  tsch_bc_sf_ep_rx_timeslots = 0;
+  tsch_uc_sf_ep_tx_timeslots = 0;
+  tsch_uc_sf_ep_rx_timeslots = 0;
+#endif
+
 #if WITH_OST
   tsch_ost_periodic_provisioning_tx_operation_count = 0;
   tsch_ost_periodic_provisioning_rx_operation_count = 0;
@@ -422,6 +524,16 @@ print_utilization()
           tsch_unlocked_scheduled_broadcast_cell_count, 
           tsch_unlocked_scheduled_unicast_tx_cell_count, 
           tsch_unlocked_scheduled_unicast_rx_cell_count);
+
+#if WITH_PPSD
+  LOG_INFO("HCK sch_any_ep %lu sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu |\n", 
+          tsch_unlocked_scheduled_any_ep_cell_count,
+          tsch_unlocked_scheduled_broadcast_ep_tx_cell_count,
+          tsch_unlocked_scheduled_broadcast_ep_rx_cell_count,
+          tsch_unlocked_scheduled_unicast_ep_tx_cell_count,
+          tsch_unlocked_scheduled_unicast_ep_rx_cell_count);
+#endif
+
   LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
           tsch_any_slotframe_tx_operation_count, 
           tsch_any_slotframe_rx_operation_count, 
@@ -431,6 +543,32 @@ print_utilization()
           tsch_broadcast_slotframe_rx_operation_count, 
           tsch_unicast_slotframe_tx_operation_count, 
           tsch_unicast_slotframe_rx_operation_count);
+
+#if WITH_PPSD
+  LOG_INFO("HCK any_ep_tx_rs %lu any_ep_rx_rs %lu bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu |\n", 
+          tsch_any_sf_ep_tx_reserved_count,
+          tsch_any_sf_ep_rx_reserved_count,
+          tsch_bc_sf_ep_tx_reserved_count,
+          tsch_bc_sf_ep_rx_reserved_count,
+          tsch_uc_sf_ep_tx_reserved_count,
+          tsch_uc_sf_ep_rx_reserved_count);
+
+  LOG_INFO("HCK any_ep_tx_ok %lu any_ep_rx_ok %lu bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu |\n", 
+          tsch_any_sf_ep_tx_ok_count,
+          tsch_any_sf_ep_rx_ok_count,
+          tsch_bc_sf_ep_tx_ok_count,
+          tsch_bc_sf_ep_rx_ok_count,
+          tsch_uc_sf_ep_tx_ok_count,
+          tsch_uc_sf_ep_rx_ok_count);
+
+  LOG_INFO("HCK any_ep_tx_ts %lu any_ep_rx_ts %lu bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu |\n", 
+          tsch_any_sf_ep_tx_timeslots,
+          tsch_any_sf_ep_rx_timeslots,
+          tsch_bc_sf_ep_tx_timeslots,
+          tsch_bc_sf_ep_rx_timeslots,
+          tsch_uc_sf_ep_tx_timeslots,
+          tsch_uc_sf_ep_rx_timeslots);
+#endif
 #endif
 
   ctimer_reset(&utilization_timer);
@@ -1426,6 +1564,16 @@ PROCESS_THREAD(tsch_process, ev, data)
           tsch_unlocked_scheduled_broadcast_cell_count, 
           tsch_unlocked_scheduled_unicast_tx_cell_count, 
           tsch_unlocked_scheduled_unicast_rx_cell_count);
+
+#if WITH_PPSD
+  LOG_INFO("HCK sch_any_ep %lu sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu |\n", 
+          tsch_unlocked_scheduled_any_ep_cell_count,
+          tsch_unlocked_scheduled_broadcast_ep_tx_cell_count,
+          tsch_unlocked_scheduled_broadcast_ep_rx_cell_count,
+          tsch_unlocked_scheduled_unicast_ep_tx_cell_count,
+          tsch_unlocked_scheduled_unicast_ep_rx_cell_count);
+#endif
+
   LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
           tsch_any_slotframe_tx_operation_count, 
           tsch_any_slotframe_rx_operation_count, 
@@ -1435,6 +1583,32 @@ PROCESS_THREAD(tsch_process, ev, data)
           tsch_broadcast_slotframe_rx_operation_count, 
           tsch_unicast_slotframe_tx_operation_count, 
           tsch_unicast_slotframe_rx_operation_count);
+
+#if WITH_PPSD
+  LOG_INFO("HCK any_ep_tx_rs %lu any_ep_rx_rs %lu bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu |\n", 
+          tsch_any_sf_ep_tx_reserved_count,
+          tsch_any_sf_ep_rx_reserved_count,
+          tsch_bc_sf_ep_tx_reserved_count,
+          tsch_bc_sf_ep_rx_reserved_count,
+          tsch_uc_sf_ep_tx_reserved_count,
+          tsch_uc_sf_ep_rx_reserved_count);
+
+  LOG_INFO("HCK any_ep_tx_ok %lu any_ep_rx_ok %lu bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu |\n", 
+          tsch_any_sf_ep_tx_ok_count,
+          tsch_any_sf_ep_rx_ok_count,
+          tsch_bc_sf_ep_tx_ok_count,
+          tsch_bc_sf_ep_rx_ok_count,
+          tsch_uc_sf_ep_tx_ok_count,
+          tsch_uc_sf_ep_rx_ok_count);
+
+  LOG_INFO("HCK any_ep_tx_ts %lu any_ep_rx_ts %lu bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu |\n", 
+          tsch_any_sf_ep_tx_timeslots,
+          tsch_any_sf_ep_rx_timeslots,
+          tsch_bc_sf_ep_tx_timeslots,
+          tsch_bc_sf_ep_rx_timeslots,
+          tsch_uc_sf_ep_tx_timeslots,
+          tsch_uc_sf_ep_rx_timeslots);
+#endif
 #endif
 
     tsch_timeslots_until_last_session = tsch_total_associated_timeslots;
