@@ -653,7 +653,7 @@ tsch_queue_is_empty(const struct tsch_neighbor *n)
 /*---------------------------------------------------------------------------*/
 #if WITH_PPSD
 struct tsch_packet *
-tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *link, uint8_t ppsd_last_tx_seq)
+tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, uint8_t ppsd_last_tx_seq)
 {
   if(!tsch_is_locked()) {
     uint8_t offset = ppsd_last_tx_seq;

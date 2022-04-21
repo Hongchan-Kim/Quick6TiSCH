@@ -1522,6 +1522,44 @@ ost_remove_reserved_ssq(uint16_t nbr_id) //hckim
 #endif
 /*---------------------------------------------------------------------------*/
 #if WITH_PPSD
+int
+tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr, uint8_t num_of_pending_pkts)
+{
+  rtimer_clock_t ep_expected_tx_duration = 0;
+  rtimer_clock_t ep_expected_all_tx_duration = 0;
+
+  uint8_t ep_expected_packet_len = 0;
+  rtimer_clock_t ep_expected_packet_duration = 0;
+
+  uint8_t ep_expected_timeslots = 0;
+
+  uint8_t i = 1;
+  for(i = 1; i <= num_of_pending_pkts; i++) {
+    struct tsch_packet *ep_packet = tsch_queue_ppsd_get_next_packet_for_nbr(curr_nbr, i);
+
+    ep_expected_packet_len = queuebuf_datalen(ep_packet->qb);
+    ep_expected_packet_duration = TSCH_PACKET_DURATION(ep_expected_packet_len);
+
+    if(i == 1) {
+      ep_expected_tx_duration += (ppsd_timing[ppsd_tx_offset_1] + ep_expected_packet_duration);
+    } else {
+      ep_expected_tx_duration += (ppsd_timing[ppsd_tx_offset_2] + ep_expected_packet_duration);
+    }
+    ep_expected_all_tx_duration = ep_expected_tx_duration
+                                + ppsd_timing[ppsd_ts_rx_ack_delay] 
+                                + ppsd_timing[ppsd_ts_ack_wait] 
+                                + tsch_timing[tsch_ts_max_ack];
+
+    ep_expected_timeslots = (ep_expected_all_tx_duration + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                          / tsch_timing[tsch_ts_timeslot_length];
+
+    if(i * 100 / ep_expected_timeslots > 100) {
+      return 1; /* Advantageous */
+    }
+  }
+  return 0; /* No advantage */
+}
+/*---------------------------------------------------------------------------*/
 static
 PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 {
@@ -1692,7 +1730,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
     if(ppsd_tx_seq < ppsd_pkts_to_send) {
-      ppsd_curr_packet = tsch_queue_ppsd_get_next_packet_for_nbr(current_neighbor, current_link, ppsd_tx_seq);
+      ppsd_curr_packet = tsch_queue_ppsd_get_next_packet_for_nbr(current_neighbor, ppsd_tx_seq);
       ++ppsd_tx_seq;
     } else {
       ppsd_curr_packet = NULL;
@@ -2261,7 +2299,30 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
         uint8_t ppsd_pkts_to_request = (uint8_t)MIN(ppsd_pkts_pending, ppsd_free_dequeued_ringbuf);
 
+#if PPSD_EP_POLICY_REQUEST
+        uint8_t ep_request_urgent = 0;
+        int ep_number_of_rx_links = tsch_get_number_of_rx_links_before_next_tx_link(&tsch_current_asn, current_link);
+        if(ep_number_of_rx_links != 1) {
+          ep_request_urgent = (tsch_queue_global_packet_count() - 1) + ep_number_of_rx_links
+                              > QUEUEBUF_NUM;
+        }
+
+        uint8_t ep_request_advantageous = tsch_is_ep_request_advantageous_or_not(current_neighbor, ppsd_pkts_pending);
+
+#if PPSD_DBG_EP_ESSENTIAL
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "ep policy request %u, %u (%u, %u, %u), %u", ppsd_pkts_to_request, ep_request_urgent,
+            tsch_queue_global_packet_count() - 1, 
+            ep_number_of_rx_links,
+            QUEUEBUF_NUM,
+            ep_request_advantageous));
+#endif
+
+        if(ppsd_pkts_to_request > 0 && (ep_request_urgent == 1 || ep_request_advantageous == 1)) {
+#else
         if(ppsd_pkts_to_request > 0) {
+#endif
           ppsd_link_requested = 1;
           tsch_packet_set_frame_pending(packet, packet_len);
 

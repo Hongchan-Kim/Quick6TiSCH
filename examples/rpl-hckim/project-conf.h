@@ -8,6 +8,8 @@
 #define WITH_PPSD                      1
 #define PPSD_TX_CCA                    1
 
+#define PPSD_EP_POLICY_REQUEST         1
+
 #define PPSD_DBG_SLOT_TIMING           0
 #define PPSD_DBG_EP_ESSENTIAL          1
 #define PPSD_DBG_EP_OPERATION          0
@@ -93,11 +95,11 @@
 /*
  * Configure App
  */
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 30)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (60 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (25 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
@@ -197,10 +199,10 @@
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define WITH_ORCHESTRA                             1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              211 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
 #define TSCH_CONF_BURST_MAX_LEN                    0
 /* for log messages */
 #define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe

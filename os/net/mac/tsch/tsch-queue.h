@@ -148,7 +148,7 @@ int tsch_queue_is_empty(const struct tsch_neighbor *n);
 
 #if WITH_PPSD
 int tsch_queue_ppsd_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p, struct tsch_link *link, uint8_t mac_tx_status);
-struct tsch_packet *tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *link, uint8_t ppsd_last_tx_seq);
+struct tsch_packet *tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, uint8_t ppsd_last_tx_seq);
 #endif
 
 /**
