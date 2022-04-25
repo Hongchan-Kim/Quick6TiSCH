@@ -5,10 +5,18 @@
 /*
  * Exclusive period implementation
  */
-#define WITH_PPSD                      1
+#define WITH_PPSD                      0
 #define PPSD_TX_CCA                    1
 
-#define PPSD_EP_POLICY_REQUEST         1
+#if WITH_PPSD
+#define PPSD_EP_POLICY_REQ_UTIL        1
+#define PPSD_EP_REQ_UTIL_THRESH        12 /* 75% of QUEUEBUF_NUM */
+#define PPSD_EP_POLICY_REQ_ADV         0
+#define PPSD_EP_POLICY_REQ_RX_SLOTS    0
+
+#define PPSD_EP_POLICY_RESP_UTIL       1
+#define PPSD_EP_RESP_UTIL_THRESH       4 /* 25% of QUEUEBUF_NUM */
+#endif /* WITH_PPSD */
 
 #define PPSD_DBG_SLOT_TIMING           0
 #define PPSD_DBG_EP_ESSENTIAL          1
@@ -41,11 +49,11 @@
 #define IOTLAB_GRENOBLE_L_79                       9 /* 79 nodes */
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_CORNER
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_CORNER
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
-#define IOTLAB_SITE                                IOTLAB_LYON_3
+//#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_8
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
@@ -95,11 +103,11 @@
 /*
  * Configure App
  */
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 30)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (25 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (60 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
@@ -202,7 +210,7 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              211 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 #define TSCH_CONF_BURST_MAX_LEN                    0
 /* for log messages */
 #define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe

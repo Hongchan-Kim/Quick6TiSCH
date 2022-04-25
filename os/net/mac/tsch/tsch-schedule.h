@@ -195,7 +195,7 @@ uint8_t tsch_schedule_get_next_timeslot_available_or_not(struct tsch_asn_t *asn,
 #endif
 #endif
 
-#if PPSD_EP_POLICY_REQUEST
+#if PPSD_EP_POLICY_REQ_RX_SLOTS
 int tsch_get_number_of_rx_links_before_next_tx_link(struct tsch_asn_t *asn, struct tsch_link *curr_link);
 #endif
 

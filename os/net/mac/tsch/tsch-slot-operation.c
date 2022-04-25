@@ -205,8 +205,9 @@ static PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t));
 static PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t));
 
 static uint8_t is_ppsd_slot;
-static uint8_t ppsd_slot_finished;
 static uint8_t ppsd_passed_timeslots;
+static uint8_t current_ep_tx_ok_count;
+static uint8_t current_ep_rx_ok_count;
 
 static int ppsd_link_scheduled = 0;
 static int ppsd_pkts_to_send = 0;
@@ -1580,8 +1581,6 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   static void *ppsd_packet_payload;
   static uint8_t ppsd_packet_len;
 
-  static uint8_t current_ep_tx_ok_count = 0;
-
 #if PPSD_DBG_SLOT_TIMING
   static rtimer_clock_t ppsd_tx_slot_timestamp_t0 = 0;
   static rtimer_clock_t ppsd_tx_slot_timestamp_t1 = 0;
@@ -1848,15 +1847,12 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
     tsch_any_sf_ep_tx_ok_count += current_ep_tx_ok_count;
     tsch_uc_sf_ep_tx_ok_count += current_ep_tx_ok_count;
   }
-  current_ep_tx_ok_count = 0;
 
   /* do not proceed to clock drif compensation in exclusive period */
   drift_correction = 0;
   is_drift_correction_used = 0;
 
   process_poll(&tsch_pending_events_process);
-
-  ppsd_slot_finished = 1;
 
   PT_END(pt);
 }
@@ -1893,8 +1889,6 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
   static frame802154_t ppsd_frame;
   static uint8_t ppsd_ack_buf[TSCH_PACKET_MAX_LEN];
   static int ppsd_ack_len;
-
-  static uint8_t current_ep_rx_ok_count = 0;
 
 #if PPSD_DBG_SLOT_TIMING
   static rtimer_clock_t ppsd_rx_slot_timestamp_t0 = 0;
@@ -2170,15 +2164,12 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
     tsch_any_sf_ep_rx_ok_count += current_ep_rx_ok_count;
     tsch_uc_sf_ep_rx_ok_count += current_ep_rx_ok_count;
   }
-  current_ep_rx_ok_count = 0;
 
   /* do not proceed to clock drif compensation in exclusive period */
   drift_correction = 0;
   is_drift_correction_used = 0;
 
   process_poll(&tsch_pending_events_process);
-
-  ppsd_slot_finished = 1;
 
   PT_END(pt);
 }
@@ -2290,39 +2281,67 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       
       /* Unicast. More packets in queue for the neighbor? */
       if(do_wait_for_ack && tsch_queue_nbr_packet_count(current_neighbor) > 1) {
-        /* except for current packet */
+        /* except for current packet: tsch_queue_nbr_packet_count(current_neighbor) - 1 */
         int ppsd_pkts_pending = tsch_queue_nbr_packet_count(current_neighbor) - 1;
-        /* except for current packet */
+        /* consider current packet: ringbufindex_elements(&dequeued_ringbuf) + 1 */
         int ppsd_free_dequeued_ringbuf
-                = ((int)TSCH_DEQUEUED_ARRAY_SIZE - 1) - ringbufindex_elements(&dequeued_ringbuf) - 1 > 0 ?
-                  ((int)TSCH_DEQUEUED_ARRAY_SIZE - 1) - ringbufindex_elements(&dequeued_ringbuf) - 1 : 0;
+                = ((int)TSCH_DEQUEUED_ARRAY_SIZE - 1) - (ringbufindex_elements(&dequeued_ringbuf) + 1) > 0 ?
+                  ((int)TSCH_DEQUEUED_ARRAY_SIZE - 1) - (ringbufindex_elements(&dequeued_ringbuf) + 1) : 0;
 
         uint8_t ppsd_pkts_to_request = (uint8_t)MIN(ppsd_pkts_pending, ppsd_free_dequeued_ringbuf);
 
-#if PPSD_EP_POLICY_REQUEST
+#if PPSD_EP_POLICY_REQ_UTIL
+        /* except for current packet: tsch_queue_global_packet_count() - 1 */
+        uint8_t ep_request_util = (tsch_queue_global_packet_count() - 1) > PPSD_EP_REQ_UTIL_THRESH;
+#if PPSD_DBG_EP_ESSENTIAL
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "ep policy req util %u (%u, %u)",
+            ep_request_util,
+            tsch_queue_global_packet_count() - 1,
+            PPSD_EP_REQ_UTIL_THRESH));
+#endif /* PPSD_DBG_EP_ESSENTIAL */
+#endif /* PPSD_EP_POLICY_REQ_UTIL */
+
+#if PPSD_EP_POLICY_REQ_ADV
+        uint8_t ep_request_advantageous = tsch_is_ep_request_advantageous_or_not(current_neighbor, ppsd_pkts_pending);
+#if PPSD_DBG_EP_ESSENTIAL
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "ep policy req adv %u", ep_request_advantageous));
+#endif /* PPSD_DBG_EP_ESSENTIAL */
+#endif /* PPSD_EP_POLICY_REQ_ADV */
+
+#if PPSD_EP_POLICY_REQ_RX_SLOTS
         uint8_t ep_request_urgent = 0;
         int ep_number_of_rx_links = tsch_get_number_of_rx_links_before_next_tx_link(&tsch_current_asn, current_link);
         if(ep_number_of_rx_links != 1) {
           ep_request_urgent = (tsch_queue_global_packet_count() - 1) + ep_number_of_rx_links
                               > QUEUEBUF_NUM;
         }
-
-        uint8_t ep_request_advantageous = tsch_is_ep_request_advantageous_or_not(current_neighbor, ppsd_pkts_pending);
-
 #if PPSD_DBG_EP_ESSENTIAL
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-            "ep policy request %u, %u (%u, %u, %u), %u", ppsd_pkts_to_request, ep_request_urgent,
+            "ep policy req urg %u (%u, %u, %u)", 
+            ep_request_urgent,
             tsch_queue_global_packet_count() - 1, 
             ep_number_of_rx_links,
-            QUEUEBUF_NUM,
-            ep_request_advantageous));
-#endif
+            QUEUEBUF_NUM));
+#endif /* PPSD_DBG_EP_ESSENTIAL */
+#endif /* PPSD_EP_POLICY_REQ_RX_SLOTS */
 
-        if(ppsd_pkts_to_request > 0 && (ep_request_urgent == 1 || ep_request_advantageous == 1)) {
-#else
-        if(ppsd_pkts_to_request > 0) {
+        if(ppsd_pkts_to_request > 0 &&
+            (
+#if PPSD_EP_POLICY_REQ_UTIL
+            (ep_request_util == 1) ||
 #endif
+#if PPSD_EP_POLICY_REQ_ADV
+            (ep_request_advantageous == 1) ||
+#endif
+#if PPSD_EP_POLICY_REQ_RX_SLOTS
+            (ep_request_urgent == 1) ||
+#endif
+            0)) {
           ppsd_link_requested = 1;
           tsch_packet_set_frame_pending(packet, packet_len);
 
@@ -3131,15 +3150,20 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                     "ep pkts requested %d", ppsd_pkts_requested));
 #endif
 
-                /* except for current packet */
+                /* consider current packet: ringbufindex_elements(&input_ringbuf) + 1 */
                 int ppsd_free_input_ringbuf
-                        = ((int)TSCH_MAX_INCOMING_PACKETS - 1) - ringbufindex_elements(&input_ringbuf) - 1 > 0 ?
-                          ((int)TSCH_MAX_INCOMING_PACKETS - 1) - ringbufindex_elements(&input_ringbuf) - 1 : 0;
+                        = ((int)TSCH_MAX_INCOMING_PACKETS - 1) - (ringbufindex_elements(&input_ringbuf) + 1) > 0 ?
+                          ((int)TSCH_MAX_INCOMING_PACKETS - 1) - (ringbufindex_elements(&input_ringbuf) + 1) : 0;
 
-                /* except for current packet */
+                /* consider current packet: tsch_queue_global_packet_count() + 1 */
                 int ppsd_free_any_queue
-                        = (int)QUEUEBUF_NUM - tsch_queue_global_packet_count() - 1 > 0 ?
-                          (int)QUEUEBUF_NUM - tsch_queue_global_packet_count() - 1 : 0;
+                        = (int)QUEUEBUF_NUM - (tsch_queue_global_packet_count() + 1) > 0 ?
+                          (int)QUEUEBUF_NUM - (tsch_queue_global_packet_count() + 1) : 0;
+
+#if PPSD_EP_POLICY_RESP_UTIL
+                ppsd_free_any_queue = ppsd_free_any_queue - PPSD_EP_RESP_UTIL_THRESH > 0 ?
+                                      ppsd_free_any_queue - PPSD_EP_RESP_UTIL_THRESH : 0;
+#endif 
 
                 int minimum_free_ringbuf_or_queue = (int)MIN(ppsd_free_input_ringbuf, ppsd_free_any_queue);
                 ppsd_pkts_acceptable = (uint8_t)MIN(ppsd_pkts_requested, minimum_free_ringbuf_or_queue);
@@ -3701,23 +3725,59 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
           if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
             tsch_bc_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "ep result bcsf tx %u %u %u", 
+                    ppsd_pkts_to_send, 
+                    current_ep_tx_ok_count, 
+                    ppsd_passed_timeslots);
+            );
+#endif
           }
           else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
             tsch_uc_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "ep result ucsf tx %u %u %u", 
+                    ppsd_pkts_to_send, 
+                    current_ep_tx_ok_count, 
+                    ppsd_passed_timeslots);
+            );
+#endif
           }
         } else {
           tsch_any_sf_ep_rx_timeslots += ppsd_passed_timeslots;
 
           if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
             tsch_bc_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "ep result bcsf rx %u %u %u", 
+                    ppsd_pkts_to_receive, 
+                    current_ep_rx_ok_count, 
+                    ppsd_passed_timeslots);
+            );
+#endif
           }
           else if(current_link->slotframe_handle == ORCHESTRA_UNICAST_SF_ID) {
             tsch_uc_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "ep result ucsf rx %u %u %u", 
+                    ppsd_pkts_to_receive, 
+                    current_ep_rx_ok_count, 
+                    ppsd_passed_timeslots);
+            );
+#endif
           }
         }
 
 
-#if PPSD_DBG_EP_ESSENTIAL
+#if 0//PPSD_DBG_EP_ESSENTIAL
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
                 "ep asn diff %u", ppsd_passed_timeslots);
