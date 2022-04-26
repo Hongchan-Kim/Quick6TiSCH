@@ -38,29 +38,31 @@
 #define WITH_IOTLAB                                1
 #if WITH_IOTLAB
 
-#define IOTLAB_GRENOBLE_83_CORNER                  1 /* 83 nodes */
-#define IOTLAB_GRENOBLE_79_CORNER                  2 /* 79 nodes */
-#define IOTLAB_LILLE_79_CORNER                     3 /* 79 nodes */
-#define IOTLAB_LILLE_79_CENTER                     4 /* 79 nodes */
-#define IOTLAB_LYON_2                              5 /* 2 nodes */
-#define IOTLAB_LYON_3                              6 /* 3 nodes */
-#define IOTLAB_LYON_8                              7 /* 8 nodes */
-#define IOTLAB_LYON_17                             8 /* 17 nodes */
-#define IOTLAB_GRENOBLE_L_79                       9 /* 79 nodes */
+#define IOTLAB_GRENOBLE_83_R_CORNER                1 /* 83 nodes */
+#define IOTLAB_GRENOBLE_79_R_CORNER                2 /* 79 nodes */
+#define IOTLAB_GRENOBLE_79_L_CORNER                3 /* 79 nodes */
+#define IOTLAB_LILLE_79_CORNER                     4 /* 79 nodes */
+#define IOTLAB_LILLE_79_CENTER                     5 /* 79 nodes */
+#define IOTLAB_LYON_2                              6 /* 2 nodes */
+#define IOTLAB_LYON_3                              7 /* 3 nodes */
+#define IOTLAB_LYON_8                              8 /* 8 nodes */
+#define IOTLAB_LYON_17                             9 /* 17 nodes */
 
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_CORNER
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_CORNER
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_8
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
 
-#if IOTLAB_SITE == IOTLAB_GRENOBLE_83_CORNER
+#if IOTLAB_SITE == IOTLAB_GRENOBLE_83_R_CORNER
 #define NODE_NUM                                   83
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_79_CORNER
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_79_R_CORNER
+#define NODE_NUM                                   79
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER
 #define NODE_NUM                                   79
 #elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
 #define NODE_NUM                                   79
@@ -74,8 +76,6 @@
 #define NODE_NUM                                   8
 #elif IOTLAB_SITE == IOTLAB_LYON_17
 #define NODE_NUM                                   17
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_L_79
-#define NODE_NUM                                   79
 #endif
 
 #endif /* WITH_IOTLAB */
@@ -95,7 +95,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
 /*---------------------------------------------------------------------------*/
 
 
@@ -207,7 +207,7 @@
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define WITH_ORCHESTRA                             1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
