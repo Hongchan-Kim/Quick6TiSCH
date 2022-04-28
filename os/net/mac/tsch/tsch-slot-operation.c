@@ -3606,7 +3606,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if WITH_PPSD
       /* Do not change current_neigbor in ppsd slot */
       if(ppsd_link_scheduled && ppsd_pkts_to_send > 0) { /* ppsd tx slot */
-        current_packet = tsch_queue_get_packet_for_nbr(current_neighbor, current_link);
+        current_packet = tsch_queue_ppsd_get_next_packet_for_nbr(current_neighbor, 0);
       } else if(ppsd_link_scheduled && ppsd_pkts_to_receive > 0) { /* ppsd rx slot */
         current_packet = NULL;
       } else {
