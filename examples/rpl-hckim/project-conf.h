@@ -164,7 +164,7 @@
  */
 #define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
 #define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* 8 in OST, originally 4 */
-//#define IEEE802154_CONF_PANID                      0x81a5 //ksh
+#define IEEE802154_CONF_PANID                      0x58FE //22782 hckim //0x81a5 //ksh
 //#define TSCH_CONF_AUTOSTART                        0 //ksh
 //#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH          3 //ksh 6TiSCH minimal schedule length.
 #ifndef WITH_SECURITY
