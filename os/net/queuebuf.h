@@ -117,6 +117,9 @@ void queuebuf_debug_print(void);
 
 int queuebuf_numfree(void);
 
+#if ORCHESTRA_PACKET_OFFLOADING
+void queuebuf_update_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val);
+#endif
 #if WITH_OST
 void ost_set_queuebuf_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val);
 #endif

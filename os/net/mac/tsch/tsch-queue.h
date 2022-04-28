@@ -55,6 +55,10 @@ extern struct tsch_neighbor *n_eb;
 
 /********** Functions *********/
 
+#if ORCHESTRA_PACKET_OFFLOADING
+void tsch_queue_change_attr_of_packets_in_queue(const struct tsch_neighbor *target_nbr, 
+                                           uint16_t sf_handle, uint16_t timeslot);
+#endif
 #if WITH_OST
 struct tsch_neighbor *tsch_queue_get_nbr_from_id(const uint16_t id);
 void ost_update_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N);

@@ -204,6 +204,10 @@ child_added(const linkaddr_t *linkaddr)
 static void
 child_removed(const linkaddr_t *linkaddr)
 {
+#if ORCHESTRA_PACKET_OFFLOADING
+    const struct tsch_neighbor *removed_child = tsch_queue_get_nbr(linkaddr);
+    tsch_queue_change_attr_of_packets_in_queue(removed_child, 2, 0);
+#endif
   remove_uc_link(linkaddr);
 }
 /*---------------------------------------------------------------------------*/
@@ -240,6 +244,9 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     } else {
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
+#if ORCHESTRA_PACKET_OFFLOADING
+    tsch_queue_change_attr_of_packets_in_queue(old, 2, 0);
+#endif
     remove_uc_link(old_addr);
     add_uc_link(new_addr);
   }

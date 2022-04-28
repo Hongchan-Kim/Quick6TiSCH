@@ -94,6 +94,48 @@ static struct ctimer ost_select_N_timer;
 #endif
 
 /*---------------------------------------------------------------------------*/
+#if ORCHESTRA_PACKET_OFFLOADING
+void
+tsch_queue_change_attr_of_packets_in_queue(const struct tsch_neighbor *target_nbr, 
+                                           uint16_t sf_handle, uint16_t timeslot)
+{
+  if(target_nbr == NULL) {
+    /* we do not have packets to change */
+    return;
+  }
+
+  int16_t get_index = 0;
+  uint8_t num_elements = 0;
+
+  if(!tsch_is_locked()) {
+#if 0
+    tsch_queue_backoff_reset(target_nbr);
+#endif
+
+    get_index = ringbufindex_peek_get(&target_nbr->tx_ringbuf);
+    num_elements = ringbufindex_elements(&target_nbr->tx_ringbuf);
+
+    if(get_index == -1) {
+      return;
+    }
+    
+    uint8_t i;
+    for(i = get_index; i < get_index + num_elements; i++) {
+      int16_t index;
+
+      if(i >= ringbufindex_size(&target_nbr->tx_ringbuf)) { /* default size: 16 */
+        index = i - ringbufindex_size(&target_nbr->tx_ringbuf);
+      } else {
+        index = i;  
+      }
+
+      queuebuf_update_attr(target_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME, sf_handle);
+      queuebuf_update_attr(target_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
+    }
+  }
+}
+#endif
+/*---------------------------------------------------------------------------*/
 #if WITH_OST
 uint8_t ost_is_routing_nbr(uip_ds6_nbr_t *nbr)
 {

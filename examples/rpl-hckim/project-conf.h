@@ -8,6 +8,8 @@
 #define WITH_PPSD                      0
 #define PPSD_TX_CCA                    1
 
+#define ORCHESTRA_PACKET_OFFLOADING    1
+
 #if WITH_PPSD
 #define PPSD_EP_POLICY_REQ_UTIL        1
 #define PPSD_EP_REQ_UTIL_THRESH        12 /* 75% of QUEUEBUF_NUM */
