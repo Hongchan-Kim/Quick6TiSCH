@@ -4,7 +4,10 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-#if WITH_IOTLAB
+#if WITH_COOJA
+uint16_t cooja_nodes[NODE_NUM];
+
+#elif WITH_IOTLAB
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_R_CORNER
 uint16_t iotlab_nodes[NODE_NUM][3] = {
@@ -476,7 +479,7 @@ uint16_t iotlab_nodes[NODE_NUM][3] = {
   {17, 0xa168, 0}
 };
 #endif /* IOTLAB_SITE */
-
+/*---------------------------------------------------------------------------*/
 uint16_t
 iotlab_node_id_from_uid(uint16_t uid)
 {
@@ -488,23 +491,19 @@ iotlab_node_id_from_uid(uint16_t uid)
   }
   return 0; /* no matching index */
 }
-
-#endif /* WITH_IOTLAB */
-
 /*---------------------------------------------------------------------------*/
 void
-print_node_info()
+print_iotlab_node_info()
 {
-#if WITH_IOTLAB
   LOG_INFO("HCK-NODE root %u %x (%u %x)\n", IOTLAB_ROOT_ID, IOTLAB_ROOT_ID, iotlab_nodes[0][0], iotlab_nodes[0][1]);
   uint8_t i = 1;
   for(i = 1; i < NODE_NUM; i++) {
     LOG_INFO("HCK-NODE non_root %u %x (%u %x)\n", i + 1, i + 1, iotlab_nodes[i][0], iotlab_nodes[i][1]);
   }
-#endif
   LOG_INFO("HCK-NODE end\n");
 }
 /*---------------------------------------------------------------------------*/
+#endif /* WITH_IOTLAB */
 
 
 /* backup settings */

@@ -127,7 +127,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_TIMER);
     if(data == &print_timer) {
-      print_node_info();
+#if WITH_IOTLAB
+      print_iotlab_node_info();
+#endif
     } else if(data == &reset_log_timer) {
 #if WITH_OST && OST_HANDLE_QUEUED_PACKETS
       bootstrap_period = 0;
@@ -144,7 +146,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
     } else if(data == &send_timer) {
 #if WITH_VARYING_PPM
       if(varycount < APP_UPWARD_VARYING_MAX_TX[index]) {
-#if WITH_IOTLAB
+#if WITH_COOJA
+        uip_ip6addr((&dest_ipaddr), 0xfe80, 0, 0, 0, 0, 0, 0, COOJA_ROOT_ID);
+#elif WITH_IOTLAB
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, IOTLAB_ROOT_ID);
 #endif
         /* Send to DAG root */
@@ -162,7 +166,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
       }
 #else /* WITH_VARYING_PPM */
       if(count <= APP_UPWARD_MAX_TX) {
-#if WITH_IOTLAB
+#if WITH_COOJA
+        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, COOJA_ROOT_ID);
+#elif WITH_IOTLAB
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, IOTLAB_ROOT_ID);
 #endif
         /* Send to DAG root */

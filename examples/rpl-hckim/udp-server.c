@@ -78,6 +78,17 @@ extern uint8_t bootstrap_period;
 PROCESS(udp_server_process, "UDP server");
 AUTOSTART_PROCESSES(&udp_server_process);
 /*---------------------------------------------------------------------------*/
+#if WITH_COOJA
+static void
+reset_cooja_nodes()
+{
+  uint8_t i = 0;
+  for(i = 0; i < NODE_NUM; i++) {
+    cooja_nodes[i] = 0;
+  }
+}
+#endif
+/*---------------------------------------------------------------------------*/
 static void
 reset_log()
 {
@@ -107,7 +118,10 @@ udp_rx_callback(struct simple_udp_connection *c,
     LOG_INFO("Fail to receive: out of index\n");
     return;
   }
-#if WITH_IOTLAB
+#if WITH_COOJA
+  LOG_INFO("HCK rx_up %u from %u | Received message '%.*s' from ", 
+            ++cooja_nodes[sender_index], sender_index + 1, datalen, (char *) data);
+#elif WITH_IOTLAB
   LOG_INFO("HCK rx_up %u from %u %x (%u %x) | Received message '%.*s' from ", 
             ++iotlab_nodes[sender_index][2],
             sender_index + 1, sender_index + 1, 
@@ -128,7 +142,9 @@ PROCESS_THREAD(udp_server_process, ev, data)
   static struct etimer periodic_timer;
   static struct etimer send_timer;
   static unsigned count = 1;
-#if WITH_IOTLAB
+#if WITH_COOJA
+  static unsigned dest_id = COOJA_ROOT_ID + 1;
+#elif WITH_IOTLAB
   static unsigned dest_id = IOTLAB_ROOT_ID + 1;
 #endif
   static char str[32];
@@ -152,6 +168,10 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #endif
 
   PROCESS_BEGIN();
+
+#if WITH_COOJA
+  reset_cooja_nodes();
+#endif
 
   /* Initialize DAG root */
   NETSTACK_ROUTING.root_start();
@@ -177,7 +197,9 @@ PROCESS_THREAD(udp_server_process, ev, data)
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_TIMER);
     if(data == &print_timer) {
-      print_node_info();
+#if WITH_IOTLAB
+      print_iotlab_node_info();
+#endif
     } else if(data == &reset_log_timer) {
 #if WITH_OST && OST_HANDLE_QUEUED_PACKETS
       bootstrap_period = 0;
@@ -200,7 +222,10 @@ PROCESS_THREAD(udp_server_process, ev, data)
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
         /* Send to clients */
         uint16_t dest_index = dest_id - 1;
-#if WITH_IOTLAB
+#if WITH_COOJA
+        LOG_INFO("HCK tx_down %u to %u | Sending message %u to ", 
+                  count, dest_id, count);
+#elif WITH_IOTLAB
         LOG_INFO("HCK tx_down %u to %u %x (%u %x) | Sending message %u to ", 
                   count, dest_id, dest_id,
                   iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
@@ -224,12 +249,15 @@ PROCESS_THREAD(udp_server_process, ev, data)
         index++;
         varycount = 1;
       }
-#else
+#else /* WITH_VARYING_PPM */
       if(count <= APP_DOWNWARD_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
         /* Send to clients */
         uint16_t dest_index = dest_id - 1;
-#if WITH_IOTLAB
+#if WITH_COOJA
+        LOG_INFO("HCK tx_down %u to %u | Sending message %u to ", 
+                  count, dest_id, count);
+#elif WITH_IOTLAB
         LOG_INFO("HCK tx_down %u to %u %x (%u %x) | Sending message %u to ", 
                   count, dest_id, dest_id,
                   iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
