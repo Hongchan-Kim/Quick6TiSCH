@@ -49,6 +49,11 @@
 
 /********** Functions *********/
 
+#if WITH_PPSD
+int tsch_rpl_callback_is_root(void);
+int tsch_rpl_callback_has_children(void);
+#endif
+
 /**
 * \brief Report statiscs from KA packet sent in RPL.
 * To use, set TSCH_CALLBACK_KA_SENT to tsch_rpl_callback_ka_sent

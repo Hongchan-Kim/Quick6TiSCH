@@ -61,6 +61,20 @@
 #define LOG_LEVEL LOG_LEVEL_MAC
 
 /*---------------------------------------------------------------------------*/
+#if WITH_PPSD
+int
+tsch_rpl_callback_is_root(void)
+{
+  return NETSTACK_ROUTING.node_is_root();
+}
+/*---------------------------------------------------------------------------*/
+int
+tsch_rpl_callback_has_children(void)
+{
+  return uip_ds6_route_num_routes() > 0;
+}
+#endif
+/*---------------------------------------------------------------------------*/
 /* To use, set #define TSCH_CALLBACK_KA_SENT tsch_rpl_callback_ka_sent */
 void
 tsch_rpl_callback_ka_sent(int status, int transmissions)

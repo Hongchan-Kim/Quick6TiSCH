@@ -3184,7 +3184,15 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                                       ppsd_free_any_queue - PPSD_EP_RESP_UTIL_THRESH : 0;
 #endif
 
-                int minimum_free_ringbuf_or_queue = (int)MIN(ppsd_free_input_ringbuf, ppsd_free_any_queue);
+                int minimum_free_ringbuf_or_queue = 0;
+
+                int is_rpl_root_or_end_node = (tsch_rpl_callback_is_root() == 1)
+                                            || (tsch_rpl_callback_has_children() == 1);
+                if(is_rpl_root_or_end_node == 1) { /* Do not consider queue length for root/end nodes */
+                  minimum_free_ringbuf_or_queue = ppsd_free_input_ringbuf;
+                } else {
+                  minimum_free_ringbuf_or_queue = (int)MIN(ppsd_free_input_ringbuf, ppsd_free_any_queue);
+                }
                 ppsd_pkts_acceptable = (uint8_t)MIN(ppsd_pkts_requested, minimum_free_ringbuf_or_queue);
 
 #if PPSD_DBG_EP_ESSENTIAL
