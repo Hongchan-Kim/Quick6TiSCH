@@ -44,7 +44,7 @@
 #include <string.h>
 
 #if WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_ACK
+#if PPSD_HEADER_IE_IN_DATA_AND_ACK
 #include "net/mac/framer/frame802154e-ie.h"
 #endif
 #endif
