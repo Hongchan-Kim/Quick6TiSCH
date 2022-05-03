@@ -59,10 +59,12 @@
  * \return The length of the packet that was created. -1 if failure.
  */
 #if WITH_PPSD
+#if PPSD_HEADER_IE_IN_DATA_AND_ACK
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,
                             int16_t drift, int nack, 
                             uint16_t ppsd_acceptable_pkts);
+#endif
 #else
 #if WITH_OST
 #if OST_ON_DEMAND_PROVISION

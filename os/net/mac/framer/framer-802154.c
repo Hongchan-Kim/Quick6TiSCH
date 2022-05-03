@@ -43,8 +43,10 @@
 #include "lib/random.h"
 #include <string.h>
 
-#if WITH_PPSD /* HCK: ppsd header ie implementation (Data) */
+#if WITH_PPSD
+#if PPSD_HEADER_IE_IN_DATA_ACK
 #include "net/mac/framer/frame802154e-ie.h"
+#endif
 #endif
 
 #if WITH_OST /* OST: Include header files */
@@ -144,7 +146,8 @@ create_frame(int do_create)
     return hdr_len;
   } else if(packetbuf_hdralloc(hdr_len)) {
 
-#if WITH_PPSD /* HCK: ppsd header ie implementation (Data) */
+#if WITH_PPSD
+#if PPSD_HEADER_IE_IN_DATA_AND_ACK /* Data packet */
     int hdr_len_increment = 0;
     if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA) == 1 && !packetbuf_holds_broadcast()) {
       struct ieee802154_ies ppsd_ies;
@@ -161,18 +164,19 @@ create_frame(int do_create)
       } else {
         return FRAMER_FAILED;
       }
-      if(packetbuf_hdralloc(3)) {
+      if(packetbuf_hdralloc(4)) {
         /* HCK: the second parameter must be revised */
         if(frame80215e_create_ie_header_ppsd_info((uint8_t *)packetbuf_hdrptr() + hdr_len,
                                                                 PACKETBUF_SIZE - hdr_len, &ppsd_ies) < 0) {
           return FRAMER_FAILED;
         }
-        hdr_len_increment += 3;
+        hdr_len_increment += 4;
       } else {
         return FRAMER_FAILED;
       }
     }
     hdr_len += hdr_len_increment;
+#endif
 #endif
 
     frame802154_create(&params, packetbuf_hdrptr());
@@ -307,12 +311,14 @@ parse(void)
     packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, frame.fcf.frame_type);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, frame.fcf.ack_required);
 
-#if WITH_PPSD /* HCK: ppsd header ie implementation (Data) */
+#if WITH_PPSD
+#if PPSD_HEADER_IE_IN_DATA_AND_ACK /* Data packet */
     if(frame.fcf.ie_list_present) {
       /* hckim: must be revised */
-      packetbuf_hdrreduce(5);
+      packetbuf_hdrreduce(6); /* 2 for termination, 4 for ppsd ie */
       packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, frame.fcf.ie_list_present);
     }
+#endif
 #endif
 
     if(frame.fcf.dest_addr_mode) {
