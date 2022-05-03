@@ -5,12 +5,14 @@
 /*
  * Exclusive period implementation
  */
-#define WITH_PPSD                      0
+#define WITH_PPSD                      1
 #define PPSD_TX_CCA                    0
 
 #define ORCHESTRA_PACKET_OFFLOADING    1
 
 #if WITH_PPSD
+#define PPSD_HEADER_IE_IN_DATA_AND_ACK 1 /* Must be 1 if WITH_PPSD is 1*/
+
 #define PPSD_EP_POLICY_REQ_UTIL        1
 #define PPSD_EP_REQ_UTIL_THRESH        12 /* 75% of QUEUEBUF_NUM */
 #define PPSD_EP_POLICY_REQ_ADV         0
