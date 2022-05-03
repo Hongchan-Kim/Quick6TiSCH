@@ -55,6 +55,8 @@
 
 #if WITH_ALICE == 1 /* alice implementation */
 #include "services/alice/orchestra.h"
+#elif WITH_OST
+#include "services/ost/orchestra.h"
 #else /* default orchestra */
 #include "services/orchestra/orchestra.h"
 #endif
