@@ -3727,18 +3727,22 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           current_link = backup_link;
           current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
         }
-#if WITH_PPSD /* hold current_neighbor in ppsd slot */
-      }
-#endif
 
 #if OST_JSB_ADD
-      /* Seungbeom Jeong added this else if block */
-      else if(current_packet == NULL && (current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
-        if(current_link->slotframe_handle > backup_link->slotframe_handle) {
-          /* There could be Tx option in backup link */
-          current_link = backup_link;
-          current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+        /* Seungbeom Jeong added this else if block */
+        /* In the case of there is no packet to send in the current best link,
+           even if there is Rx option in the current best link,
+           the backup link without Tx option can have slotframe handle smaller than the current best link
+           -> then, the backup link must be executed */
+        else if(current_packet == NULL && (current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
+          if(current_link->slotframe_handle > backup_link->slotframe_handle) {
+            /* There could be Tx option in backup link */
+            current_link = backup_link;
+            current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+          }
         }
+#endif
+#if WITH_PPSD /* hold current_neighbor in ppsd slot */
       }
 #endif
 
