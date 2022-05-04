@@ -109,44 +109,6 @@ tsch_schedule_add_slotframe(uint16_t handle, uint16_t size)
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
-#if PPSD_EP_POLICY_REQ_RX_SLOTS
-int
-tsch_get_number_of_rx_links_before_next_tx_link(struct tsch_asn_t *asn, struct tsch_link * curr_link)
-{
-  int number_of_rx_links = 0;
-
-  if(!tsch_is_locked()) {
-    /* First, find the earliest next tx link to the current neighbor */
-    uint16_t time_to_next_tx_link 
-              = tsch_schedule_get_slotframe_by_handle(curr_link->slotframe_handle)->size.val;
-
-    /* Second, count the number of rx links before the next tx link */
-    struct tsch_slotframe *sf = list_head(slotframe_list);
-    while(sf != NULL) {
-      uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
-      struct tsch_link *l = list_head(sf->links_list);
-
-      while(l != NULL) {
-        if(l->link_options & LINK_OPTION_RX) {
-          uint16_t time_to_timeslot =
-            l->timeslot > timeslot ?
-            l->timeslot - timeslot :
-            sf->size.val + l->timeslot - timeslot;
-
-          if(time_to_timeslot < time_to_next_tx_link) {
-            ++number_of_rx_links;
-          }
-        }
-        l = list_item_next(l);
-      }
-      sf = list_item_next(sf);
-    }
-    return number_of_rx_links;
-  }
-  return -1;
-}
-#endif
-/*---------------------------------------------------------------------------*/
 #if WITH_OST && TSCH_DEFAULT_BURST_TRANSMISSION
 uint8_t
 tsch_schedule_get_next_timeslot_available_or_not(struct tsch_asn_t *asn, uint16_t *time_to_earliest)

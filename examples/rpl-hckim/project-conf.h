@@ -5,31 +5,24 @@
 /*
  * Exclusive period implementation
  */
-#define WITH_PPSD                      1
-#define PPSD_TX_CCA                    0
+#define WITH_PPSD                         1
+#define PPSD_TX_CCA                       1
 
-#define ORCHESTRA_PACKET_OFFLOADING    1
+#define ORCHESTRA_PACKET_OFFLOADING       1
 
 #if WITH_PPSD
-#define PPSD_HEADER_IE_IN_DATA_AND_ACK 1 /* Must be 1 if WITH_PPSD is 1*/
-
-#define PPSD_EP_POLICY_REQ_UTIL        1
-#define PPSD_EP_REQ_UTIL_THRESH        12 /* 75% of QUEUEBUF_NUM */
-#define PPSD_EP_POLICY_REQ_ADV         0
-#define PPSD_EP_POLICY_REQ_RX_SLOTS    0
-
-#define PPSD_EP_POLICY_RESP_UTIL       1
-#define PPSD_EP_RESP_UTIL_THRESH       4 /* 25% of QUEUEBUF_NUM */
+#define PPSD_HEADER_IE_IN_DATA_AND_ACK    1 /* Must be 1 if WITH_PPSD is 1*/
+#define PPSD_EP_POLICY_CELL_UTIL          1
 #endif /* WITH_PPSD */
 
-#define PPSD_DBG_SLOT_TIMING           0
-#define PPSD_DBG_EP_ESSENTIAL          1
-#define PPSD_DBG_EP_OPERATION          0
+#define PPSD_DBG_SLOT_TIMING              0
+#define PPSD_DBG_EP_ESSENTIAL             1
+#define PPSD_DBG_EP_OPERATION             0
 
 #if PPSD_TX_CCA
-#define TSCH_CONF_CCA_ENABLED          1
-#define PPSD_DBG_CCA_STATUS            0
-#define PPSD_CCA_EARLY_TX_NODE         0
+#define TSCH_CONF_CCA_ENABLED             1
+#define PPSD_DBG_CCA_STATUS               0
+#define PPSD_CCA_EARLY_TX_NODE            0
 #endif
 
 //#define PPSD_CONF_RX_WAIT                    800
@@ -39,8 +32,8 @@
 /*
  * Configure testbed site, node num, topology
  */
-#define WITH_COOJA                                 1
-#define WITH_IOTLAB                                0
+#define WITH_COOJA                                 0
+#define WITH_IOTLAB                                1
 #if WITH_COOJA && WITH_IOTLAB
 #error "Wrong topoligy setting. See project-conf.h"
 #endif
@@ -122,6 +115,7 @@
 #define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
+
 #elif WITH_IOTLAB
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
 #define DOWNWARD_TRAFFIC                           0
@@ -231,7 +225,7 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 #define TSCH_CONF_BURST_MAX_LEN                    0
 /* for log messages */
 #define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
