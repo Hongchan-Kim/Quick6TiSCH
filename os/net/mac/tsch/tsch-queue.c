@@ -554,8 +554,10 @@ tsch_queue_ppsd_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
   int is_unicast = !n->is_broadcast;
 
   if(mac_tx_status == MAC_TX_OK) {
+#if 0
     /* Successful transmission */
     tsch_queue_remove_packet_from_queue(n);
+#endif
     in_queue = 0;
 
     /* Update CSMA state in the unicast case */
@@ -576,8 +578,10 @@ tsch_queue_ppsd_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
   } else {
     /* Failed transmission */
     if(p->transmissions >= p->max_transmissions) {
+#if 0
       /* Drop packet */
       tsch_queue_remove_packet_from_queue(n);
+#endif
       in_queue = 0;
     }
     /* Even if this packet is not successfully sent in current ppsd slot,

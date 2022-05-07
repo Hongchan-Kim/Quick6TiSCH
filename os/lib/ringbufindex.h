@@ -55,6 +55,10 @@ struct ringbufindex {
  */
 void ringbufindex_init(struct ringbufindex *r, uint8_t size);
 
+#if WITH_PPSD
+int ringbufindex_shift_get_ptr(struct ringbufindex *r, int shift);
+#endif
+
 /**
  * \brief Put one element to the ring buffer
  * \param r Pointer to ringbufindex

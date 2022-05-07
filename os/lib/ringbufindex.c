@@ -53,6 +53,19 @@ ringbufindex_init(struct ringbufindex *r, uint8_t size)
   r->put_ptr = 0;
   r->get_ptr = 0;
 }
+#if WITH_PPSD
+/* Shift get_ptr of ring buffer */
+int
+ringbufindex_shift_get_ptr(struct ringbufindex *r, int shift)
+{
+  int new_get_ptr;
+
+  r->get_ptr = (r->get_ptr + shift) & r->mask;
+  new_get_ptr = r->get_ptr;
+  return new_get_ptr;
+}
+#endif
+
 /* Put one element to the ring buffer */
 int
 ringbufindex_put(struct ringbufindex *r)

@@ -199,6 +199,10 @@ static PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t));
 static PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t));
 
 #if WITH_PPSD
+static uint8_t ppsd_array_ringbuf_index[TSCH_DEQUEUED_ARRAY_SIZE];
+static uint8_t ppsd_array_in_queue[TSCH_DEQUEUED_ARRAY_SIZE];
+static int num_of_non_zero_in_queue_pkts = 0;
+static int tx_ringbuf_ep_head_index = 0;
 struct tsch_packet *ppsd_array[TSCH_DEQUEUED_ARRAY_SIZE];
 
 static PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t));
@@ -1670,7 +1674,17 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
   uint8_t i = 0;
   for(i = 0; i < TSCH_DEQUEUED_ARRAY_SIZE; i++) {
+    ppsd_array_ringbuf_index[i] = 0;
+    ppsd_array_in_queue[i] = 0;
     ppsd_array[i] = NULL;
+  }
+
+  tx_ringbuf_ep_head_index = ringbufindex_peek_get(&current_neighbor->tx_ringbuf);
+
+  for(i = 0; i < ppsd_pkts_to_send; i++) {
+    ppsd_array_ringbuf_index[i] = (tx_ringbuf_ep_head_index + i) < TSCH_QUEUE_NUM_PER_NEIGHBOR ?
+                                  (tx_ringbuf_ep_head_index + i) : 
+                                  (tx_ringbuf_ep_head_index + i) - TSCH_QUEUE_NUM_PER_NEIGHBOR;
   }
 
   while(1) {
@@ -1867,6 +1881,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
   current_ep_tx_ok_count = 0;
 
+  num_of_non_zero_in_queue_pkts = 0;
   uint8_t ppsd_seq = 0;
   for(ppsd_seq = 0; ppsd_seq < ppsd_pkts_to_send; ppsd_seq++) {
     
@@ -1890,15 +1905,65 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
         log->tx.seqno = queuebuf_attr(ppsd_array[ppsd_seq]->qb, PACKETBUF_ATTR_MAC_SEQNO);
     );
 
-    uint8_t in_queue;
-    in_queue = tsch_queue_ppsd_packet_sent(current_neighbor, ppsd_array[ppsd_seq], current_link, ppsd_array[ppsd_seq]->ret);
+    ppsd_array_in_queue[ppsd_seq] 
+        = tsch_queue_ppsd_packet_sent(current_neighbor, ppsd_array[ppsd_seq], 
+                                      current_link, ppsd_array[ppsd_seq]->ret);
 
-    int ppsd_dequeued_index = ringbufindex_peek_put(&dequeued_ringbuf);
-    if(in_queue == 0) {
-      dequeued_array[ppsd_dequeued_index] = ppsd_array[ppsd_seq];
-      ringbufindex_put(&dequeued_ringbuf);
+    if(ppsd_array_in_queue[ppsd_seq] == 0) {
+      int ppsd_dequeued_index = ringbufindex_peek_put(&dequeued_ringbuf);
+      if(ppsd_dequeued_index != -1) {
+        dequeued_array[ppsd_dequeued_index] = ppsd_array[ppsd_seq];
+        ringbufindex_put(&dequeued_ringbuf);
+      }      
+    } else {
+      ++num_of_non_zero_in_queue_pkts;
     }
   }
+
+#if 0
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "zzz2 %d", num_of_non_zero_in_queue_pkts));
+#endif
+
+  uint8_t cursor = 0;
+  if(num_of_non_zero_in_queue_pkts > 0 ) {
+    for(i = 0; i < ppsd_pkts_to_send; i++) {
+      if(ppsd_array_in_queue[(ppsd_pkts_to_send - 1) - i] == 1) {
+        uint8_t dest_ringbuf_index = ppsd_array_ringbuf_index[(ppsd_pkts_to_send - 1) - cursor];
+        current_neighbor->tx_array[dest_ringbuf_index] = ppsd_array[(ppsd_pkts_to_send - 1) - i];
+        ++cursor;
+        if(num_of_non_zero_in_queue_pkts == cursor) {
+          break;
+        }
+      }
+    }
+  }
+  int get_ptr_shift = ppsd_pkts_to_send - num_of_non_zero_in_queue_pkts;
+  /*int shifted_get_index = */ringbufindex_shift_get_ptr(&current_neighbor->tx_ringbuf, get_ptr_shift);
+#if 0
+  int new_put_index = ringbufindex_peek_put(&current_neighbor->tx_ringbuf);
+  int new_get_index = ringbufindex_peek_get(&current_neighbor->tx_ringbuf);
+
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "zzz3 %d %d %d %d %d", tx_ringbuf_ep_head_index, get_ptr_shift, shifted_get_index, new_put_index, new_get_index));
+
+
+  uint8_t elements = ringbufindex_elements(&current_neighbor->tx_ringbuf);
+  uint8_t index_head = ringbufindex_peek_get(&current_neighbor->tx_ringbuf);
+  uint8_t index = index_head;
+  int seqno = 0;
+  for(i = 0; i < elements; i++) {
+    index = index_head + i < TSCH_QUEUE_NUM_PER_NEIGHBOR ?
+            index_head + i : index_head + i - TSCH_QUEUE_NUM_PER_NEIGHBOR;
+    seqno = queuebuf_attr(current_neighbor->tx_array[index]->qb, PACKETBUF_ATTR_MAC_SEQNO);
+
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "zzz4 %d %d", index, seqno));
+  }
+#endif
 
   if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
     tsch_any_sf_ep_tx_ok_count += current_ep_tx_ok_count;
