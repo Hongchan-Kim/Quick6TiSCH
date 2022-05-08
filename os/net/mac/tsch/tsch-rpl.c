@@ -69,9 +69,9 @@ tsch_rpl_callback_is_root(void)
 }
 /*---------------------------------------------------------------------------*/
 int
-tsch_rpl_callback_has_children(void)
+tsch_rpl_callback_has_no_children(void)
 {
-  return uip_ds6_route_num_routes() > 0;
+  return uip_ds6_route_num_routes() == 0;
 }
 #endif
 /*---------------------------------------------------------------------------*/

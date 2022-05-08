@@ -1530,11 +1530,11 @@ ost_remove_reserved_ssq(uint16_t nbr_id) //hckim
 #if PPSD_EP_POLICY_CELL_UTIL
 int
 tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr, 
-                                       uint8_t num_of_pending_pkts, 
+                                       uint8_t num_of_pkts_to_request, 
                                        uint8_t *minimum_number_of_pkts_with_advantage,
                                        uint8_t *number_of_pkts_for_max_advantage)
 {
-  uint8_t upper_bound = MIN(num_of_pending_pkts, (((int)TSCH_MAX_INCOMING_PACKETS - 1) - 1));
+  uint8_t upper_bound = MIN(num_of_pkts_to_request, (((int)TSCH_MAX_INCOMING_PACKETS - 1) - 1));
   uint8_t pkts1 = 0; /* minimum_number_of_pkts_with_advantage */
   uint8_t pkts1_updated = 0;
 
@@ -1882,6 +1882,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   current_ep_tx_ok_count = 0;
 
   num_of_non_zero_in_queue_pkts = 0;
+
   uint8_t ppsd_seq = 0;
   for(ppsd_seq = 0; ppsd_seq < ppsd_pkts_to_send; ppsd_seq++) {
     
@@ -2421,7 +2422,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_EP_POLICY_CELL_UTIL
         uint8_t minimum_number_of_pkts_with_advantage = 0;
         uint8_t number_of_pkts_for_max_advantage = 0;
-        uint8_t ep_request_advantageous = tsch_is_ep_request_advantageous_or_not(current_neighbor, ppsd_pkts_pending, 
+        uint8_t ep_request_advantageous = tsch_is_ep_request_advantageous_or_not(current_neighbor, ppsd_pkts_to_request, 
                                                                                 &minimum_number_of_pkts_with_advantage, 
                                                                                 &number_of_pkts_for_max_advantage);
 
@@ -2429,12 +2430,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_DBG_EP_ESSENTIAL
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-            "ep policy req %u %u | %u (%x %x %x)", ppsd_pkts_pending,
-                                            ppsd_pkts_to_request,
-                                            ep_request_advantageous, 
+            "ep pol req %d (%d %d, %x) (%u %u %u)", ep_request_advantageous,
                                             minimum_number_of_pkts_with_advantage, 
                                             number_of_pkts_for_max_advantage,
-                                            adv_2_request_info));
+                                            
+                                            adv_2_request_info,
+                                            ppsd_pkts_pending,
+                                            ppsd_free_dequeued_ringbuf,
+                                            ppsd_pkts_to_request));
 #endif
 #endif
 
@@ -2462,7 +2465,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 #endif
 
-#if PPSD_DBG_EP_ESSENTIAL
+#if 0//PPSD_DBG_EP_ESSENTIAL
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "ep pkts to request %u (%u, %u)", ppsd_pkts_to_request, 
@@ -2785,7 +2788,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                   if(ppsd_link_requested) {
                     TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                        "ep pkts allowed %u", ppsd_pkts_allowed));
+                        "ep pol allowed %u", ppsd_pkts_allowed));
                   }
 #endif
                   if(ppsd_link_requested && ppsd_pkts_allowed > 0) {
@@ -3274,7 +3277,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_DBG_EP_ESSENTIAL
                 TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                    "ep pkts requested %u %u", minimum_number_of_pkts_with_advantage, number_of_pkts_for_max_advantage));
+                    "ep pol requested %u %u", minimum_number_of_pkts_with_advantage, number_of_pkts_for_max_advantage));
 #endif
 
 #else
@@ -3282,7 +3285,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_DBG_EP_ESSENTIAL
                 TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                    "ep pkts requested %d", ppsd_pkts_requested));
+                    "ep pol requested %d", ppsd_pkts_requested));
 #endif
 #endif
                 /* consider current packet: ringbufindex_elements(&input_ringbuf) + 1 */
@@ -3297,9 +3300,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
                 int minimum_free_ringbuf_or_queue = 0;
 
-                int is_rpl_root_or_end_node = (tsch_rpl_callback_is_root() == 1)
-                                            || (tsch_rpl_callback_has_children() == 1);
-                if(is_rpl_root_or_end_node == 1) { /* Do not consider queue length for root/end nodes */
+                int ep_is_root = tsch_rpl_callback_is_root();
+                int ep_has_no_children = tsch_rpl_callback_has_no_children();
+
+                int is_rpl_root_or_has_no_children = (ep_is_root == 1) || (ep_has_no_children == 1);
+                if(is_rpl_root_or_has_no_children == 1) { /* Do not consider queue length for root/end nodes */
                   minimum_free_ringbuf_or_queue = ppsd_free_input_ringbuf;
                 } else {
                   minimum_free_ringbuf_or_queue = (int)MIN(ppsd_free_input_ringbuf, ppsd_free_any_queue);
@@ -3320,7 +3325,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_DBG_EP_ESSENTIAL
                 TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                    "ep pkts acceptable %u (%u, %u)", ppsd_pkts_acceptable, 
+                    "ep pol acceptable %u (%u %u, %u) (%u %u)", ppsd_pkts_acceptable, 
+                    ep_is_root, ep_has_no_children, is_rpl_root_or_has_no_children,
                     ppsd_free_input_ringbuf, ppsd_free_any_queue));
 #endif
               }
