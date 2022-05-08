@@ -550,14 +550,10 @@ tsch_queue_ppsd_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
                       struct tsch_link *link, uint8_t mac_tx_status)
 {
   int in_queue = 1;
-  //int is_shared_link = link->link_options & LINK_OPTION_SHARED;
   int is_unicast = !n->is_broadcast;
 
   if(mac_tx_status == MAC_TX_OK) {
-#if 0
     /* Successful transmission */
-    tsch_queue_remove_packet_from_queue(n);
-#endif
     in_queue = 0;
 
     /* Update CSMA state in the unicast case */
@@ -569,7 +565,7 @@ tsch_queue_ppsd_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
        * in the previous 'shared' regular slot was successful.
        * Therefore, backoff must be reset in the previous regular slot.
        * So, we only need to check tsch_queue_is_empty(n) for dedicated links. */
-      if(/* is_shared_link || */tsch_queue_is_empty(n)) {
+      if(tsch_queue_is_empty(n)) {
         /* If this is a shared link, reset backoff on success.
          * Otherwise, do so only is the queue is empty */
         tsch_queue_backoff_reset(n);
@@ -578,10 +574,7 @@ tsch_queue_ppsd_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
   } else {
     /* Failed transmission */
     if(p->transmissions >= p->max_transmissions) {
-#if 0
       /* Drop packet */
-      tsch_queue_remove_packet_from_queue(n);
-#endif
       in_queue = 0;
     }
     /* Even if this packet is not successfully sent in current ppsd slot,
@@ -592,17 +585,6 @@ tsch_queue_ppsd_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
      * then, backoff window will be non-zero and
      * consecutive transmission will be stopped.
      * Therefore, we disable tsch_queue_backoff_inc in ppsd slot. */
-#if 0
-    /* Update CSMA state in the unicast case */
-    if(is_unicast) {
-      /* Failures on dedicated (== non-shared) leave the backoff
-       * window nor exponent unchanged */
-      if(is_shared_link) {
-        /* Shared link: increment backoff exponent, pick a new window */
-        tsch_queue_backoff_inc(n);
-      }
-    }
-#endif
   }
 
   return in_queue;

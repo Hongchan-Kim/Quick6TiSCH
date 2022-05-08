@@ -1506,7 +1506,7 @@ packet_sent(void *ptr, int status, int transmissions)
   }
 
 #if WITH_PPSD
-  uint8_t ppsd_sent_in_ep = 0;
+  int ppsd_sent_in_ep = 0;
   if(transmissions >= 0xff) {
     ppsd_sent_in_ep = 1;
     transmissions = transmissions - 0xff;
