@@ -79,7 +79,7 @@ static uint8_t tx_buf[RF2XX_MAX_PAYLOAD];
 #endif /* RF2XX_SOFT_PREPARE */
 static uint8_t tx_len;
 
-#if PPSD_DBG_CCA_STATUS
+#if TSCH_TX_CCA_DBG_CCA_STATUS
 uint8_t global_rf2xx_on;
 uint8_t global_rf2xx_state;
 uint8_t global_rf2xx_status;
@@ -369,7 +369,7 @@ rf2xx_wr_channel_clear(void)
     {
         uint8_t reg;
         case RF_LISTEN:
-#if PPSD_DBG_CCA_STATUS
+#if TSCH_TX_CCA_DBG_CCA_STATUS
             global_rf2xx_on = rf2xx_on;
             global_rf2xx_state = rf2xx_state;
             global_rf2xx_status = rf2xx_get_status(RF2XX_DEVICE);
@@ -395,7 +395,7 @@ rf2xx_wr_channel_clear(void)
             }
             while (rf2xx_state == RF_LISTEN && !(reg & RF2XX_TRX_STATUS_MASK__CCA_DONE));
 
-#if PPSD_DBG_CCA_STATUS
+#if TSCH_TX_CCA_DBG_CCA_STATUS
             global_trx_status = reg;
             global_cca_done = reg & RF2XX_TRX_STATUS_MASK__CCA_DONE;
             global_cca_status = reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS;
@@ -409,12 +409,12 @@ rf2xx_wr_channel_clear(void)
             }
             break;
             
-#if PPSD_TX_CCA
+#if WITH_TSCH_TX_CCA
         /* 
          * Perform CCA in a way similar to the case of RF_LISTEN.
          */
         case RF_TX:
-#if PPSD_DBG_CCA_STATUS
+#if TSCH_TX_CCA_DBG_CCA_STATUS
             global_rf2xx_on = rf2xx_on;
             global_rf2xx_state = rf2xx_state;
             global_rf2xx_status = rf2xx_get_status(RF2XX_DEVICE);
@@ -440,7 +440,7 @@ rf2xx_wr_channel_clear(void)
             }
             while (rf2xx_state == RF_TX && !(reg & RF2XX_TRX_STATUS_MASK__CCA_DONE));
 
-#if PPSD_DBG_CCA_STATUS
+#if TSCH_TX_CCA_DBG_CCA_STATUS
             global_trx_status = reg;
             global_cca_done = reg & RF2XX_TRX_STATUS_MASK__CCA_DONE;
             global_cca_status = reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS;
@@ -533,7 +533,7 @@ rf2xx_wr_on(void)
             flag = 1;
             rf2xx_state = RF_BUSY;
         }
-#if PPSD_TX_CCA
+#if WITH_TSCH_TX_CCA
         /*
          * When performing CCA in the tx slot of TSCH, 
          * rf2xx_wr_hard_prepare() is called in advance by tsch_tx_slot().
@@ -562,7 +562,7 @@ rf2xx_wr_on(void)
     if (flag)
     {
         listen();
-#if PPSD_TX_CCA
+#if WITH_TSCH_TX_CCA
         /*
          * A flag of 2 means that we are in the Tx CCA routine.
          * Maintain rf2xx_state as RF_TX even after listen() is executed.

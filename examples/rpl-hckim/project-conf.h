@@ -5,24 +5,24 @@
 /*
  * Exclusive period implementation
  */
-#define WITH_PPSD                         1
-#define PPSD_TX_CCA                       1
+#define WITH_TSCH_TX_CCA                           1
+#define WITH_PPSD                                  1
 
-#define ORCHESTRA_PACKET_OFFLOADING       1
+#define ORCHESTRA_PACKET_OFFLOADING                1
 
 #if WITH_PPSD
-#define PPSD_HEADER_IE_IN_DATA_AND_ACK    1 /* Must be 1 if WITH_PPSD is 1*/
-#define PPSD_EP_POLICY_CELL_UTIL          1
+#define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
+#define PPSD_EP_POLICY_CELL_UTIL                   1
 #endif /* WITH_PPSD */
 
-#define PPSD_DBG_SLOT_TIMING              0
-#define PPSD_DBG_EP_ESSENTIAL             1
-#define PPSD_DBG_EP_OPERATION             0
+#define PPSD_DBG_SLOT_TIMING                       0
+#define PPSD_DBG_EP_ESSENTIAL                      1
+#define PPSD_DBG_EP_OPERATION                      0
 
-#if PPSD_TX_CCA
-#define TSCH_CONF_CCA_ENABLED             1
-#define PPSD_DBG_CCA_STATUS               0
-#define PPSD_CCA_EARLY_TX_NODE            0
+#if WITH_TSCH_TX_CCA
+#define TSCH_CONF_CCA_ENABLED                      1
+#define TSCH_TX_CCA_DBG_CCA_STATUS                 0
+#define TSCH_TX_CCA_EARLY_TX_NODE                  0
 #endif
 
 //#define PPSD_CONF_RX_WAIT                    800

@@ -2406,7 +2406,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
   static rtimer_clock_t tx_slot_timestamp_t5 = 0;
 #endif
 
-#if PPSD_CCA_EARLY_TX_NODE
+#if TSCH_TX_CCA_EARLY_TX_NODE
   static rtimer_clock_t tx_cca_offset = 0;
 #endif
 
@@ -2419,7 +2419,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
   PT_BEGIN(pt);
 
-#if PPSD_CCA_EARLY_TX_NODE
+#if TSCH_TX_CCA_EARLY_TX_NODE
   tx_cca_offset = tsch_timing[tsch_ts_ack_wait] * 2;
 #endif
 
@@ -2705,7 +2705,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         /* there is not enough time to turn radio off */
         /*  NETSTACK_RADIO.off(); */
         if(cca_status == 0) {
-#if PPSD_DBG_CCA_STATUS
+#if TSCH_TX_CCA_DBG_CCA_STATUS
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca busy"));
@@ -2725,7 +2725,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* TSCH_CCA_ENABLED */
         {
 
-#if PPSD_DBG_CCA_STATUS
+#if TSCH_TX_CCA_DBG_CCA_STATUS
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca idle"));
@@ -2740,7 +2740,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 #endif
 
-#if PPSD_CCA_EARLY_TX_NODE
+#if TSCH_TX_CCA_EARLY_TX_NODE
           /* delay before TX */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
                 tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX - tx_cca_offset, "TxBeforeTxU");
@@ -2763,7 +2763,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
           tx_count++;
           /* Save tx timestamp */
-#if PPSD_CCA_EARLY_TX_NODE
+#if TSCH_TX_CCA_EARLY_TX_NODE
           tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset] - tx_cca_offset;
 #else
           tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
@@ -2801,7 +2801,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode & (~RADIO_RX_MODE_ADDRESS_FILTER));
 #endif /* TSCH_HW_FRAME_FILTERING */
               /* Unicast: wait for ack after tx: sleep until ack time */
-#if PPSD_CCA_EARLY_TX_NODE
+#if TSCH_TX_CCA_EARLY_TX_NODE
               TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
                   tsch_timing[tsch_ts_tx_offset] - tx_cca_offset + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
 #else
@@ -2910,7 +2910,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               }
               if(ack_len != 0) {
                 if(is_time_source) {
-#if PPSD_CCA_EARLY_TX_NODE
+#if TSCH_TX_CCA_EARLY_TX_NODE
                   int32_t eack_time_correction = US_TO_RTIMERTICKS(ack_ies.ie_time_correction) - tx_cca_offset;
 #else
                   int32_t eack_time_correction = US_TO_RTIMERTICKS(ack_ies.ie_time_correction);
