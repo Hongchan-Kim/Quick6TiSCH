@@ -1978,7 +1978,43 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   drift_correction = 0;
   is_drift_correction_used = 0;
 
+#if 0//PPSD_DBG_TEMP
+  rtimer_clock_t ep_temp_tx_slot_end = RTIMER_NOW();
+  uint8_t ep_temp_tx_passed_ts;
+  ep_temp_tx_passed_ts = ((ep_temp_tx_slot_end - current_slot_start + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                          / tsch_timing[tsch_ts_timeslot_length]);
+  uint8_t ep_temp_tx_passed_ts2;
+  ep_temp_tx_passed_ts2 = ((RTIMER_CLOCK_DIFF(ep_temp_tx_slot_end, current_slot_start) + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                          / tsch_timing[tsch_ts_timeslot_length]);
+
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+          "ep result temp tx1 %u %u %u (%u %u)", 
+          ep_temp_tx_passed_ts,
+          ep_temp_tx_passed_ts2,
+          (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ep_temp_tx_slot_end, current_slot_start)),
+          ep_temp_tx_slot_end, current_slot_start);
+  );
+#endif
+
   process_poll(&tsch_pending_events_process);
+
+#if 0//PPSD_DBG_TEMP
+  ep_temp_tx_slot_end = RTIMER_NOW();
+  ep_temp_tx_passed_ts = ((ep_temp_tx_slot_end - current_slot_start + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                          / tsch_timing[tsch_ts_timeslot_length]);
+  ep_temp_tx_passed_ts2 = ((RTIMER_CLOCK_DIFF(ep_temp_tx_slot_end, current_slot_start) + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                          / tsch_timing[tsch_ts_timeslot_length]);
+
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+          "ep result temp tx2 %u %u %u (%u %u)", 
+          ep_temp_tx_passed_ts,
+          ep_temp_tx_passed_ts2,
+          (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ep_temp_tx_slot_end, current_slot_start)),
+          ep_temp_tx_slot_end, current_slot_start);
+  );
+#endif
 
   PT_END(pt);
 }
@@ -2298,7 +2334,44 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
   drift_correction = 0;
   is_drift_correction_used = 0;
 
+#if 0//PPSD_DBG_TEMP
+  rtimer_clock_t ep_temp_rx_slot_end = RTIMER_NOW();
+  uint8_t ep_temp_rx_passed_ts;
+  ep_temp_rx_passed_ts = ((ep_temp_rx_slot_end - current_slot_start + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                          / tsch_timing[tsch_ts_timeslot_length]);
+  uint8_t ep_temp_rx_passed_ts2;
+  ep_temp_rx_passed_ts2 = ((RTIMER_CLOCK_DIFF(ep_temp_rx_slot_end, current_slot_start) + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                          / tsch_timing[tsch_ts_timeslot_length]);
+
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+          "ep result temp rx1 %u %u %u (%u %u)", 
+          ep_temp_rx_passed_ts,
+          ep_temp_rx_passed_ts2,
+          (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ep_temp_rx_slot_end, current_slot_start)),
+          ep_temp_rx_slot_end, current_slot_start);
+  );
+#endif
+
   process_poll(&tsch_pending_events_process);
+
+#if 0//PPSD_DBG_TEMP
+  ep_temp_rx_slot_end = RTIMER_NOW();
+  ep_temp_rx_passed_ts = ((ep_temp_rx_slot_end - current_slot_start + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                          / tsch_timing[tsch_ts_timeslot_length]);
+  ep_temp_rx_passed_ts2 = ((RTIMER_CLOCK_DIFF(ep_temp_rx_slot_end, current_slot_start) + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                          / tsch_timing[tsch_ts_timeslot_length]);
+
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+          "ep result temp rx2 %u %u %u (%u %u)", 
+          ep_temp_rx_passed_ts,
+          ep_temp_rx_passed_ts2,
+          (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ep_temp_rx_slot_end, current_slot_start)),
+          ep_temp_rx_slot_end, current_slot_start);
+  );
+#endif
+
 
   PT_END(pt);
 }
@@ -3877,7 +3950,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         }
 
         rtimer_clock_t ppsd_slot_end = RTIMER_NOW();
-        ppsd_passed_timeslots = ((ppsd_slot_end - current_slot_start + tsch_timing[tsch_ts_timeslot_length] - 1) 
+        ppsd_passed_timeslots = ((RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start) + tsch_timing[tsch_ts_timeslot_length] - 1) 
                                 / tsch_timing[tsch_ts_timeslot_length]);
         TSCH_ASN_INC(tsch_current_asn, (ppsd_passed_timeslots - 1));
 
@@ -3889,10 +3962,11 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if PPSD_DBG_EP_ESSENTIAL
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ep result bcsf tx %u %u %u", 
+                    "ep result bcsf tx %u %u %u %u", 
                     ppsd_pkts_to_send, 
                     current_ep_tx_ok_count, 
-                    ppsd_passed_timeslots);
+                    ppsd_passed_timeslots,
+                    (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start)));
             );
 #endif
           }
@@ -3901,10 +3975,11 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if PPSD_DBG_EP_ESSENTIAL
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ep result ucsf tx %u %u %u", 
+                    "ep result ucsf tx %u %u %u %u", 
                     ppsd_pkts_to_send, 
                     current_ep_tx_ok_count, 
-                    ppsd_passed_timeslots);
+                    ppsd_passed_timeslots,
+                    (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start)));
             );
 #endif
           }
@@ -3916,10 +3991,11 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if PPSD_DBG_EP_ESSENTIAL
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ep result bcsf rx %u %u %u", 
+                    "ep result bcsf rx %u %u %u %u", 
                     ppsd_pkts_to_receive, 
                     current_ep_rx_ok_count, 
-                    ppsd_passed_timeslots);
+                    ppsd_passed_timeslots,
+                    (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start)));
             );
 #endif
           }
@@ -3928,10 +4004,11 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if PPSD_DBG_EP_ESSENTIAL
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ep result ucsf rx %u %u %u", 
+                    "ep result ucsf rx %u %u %u %u", 
                     ppsd_pkts_to_receive, 
                     current_ep_rx_ok_count, 
-                    ppsd_passed_timeslots);
+                    ppsd_passed_timeslots,
+                    (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start)));
             );
 #endif
           }
