@@ -13,11 +13,16 @@
 #if WITH_PPSD
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
 #define PPSD_EP_POLICY_CELL_UTIL                   1
+#define PPSD_EP_EXTRA_CHANNELS                     1 /* Extra channel hopping */
 #endif /* WITH_PPSD */
 
 #define PPSD_DBG_SLOT_TIMING                       0
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
+
+#if PPSD_EP_EXTRA_CHANNELS
+#define TSCH_PPSD_HOPPING_SEQUENCE_4_4 (uint8_t[]){ 11, 16, 19, 21 }
+#endif
 
 #if WITH_TSCH_TX_CCA
 #define TSCH_CONF_CCA_ENABLED                      1

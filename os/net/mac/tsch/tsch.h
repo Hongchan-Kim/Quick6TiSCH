@@ -278,6 +278,11 @@ extern uint16_t tsch_current_timeslot; // hckim
 /* TSCH channel hopping sequence */
 extern uint8_t tsch_hopping_sequence[TSCH_HOPPING_SEQUENCE_MAX_LEN];
 extern struct tsch_asn_divisor_t tsch_hopping_sequence_length;
+#if PPSD_EP_EXTRA_CHANNELS
+/* TSCH channel hopping sequence */
+extern uint8_t tsch_ppsd_hopping_sequence[TSCH_PPSD_HOPPING_SEQUENCE_MAX_LEN];
+extern struct tsch_asn_divisor_t tsch_ppsd_hopping_sequence_length;
+#endif
 /* TSCH timeslot timing (in micro-second) */
 extern tsch_timeslot_timing_usec tsch_timing_us;
 /* TSCH timeslot timing (in rtimer ticks) */

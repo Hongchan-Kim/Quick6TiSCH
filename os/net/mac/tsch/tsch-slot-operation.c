@@ -1295,6 +1295,17 @@ tsch_calculate_channel(struct tsch_asn_t *asn, uint16_t channel_offset)
   index_of_offset = (index_of_0 + channel_offset) % tsch_hopping_sequence_length.val;
   return tsch_hopping_sequence[index_of_offset];
 }
+/*---------------------------------------------------------------------------*/
+#if PPSD_EP_EXTRA_CHANNELS
+static uint8_t
+tsch_ppsd_calculate_channel(struct tsch_asn_t *asn, uint16_t channel_offset)
+{
+  uint16_t index_of_0, index_of_offset;
+  index_of_0 = TSCH_ASN_MOD(*asn, tsch_ppsd_hopping_sequence_length);
+  index_of_offset = (index_of_0 + channel_offset) % tsch_ppsd_hopping_sequence_length.val;
+  return tsch_ppsd_hopping_sequence[index_of_offset];
+}
+#endif
 
 /*---------------------------------------------------------------------------*/
 /* Timing utility functions */
@@ -3797,6 +3808,14 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       if(ppsd_link_scheduled) {
         ppsd_link_scheduled = 0;
         is_ppsd_slot = 1;
+
+        tsch_current_timeslot = current_link->timeslot;
+
+#if PPSD_EP_EXTRA_CHANNELS
+        /* Hop channel */
+        //tsch_current_channel_offset = tsch_get_channel_offset(current_link, current_packet);
+        tsch_current_channel = tsch_ppsd_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
+#endif
 
         NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
         /* Turn the radio on already here if configured so; necessary for radios with slow startup */

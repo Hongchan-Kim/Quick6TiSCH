@@ -594,6 +594,11 @@ NBR_TABLE(struct eb_stat, eb_stats);
 /* TSCH channel hopping sequence */
 uint8_t tsch_hopping_sequence[TSCH_HOPPING_SEQUENCE_MAX_LEN];
 struct tsch_asn_divisor_t tsch_hopping_sequence_length;
+#if PPSD_EP_EXTRA_CHANNELS
+/* TSCH channel hopping sequence */
+uint8_t tsch_ppsd_hopping_sequence[TSCH_PPSD_HOPPING_SEQUENCE_MAX_LEN];
+struct tsch_asn_divisor_t tsch_ppsd_hopping_sequence_length;
+#endif
 
 /* Default TSCH timeslot timing (in micro-second) */
 static const uint16_t *tsch_default_timing_us;
@@ -1162,6 +1167,11 @@ tsch_start_coordinator(void)
   /* Initialize hopping sequence as default */
   memcpy(tsch_hopping_sequence, TSCH_DEFAULT_HOPPING_SEQUENCE, sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE));
   TSCH_ASN_DIVISOR_INIT(tsch_hopping_sequence_length, sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE));
+#if PPSD_EP_EXTRA_CHANNELS
+  /* Initialize hopping sequence as default */
+  memcpy(tsch_ppsd_hopping_sequence, TSCH_PPSD_HOPPING_SEQUENCE, sizeof(TSCH_PPSD_HOPPING_SEQUENCE));
+  TSCH_ASN_DIVISOR_INIT(tsch_ppsd_hopping_sequence_length, sizeof(TSCH_PPSD_HOPPING_SEQUENCE));
+#endif
 #if TSCH_SCHEDULE_WITH_6TISCH_MINIMAL
   tsch_schedule_create_minimal();
 #endif
@@ -1256,6 +1266,10 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   if(ies.ie_channel_hopping_sequence_id == 0) {
     memcpy(tsch_hopping_sequence, TSCH_DEFAULT_HOPPING_SEQUENCE, sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE));
     TSCH_ASN_DIVISOR_INIT(tsch_hopping_sequence_length, sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE));
+#if PPSD_EP_EXTRA_CHANNELS
+    memcpy(tsch_ppsd_hopping_sequence, TSCH_PPSD_HOPPING_SEQUENCE, sizeof(TSCH_PPSD_HOPPING_SEQUENCE));
+    TSCH_ASN_DIVISOR_INIT(tsch_ppsd_hopping_sequence_length, sizeof(TSCH_PPSD_HOPPING_SEQUENCE));
+#endif
   } else {
     if(ies.ie_hopping_sequence_len <= sizeof(tsch_hopping_sequence)) {
       memcpy(tsch_hopping_sequence, ies.ie_hopping_sequence_list, ies.ie_hopping_sequence_len);

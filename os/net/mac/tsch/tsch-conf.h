@@ -160,6 +160,11 @@
 #define TSCH_HOPPING_SEQUENCE_MAX_LEN sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE)
 #endif
 
+#if PPSD_EP_EXTRA_CHANNELS
+#define TSCH_PPSD_HOPPING_SEQUENCE TSCH_PPSD_HOPPING_SEQUENCE_4_4
+#define TSCH_PPSD_HOPPING_SEQUENCE_MAX_LEN sizeof(TSCH_PPSD_HOPPING_SEQUENCE)
+#endif
+
 /******** Configuration: association *******/
 
 /* Start TSCH automatically after init? If not, the upper layers
