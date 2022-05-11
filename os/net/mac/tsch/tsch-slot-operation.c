@@ -216,16 +216,6 @@ struct tsch_packet *ppsd_array_packet[TSCH_DEQUEUED_ARRAY_SIZE];
 static uint8_t ppsd_array_hdr_len[TSCH_DEQUEUED_ARRAY_SIZE];
 static uint16_t ppsd_tx_seq = 1;
 
-static rtimer_clock_t ppsd_temp_tx1_t0 = 0;
-static rtimer_clock_t ppsd_temp_tx1_t1 = 0;
-static rtimer_clock_t ppsd_temp_tx1_t2 = 0;
-static rtimer_clock_t ppsd_temp_tx1_t2_1 = 0;
-static rtimer_clock_t ppsd_temp_tx1_t3 = 0;
-static rtimer_clock_t ppsd_temp_tx1_t4 = 0;
-static rtimer_clock_t ppsd_temp_tx1_t5 = 0;
-static rtimer_clock_t ppsd_temp_tx1_t6 = 0;
-static rtimer_clock_t ppsd_temp_tx1_t7 = 0;
-
 #if PPSD_TEMP_RX1
 static uint8_t ppsd_ack_buf[TSCH_PACKET_MAX_LEN];
 static int ppsd_ack_len;
@@ -1648,9 +1638,12 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
 #if PPSD_DBG_SLOT_TIMING
   static rtimer_clock_t ppsd_tx_slot_timestamp_t0 = 0;
-  static rtimer_clock_t ppsd_tx_slot_timestamp_t1 = 0;
-  static rtimer_clock_t ppsd_tx_slot_timestamp_t2 = 0;
-  static rtimer_clock_t ppsd_tx_slot_timestamp_t3 = 0;
+  static rtimer_clock_t ppsd_tx_slot_timestamp_t1_1 = 0;
+  static rtimer_clock_t ppsd_tx_slot_timestamp_t1_2 = 0;
+  static rtimer_clock_t ppsd_tx_slot_timestamp_t1_3 = 0;
+  static rtimer_clock_t ppsd_tx_slot_timestamp_t2_1 = 0;
+  static rtimer_clock_t ppsd_tx_slot_timestamp_t2_2 = 0;
+  static rtimer_clock_t ppsd_tx_slot_timestamp_t2_3 = 0;
   static rtimer_clock_t ppsd_tx_slot_timestamp_t4 = 0;
   static rtimer_clock_t ppsd_tx_slot_timestamp_t5 = 0;
 #endif
@@ -1661,19 +1654,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   PT_BEGIN(pt);
 
 #if PPSD_DBG_SLOT_TIMING
-  ppsd_tx_slot_timestamp_t0 = 0;
-  ppsd_tx_slot_timestamp_t1 = 0;
-  ppsd_tx_slot_timestamp_t2 = 0;
-  ppsd_tx_slot_timestamp_t3 = 0;
-  ppsd_tx_slot_timestamp_t4 = 0;
-  ppsd_tx_slot_timestamp_t5 = 0;
-
   ppsd_tx_slot_timestamp_t0 = RTIMER_NOW();
-
-  TSCH_LOG_ADD(tsch_log_message,
-      snprintf(log->message, sizeof(log->message),
-      "ep tx_t %u", 
-      ppsd_tx_slot_timestamp_t0 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t0, current_slot_start)) : 0));
 #endif
 
   ppsd_tx_seq = 1;
@@ -1681,11 +1662,11 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
   while(1) {
 #if PPSD_DBG_SLOT_TIMING
-    ppsd_tx_slot_timestamp_t1 = 0;
-    ppsd_tx_slot_timestamp_t2 = 0;
-    ppsd_tx_slot_timestamp_t3 = 0;
-
-    ppsd_tx_slot_timestamp_t1 = RTIMER_NOW();
+    if(ppsd_tx_seq == 1) {
+      ppsd_tx_slot_timestamp_t1_1 = RTIMER_NOW();
+    } else if(ppsd_tx_seq == 2) {
+      ppsd_tx_slot_timestamp_t2_1 = RTIMER_NOW();
+    }
 #endif
 
 #if PPSD_DBG_EP_OPERATION
@@ -1725,13 +1706,21 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
       }
 
 #if PPSD_DBG_SLOT_TIMING
-      ppsd_tx_slot_timestamp_t2 = RTIMER_NOW();
+    if(ppsd_tx_seq == 1) {
+      ppsd_tx_slot_timestamp_t1_2 = RTIMER_NOW();
+    } else if(ppsd_tx_seq == 2) {
+      ppsd_tx_slot_timestamp_t2_2 = RTIMER_NOW();
+    }
 #endif
 
       ppsd_mac_tx_status = NETSTACK_RADIO.transmit(ppsd_packet_len);
 
 #if PPSD_DBG_SLOT_TIMING
-      ppsd_tx_slot_timestamp_t3 = RTIMER_NOW();
+    if(ppsd_tx_seq == 1) {
+      ppsd_tx_slot_timestamp_t1_3 = RTIMER_NOW();
+    } else if(ppsd_tx_seq == 2) {
+      ppsd_tx_slot_timestamp_t2_3 = RTIMER_NOW();
+    }
 #endif
 
       tx_count++;
@@ -1752,18 +1741,6 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
     TSCH_LOG_ADD(tsch_log_message,
         snprintf(log->message, sizeof(log->message),
         "ep tx seq %u end", ppsd_tx_seq));
-#endif
-
-#if PPSD_DBG_SLOT_TIMING
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "ep tx_t %u(%u) %u(%u) %u(%u)", 
-        ppsd_tx_slot_timestamp_t1 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t1, current_slot_start)) : 0,
-        (unsigned)RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t1, current_slot_start),
-        ppsd_tx_slot_timestamp_t2 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t2, current_slot_start)) : 0,
-        (unsigned)RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t2, current_slot_start),
-        ppsd_tx_slot_timestamp_t3 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t3, current_slot_start)) : 0,
-        (unsigned)RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t3, current_slot_start)));
 #endif
 
     if(ppsd_tx_seq < ppsd_pkts_to_send) {
@@ -1805,12 +1782,6 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
 #if PPSD_DBG_SLOT_TIMING
   ppsd_tx_slot_timestamp_t5 = RTIMER_NOW();
-
-  TSCH_LOG_ADD(tsch_log_message,
-      snprintf(log->message, sizeof(log->message),
-      "ep tx_t %u %u", 
-      ppsd_tx_slot_timestamp_t4 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t4, current_slot_start)) : 0,
-      ppsd_tx_slot_timestamp_t5 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t5, current_slot_start)) : 0));
 #endif
 
   ack_len = NETSTACK_RADIO.read((void *)ackbuf, sizeof(ackbuf));
@@ -1843,6 +1814,39 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   }
 
   tsch_radio_off(TSCH_RADIO_CMD_ON_FORCE);
+
+#if PPSD_DBG_SLOT_TIMING
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+      "ep tx_t0 %u", 
+      ppsd_tx_slot_timestamp_t0 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t0, current_slot_start)) : 0));
+
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+      "ep tx_t1 %u(%u) %u(%u) %u(%u)", 
+      ppsd_tx_slot_timestamp_t1_1 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t1_1, current_slot_start)) : 0,
+      (unsigned)RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t1_1, current_slot_start),
+      ppsd_tx_slot_timestamp_t1_2 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t1_2, current_slot_start)) : 0,
+      (unsigned)RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t1_2, current_slot_start),
+      ppsd_tx_slot_timestamp_t1_3 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t1_3, current_slot_start)) : 0,
+      (unsigned)RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t1_3, current_slot_start)));
+
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+      "ep tx_t2 %u(%u) %u(%u) %u(%u)", 
+      ppsd_tx_slot_timestamp_t2_1 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t2_1, current_slot_start)) : 0,
+      (unsigned)RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t2_1, current_slot_start),
+      ppsd_tx_slot_timestamp_t2_2 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t2_2, current_slot_start)) : 0,
+      (unsigned)RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t2_2, current_slot_start),
+      ppsd_tx_slot_timestamp_t2_3 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t2_3, current_slot_start)) : 0,
+      (unsigned)RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t2_3, current_slot_start)));
+
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+      "ep tx_tA %u %u", 
+      ppsd_tx_slot_timestamp_t4 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t4, current_slot_start)) : 0,
+      ppsd_tx_slot_timestamp_t5 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t5, current_slot_start)) : 0));
+#endif
 
   current_ep_tx_ok_count = 0;
 
@@ -3564,9 +3568,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif 
 
     } else {
-      if(ppsd_link_scheduled && ppsd_pkts_to_send > 0) {
-        ppsd_temp_tx1_t3 = RTIMER_NOW();
-      } 
 #if WITH_PPSD
       if(!ppsd_link_scheduled) {
         ++tsch_unlocked_scheduled_any_cell_count; //hckim
@@ -3717,10 +3718,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif /* !WITH_OST */
 #endif /* WITH_PPSD */
 
-      if(ppsd_link_scheduled && ppsd_pkts_to_send > 0) {
-        ppsd_temp_tx1_t4 = RTIMER_NOW();
-      }
-
       int is_active_slot;
       TSCH_DEBUG_SLOT_START();
       tsch_in_slot_operation = 1;
@@ -3835,20 +3832,8 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         tsch_current_channel = tsch_ppsd_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
 #endif
 
-      if(ppsd_pkts_to_send > 0) {
-        ppsd_temp_tx1_t5 = RTIMER_NOW();
-      }
-
-      if(ppsd_pkts_to_send > 0) {
-        ppsd_temp_tx1_t6 = RTIMER_NOW();
-      }
-
         /* Turn the radio on already here if configured so; necessary for radios with slow startup */
         tsch_radio_on(TSCH_RADIO_CMD_ON_START_OF_TIMESLOT);
-
-      if(ppsd_pkts_to_send > 0) {
-        ppsd_temp_tx1_t7 = RTIMER_NOW();
-      }
 
         /* Decide whether it is a TX/RX/IDLE or OFF slot */
         /* Actual slot operation */
@@ -3930,37 +3915,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif
           }
         }
-
-      if(ppsd_pkts_to_send > 0) {
-        TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-            "trg3 %u(%u, %u) %u(%u, %u)", 
-            ppsd_temp_tx1_t3 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t3, current_slot_start)) : 0,
-            ppsd_temp_tx1_t3 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t3, current_slot_start) : 0,
-            ppsd_temp_tx1_t3,
-            ppsd_temp_tx1_t4 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t4, current_slot_start)) : 0,
-            ppsd_temp_tx1_t4 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t4, current_slot_start) : 0,
-            ppsd_temp_tx1_t4));
-        TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-            "trg4 %u(%u, %u) %u(%u, %u)", 
-            ppsd_temp_tx1_t5 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t5, current_slot_start)) : 0,
-            ppsd_temp_tx1_t5 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t5, current_slot_start) : 0,
-            ppsd_temp_tx1_t5,
-            ppsd_temp_tx1_t6 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t6, current_slot_start)) : 0,
-            ppsd_temp_tx1_t6 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t6, current_slot_start) : 0,
-            ppsd_temp_tx1_t6
-            ));
-        TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-            "trg5 %u(%u, %u) %u",
-            ppsd_temp_tx1_t7 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t7, current_slot_start)) : 0,
-            ppsd_temp_tx1_t7 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t7, current_slot_start) : 0,
-            ppsd_temp_tx1_t7,
-            current_slot_start));
-
-      }
-
         ppsd_pkts_to_send = 0;
         ppsd_pkts_to_receive = 0;
       } else {
@@ -4102,10 +4056,6 @@ ost_donothing:
       TSCH_DEBUG_SLOT_END();
     }
 
-  if(ppsd_link_scheduled) {
-    ppsd_temp_tx1_t0 = RTIMER_NOW();
-  }
-
     /* End of slot operation, schedule next slot or resynchronize */
 
     if(tsch_is_coordinator) {
@@ -4152,8 +4102,6 @@ ost_donothing:
           timeslot_diff = 1;
           backup_link = NULL;
 
-          ppsd_temp_tx1_t1 = RTIMER_NOW();
-
           if(ppsd_pkts_to_send > 0) {
 
             ppsd_tx_seq = 1;
@@ -4180,27 +4128,8 @@ ost_donothing:
               ((uint8_t *)(queuebuf_dataptr(ppsd_array_packet[i]->qb)))[ppsd_array_hdr_len[i] + 3] = (uint8_t)(((i + 1) >> 8) & 0xFF);
             }
 
-            ppsd_temp_tx1_t2 = RTIMER_NOW();
-
             NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
             tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
-            ppsd_temp_tx1_t2_1 = RTIMER_NOW();
-
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                "trg1 %u(%u) %u(%u) %u(%u)", 
-                ppsd_temp_tx1_t0 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t0, current_slot_start)) : 0,
-                ppsd_temp_tx1_t0 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t0, current_slot_start) : 0,
-                ppsd_temp_tx1_t1 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t1, current_slot_start)) : 0,
-                ppsd_temp_tx1_t1 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t1, current_slot_start) : 0,
-                ppsd_temp_tx1_t2 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t2, current_slot_start)) : 0,
-                ppsd_temp_tx1_t2 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t2, current_slot_start) : 0));
-
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                "trg1_1 %u(%u)", 
-                ppsd_temp_tx1_t2_1 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t2_1, current_slot_start)) : 0,
-                ppsd_temp_tx1_t2_1 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t2_1, current_slot_start) : 0));
           }
 
 #if PPSD_TEMP_RX1

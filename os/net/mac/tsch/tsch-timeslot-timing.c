@@ -119,11 +119,11 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 
 #if WITH_PPSD
 const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
-   946, /* ppsd_tx_offset_1 */
-   (946 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_1 */
+   992, /* ppsd_tx_offset_1 */
+   (992 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_1 */
 #if PPSD_TEMP_TX6
-   946, /* ppsd_tx_offset_2 */
-   (946 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_2 */
+   992, /* ppsd_tx_offset_2 */
+   (992 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_2 */
 #else
    1300, /* ppsd_tx_offset_2 */
    (1300 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_2 */
