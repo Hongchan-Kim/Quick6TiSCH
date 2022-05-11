@@ -1708,10 +1708,8 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
       if(ppsd_tx_seq == 1) { /* the first transmission */
         ppsd_tx_slot_curr_start = current_slot_start;
         ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_tx_offset_1];
-#if !PPSD_TEMP_TX4
         TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start, 
                                 ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX, "epTx1");
-#endif
       } else {
         ppsd_tx_slot_prev_start = ppsd_tx_slot_curr_start;
         ppsd_tx_slot_prev_offset = ppsd_tx_slot_curr_offset;
