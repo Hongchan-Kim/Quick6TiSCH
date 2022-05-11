@@ -13,10 +13,21 @@
 #if WITH_PPSD
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
 #define PPSD_EP_POLICY_CELL_UTIL                   1
-#define PPSD_EP_EXTRA_CHANNELS                     1 /* Extra channel hopping */
+#define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
+
+#define PPSD_TEMP_TRX                              1
+#define PPSD_TEMP_TX1                              1 /* Timeslot template opimization */
+#define PPSD_TEMP_TX2                              1 /* Timeslot template opimization */
+#define PPSD_TEMP_TX3                              1 /* Timeslot template opimization */
+#define PPSD_TEMP_TX4                              0 /* Timeslot template opimization */
+#define PPSD_TEMP_TX5                              1
+#define PPSD_TEMP_TX6                              1
+
+#define PPSD_TEMP_RX1                              1 /* Timeslot template opimization */
+
 #endif /* WITH_PPSD */
 
-#define PPSD_DBG_SLOT_TIMING                       0
+#define PPSD_DBG_SLOT_TIMING                       1
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
 
@@ -59,12 +70,12 @@
 #define IOTLAB_LYON_17                             9 /* 17 nodes */
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
-//#define IOTLAB_SITE                                IOTLAB_LYON_3
+#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_8
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
 
@@ -122,11 +133,11 @@
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (60 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (20 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 #endif
 
@@ -230,7 +241,7 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              211 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 #define TSCH_CONF_BURST_MAX_LEN                    0
 /* for log messages */
 #define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe

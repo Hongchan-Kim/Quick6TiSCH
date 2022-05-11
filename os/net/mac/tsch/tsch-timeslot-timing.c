@@ -110,10 +110,33 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 #ifdef PPSD_CONF_RX_WAIT
 #define PPSD_RX_WAIT PPSD_CONF_RX_WAIT
 #else
+#if PPSD_TEMP_TRX
+#define PPSD_RX_WAIT 200
+#else
 #define PPSD_RX_WAIT 400
+#endif
 #endif
 
 #if WITH_PPSD
+#if PPSD_TEMP_TX1
+const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
+   946, /* ppsd_tx_offset_1 */
+   (946 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_1 */
+#if PPSD_TEMP_TX6
+   946, /* ppsd_tx_offset_2 */
+   (946 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_2 */
+#else
+   1300, /* ppsd_tx_offset_2 */
+   (1300 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_2 */
+#endif
+   800,//800, /* RxAckDelay */
+   1000,//1000, /* TxAckDelay */
+  PPSD_RX_WAIT, /* RxWait */
+    400, /* AckWait */
+   2400, /* MaxAck */
+   4256, /* MaxTx */
+};
+#else
 const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
    1000, /* ppsd_tx_offset_1 */
    (1000 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_1 */
@@ -126,6 +149,7 @@ const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
    2400, /* MaxAck */
    4256, /* MaxTx */
 };
+#endif
 #endif
 
 /** @} */

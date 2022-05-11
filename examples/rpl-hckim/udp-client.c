@@ -89,7 +89,11 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer send_timer;
 
   static unsigned count = 1;
+#if PPSD_TEMP_TX5
+  static char str[81];
+#else
   static char str[32];
+#endif
   uip_ipaddr_t dest_ipaddr;
 
 #if WITH_VARYING_PPM
@@ -176,7 +180,12 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
 
+#if PPSD_TEMP_TX5
+        printf("tx_up sizeof str %d\n", sizeof(str));
+        snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
+#else
         snprintf(str, sizeof(str), "hello %d", count);
+#endif
         simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
         count++;
       }
