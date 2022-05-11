@@ -89,7 +89,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer send_timer;
 
   static unsigned count = 1;
-#if PPSD_TEMP_TX5
+#if PPSD_LONGEST_FRAME
   static char str[81];
 #else
   static char str[32];
@@ -180,7 +180,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
 
-#if PPSD_TEMP_TX5
+#if PPSD_LONGEST_FRAME
         printf("tx_up sizeof str %d\n", sizeof(str));
         snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
 #else

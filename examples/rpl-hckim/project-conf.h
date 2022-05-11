@@ -15,9 +15,8 @@
 #define PPSD_EP_POLICY_CELL_UTIL                   1
 #define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
 
-#define PPSD_TEMP_TRX                              1
-#define PPSD_TEMP_TX5                              1
-#define PPSD_TEMP_TX6                              1
+#define PPSD_LONGEST_FRAME                         1
+#define WITH_PPSD_NEW                              0
 
 #define PPSD_TEMP_RX1                              1 /* Timeslot template opimization */
 
@@ -70,8 +69,8 @@
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
-//#define IOTLAB_SITE                                IOTLAB_LYON_2
-#define IOTLAB_SITE                                IOTLAB_LYON_3
+#define IOTLAB_SITE                                IOTLAB_LYON_2
+//#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_8
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
 
@@ -121,7 +120,7 @@
  * Configure App
  */
 #if WITH_COOJA
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 20)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 #define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
