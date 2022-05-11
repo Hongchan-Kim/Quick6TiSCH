@@ -16,7 +16,6 @@
 #define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
 
 #define PPSD_TEMP_TRX                              1
-#define PPSD_TEMP_TX1                              1 /* Timeslot template opimization */
 #define PPSD_TEMP_TX2                              1 /* Timeslot template opimization */
 #define PPSD_TEMP_TX3                              1 /* Timeslot template opimization */
 #define PPSD_TEMP_TX4                              0 /* Timeslot template opimization */
