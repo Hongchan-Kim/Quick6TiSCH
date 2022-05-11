@@ -1676,10 +1676,6 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
       ppsd_tx_slot_timestamp_t0 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_t0, current_slot_start)) : 0));
 #endif
 
-#if PPSD_TEMP_TX2
-#else
-  tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
-#endif
   ppsd_tx_seq = 1;
   ppsd_curr_packet = ppsd_array_packet[ppsd_tx_seq - 1];
 
@@ -1698,89 +1694,66 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
         "ep tx seq %u begin", ppsd_tx_seq));
 #endif
 
-#if !PPSD_TEMP_TX3
-    if(ringbufindex_elements(&dequeued_ringbuf) + ppsd_tx_seq < TSCH_DEQUEUED_ARRAY_SIZE) {
-#endif
-#if !PPSD_TEMP_TX3
-      if(ppsd_curr_packet == NULL || ppsd_curr_packet->qb == NULL) {
-        ppsd_mac_tx_status = MAC_TX_ERR_FATAL;
-      } else {
-#endif
-        ppsd_packet_payload = queuebuf_dataptr(ppsd_curr_packet->qb);
-        ppsd_packet_len = queuebuf_datalen(ppsd_curr_packet->qb);
+    ppsd_packet_payload = queuebuf_dataptr(ppsd_curr_packet->qb);
+    ppsd_packet_len = queuebuf_datalen(ppsd_curr_packet->qb);
 
 #if PPSD_DBG_EP_OPERATION
-        ep_mac_seqno = ((uint8_t *)(ppsd_packet_payload))[2];
-        TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-            "ep tx mac seq %u", ep_mac_seqno));
+    ep_mac_seqno = ((uint8_t *)(ppsd_packet_payload))[2];
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "ep tx mac seq %u", ep_mac_seqno));
 #endif
 
-        if(NETSTACK_RADIO.prepare(ppsd_packet_payload, ppsd_packet_len) == 0) { /* 0 means success */
-          if(ppsd_tx_seq == 1) { /* the first transmission */
-            ppsd_tx_slot_curr_start = current_slot_start;
-            ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_tx_offset_1];
+    if(NETSTACK_RADIO.prepare(ppsd_packet_payload, ppsd_packet_len) == 0) { /* 0 means success */
+      if(ppsd_tx_seq == 1) { /* the first transmission */
+        ppsd_tx_slot_curr_start = current_slot_start;
+        ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_tx_offset_1];
 #if !PPSD_TEMP_TX4
-            TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start, 
-                                    ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX, "epTx1");
+        TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start, 
+                                ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX, "epTx1");
 #endif
-          } else {
-            ppsd_tx_slot_prev_start = ppsd_tx_slot_curr_start;
-            ppsd_tx_slot_prev_offset = ppsd_tx_slot_curr_offset;
-            ppsd_tx_slot_prev_duration = ppsd_tx_slot_curr_duration;
+      } else {
+        ppsd_tx_slot_prev_start = ppsd_tx_slot_curr_start;
+        ppsd_tx_slot_prev_offset = ppsd_tx_slot_curr_offset;
+        ppsd_tx_slot_prev_duration = ppsd_tx_slot_curr_duration;
 
-            ppsd_tx_slot_curr_start = ppsd_tx_slot_prev_start
-                                    + ppsd_tx_slot_prev_offset
-                                    + ppsd_tx_slot_prev_duration;
-            ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_tx_offset_2];
+        ppsd_tx_slot_curr_start = ppsd_tx_slot_prev_start
+                                + ppsd_tx_slot_prev_offset
+                                + ppsd_tx_slot_prev_duration;
+        ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_tx_offset_2];
 
-            TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start, 
-                                    ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX, "epTx2");
-          }
-
-#if PPSD_DBG_SLOT_TIMING
-          ppsd_tx_slot_timestamp_t2 = RTIMER_NOW();
-#endif
-
-          ppsd_mac_tx_status = NETSTACK_RADIO.transmit(ppsd_packet_len);
-
-#if PPSD_DBG_SLOT_TIMING
-          ppsd_tx_slot_timestamp_t3 = RTIMER_NOW();
-#endif
-
-          tx_count++;
-
-          ppsd_tx_slot_curr_duration = TSCH_PACKET_DURATION(ppsd_packet_len);
-          ppsd_tx_slot_curr_duration = MIN(ppsd_tx_slot_curr_duration, tsch_timing[tsch_ts_max_tx]);
-
-          if(ppsd_mac_tx_status == RADIO_TX_OK) {
-            ppsd_mac_tx_status = MAC_TX_NOACK; /* Not yet ACK received */
-          } else {
-            ppsd_mac_tx_status = MAC_TX_ERR;
-          }
-        } else {
-          ppsd_mac_tx_status = MAC_TX_ERR;
-        }
-#if !PPSD_TEMP_TX3
+        TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start, 
+                                ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX, "epTx2");
       }
+
+#if PPSD_DBG_SLOT_TIMING
+      ppsd_tx_slot_timestamp_t2 = RTIMER_NOW();
 #endif
+
+      ppsd_mac_tx_status = NETSTACK_RADIO.transmit(ppsd_packet_len);
+
+#if PPSD_DBG_SLOT_TIMING
+      ppsd_tx_slot_timestamp_t3 = RTIMER_NOW();
+#endif
+
+      tx_count++;
+
+      ppsd_tx_slot_curr_duration = TSCH_PACKET_DURATION(ppsd_packet_len);
+      ppsd_tx_slot_curr_duration = MIN(ppsd_tx_slot_curr_duration, tsch_timing[tsch_ts_max_tx]);
+
+      if(ppsd_mac_tx_status == RADIO_TX_OK) {
+        ppsd_mac_tx_status = MAC_TX_NOACK; /* Not yet ACK received */
+      } else {
+        ppsd_mac_tx_status = MAC_TX_ERR;
+      }
+    } else {
+      ppsd_mac_tx_status = MAC_TX_ERR;
+    }
 
 #if PPSD_DBG_EP_OPERATION
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "ep tx seq %u end", ppsd_tx_seq));
-#endif
-
-#if !PPSD_TEMP_TX3
-    } else {
-#if PPSD_DBG_EP_ESSENTIAL
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "!ep tx %u fail (full buf)", ppsd_tx_seq));
-#endif
-
-      break; /* No space in dequeued_array */
-    }
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "ep tx seq %u end", ppsd_tx_seq));
 #endif
 
 #if PPSD_DBG_SLOT_TIMING
@@ -3868,11 +3841,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         ppsd_temp_tx1_t5 = RTIMER_NOW();
       }
 
-#if PPSD_TEMP_TX2
-#else
-        NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
-#endif
-
       if(ppsd_pkts_to_send > 0) {
         ppsd_temp_tx1_t6 = RTIMER_NOW();
       }
@@ -4216,10 +4184,9 @@ ost_donothing:
 
             ppsd_temp_tx1_t2 = RTIMER_NOW();
 
-#if PPSD_TEMP_TX2
+            NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
             tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
             ppsd_temp_tx1_t2_1 = RTIMER_NOW();
-#endif
 
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
@@ -4231,14 +4198,11 @@ ost_donothing:
                 ppsd_temp_tx1_t2 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t2, current_slot_start)) : 0,
                 ppsd_temp_tx1_t2 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t2, current_slot_start) : 0));
 
-#if PPSD_TEMP_TX2
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
                 "trg1_1 %u(%u)", 
                 ppsd_temp_tx1_t2_1 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t2_1, current_slot_start)) : 0,
                 ppsd_temp_tx1_t2_1 != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_temp_tx1_t2_1, current_slot_start) : 0));
-#endif
-
           }
 
 #if PPSD_TEMP_RX1
