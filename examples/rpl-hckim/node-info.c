@@ -435,8 +435,8 @@ uint16_t iotlab_nodes[NODE_NUM][3] = {
 #elif IOTLAB_SITE == IOTLAB_LYON_2
 uint16_t iotlab_nodes[NODE_NUM][3] = {
   // {host name, uid, rx count}
-  {7, 0xa371, 0}, // root node
-  {3, 0x8676, 0}
+  {15, 0xa377, 0}, // root node
+  {14, 0x2860, 0}
 };
 #elif IOTLAB_SITE == IOTLAB_LYON_3
 uint16_t iotlab_nodes[NODE_NUM][3] = {
