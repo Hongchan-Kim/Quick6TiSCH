@@ -78,6 +78,7 @@
  * (TxOffset - (RxWait / 2)) instead
  */
 
+
 const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
    1800, /* CCAOffset */
 #if TSCH_CONF_CCA_ENABLED
@@ -107,7 +108,8 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
   10000, /* TimeslotLength */
 };
 
-const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9000 = {
+#if WITH_ATL
+const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9500 = {
    1800, /* CCAOffset */
 #if TSCH_CONF_CCA_ENABLED
     150, /* CCA */
@@ -115,8 +117,37 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9000 = {
   (2500 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
 #else
     128, /* CCA */
-   2120 - 800, /* TxOffset */
-  (2120 - 800 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
+   2120 - 300, /* TxOffset */
+  (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
+#endif
+#if WITH_PPSD
+   1300,
+   1500,
+#elif WITH_OST
+   OST_TSCH_TS_RX_ACK_DELAY, /* RxAckDelay - 1300 */
+   OST_TSCH_TS_TX_ACK_DELAY, /* TxAckDelay - 1500 */
+#else
+    800, /* RxAckDelay */
+   1000, /* TxAckDelay */
+#endif
+  TSCH_CONF_RX_WAIT, /* RxWait */
+    400, /* AckWait */
+    192, /* RxTx */
+   2400, /* MaxAck */
+   4256, /* MaxTx */
+   9500, /* TimeslotLength */
+};
+
+const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9000 = { 
+   1800, /* CCAOffset */
+#if TSCH_CONF_CCA_ENABLED
+    150, /* CCA */
+   2500, /* TxOffset */
+  (2500 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
+#else
+    128, /* CCA */
+   2120 - 700, /* TxOffset */
+   2120 - 700 - (TSCH_CONF_RX_WAIT / 2), /* RxOffset */
 #endif
 #if WITH_PPSD
    1300,
@@ -135,35 +166,7 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9000 = {
    4256, /* MaxTx */
    9000, /* TimeslotLength */
 };
-
-const tsch_timeslot_timing_usec tsch_timeslot_timing_us_8500 = {
-   1800, /* CCAOffset */
-#if TSCH_CONF_CCA_ENABLED
-    150, /* CCA */
-   2500, /* TxOffset */
-  (2500 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
-#else
-    128, /* CCA */
-   2120 - 1300, /* TxOffset */
-   2120 - 1820, /* RxOffset */
 #endif
-#if WITH_PPSD
-   1300,
-   1500,
-#elif WITH_OST
-   OST_TSCH_TS_RX_ACK_DELAY, /* RxAckDelay - 1300 */
-   OST_TSCH_TS_TX_ACK_DELAY, /* TxAckDelay - 1500 */
-#else
-    800, /* RxAckDelay */
-   1000, /* TxAckDelay */
-#endif
-  TSCH_CONF_RX_WAIT, /* RxWait */
-    400, /* AckWait */
-    192, /* RxTx */
-   2400, /* MaxAck */
-   4256, /* MaxTx */
-   8500, /* TimeslotLength */
-};
 
 #ifdef PPSD_CONF_RX_WAIT
 #define PPSD_RX_WAIT PPSD_CONF_RX_WAIT

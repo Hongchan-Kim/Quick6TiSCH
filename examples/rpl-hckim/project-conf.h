@@ -2,7 +2,7 @@
 #define PROJECT_CONF_H_
 
 #define PPSD_CCA_TX                    0
-#define PPSD_CCA_DBG_EARLY_TX_NODE     1
+#define PPSD_CCA_DBG_EARLY_TX_NODE     0
 #if PPSD_CCA_TX
 #define TSCH_CONF_CCA_ENABLED          1
 #define PPSD_CCA_DBG_STATUS            1
@@ -11,11 +11,12 @@
 #define PPSD_DBG                       1
 
 
+
 /*---------------------------------------------------------------------------*/
 /*
  * Exclusive period implementation
  */
-#define WITH_PPSD                   1
+#define WITH_PPSD                   0
 #define PPSD_DBG                    1
 
 //#define PPSD_CONF_RX_WAIT                    800
@@ -23,6 +24,11 @@
 #define PPSD_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 /*---------------------------------------------------------------------------*/
 
+/*---------------------------------------------------------------------------*/
+/*
+ * Adaptive timeslot length
+ */
+#define WITH_ATL                    1
 /*---------------------------------------------------------------------------*/
 /*
  * Configure testbed site, node num, topology
@@ -87,7 +93,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0 /*test*/
 /*---------------------------------------------------------------------------*/
 
 
@@ -96,10 +102,10 @@
  * Configure App
  */
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
-#define DOWNWARD_TRAFFIC                           0
-#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (60 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+#define DOWNWARD_TRAFFIC                           1
+#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 6)
+#define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (15 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)

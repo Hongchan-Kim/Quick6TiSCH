@@ -72,6 +72,9 @@ enum ieee802154e_payload_ie_id {
 /* c.f. IEEE 802.15.4e Table 4d */
 enum ieee802154e_mlme_short_subie_id {
   MLME_SHORT_IE_TSCH_SYNCHRONIZATION = 0x1a,
+#if WITH_ATL
+  MLME_SHORT_IE_TSCH_ADAPTIVE_TIMESLOT_LENGTH,
+#endif
   MLME_SHORT_IE_TSCH_SLOFTRAME_AND_LINK,
   MLME_SHORT_IE_TSCH_TIMESLOT,
   MLME_SHORT_IE_TSCH_HOPPING_TIMING,
@@ -278,6 +281,26 @@ frame80215e_create_ie_tsch_synchronization(uint8_t *buf, int len,
   }
 }
 
+#if WITH_ATL
+int
+frame80215e_create_ie_tsch_adaptive_timeslot_length(uint8_t *buf, int len, 
+    struct ieee802154_ies *ies)
+{
+  int ie_len = 5;
+  if(len >= 2 + ie_len && ies != NULL) {
+    buf[2] = ies->ie_trigger_asn.ls4b;
+    buf[3] = ies->ie_trigger_asn.ls4b >> 8;
+    buf[4] = ies->ie_trigger_asn.ls4b >> 16;
+    buf[5] = ies->ie_trigger_asn.ls4b >> 24;
+    buf[6] = ies->ie_trigger_asn.ms1b;
+    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_ADAPTIVE_TIMESLOT_LENGTH, ie_len);
+    return 2 + ie_len;
+  } else {
+    return -1;
+  }
+} 
+#endif
+
 /* MLME sub-IE. TSCH slotframe and link. Used in EBs: initial schedule */
 int
 frame80215e_create_ie_tsch_slotframe_and_link(uint8_t *buf, int len,
@@ -324,8 +347,8 @@ frame80215e_create_ie_tsch_timeslot(uint8_t *buf, int len,
   if(ies == NULL) {
     return -1;
   }
-  /* Only ID if ID == 0, else full timing description */
-  ie_len = ies->ie_tsch_timeslot_id == 0 ? 1 : 25;
+  /* Only ID if ID == 0, else full timing description */ 
+  ie_len = ies->ie_tsch_timeslot_id == 0 ? 1 : 25; 
   if(len >= 2 + ie_len) {
     buf[2] = ies->ie_tsch_timeslot_id;
     if(ies->ie_tsch_timeslot_id != 0) {
@@ -460,6 +483,22 @@ frame802154e_parse_mlme_short_ie(const uint8_t *buf, int len,
         return len;
       }
       break;
+
+  #if WITH_ATL
+    case MLME_SHORT_IE_TSCH_ADAPTIVE_TIMESLOT_LENGTH: 
+      if(len == 5) {
+        if(ies != NULL) {
+          ies->ie_trigger_asn.ls4b = (uint32_t)buf[0];
+          ies->ie_trigger_asn.ls4b |= (uint32_t)buf[1] << 8;
+          ies->ie_trigger_asn.ls4b |= (uint32_t)buf[2] << 16;
+          ies->ie_trigger_asn.ls4b |= (uint32_t)buf[3] << 24;
+          ies->ie_trigger_asn.ms1b = (uint8_t)buf[4];
+        }
+        return len;
+      }
+      break; 
+  #endif
+
     case MLME_SHORT_IE_TSCH_TIMESLOT:
       if(len == 1 || len == 25) {
         if(ies != NULL) {

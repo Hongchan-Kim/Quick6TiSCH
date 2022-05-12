@@ -187,8 +187,6 @@ static int is_burst_slot = 0;
 #endif
 /* Counts the length of the current burst */
 int tsch_current_burst_count = 0;
-/*timeslot length test param */
-int lengthchanged = 0;
 
 /* Protothread for association */
 PT_THREAD(tsch_scan(struct pt *pt));
@@ -2159,6 +2157,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
   static int packet_ready = 1;
 
   PT_BEGIN(pt);
+  
 
 #if PPSD_CCA_DBG_EARLY_TX_NODE
   tx_cca_offset = tsch_timing[tsch_ts_ack_wait] * 2;
@@ -2530,7 +2529,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               /* Wait for ACK to finish */
               RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
                                  ack_start_time, tsch_timing[tsch_ts_max_ack]);
-
+          
 #if PPSD_DBG
           timestamp_tx5 = RTIMER_NOW();
 #endif
@@ -3333,11 +3332,9 @@ static
 PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 {
   TSCH_DEBUG_INTERRUPT();
-  PT_BEGIN(&slot_operation_pt);
-
+  PT_BEGIN(&slot_operation_pt); 
   /* Loop over all active slots */
   while(tsch_is_associated) {
-
     if(current_link == NULL || tsch_lock_requested) { /* Skip slot operation if there is no link
                                                           or if there is a pending request for getting the lock */
       /* Issue a log whenever skipping a slot */
@@ -3856,17 +3853,13 @@ ost_donothing:
           && ost_exist_matching_slot(&tsch_current_asn)) { /* tsch-schedule is being changing, so locked */
           ost_remove_matching_slot();
         }
-#endif        
-        if(tsch_current_asn.ls4b > 0x0000afc8 && current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID && lengthchanged == 0){
-          printf("\ntimeslot length changed into 8.5ms : current ASN %02x.%08lx \n", tsch_current_asn.ms1b, tsch_current_asn.ls4b); 
-          tsch_change_timeslot_length(0);
-          lengthchanged = 1;
-        }
-        /*if(tsch_current_asn.ls4b > 0x00124f80 && current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID && lengthchanged == 1){
-          printf("\ntimeslot length changed into 10ms : current ASN %02x.%08lx \n", tsch_current_asn.ms1b, tsch_current_asn.ls4b); 
-          tsch_change_timeslot_length(1);
-          lengthchanged = 2;
-        } */
+#endif  
+
+#if WITH_ATL
+        if(tsch_current_asn.ls4b > tsch_trigger_asn.ls4b && current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID){
+          tsch_change_timeslot_length(length_next);
+        }     
+#endif
 
         /* Time to next wake up */
         time_to_next_active_slot = timeslot_diff * tsch_timing[tsch_ts_timeslot_length] + drift_correction;

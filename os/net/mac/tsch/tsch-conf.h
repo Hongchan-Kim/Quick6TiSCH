@@ -225,11 +225,11 @@
 #define TSCH_CHANNEL_SCAN_DURATION CLOCK_SECOND
 #endif
 
-/* TSCH EB: include timeslot timing Information Element? */
+/* TSCH EB: include timeslot timing Information Element? */ 
 #ifdef TSCH_PACKET_CONF_EB_WITH_TIMESLOT_TIMING
 #define TSCH_PACKET_EB_WITH_TIMESLOT_TIMING TSCH_PACKET_CONF_EB_WITH_TIMESLOT_TIMING
 #else
-#define TSCH_PACKET_EB_WITH_TIMESLOT_TIMING 0
+#define TSCH_PACKET_EB_WITH_TIMESLOT_TIMING 1
 #endif
 
 /* TSCH EB: include hopping sequence Information Element? */
@@ -443,8 +443,8 @@ by default, useful in case of duplicate seqno */
 #define TSCH_DEFAULT_TIMESLOT_TIMING TSCH_CONF_DEFAULT_TIMESLOT_TIMING
 #else
 #define TSCH_DEFAULT_TIMESLOT_TIMING tsch_timeslot_timing_us_10000
+#define TSCH_9500_TIMESLOT_TIMING tsch_timeslot_timing_us_9500
 #define TSCH_9000_TIMESLOT_TIMING tsch_timeslot_timing_us_9000
-#define TSCH_8500_TIMESLOT_TIMING tsch_timeslot_timing_us_8500
 #endif
 
 #if WITH_PPSD

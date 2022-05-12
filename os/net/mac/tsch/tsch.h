@@ -257,9 +257,16 @@ extern int32_t min_drift_seen;
 extern int32_t max_drift_seen;
 /* The TSCH standard 10ms timeslot timing */
 extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000;
+
+#if WITH_ATL
+extern struct tsch_asn_t tsch_trigger_asn; 
 /* TSCH modified timeslot timing */
+extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9500;
 extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9000;
-extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_8500;
+extern uint8_t length_now;
+extern uint8_t length_next;
+#endif
+
 #if WITH_PPSD
 extern ppsd_timeslot_timing_usec ppsd_timing_us;
 extern ppsd_timeslot_timing_ticks ppsd_timing;
@@ -339,7 +346,11 @@ void tsch_disassociate(void);
 /**
  *  Change timeslot length 
  */
-void tsch_change_timeslot_length(uint8_t flag);
+
+#if WITH_ATL
+void tsch_change_timeslot_length(uint8_t flag);  /*Set trigger ASN*/
+void tsch_coordinator_set_trigger_asn(void); 
+#endif
 
 #if WITH_OST
 void ost_post_process_rx_N(struct input_packet *);
