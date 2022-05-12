@@ -16,9 +16,8 @@
 #define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
 
 #define PPSD_LONGER_FRAME                          81 /* Max: 81 */
-#define WITH_PPSD_NEW                              0
 
-#define PPSD_TEMP_RX1                              1
+#define PPSD_TEMP_ACK                              1
 
 #endif /* WITH_PPSD */
 
