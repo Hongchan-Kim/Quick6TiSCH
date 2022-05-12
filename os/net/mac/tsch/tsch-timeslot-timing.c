@@ -111,7 +111,7 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 #define PPSD_RX_WAIT PPSD_CONF_RX_WAIT
 #else
 #if WITH_PPSD_NEW
-#define PPSD_RX_WAIT 200
+#define PPSD_RX_WAIT 400
 #else
 #define PPSD_RX_WAIT 400
 #endif
@@ -120,8 +120,8 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 #if WITH_PPSD
 #if WITH_PPSD_NEW
 const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
-   1300, /* ppsd_tx_offset_1 */
-   (1300 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_1 */
+   850, /* ppsd_tx_offset_1 */
+   (850 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_1 */
    1000, /* ppsd_tx_offset_2 */
    (1000 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_2 */
    600,//800, /* RxAckDelay */

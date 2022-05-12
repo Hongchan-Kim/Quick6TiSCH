@@ -15,10 +15,10 @@
 #define PPSD_EP_POLICY_CELL_UTIL                   1
 #define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
 
-#define PPSD_LONGEST_FRAME                         1
+#define PPSD_LONGER_FRAME                          81 /* Max: 81 */
 #define WITH_PPSD_NEW                              0
 
-#define PPSD_TEMP_RX1                              1 /* Timeslot template opimization */
+#define PPSD_TEMP_RX1                              1
 
 #endif /* WITH_PPSD */
 
@@ -111,7 +111,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
 /*---------------------------------------------------------------------------*/
 
 
@@ -132,7 +132,7 @@
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 #define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (20 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 #endif
 
