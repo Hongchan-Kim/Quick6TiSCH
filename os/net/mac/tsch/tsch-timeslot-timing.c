@@ -114,18 +114,31 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 #endif
 
 #if WITH_PPSD
+#if PPSD_USE_PREV_TIMING
 const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
-   850, /* ppsd_tx_offset_1 */
-   (850 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_1 */
-   1000, /* ppsd_tx_offset_2 */
-   (1000 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_2 */
-   600,//800, /* RxAckDelay */
+   1000, /* ppsd_tx_offset_1 */
+   (1000 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_1 */
+   1300, /* ppsd_tx_offset_2 */
+   (1300 - (PPSD_RX_WAIT / 2)), /* ppsd_rx_offset_2 */
+   800,//800, /* RxAckDelay */
    1000,//1000, /* TxAckDelay */
   PPSD_RX_WAIT, /* RxWait */
-    800, /* AckWait */
+    400, /* AckWait */
    2400, /* MaxAck */
    4256, /* MaxTx */
 };
+#else
+const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
+   1000, //850/* ppsd_tx_offset_1 */
+   (1000 - (PPSD_RX_WAIT / 2)), //850/* ppsd_rx_offset_1 */
+   800,//800, /* RxAckDelay */
+   1000,//1000, /* TxAckDelay */
+  PPSD_RX_WAIT, /* RxWait */
+    400, /* AckWait */
+   2400, /* MaxAck */
+   4256, /* MaxTx */
+};
+#endif
 #endif
 
 /** @} */

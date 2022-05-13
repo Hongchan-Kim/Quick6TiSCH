@@ -15,13 +15,18 @@
 #define PPSD_EP_POLICY_CELL_UTIL                   1
 #define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
 
-#define PPSD_LONGER_FRAME                          81 /* Max: 81 */
+#define PPSD_LONGER_FRAME                          0//81 /* Max: 81 */
 
-#define PPSD_TEMP_ACK                              1
-
+#define PPSD_USE_PREV_TIMING                       1
+#define PPSD_USE_BUSYWAIT                          0
+#define PPSD_TX_SLOT_FORWARD_OFFLOADING            0
+#define PPSD_TX_SLOT_BACKWARD_OFFLOADING           0
+#define PPSD_RX_SLOT_FORWARD_OFFLOADING            0
+#define PPSD_RX_SLOT_BACKWARD_OFFLOADING           0
 #endif /* WITH_PPSD */
 
 #define PPSD_DBG_SLOT_TIMING                       1
+#define PPSD_DBG_EP_SLOT_TIMING                    1
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
 
@@ -119,7 +124,7 @@
  * Configure App
  */
 #if WITH_COOJA
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 30)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 #define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
