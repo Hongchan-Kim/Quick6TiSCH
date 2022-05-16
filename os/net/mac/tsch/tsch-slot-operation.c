@@ -1588,11 +1588,11 @@ tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr,
     ep_expected_packet_len = queuebuf_datalen(ep_packet->qb);
     ep_expected_packet_duration = TSCH_PACKET_DURATION(ep_expected_packet_len);
 
-    ep_expected_tx_duration += (ppsd_timing[ppsd_tx_offset_1] + ep_expected_packet_duration);
+    ep_expected_tx_duration += (ppsd_timing[ppsd_ts_tx_offset] + ep_expected_packet_duration);
     ep_expected_all_tx_duration = ep_expected_tx_duration
                                 + ppsd_timing[ppsd_ts_rx_ack_delay] 
                                 + ppsd_timing[ppsd_ts_ack_wait] 
-                                + tsch_timing[tsch_ts_max_ack];
+                                + ppsd_timing[ppsd_ts_max_ack];
 
     ep_expected_timeslots = (ep_expected_all_tx_duration + tsch_timing[tsch_ts_timeslot_length] - 1) 
                           / tsch_timing[tsch_ts_timeslot_length];
@@ -1719,7 +1719,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 
           if(ppsd_tx_seq == 1) { /* the first transmission */
             ppsd_tx_slot_curr_start = current_slot_start;
-            ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_tx_offset_1];
+            ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_ts_tx_offset];
 #if PPSD_USE_BUSYWAIT
             RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_tx_slot_curr_start, ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX);
 #else
@@ -1735,7 +1735,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
                                     + ppsd_tx_slot_prev_offset
                                     + ppsd_tx_slot_prev_duration;
 
-            ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_tx_offset_1];
+            ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_ts_tx_offset];
 #if PPSD_USE_BUSYWAIT
             RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_tx_slot_curr_start, ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX);
 #else
@@ -1757,7 +1757,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
           tx_count++;
 
           ppsd_tx_slot_curr_duration = TSCH_PACKET_DURATION(ppsd_packet_len);
-          ppsd_tx_slot_curr_duration = MIN(ppsd_tx_slot_curr_duration, tsch_timing[tsch_ts_max_tx]);
+          ppsd_tx_slot_curr_duration = MIN(ppsd_tx_slot_curr_duration, ppsd_timing[ppsd_ts_max_tx]);
 
           if(ppsd_mac_tx_status == RADIO_TX_OK) {
             ppsd_mac_tx_status = MAC_TX_NOACK; /* Not yet ACK received */
@@ -1811,15 +1811,14 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   ppsd_tx_slot_timestamp_tA[0] = RTIMER_NOW();
 #endif
 
-#if 1
-  ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_tx_offset_1] + ppsd_tx_slot_curr_duration + ppsd_timing[ppsd_ts_rx_ack_delay];
+  ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_ts_tx_offset] + ppsd_tx_slot_curr_duration + ppsd_timing[ppsd_ts_rx_ack_delay];
 #if PPSD_USE_BUSYWAIT
   RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_tx_slot_curr_start, ppsd_tx_slot_curr_offset);
 #else
   TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start,
                           ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_RX, "epTx3");
 #endif
-  ppsd_tx_slot_curr_offset = (ppsd_timing[ppsd_tx_offset_1] + tsch_timing[tsch_ts_max_tx]) * ppsd_pkts_to_send
+  ppsd_tx_slot_curr_offset = (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * ppsd_pkts_to_send
                           + ppsd_timing[ppsd_ts_rx_ack_delay] + ppsd_timing[ppsd_ts_ack_wait];
 
   uint8_t ackbuf[TSCH_PACKET_MAX_LEN];
@@ -1828,17 +1827,6 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   struct ieee802154_ies ack_ies;
   uint8_t ack_hdrlen;
   frame802154_t frame;
-#else
-  ppsd_tx_slot_curr_offset = (ppsd_timing[ppsd_tx_offset_1] + tsch_timing[tsch_ts_max_tx]) * ppsd_pkts_to_send
-                          + ppsd_timing[ppsd_ts_rx_ack_delay] + ppsd_timing[ppsd_ts_ack_wait];
-
-  uint8_t ackbuf[TSCH_PACKET_MAX_LEN];
-  int ack_len;
-  rtimer_clock_t ack_start_time;
-  struct ieee802154_ies ack_ies;
-  uint8_t ack_hdrlen;
-  frame802154_t frame;
-#endif
 
 #if PPSD_DBG_EP_SLOT_TIMING /* tx_tA2: After ts_rx_ack_delay */
   ppsd_tx_slot_timestamp_tA[1] = RTIMER_NOW();
@@ -1855,7 +1843,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
   RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
-                            ack_start_time, tsch_timing[tsch_ts_max_ack]);
+                            ack_start_time, ppsd_timing[ppsd_ts_max_ack]);
 
   ack_len = NETSTACK_RADIO.read((void *)ackbuf, sizeof(ackbuf));
 
@@ -2087,9 +2075,9 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 
       if(ppsd_last_rx_seq == 0) {
         ppsd_rx_slot_curr_start = current_slot_start;
-        ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_rx_offset_1];
-        ppsd_rx_slot_curr_timeout = ppsd_timing[ppsd_rx_offset_1] + ppsd_timing[ppsd_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]
-                                  + (ppsd_timing[ppsd_tx_offset_1] + tsch_timing[tsch_ts_max_tx]) * (ppsd_pkts_to_receive - 1);
+        ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_ts_rx_offset];
+        ppsd_rx_slot_curr_timeout = ppsd_timing[ppsd_ts_rx_offset] + ppsd_timing[ppsd_ts_rx_wait] + ppsd_timing[ppsd_ts_max_tx]
+                                  + (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * (ppsd_pkts_to_receive - 1);
 #if PPSD_USE_BUSYWAIT
         RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_rx_slot_curr_start, ppsd_rx_slot_curr_offset);
 #else
@@ -2098,9 +2086,9 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
       } else {
         ppsd_rx_slot_curr_start = ppsd_rx_slot_last_valid_reception_start + ppsd_rx_slot_last_valid_duration;
-        ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_rx_offset_1];
-        ppsd_rx_slot_curr_timeout = ppsd_timing[ppsd_rx_offset_1] + ppsd_timing[ppsd_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]
-                                  + (ppsd_timing[ppsd_tx_offset_1] + tsch_timing[tsch_ts_max_tx]) * (ppsd_pkts_to_receive - ppsd_last_rx_seq - 1);
+        ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_ts_rx_offset];
+        ppsd_rx_slot_curr_timeout = ppsd_timing[ppsd_ts_rx_offset] + ppsd_timing[ppsd_ts_rx_wait] + ppsd_timing[ppsd_ts_max_tx]
+                                  + (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * (ppsd_pkts_to_receive - ppsd_last_rx_seq - 1);
 #if PPSD_USE_BUSYWAIT
         RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_rx_slot_curr_start, ppsd_rx_slot_curr_offset);
 #else
@@ -2135,7 +2123,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
         RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
-            ppsd_rx_slot_curr_reception_start, tsch_timing[tsch_ts_max_tx]);
+            ppsd_rx_slot_curr_reception_start, ppsd_timing[ppsd_ts_max_tx]);
 
 #if PPSD_DBG_EP_SLOT_TIMING /* After receiving_packet */
         ppsd_rx_slot_timestamp_t[current_ep_rx_ok_count][3] = RTIMER_NOW();
@@ -2156,7 +2144,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
             frame802154_extract_linkaddr(&ppsd_frame, &ppsd_source_address, &ppsd_destination_address);
 
           ppsd_rx_slot_curr_duration = TSCH_PACKET_DURATION(ppsd_current_input->len);
-          ppsd_rx_slot_curr_duration = MIN(ppsd_rx_slot_curr_duration, tsch_timing[tsch_ts_max_tx]);
+          ppsd_rx_slot_curr_duration = MIN(ppsd_rx_slot_curr_duration, ppsd_timing[ppsd_ts_max_tx]);
 
           if(!ppsd_frame_valid) {
             TSCH_LOG_ADD(tsch_log_message,
@@ -2258,8 +2246,8 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 
 
     if(ppsd_last_rx_seq >= ppsd_pkts_to_receive
-      || !RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start + ppsd_timing[ppsd_rx_offset_1] + ppsd_timing[ppsd_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]
-                                            + (ppsd_timing[ppsd_tx_offset_1] + tsch_timing[tsch_ts_max_tx]) * (ppsd_pkts_to_receive - 1))) {
+      || !RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start + ppsd_timing[ppsd_ts_rx_offset] + ppsd_timing[ppsd_ts_rx_wait] + ppsd_timing[ppsd_ts_max_tx]
+                                            + (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * (ppsd_pkts_to_receive - 1))) {
       if(ppsd_last_rx_seq >= ppsd_pkts_to_receive) {
 #if PPSD_DBG_EP_OPERATION
         TSCH_LOG_ADD(tsch_log_message,
@@ -2268,8 +2256,8 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
       }
 
-      if(!RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start + ppsd_timing[ppsd_rx_offset_1] + ppsd_timing[ppsd_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]
-                                            + (ppsd_timing[ppsd_tx_offset_1] + tsch_timing[tsch_ts_max_tx]) * (ppsd_pkts_to_receive - 1))) {
+      if(!RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start + ppsd_timing[ppsd_ts_rx_offset] + ppsd_timing[ppsd_ts_rx_wait] + ppsd_timing[ppsd_ts_max_tx]
+                                            + (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * (ppsd_pkts_to_receive - 1))) {
 #if PPSD_DBG_EP_OPERATION
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
