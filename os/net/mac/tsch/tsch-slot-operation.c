@@ -1919,9 +1919,9 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
         ppsd_tx_slot_timestamp_tA[j] != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_tA[j], current_slot_start)) : 0,
         (unsigned)RTIMER_CLOCK_DIFF(ppsd_tx_slot_timestamp_tA[j], current_slot_start)));    
   }
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "ep ppsd_ack_seen %u", ppsd_ack_seen));
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+      "ep A_seen %u A_len %u(%u, %u)", ppsd_ack_seen, ack_len, (unsigned)TSCH_PACKET_DURATION(ack_len), (unsigned)RTIMERTICKS_TO_US(TSCH_PACKET_DURATION(ack_len))));
 
   ppsd_tx_slot_timestamp_t0 = 0;
   for(j = 0; j < TSCH_DEQUEUED_ARRAY_SIZE; j++) {
@@ -2350,6 +2350,9 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
         ppsd_rx_slot_timestamp_tA[j] != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(ppsd_rx_slot_timestamp_tA[j], current_slot_start)) : 0,
         (unsigned)RTIMER_CLOCK_DIFF(ppsd_rx_slot_timestamp_tA[j], current_slot_start)));
   }
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+      "ep A_len %u(%u, %u)", ppsd_ack_len, (unsigned)TSCH_PACKET_DURATION(ppsd_ack_len), (unsigned)RTIMERTICKS_TO_US(TSCH_PACKET_DURATION(ppsd_ack_len))));
 
   ppsd_rx_slot_timestamp_t0 = 0;
   for(j = 0; j < TSCH_MAX_INCOMING_PACKETS; j++) {

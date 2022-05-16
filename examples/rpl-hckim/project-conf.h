@@ -23,8 +23,6 @@
 
 #define PPSD_USE_BUSYWAIT                          0
 
-#define PPSD_TEMP 1
-
 #endif /* WITH_PPSD */
 
 #define PPSD_DBG_SLOT_TIMING                       1
