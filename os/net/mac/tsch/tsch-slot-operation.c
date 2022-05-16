@@ -1606,7 +1606,7 @@ tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr,
         pkts1 = i;
         pkts1_updated = 1;
       }
-      if(ep_expected_advantage > ep_expected_max_advantage) {
+      if(ep_expected_advantage >= ep_expected_max_advantage) {
         pkts2 = i;
         ep_expected_max_advantage = ep_expected_advantage;
       }
