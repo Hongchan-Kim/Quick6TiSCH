@@ -89,8 +89,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer send_timer;
 
   static unsigned count = 1;
-#if PPSD_LONGER_FRAME
-  static char str[PPSD_LONGER_FRAME];
+#if PPSD_APP_PAYLOAD_LEN_CONTROL
+  static char str[PPSD_APP_PAYLOAD_LEN_CONTROL];
 #else
   static char str[32];
 #endif
@@ -160,7 +160,11 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
 
+#if PPSD_APP_PAYLOAD_LEN_CONTROL
+        snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
+#else
         snprintf(str, sizeof(str), "hello %d", count);
+#endif
         simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
         count++;
         varycount++;
@@ -180,7 +184,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
 
-#if PPSD_LONGER_FRAME
+#if PPSD_APP_PAYLOAD_LEN_CONTROL
         snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
 #else
         snprintf(str, sizeof(str), "hello %d", count);

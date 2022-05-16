@@ -11,6 +11,8 @@
 #define ORCHESTRA_PACKET_OFFLOADING                1
 
 #if WITH_PPSD
+#define PPSD_APP_PAYLOAD_LEN_CONTROL               64 /* Max in single hop: 81, Max in multi hop: 64 */
+
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
 #define PPSD_EP_POLICY_CELL_UTIL                   0
 #define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
@@ -18,8 +20,6 @@
 #define PPSD_TX_SLOT_BACKWARD_OFFLOADING           1
 #define PPSD_RX_SLOT_FORWARD_OFFLOADING            1
 #define PPSD_RX_SLOT_BACKWARD_OFFLOADING           1
-
-#define PPSD_LONGER_FRAME                          81 /* Max in single hop: 81, Max in multi hop: 64 */
 
 #define PPSD_USE_BUSYWAIT                          0
 
@@ -245,7 +245,7 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              211 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              307 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 //#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 #define TSCH_CONF_BURST_MAX_LEN                    0
 /* for log messages */
