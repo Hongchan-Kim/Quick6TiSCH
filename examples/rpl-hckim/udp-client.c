@@ -181,7 +181,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_("\n");
 
 #if PPSD_LONGER_FRAME
-        printf("tx_up sizeof str %d\n", sizeof(str));
         snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
 #else
         snprintf(str, sizeof(str), "hello %d", count);
