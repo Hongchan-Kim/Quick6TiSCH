@@ -6,26 +6,27 @@
  * Exclusive period implementation
  */
 #define WITH_TSCH_TX_CCA                           1
-#define WITH_PPSD                                  1
+#define WITH_PPSD                                  0
 
 #define ORCHESTRA_PACKET_OFFLOADING                1
+/* Wihtout EP: Max in single hop: 87, Max in multi hop: 70
+   With EP: Max in single hop: 81, Max in multi hop: 64 */
+#define PPSD_APP_PAYLOAD_LEN_CONTROL               87
 
 #if WITH_PPSD
-#define PPSD_APP_PAYLOAD_LEN_CONTROL               64 /* Max in single hop: 81, Max in multi hop: 64 */
-
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
-#define PPSD_EP_POLICY_CELL_UTIL                   0
-#define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
+#define PPSD_EP_POLICY_CELL_UTIL                   1
 #define PPSD_TX_SLOT_FORWARD_OFFLOADING            1
 #define PPSD_TX_SLOT_BACKWARD_OFFLOADING           1
 #define PPSD_RX_SLOT_FORWARD_OFFLOADING            1
 #define PPSD_RX_SLOT_BACKWARD_OFFLOADING           1
 
+#define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
 #define PPSD_USE_BUSYWAIT                          0
 
 #endif /* WITH_PPSD */
 
-#define PPSD_DBG_SLOT_TIMING                       1
+#define PPSD_DBG_REGULAR_SLOT_TIMING               1
 #define PPSD_DBG_EP_SLOT_TIMING                    1
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
@@ -132,14 +133,14 @@
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
-//#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
+//#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 #define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
-//#define APP_START_DELAY                            (40 * 60 * CLOCK_SECOND)
-//#define APP_DATA_PERIOD                            (20 * 60 * CLOCK_SECOND)
+//#define APP_START_DELAY                            (60 * 60 * CLOCK_SECOND)
+//#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 #endif
 
@@ -243,8 +244,8 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              307 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
-//#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+//#define ORCHESTRA_CONF_UNICAST_PERIOD              307 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 #define TSCH_CONF_BURST_MAX_LEN                    0
 /* for log messages */
 #define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe

@@ -235,6 +235,14 @@ static rtimer_clock_t ppsd_rx_slot_timestamp_tA[4];
 #endif
 #endif /* WITH_PPSD */
 
+#if PPSD_DBG_REGULAR_SLOT_TIMING
+static rtimer_clock_t regular_slot_timestamp_t[2];
+static uint8_t regular_tx_packet_len;
+static uint8_t regular_tx_do_wait_for_ack;
+static rtimer_clock_t regular_tx_slot_timestamp_t[15];
+static rtimer_clock_t regular_rx_slot_timestamp_t[13];
+#endif
+
 #if WITH_OST /* OST-00-03: struct for t_offset */
 typedef struct ost_t_offset_candidate {
   uint8_t installable;
@@ -2388,17 +2396,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
    * 7. Schedule mac_call_sent_callback
    **/
 
-#if PPSD_DBG_SLOT_TIMING
-  static rtimer_clock_t tx_slot_timestamp_t0 = 0;
-  static rtimer_clock_t tx_slot_timestamp_t1_0 = 0;
-  static rtimer_clock_t tx_slot_timestamp_t1_1 = 0;
-  static rtimer_clock_t tx_slot_timestamp_t1_2 = 0;
-  static rtimer_clock_t tx_slot_timestamp_t2 = 0;
-  static rtimer_clock_t tx_slot_timestamp_t3 = 0;
-  static rtimer_clock_t tx_slot_timestamp_t4 = 0;
-  static rtimer_clock_t tx_slot_timestamp_t5 = 0;
-#endif
-
 #if TSCH_TX_CCA_EARLY_TX_NODE
   static rtimer_clock_t tx_cca_offset = 0;
 #endif
@@ -2418,22 +2415,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
   TSCH_DEBUG_TX_EVENT();
 
-#if PPSD_DBG_SLOT_TIMING
-  tx_slot_timestamp_t0 = 0;
-  tx_slot_timestamp_t1_0 = 0;
-  tx_slot_timestamp_t1_1 = 0;
-  tx_slot_timestamp_t1_2 = 0;
-  tx_slot_timestamp_t2 = 0;
-  tx_slot_timestamp_t3 = 0;
-  tx_slot_timestamp_t4 = 0;
-  tx_slot_timestamp_t5 = 0;
-
-  tx_slot_timestamp_t0 = RTIMER_NOW();
-
-  TSCH_LOG_ADD(tsch_log_message,
-      snprintf(log->message, sizeof(log->message),
-      "tx_t %u", 
-      tx_slot_timestamp_t0 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(tx_slot_timestamp_t0, current_slot_start)) : 0));
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: start of tsch_tx_slot */
+  regular_tx_slot_timestamp_t[0] = RTIMER_NOW();
 #endif
 
   /* First check if we have space to store a newly dequeued packet (in case of
@@ -2476,6 +2459,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       packet_len = queuebuf_datalen(current_packet->qb);
       /* if is this a broadcast packet, don't wait for ack */
       do_wait_for_ack = !current_neighbor->is_broadcast;
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING
+      regular_tx_packet_len = packet_len;
+      regular_tx_do_wait_for_ack = do_wait_for_ack;
+#endif
+
 #if WITH_PPSD
       ppsd_link_requested = 0;
       
@@ -2670,9 +2659,17 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       }
 #endif /* LLSEC802154_ENABLED */
 
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: before RADIO.prepare() */
+      regular_tx_slot_timestamp_t[1] = RTIMER_NOW();
+#endif
+
       /* prepare packet to send: copy to radio buffer */
       if(packet_ready && NETSTACK_RADIO.prepare(packet, packet_len) == 0) { /* 0 means success */
         static rtimer_clock_t tx_duration;
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: after RADIO.prepare(), before set cca_offset */
+        regular_tx_slot_timestamp_t[2] = RTIMER_NOW();
+#endif
 
 #if TSCH_CCA_ENABLED
         cca_status = 1;
@@ -2680,14 +2677,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
         TSCH_DEBUG_TX_EVENT();
 
-#if PPSD_DBG_SLOT_TIMING
-        tx_slot_timestamp_t1_0 = RTIMER_NOW();
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: cca_offset expired, before tsch_radio_on() */
+        regular_tx_slot_timestamp_t[3] = RTIMER_NOW();
 #endif
 
         tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
 
-#if PPSD_DBG_SLOT_TIMING
-        tx_slot_timestamp_t1_1 = RTIMER_NOW();
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: after tsch_radio_on(), before CCA */
+        regular_tx_slot_timestamp_t[4] = RTIMER_NOW();
 #endif
 
         /* CCA */
@@ -2695,8 +2692,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                            current_slot_start, tsch_timing[tsch_ts_cca_offset] + tsch_timing[tsch_ts_cca]);
         TSCH_DEBUG_TX_EVENT();
 
-#if PPSD_DBG_SLOT_TIMING
-        tx_slot_timestamp_t1_2 = RTIMER_NOW();
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: after CCA */
+        regular_tx_slot_timestamp_t[5] = RTIMER_NOW();
 #endif
 
         /* there is not enough time to turn radio off */
@@ -2747,15 +2744,15 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
           TSCH_DEBUG_TX_EVENT();
 
-#if PPSD_DBG_SLOT_TIMING
-          tx_slot_timestamp_t2 = RTIMER_NOW();
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: after tx_offset, before RADIO.transmit() */
+          regular_tx_slot_timestamp_t[6] = RTIMER_NOW();
 #endif
 
           /* send packet already in radio tx buffer */
           mac_tx_status = NETSTACK_RADIO.transmit(packet_len);
 
-#if PPSD_DBG_SLOT_TIMING
-          tx_slot_timestamp_t3 = RTIMER_NOW();
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: after RADIO.transmit() */
+          regular_tx_slot_timestamp_t[7] = RTIMER_NOW();
 #endif
 
           tx_count++;
@@ -2778,8 +2775,17 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           tx_duration = tsch_timing[tsch_ts_max_tx];
 #endif
 #endif
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: after RADIO.transmit(), before turn_radio_off() */
+          regular_tx_slot_timestamp_t[8] = RTIMER_NOW();
+#endif
+
           /* turn tadio off -- will turn on again to wait for ACK if needed */
           tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: after turn_radio_off() */
+          regular_tx_slot_timestamp_t[9] = RTIMER_NOW();
+#endif
 
           if(mac_tx_status == RADIO_TX_OK) {
             if(do_wait_for_ack) {
@@ -2805,29 +2811,44 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
                   tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
 #endif
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Before turn_radio_on() for ACK */
+              regular_tx_slot_timestamp_t[10] = RTIMER_NOW();
+#endif
+
               TSCH_DEBUG_TX_EVENT();
               tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* After turn_radio_on() for ACK */
+              regular_tx_slot_timestamp_t[11] = RTIMER_NOW();
+#endif
+
               /* Wait for ACK to come */
               RTIMER_BUSYWAIT_UNTIL_ABS(NETSTACK_RADIO.receiving_packet(),
                   tx_start_time, tx_duration + tsch_timing[tsch_ts_rx_ack_delay] + tsch_timing[tsch_ts_ack_wait] + RADIO_DELAY_BEFORE_DETECT);
               TSCH_DEBUG_TX_EVENT();
 
-#if PPSD_DBG_SLOT_TIMING
-              tx_slot_timestamp_t4 = RTIMER_NOW();
-#endif
-
               ack_start_time = RTIMER_NOW() - RADIO_DELAY_BEFORE_DETECT;
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: ACK start time */
+              regular_tx_slot_timestamp_t[12] = ack_start_time;
+#endif
 
               /* Wait for ACK to finish */
               RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
                                  ack_start_time, tsch_timing[tsch_ts_max_ack]);
               TSCH_DEBUG_TX_EVENT();
 
-#if PPSD_DBG_SLOT_TIMING
-              tx_slot_timestamp_t5 = RTIMER_NOW();
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: ACK end time, before turn_radio_off() */
+              regular_tx_slot_timestamp_t[13] = RTIMER_NOW();
 #endif
 
               tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
+
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: after turn_radio_off() for ACK */
+              regular_tx_slot_timestamp_t[14] = RTIMER_NOW();
+#endif
 
 #if TSCH_HW_FRAME_FILTERING
               /* Leaving promiscuous mode */
@@ -2970,22 +2991,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       }
     }
 
-#if PPSD_DBG_SLOT_TIMING
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "tx_t %u %u %u",
-        tx_slot_timestamp_t1_0 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(tx_slot_timestamp_t1_0, current_slot_start)) : 0,
-        tx_slot_timestamp_t1_1 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(tx_slot_timestamp_t1_1, current_slot_start)) : 0,
-        tx_slot_timestamp_t1_2 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(tx_slot_timestamp_t1_2, current_slot_start)) : 0));
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "tx_t %u %u %u %u",
-        tx_slot_timestamp_t2 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(tx_slot_timestamp_t2, current_slot_start)) : 0,
-        tx_slot_timestamp_t3 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(tx_slot_timestamp_t3, current_slot_start)) : 0,
-        tx_slot_timestamp_t4 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(tx_slot_timestamp_t4, current_slot_start)) : 0,
-        tx_slot_timestamp_t5 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(tx_slot_timestamp_t5, current_slot_start)) : 0));
-#endif
-
     tsch_radio_off(TSCH_RADIO_CMD_OFF_END_OF_TIMESLOT);
 
     current_packet->transmissions++;
@@ -3024,6 +3029,41 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         linkaddr_copy(&log->tx.dest, queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER));
         log->tx.seqno = queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_MAC_SEQNO);
     );
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Print tx slot timing */
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "reg txR %u %u %u", regular_tx_packet_len, regular_tx_do_wait_for_ack, mac_tx_status));
+
+    uint8_t j = 0;
+    for(j = 0; j < 2; j++) {
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "reg ts%u %u %u", j,
+          (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_t[j], current_slot_start),
+          (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(regular_slot_timestamp_t[j], current_slot_start))));
+    }
+
+    for(j = 0; j < 15; j++) {
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "reg tx%u %u %u", j,
+          regular_tx_slot_timestamp_t[j] != 0 ?
+          (unsigned)RTIMER_CLOCK_DIFF(regular_tx_slot_timestamp_t[j], current_slot_start) : 0,
+          regular_tx_slot_timestamp_t[j] != 0 ?
+          (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(regular_tx_slot_timestamp_t[j], current_slot_start)) : 0));
+    }
+
+    regular_tx_packet_len = 0;
+    regular_tx_do_wait_for_ack = 0;
+
+    for(j = 0; j < 2; j++) {
+      regular_slot_timestamp_t[j] = 0;
+    }
+    for(j = 0; j < 15; j++) {
+      regular_tx_slot_timestamp_t[j] = 0;
+    }
+#endif
 
     /* hckim measure tx operation counts */
     ++tsch_any_slotframe_tx_operation_count;
@@ -3115,14 +3155,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
    * 5. Drift calculated in the ACK callback registered with the radio driver. Use it if receiving from a time source neighbor.
    **/
 
-#if PPSD_DBG_SLOT_TIMING
-  static rtimer_clock_t rx_slot_timestamp_t0 = 0;
-  static rtimer_clock_t rx_slot_timestamp_t1 = 0;
-  static rtimer_clock_t rx_slot_timestamp_t2 = 0;
-  static rtimer_clock_t rx_slot_timestamp_t3 = 0;
-  static rtimer_clock_t rx_slot_timestamp_t4 = 0;
-#endif
-
   struct tsch_neighbor *n;
   static linkaddr_t source_address;
   static linkaddr_t destination_address;
@@ -3131,19 +3163,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
   PT_BEGIN(pt);
 
-#if PPSD_DBG_SLOT_TIMING
-  rx_slot_timestamp_t0 = 0;
-  rx_slot_timestamp_t1 = 0;
-  rx_slot_timestamp_t2 = 0;
-  rx_slot_timestamp_t3 = 0;
-  rx_slot_timestamp_t4 = 0;
-
-  rx_slot_timestamp_t0 = RTIMER_NOW();
-
-  TSCH_LOG_ADD(tsch_log_message,
-      snprintf(log->message, sizeof(log->message),
-      "rx_t %u", 
-      rx_slot_timestamp_t0 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(rx_slot_timestamp_t0, current_slot_start)) : 0));
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: start of tsch_rx_slot */
+  regular_rx_slot_timestamp_t[0] = RTIMER_NOW();
 #endif
 
   TSCH_DEBUG_RX_EVENT();
@@ -3181,8 +3202,17 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
     TSCH_DEBUG_RX_EVENT();
 
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: rx_offset expired, before tsch_radio_on() */
+    regular_rx_slot_timestamp_t[1] = RTIMER_NOW();
+#endif
+
     /* Start radio for at least guard time */
     tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: after tsch_radio_on(), start to listen */
+    regular_rx_slot_timestamp_t[2] = RTIMER_NOW();
+#endif
+
     packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
 
     if(!packet_seen) {
@@ -3205,8 +3235,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       /* Save packet timestamp */
       rx_start_time = RTIMER_NOW() - RADIO_DELAY_BEFORE_DETECT;
 
-#if PPSD_DBG_SLOT_TIMING
-      rx_slot_timestamp_t1 = RTIMER_NOW();
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: rx start time */
+      regular_rx_slot_timestamp_t[3] = rx_start_time;
 #endif
 
       /* Wait until packet is received, turn radio off */
@@ -3214,13 +3244,22 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]);
       TSCH_DEBUG_RX_EVENT();
 
-#if PPSD_DBG_SLOT_TIMING
-      rx_slot_timestamp_t2 = RTIMER_NOW();
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: rx end time, before tsch_radio_off() */
+      regular_rx_slot_timestamp_t[4] = RTIMER_NOW();
 #endif
 
       tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
 
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: after tsch_radio_off() */
+      regular_rx_slot_timestamp_t[5] = RTIMER_NOW();
+#endif
+
       if(NETSTACK_RADIO.pending_packet()) {
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: RADIO.pending_packet() */
+        regular_rx_slot_timestamp_t[6] = RTIMER_NOW();
+#endif
+
         static int frame_valid;
         static int header_len;
         static frame802154_t frame;
@@ -3401,6 +3440,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                     ppsd_free_input_ringbuf, ppsd_free_any_queue));
 #endif
               }
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: create ACK */
+              regular_rx_slot_timestamp_t[7] = RTIMER_NOW();
+#endif
+
 #if PPSD_HEADER_IE_IN_DATA_AND_ACK
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
@@ -3439,11 +3483,20 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
 #if WITH_OST
 #if OST_ON_DEMAND_PROVISION
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: create ACK */
+              regular_rx_slot_timestamp_t[7] = RTIMER_NOW();
+#endif
+
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack,
                   current_input, matching_slot);
 #else
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: create ACK */
+              regular_rx_slot_timestamp_t[7] = RTIMER_NOW();
+#endif
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
@@ -3455,6 +3508,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 #endif
 #else
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: create ACK */
+              regular_rx_slot_timestamp_t[7] = RTIMER_NOW();
+#endif
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack);
@@ -3469,25 +3526,37 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 }
 #endif /* LLSEC802154_ENABLED */
 
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: before RADIO.prepare() */
+                regular_rx_slot_timestamp_t[8] = RTIMER_NOW();
+#endif
+
                 /* Copy to radio buffer */
                 NETSTACK_RADIO.prepare((const void *)ack_buf, ack_len);
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: after RADIO.prepare() */
+                regular_rx_slot_timestamp_t[9] = RTIMER_NOW();
+#endif
 
                 /* Wait for time to ACK and transmit ACK */
                 TSCH_SCHEDULE_AND_YIELD(pt, t, rx_start_time,
                                         packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX, "RxBeforeAck");
                 TSCH_DEBUG_RX_EVENT();
 
-#if PPSD_DBG_SLOT_TIMING
-                rx_slot_timestamp_t3 = RTIMER_NOW();
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: before RADIO.transmit() */
+                regular_rx_slot_timestamp_t[10] = RTIMER_NOW();
 #endif
 
                 NETSTACK_RADIO.transmit(ack_len);
 
-#if PPSD_DBG_SLOT_TIMING
-                rx_slot_timestamp_t4 = RTIMER_NOW();
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: after RADIO.transmit(), before tsch_radio_off() */
+                regular_rx_slot_timestamp_t[11] = RTIMER_NOW();
 #endif
 
                 tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: after tsch_radio_off() */
+                regular_rx_slot_timestamp_t[12] = RTIMER_NOW();
+#endif
 
 #if WITH_PPSD
                 if(tsch_packet_get_frame_pending(current_input->payload, current_input->len)
@@ -3531,16 +3600,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             /* Add current input to ringbuf */
             ringbufindex_put(&input_ringbuf);
 
-#if PPSD_DBG_SLOT_TIMING
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                "rx_t %u %u %u %u", 
-                rx_slot_timestamp_t1 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(rx_slot_timestamp_t1, current_slot_start)) : 0,
-                rx_slot_timestamp_t2 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(rx_slot_timestamp_t2, current_slot_start)) : 0,
-                rx_slot_timestamp_t3 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(rx_slot_timestamp_t3, current_slot_start)) : 0,
-                rx_slot_timestamp_t4 != 0 ? (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(rx_slot_timestamp_t4, current_slot_start)) : 0));
-#endif
-
             /* If the neighbor is known, update its stats */
             if(n != NULL) {
               NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_LINK_QUALITY, &radio_last_lqi);
@@ -3562,7 +3621,39 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             );
           }
 
-          /* hckim measure tx operation counts */
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: print timing log */
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "reg rxR %u %u", current_input->len, frame.fcf.ack_required));
+
+          uint8_t j = 0;
+          for(j = 0; j < 2; j++) {
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "reg ts%u %u %u", j,
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_t[j], current_slot_start),
+                (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(regular_slot_timestamp_t[j], current_slot_start))));
+          }
+
+          for(j = 0; j < 13; j++) {
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "reg rx%u %u %u", j,
+                regular_rx_slot_timestamp_t[j] != 0 ?
+                (unsigned)RTIMER_CLOCK_DIFF(regular_rx_slot_timestamp_t[j], current_slot_start) : 0,
+                regular_rx_slot_timestamp_t[j] != 0 ?
+                (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(regular_rx_slot_timestamp_t[j], current_slot_start)) : 0));
+          }
+
+          for(j = 0; j < 2; j++) {
+            regular_slot_timestamp_t[j] = 0;
+          }
+          for(j = 0; j < 13; j++) {
+            regular_rx_slot_timestamp_t[j] = 0;
+          }
+#endif
+
+          /* hckim measure rx operation counts */
           ++tsch_any_slotframe_rx_operation_count;
 
 #if !WITH_OST
@@ -4118,7 +4209,17 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
             is_burst_slot = 0;
 #endif
           }
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING
+          regular_slot_timestamp_t[0] = RTIMER_NOW();
+#endif
+
           NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
+
+#if PPSD_DBG_REGULAR_SLOT_TIMING
+          regular_slot_timestamp_t[1] = RTIMER_NOW();
+#endif
+
           /* Turn the radio on already here if configured so; necessary for radios with slow startup */
           tsch_radio_on(TSCH_RADIO_CMD_ON_START_OF_TIMESLOT);
           /* Decide whether it is a TX/RX/IDLE or OFF slot */
