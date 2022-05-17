@@ -161,7 +161,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_("\n");
 
 #if PPSD_APP_PAYLOAD_LEN_CONTROL
-        snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
+        snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
 #else
         snprintf(str, sizeof(str), "hello %d", count);
 #endif
@@ -185,7 +185,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_("\n");
 
 #if PPSD_APP_PAYLOAD_LEN_CONTROL
-        snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
+        snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
 #else
         snprintf(str, sizeof(str), "hello %d", count);
 #endif
