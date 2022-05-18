@@ -40,6 +40,7 @@
 #define TSCH_TX_CCA_DBG_CCA_STATUS                 0
 #endif
 #define TSCH_TX_CCA_EARLY_TX_NODE                  0
+#define TSCH_MEASURE_REGULAR_SLOT_TIMING           1
 
 //#define PPSD_CONF_RX_WAIT                    800
 /*---------------------------------------------------------------------------*/

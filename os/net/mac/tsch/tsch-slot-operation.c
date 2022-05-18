@@ -240,7 +240,9 @@ static rtimer_clock_t regular_slot_timestamp_t[2];
 static uint8_t regular_tx_packet_len;
 static uint8_t regular_tx_do_wait_for_ack;
 static rtimer_clock_t regular_tx_slot_timestamp_t[15];
+static uint8_t regular_tx_ack_len;
 static rtimer_clock_t regular_rx_slot_timestamp_t[13];
+static uint8_t regular_rx_ack_len;
 #endif
 
 #if WITH_OST /* OST-00-03: struct for t_offset */
@@ -2859,6 +2861,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               /* Read ack frame */
               ack_len = NETSTACK_RADIO.read((void *)ackbuf, sizeof(ackbuf));
 
+#if PPSD_DBG_REGULAR_SLOT_TIMING
+              regular_tx_ack_len = ack_len;
+#endif
+
               is_time_source = 0;
               /* The radio driver should return 0 if no valid packets are in the rx buffer */
               if(ack_len > 0) {
@@ -3033,7 +3039,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* Print tx slot timing */
     TSCH_LOG_ADD(tsch_log_message,
         snprintf(log->message, sizeof(log->message),
-        "reg txR %u %u %u", regular_tx_packet_len, regular_tx_do_wait_for_ack, mac_tx_status));
+        "reg txR %u %u %u A_len %u", regular_tx_packet_len, regular_tx_do_wait_for_ack, mac_tx_status, regular_tx_ack_len));
 
     uint8_t j = 0;
     for(j = 0; j < 2; j++) {
@@ -3056,6 +3062,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
     regular_tx_packet_len = 0;
     regular_tx_do_wait_for_ack = 0;
+    regular_tx_ack_len = 0;
 
     for(j = 0; j < 2; j++) {
       regular_slot_timestamp_t[j] = 0;
@@ -3518,6 +3525,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 #endif /* WITH_PPSD */
 
+#if PPSD_DBG_REGULAR_SLOT_TIMING
+              regular_rx_ack_len = ack_len;
+#endif
+
               if(ack_len > 0) {
 #if LLSEC802154_ENABLED
                 if(tsch_is_pan_secured) {
@@ -3624,7 +3635,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: print timing log */
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "reg rxR %u %u", current_input->len, frame.fcf.ack_required));
+              "reg rxR %u %u A_len %u", current_input->len, frame.fcf.ack_required, regular_rx_ack_len));
 
           uint8_t j = 0;
           for(j = 0; j < 2; j++) {
@@ -3645,6 +3656,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 (unsigned)RTIMERTICKS_TO_US(RTIMER_CLOCK_DIFF(regular_rx_slot_timestamp_t[j], current_slot_start)) : 0));
           }
 
+          regular_rx_ack_len = 0;
+          
           for(j = 0; j < 2; j++) {
             regular_slot_timestamp_t[j] = 0;
           }
