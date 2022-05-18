@@ -1664,12 +1664,12 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
   ppsd_tx_slot_timestamp_t0 = RTIMER_NOW();
 #endif
 
+  tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
+
 #if PPSD_TX_SLOT_FORWARD_OFFLOADING
   ppsd_tx_seq = 1;
   ppsd_curr_packet = ppsd_array_packet[ppsd_tx_seq - 1];
 #else
-  tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
-
   ppsd_curr_packet = current_packet;
   ppsd_tx_seq = 1;
 
@@ -1825,8 +1825,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_USE_BUSYWAIT
   RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_tx_slot_curr_start, ppsd_tx_slot_curr_offset);
 #else
-  TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start,
-                          ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_RX, "epTx3");
+  TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start, ppsd_tx_slot_curr_offset, "epTx3");
 #endif
   ppsd_tx_slot_curr_offset = (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * ppsd_pkts_to_send
                           + ppsd_timing[ppsd_ts_rx_ack_delay] + ppsd_timing[ppsd_ts_ack_wait];
@@ -2059,9 +2058,8 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 
   current_ep_rx_ok_count = 0;
 
-#if !PPSD_RX_SLOT_FORWARD_OFFLOADING
   tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
-#endif
+
   ppsd_last_rx_seq = 0;
   ppsd_ack_bitmap = 0;
 
@@ -2091,8 +2089,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_USE_BUSYWAIT
         RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_rx_slot_curr_start, ppsd_rx_slot_curr_offset);
 #else
-        TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_rx_slot_curr_start, 
-                              ppsd_rx_slot_curr_offset - RADIO_DELAY_BEFORE_RX, "epRx1");
+        TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_rx_slot_curr_start, ppsd_rx_slot_curr_offset, "epRx1");
 #endif
       } else {
         ppsd_rx_slot_curr_start = ppsd_rx_slot_last_valid_reception_start + ppsd_rx_slot_last_valid_duration;
@@ -2102,8 +2099,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 #if PPSD_USE_BUSYWAIT
         RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_rx_slot_curr_start, ppsd_rx_slot_curr_offset);
 #else
-        TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_rx_slot_curr_start, 
-                              ppsd_rx_slot_curr_offset - RADIO_DELAY_BEFORE_RX, "epRx2");
+        TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_rx_slot_curr_start, ppsd_rx_slot_curr_offset, "epRx2");
 #endif
       }
 
@@ -4352,15 +4348,6 @@ ost_donothing:
               ((uint8_t *)(queuebuf_dataptr(ppsd_array_packet[i]->qb)))[ppsd_array_hdr_len[i] + 2] = (uint8_t)((i + 1) & 0xFF);
               ((uint8_t *)(queuebuf_dataptr(ppsd_array_packet[i]->qb)))[ppsd_array_hdr_len[i] + 3] = (uint8_t)(((i + 1) >> 8) & 0xFF);
             }
-
-            NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
-            tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
-          }
-#endif
-#if PPSD_RX_SLOT_FORWARD_OFFLOADING
-          /*else */if(ppsd_pkts_to_receive > 0) {
-            NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
-            tsch_radio_on(TSCH_RADIO_CMD_ON_FORCE);
           }
 #endif
         } else {
