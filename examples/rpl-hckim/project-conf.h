@@ -38,8 +38,8 @@
 #if WITH_TSCH_TX_CCA
 #define TSCH_CONF_CCA_ENABLED                      1
 #define TSCH_TX_CCA_DBG_CCA_STATUS                 0
-#define TSCH_TX_CCA_EARLY_TX_NODE                  0
 #endif
+#define TSCH_TX_CCA_EARLY_TX_NODE                  0
 
 //#define PPSD_CONF_RX_WAIT                    800
 /*---------------------------------------------------------------------------*/
@@ -133,12 +133,12 @@
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
 
 #elif WITH_IOTLAB
-//#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
+//#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 20)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (3 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (7 * 60 * CLOCK_SECOND)
 //#define APP_START_DELAY                            (60 * 60 * CLOCK_SECOND)
 //#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
@@ -244,7 +244,7 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-//#define ORCHESTRA_CONF_UNICAST_PERIOD              307 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+//#define ORCHESTRA_CONF_UNICAST_PERIOD              211 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 #define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 #define TSCH_CONF_BURST_MAX_LEN                    0
 /* for log messages */

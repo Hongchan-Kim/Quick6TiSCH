@@ -2410,7 +2410,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
   PT_BEGIN(pt);
 
 #if TSCH_TX_CCA_EARLY_TX_NODE
-  tx_cca_offset = tsch_timing[tsch_ts_ack_wait] * 2;
+  tx_cca_offset = tsch_timing[tsch_ts_ack_wait] + tsch_timing[tsch_ts_ack_wait] / 2;
 #endif
 
   TSCH_DEBUG_TX_EVENT();
