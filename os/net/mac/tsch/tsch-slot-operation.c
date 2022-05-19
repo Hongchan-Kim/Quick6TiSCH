@@ -2114,6 +2114,8 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
       }
 
       if(!packet_seen) {
+        ppsd_rx_slot_all_reception_end = ppsd_rx_slot_curr_start + ppsd_rx_slot_curr_timeout;
+
 #if PPSD_DBG_EP_OPERATION
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
@@ -2131,11 +2133,10 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
         RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
             ppsd_rx_slot_curr_reception_start, ppsd_timing[ppsd_ts_max_tx]);
 
-#if PPSD_DBG_EP_SLOT_TIMING /* After receiving_packet */
-        ppsd_rx_slot_timestamp_t[current_ep_rx_ok_count][3] = RTIMER_NOW();
-#endif
-
         if(NETSTACK_RADIO.pending_packet()) {
+#if PPSD_DBG_EP_SLOT_TIMING /* After receiving_packet */
+          ppsd_rx_slot_timestamp_t[current_ep_rx_ok_count][3] = RTIMER_NOW();
+#endif
           radio_value_t radio_last_rssi;
           radio_value_t radio_last_lqi;
 
@@ -2255,6 +2256,8 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
       || !RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start + ppsd_timing[ppsd_ts_rx_offset] + ppsd_timing[ppsd_ts_rx_wait] + ppsd_timing[ppsd_ts_max_tx]
                                             + (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * (ppsd_pkts_to_receive - 1))) {
       if(ppsd_last_rx_seq >= ppsd_pkts_to_receive) {
+        ppsd_rx_slot_all_reception_end = ppsd_rx_slot_curr_reception_start + ppsd_rx_slot_curr_duration;
+
 #if PPSD_DBG_EP_OPERATION
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
@@ -2264,6 +2267,9 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 
       if(!RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start + ppsd_timing[ppsd_ts_rx_offset] + ppsd_timing[ppsd_ts_rx_wait] + ppsd_timing[ppsd_ts_max_tx]
                                             + (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * (ppsd_pkts_to_receive - 1))) {
+        ppsd_rx_slot_all_reception_end = current_slot_start + ppsd_timing[ppsd_ts_rx_offset] + ppsd_timing[ppsd_ts_rx_wait] + ppsd_timing[ppsd_ts_max_tx] 
+                                        + (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * (ppsd_pkts_to_receive - 1);
+
 #if PPSD_DBG_EP_OPERATION
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
@@ -2274,7 +2280,6 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
     }
   }
 
-  ppsd_rx_slot_all_reception_end = RTIMER_NOW();
   ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_ts_tx_ack_delay];
 
 #if PPSD_DBG_EP_SLOT_TIMING /* rx_tA1: Before create ACK */

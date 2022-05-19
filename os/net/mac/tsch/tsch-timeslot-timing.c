@@ -118,10 +118,10 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
    1000, /* ppsd_ts_tx_offset (30 ticks required, 1000 is equal to 33 ticks) */
    (1000 - (PPSD_RX_WAIT / 2)), /* ppsd_ts_rx_offset */
-   800, /* RxAckDelay */
-   1000, /* TxAckDelay */
+   1000, /* RxAckDelay */
+   1200, /* TxAckDelay */
   PPSD_RX_WAIT, /* RxWait */
-    800, /* AckWait (needed to be tuned) */
+    400,
     800, /* MaxAck (21 bytes, 25 ticks, 763 us) */
    4256, /* MaxTx */
 };
