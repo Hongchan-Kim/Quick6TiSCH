@@ -32,7 +32,7 @@
 #endif /* WITH_PPSD */
 
 #define PPSD_DBG_REGULAR_SLOT_TIMING               0
-#define PPSD_DBG_EP_SLOT_TIMING                    1
+#define PPSD_DBG_EP_SLOT_TIMING                    0
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
 
