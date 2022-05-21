@@ -11,7 +11,11 @@
 #define ORCHESTRA_PACKET_OFFLOADING                1
 /* Wihtout EP: Max in single hop: 87, Max in multi hop: 70
    With EP: Max in single hop: 81, Max in multi hop: 64 */
-#define PPSD_APP_PAYLOAD_LEN_CONTROL               81
+#define PPSD_APP_SET_PAYLOAD_LEN                   81
+#define PPSD_APP_VARYING_PAYLOAD_LEN               0
+#if PPSD_APP_VARYING_PAYLOAD_LEN
+#define PPSD_SINGLE_LEN_MAX_TX                     600
+#endif
 
 #if WITH_PPSD
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
@@ -40,7 +44,6 @@
 #define TSCH_TX_CCA_DBG_CCA_STATUS                 0
 #endif
 #define TSCH_TX_CCA_EARLY_TX_NODE                  0
-#define TSCH_MEASURE_REGULAR_SLOT_TIMING           0
 
 //#define PPSD_CONF_RX_WAIT                    800
 /*---------------------------------------------------------------------------*/
@@ -135,13 +138,10 @@
 
 #elif WITH_IOTLAB
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
-//#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 20)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 #define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
-//#define APP_START_DELAY                            (60 * 60 * CLOCK_SECOND)
-//#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 #endif
 

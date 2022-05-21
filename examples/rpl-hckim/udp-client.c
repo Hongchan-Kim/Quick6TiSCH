@@ -88,14 +88,14 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer periodic_timer;
   static struct etimer send_timer;
 
-#if TSCH_MEASURE_REGULAR_SLOT_TIMING
-  static uint8_t current_payload_len = 0;
-  static uint8_t current_len_tx_count = 0;
+#if PPSD_APP_VARYING_PAYLOAD_LEN
+  static uint16_t current_payload_len = 0;
+  static uint16_t current_len_tx_count = 0;
 #endif
 
   static unsigned count = 1;
-#if PPSD_APP_PAYLOAD_LEN_CONTROL
-  static char str[PPSD_APP_PAYLOAD_LEN_CONTROL];
+#if PPSD_APP_SET_PAYLOAD_LEN
+  static char str[PPSD_APP_SET_PAYLOAD_LEN];
 #else
   static char str[32];
 #endif
@@ -165,8 +165,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
 
-#if PPSD_APP_PAYLOAD_LEN_CONTROL
-        snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
+#if PPSD_APP_SET_PAYLOAD_LEN
+        snprintf(str, sizeof(str), "hello %d 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111", count);
 #else
         snprintf(str, sizeof(str), "hello %d", count);
 #endif
@@ -189,17 +189,17 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
 
-#if PPSD_APP_PAYLOAD_LEN_CONTROL
-#if TSCH_MEASURE_REGULAR_SLOT_TIMING
+#if PPSD_APP_SET_PAYLOAD_LEN
+#if PPSD_APP_VARYING_PAYLOAD_LEN
         snprintf(str, current_payload_len, "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
 
         ++current_len_tx_count;
-        if(current_len_tx_count >= 10) {
+        if(current_len_tx_count >= PPSD_SINGLE_LEN_MAX_TX) {
           current_len_tx_count = 0;
           ++current_payload_len;
         }
 #else
-        snprintf(str, sizeof(str), "hello %d zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", count);
+        snprintf(str, sizeof(str), "hello %d 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111", count);
 #endif
 #else
         snprintf(str, sizeof(str), "hello %d", count);
