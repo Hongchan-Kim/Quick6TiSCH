@@ -1606,6 +1606,13 @@ tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr,
 
     ep_expected_timeslots = (ep_expected_all_tx_duration + tsch_timing[tsch_ts_timeslot_length] - 1) 
                           / tsch_timing[tsch_ts_timeslot_length];
+#if PPSD_CONSIDER_RTIMER_GUARD
+    if(check_timer_miss(0, 
+                        ep_expected_timeslots * tsch_timing[tsch_ts_timeslot_length] - RTIMER_GUARD, 
+                        ep_expected_all_tx_duration)) {
+      ep_expected_timeslots += 1;
+    }
+#endif
 
     ep_expected_advantage = i * 100 / ep_expected_timeslots;
 
@@ -4068,6 +4075,13 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         rtimer_clock_t ppsd_slot_end = RTIMER_NOW();
         ppsd_passed_timeslots = ((RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start) + tsch_timing[tsch_ts_timeslot_length] - 1) 
                                 / tsch_timing[tsch_ts_timeslot_length]);
+#if PPSD_CONSIDER_RTIMER_GUARD
+        if(check_timer_miss(current_slot_start, 
+                            ppsd_passed_timeslots * tsch_timing[tsch_ts_timeslot_length] - RTIMER_GUARD, 
+                            ppsd_slot_end)) {
+          ppsd_passed_timeslots += 1;
+        }
+#endif
         TSCH_ASN_INC(tsch_current_asn, (ppsd_passed_timeslots - 1));
 
         if(current_packet != NULL) {

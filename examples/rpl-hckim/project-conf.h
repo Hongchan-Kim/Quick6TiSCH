@@ -24,6 +24,7 @@
 #define PPSD_TX_SLOT_BACKWARD_OFFLOADING           1
 #define PPSD_RX_SLOT_FORWARD_OFFLOADING            1
 #define PPSD_RX_SLOT_BACKWARD_OFFLOADING           1
+#define PPSD_CONSIDER_RTIMER_GUARD                 1
 
 #define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
 #define PPSD_USE_BUSYWAIT                          0
