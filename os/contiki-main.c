@@ -53,11 +53,11 @@
 #include "net/app-layer/snmp/snmp.h"
 #include "services/rpl-border-router/rpl-border-router.h"
 
-#if WITH_ALICE == 1 /* alice implementation */
+#if WITH_ALICE /* ALICE scheduler */
 #include "services/alice/orchestra.h"
-#elif WITH_OST
+#elif WITH_OST /* OST scheduler */
 #include "services/ost/orchestra.h"
-#else /* default orchestra */
+#else /* Default Orchestra scheduler */
 #include "services/orchestra/orchestra.h"
 #endif
 

@@ -676,7 +676,7 @@ PROCESS(tsch_pending_events_process, "pending events process");
 static void packet_input(void);
 
 /*---------------------------------------------------------------------------*/
-#if WITH_ALICE == 1 /* alice implementation */
+#if WITH_ALICE /* alice implementation */
 #ifdef ALICE_TIME_VARYING_SCHEDULING
 uint16_t alice_curr_asfn = 0;
 uint16_t alice_next_asfn = 0;

@@ -75,7 +75,7 @@
 #error TSCH_QUEUE_NUM_PER_NEIGHBOR must be power of two
 #endif
 
-#if WITH_ALICE == 1 /* alice implementation */
+#if WITH_ALICE /* alice implementation */
 #ifdef ALICE_PACKET_CELL_MATCHING_ON_THE_FLY /* alice packet cell matching on the fly */
 int ALICE_PACKET_CELL_MATCHING_ON_THE_FLY(uint16_t* timeslot, uint16_t* channel_offset, const linkaddr_t rx_linkaddr);
 #endif
@@ -732,7 +732,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
         int packet_attr_slotframe = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
         int packet_attr_timeslot = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
 
-#if WITH_ALICE == 1 /* alice implementation */
+#if WITH_ALICE /* alice implementation */
         int packet_attr_channel_offset = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
 
 #ifdef ALICE_PACKET_CELL_MATCHING_ON_THE_FLY
