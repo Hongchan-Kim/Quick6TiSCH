@@ -80,10 +80,10 @@
 
 #if PPSD_TRIPLE_CCA
 const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
-    750, /* CCAOffset (52 ticks) */
+    910, /* CCAOffset (52 ticks) */
     150, /* CCA (radio-rf2xx requires 140 us or 5 ticks) */
-   2710, /* TxOffset */
-  (2710 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
+   2860, /* TxOffset */
+  (2860 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
 #if WITH_PPSD
    1300, /* RxAckDelay - 1300 */
    1500, /* TxAckDelay - 1500 */

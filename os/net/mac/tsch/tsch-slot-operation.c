@@ -3218,7 +3218,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
     TSCH_LOG_ADD(tsch_log_message,
         snprintf(log->message, sizeof(log->message),
-        "reg t_t %u %u %u %u %u",
+        "reg t_1 %u %u %u %u %u",
         (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_tx[0], current_slot_start),
         (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_tx[1], current_slot_start),
         (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_tx[2], current_slot_start),
@@ -3227,7 +3227,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
     TSCH_LOG_ADD(tsch_log_message,
         snprintf(log->message, sizeof(log->message),
-        "reg t_t %u %u %u %u %u",
+        "reg t_2 %u %u %u %u %u",
         (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_tx[5], current_slot_start),
         (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_tx[6], current_slot_start),
         (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_tx[7], current_slot_start),
@@ -3236,7 +3236,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
     TSCH_LOG_ADD(tsch_log_message,
         snprintf(log->message, sizeof(log->message),
-        "reg t_t %u %u %u %u %u",
+        "reg t_3 %u %u %u %u %u",
         (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_tx[10], current_slot_start),
         (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_tx[11], current_slot_start),
         (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_tx[12], current_slot_start),
@@ -3247,6 +3247,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     regular_slot_tx_do_wait_for_ack = 0;
     regular_slot_tx_ack_len = 0;
 
+    uint8_t j = 0;
     for(j = 0; j < 2; j++) {
       regular_slot_timestamp_common[j] = 0;
     }
@@ -3828,7 +3829,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "reg r_t %u %u %u %u %u",
+              "reg r_1 %u %u %u %u %u",
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[0], current_slot_start),
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[1], current_slot_start),
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[2], current_slot_start),
@@ -3837,7 +3838,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "reg r_t %u %u %u %u %u",
+              "reg r_2 %u %u %u %u %u",
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[5], current_slot_start),
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[6], current_slot_start),
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[7], current_slot_start),
@@ -3846,13 +3847,14 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "reg r_t %u %u %u %u %u",
+              "reg r_3 %u %u %u",
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[10], current_slot_start),
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[11], current_slot_start),
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[12], current_slot_start)));
 
           regular_slot_rx_ack_len = 0;
-          
+
+          uint8_t j = 0;
           for(j = 0; j < 2; j++) {
             regular_slot_timestamp_common[j] = 0;
           }
@@ -4665,7 +4667,7 @@ ost_donothing:
         if(is_ppsd_slot) {
           timeslot_diff += (ppsd_passed_timeslots - 1);
           ppsd_passed_timeslots = 0;
-          is_ppsd_slot = 0;
+          //is_ppsd_slot = 0;
 #if PPSD_DBG_EP_OPERATION
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
@@ -4684,7 +4686,15 @@ ost_donothing:
 
         /* Time to next wake up */
         time_to_next_active_slot = timeslot_diff * tsch_timing[tsch_ts_timeslot_length] + drift_correction;
+#if WITH_PPSD
+        if(is_ppsd_slot) {
+          is_ppsd_slot = 0;
+        } else {
+          time_to_next_active_slot += tsch_timesync_adaptive_compensate(time_to_next_active_slot);
+        }
+#else
         time_to_next_active_slot += tsch_timesync_adaptive_compensate(time_to_next_active_slot);
+#endif
         drift_correction = 0;
         is_drift_correction_used = 0;
         /* Update current slot start */
