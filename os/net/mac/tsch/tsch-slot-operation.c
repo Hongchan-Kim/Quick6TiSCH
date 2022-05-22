@@ -226,6 +226,12 @@ static uint16_t ppsd_tx_seq = 1;
 struct tsch_neighbor *ep_rx_nbr;
 #endif
 
+#if PPSD_TRIPLE_CCA
+static uint8_t ppsd_first_cca_detected;
+static uint8_t ppsd_second_cca_detected;
+static uint8_t ppsd_third_cca_detected;
+#endif
+
 #if PPSD_DBG_EP_SLOT_TIMING
 static rtimer_clock_t ppsd_tx_slot_timestamp_begin[2];
 static rtimer_clock_t ppsd_tx_slot_timestamp_tx[TSCH_DEQUEUED_ARRAY_SIZE][4];
@@ -2767,10 +2773,71 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         regular_slot_timestamp_tx[4] = RTIMER_NOW();
 #endif
 
+#if PPSD_TRIPLE_CCA
+        ppsd_first_cca_detected = 0;
+        ppsd_second_cca_detected = 0;
+        ppsd_third_cca_detected = 0;
+
+#if PPSD_FIRST_CCA
         /* CCA */
         RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
                            current_slot_start, tsch_timing[tsch_ts_cca_offset] + tsch_timing[tsch_ts_cca]);
         TSCH_DEBUG_TX_EVENT();
+
+        if(cca_status == 0) {
+          ppsd_first_cca_detected = 1;
+        }
+#endif
+
+#if PPSD_SECOND_CCA
+        if(cca_status == 1) {
+          tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+  
+          /* delay before 2nd CCA */
+          TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
+                                tsch_timing[tsch_ts_cca_offset] + tsch_timing[ppsd_ts_inter_cca_offset], "cca2");
+          TSCH_DEBUG_TX_EVENT();
+
+          /* 2nd CCA */
+          RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
+              current_slot_start, 
+              tsch_timing[tsch_ts_cca_offset] + tsch_timing[ppsd_ts_inter_cca_offset] + tsch_timing[tsch_ts_cca]);
+          TSCH_DEBUG_TX_EVENT();
+
+          if(cca_status == 0) {
+            ppsd_second_cca_detected = 1;
+          }
+        }
+#endif
+
+#if PPSD_THIRD_CCA
+        if(cca_status == 1) {
+          tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+
+          /* delay before 3rd CCA */
+          TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
+                                tsch_timing[tsch_ts_cca_offset] + tsch_timing[ppsd_ts_inter_cca_offset] * 2, "cca3");
+          TSCH_DEBUG_TX_EVENT();
+
+          /* 3rd CCA */
+          RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
+              current_slot_start, 
+              tsch_timing[tsch_ts_cca_offset] + tsch_timing[ppsd_ts_inter_cca_offset] * 2 + tsch_timing[tsch_ts_cca]);
+          TSCH_DEBUG_TX_EVENT();
+
+          if(cca_status == 0) {
+            ppsd_third_cca_detected = 1;
+          }
+        }
+#endif
+#else /* PPSD_TRIPLE_CCA */
+
+        /* CCA */
+        RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
+                           current_slot_start, tsch_timing[tsch_ts_cca_offset] + tsch_timing[tsch_ts_cca]);
+        TSCH_DEBUG_TX_EVENT();
+
+#endif /* PPSD_TRIPLE_CCA */
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* Tx slot: after CCA */
         regular_slot_timestamp_tx[5] = RTIMER_NOW();
@@ -2779,10 +2846,21 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         /* there is not enough time to turn radio off */
         /*  NETSTACK_RADIO.off(); */
         if(cca_status == 0) {
-#if TSCH_TX_CCA_DBG_CCA_STATUS
+#if TSCH_TX_CCA_DBG_CCA_RESULT
+#if PPSD_TRIPLE_CCA
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "tx cca busy %u %u %u", ppsd_first_cca_detected, ppsd_second_cca_detected, ppsd_third_cca_detected));
+
+          ppsd_first_cca_detected = 0;
+          ppsd_second_cca_detected = 0;
+          ppsd_third_cca_detected = 0;
+#else
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca busy"));
+#endif
+#if TSCH_TX_CCA_DBG_CCA_STATUS
 #if WITH_IOTLAB
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
@@ -2791,6 +2869,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca %u %u %u %u", global_trx_status, global_cca_done, global_cca_status, global_phy_cc_cca_2));
+#endif
 #endif
 #endif
 
@@ -2799,10 +2878,21 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* TSCH_CCA_ENABLED */
         {
 
-#if TSCH_TX_CCA_DBG_CCA_STATUS
+#if TSCH_TX_CCA_DBG_CCA_RESULT
+#if PPSD_TRIPLE_CCA
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "tx cca idle %u %u %u", ppsd_first_cca_detected, ppsd_second_cca_detected, ppsd_third_cca_detected));
+
+          ppsd_first_cca_detected = 0;
+          ppsd_second_cca_detected = 0;
+          ppsd_third_cca_detected = 0;
+#else
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca idle"));
+#endif
+#if TSCH_TX_CCA_DBG_CCA_STATUS
 #if WITH_IOTLAB
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
@@ -2811,6 +2901,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca %u %u %u %u", global_trx_status, global_cca_done, global_cca_status, global_phy_cc_cca_2));
+#endif
 #endif
 #endif
 

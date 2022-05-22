@@ -25,14 +25,15 @@
 #define PPSD_RX_SLOT_FORWARD_OFFLOADING            1
 #define PPSD_RX_SLOT_BACKWARD_OFFLOADING           1
 #define PPSD_CONSIDER_RTIMER_GUARD                 1
+#define PPSD_TRIPLE_CCA                            1
 
 #define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
 #define PPSD_USE_BUSYWAIT                          0
 
 #endif /* WITH_PPSD */
 
-#define PPSD_DBG_REGULAR_SLOT_TIMING               0
-#define PPSD_DBG_EP_SLOT_TIMING                    0
+#define PPSD_DBG_REGULAR_SLOT_TIMING               1
+#define PPSD_DBG_EP_SLOT_TIMING                    1
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
 
@@ -42,9 +43,16 @@
 
 #if WITH_TSCH_TX_CCA
 #define TSCH_CONF_CCA_ENABLED                      1
+#define TSCH_TX_CCA_DBG_CCA_RESULT                 0
 #define TSCH_TX_CCA_DBG_CCA_STATUS                 0
 #endif
 #define TSCH_TX_CCA_EARLY_TX_NODE                  0
+
+#if PPSD_TRIPLE_CCA
+#define PPSD_FIRST_CCA                             1
+#define PPSD_SECOND_CCA                            1
+#define PPSD_THIRD_CCA                             1
+#endif
 
 //#define PPSD_CONF_RX_WAIT                    800
 /*---------------------------------------------------------------------------*/
@@ -71,8 +79,9 @@
 #define IOTLAB_LILLE_79_CENTER                     5 /* 79 nodes */
 #define IOTLAB_LYON_2                              6 /* 2 nodes */
 #define IOTLAB_LYON_3                              7 /* 3 nodes */
-#define IOTLAB_LYON_8                              8 /* 8 nodes */
-#define IOTLAB_LYON_17                             9 /* 17 nodes */
+#define IOTLAB_LYON_5                              8 /* 2 nodes */
+#define IOTLAB_LYON_8                              9 /* 8 nodes */
+#define IOTLAB_LYON_17                             10 /* 17 nodes */
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER
@@ -81,6 +90,7 @@
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 #define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
+//#define IOTLAB_SITE                                IOTLAB_LYON_5
 //#define IOTLAB_SITE                                IOTLAB_LYON_8
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
 
@@ -98,6 +108,8 @@
 #define NODE_NUM                                   2
 #elif IOTLAB_SITE == IOTLAB_LYON_3
 #define NODE_NUM                                   3
+#elif IOTLAB_SITE == IOTLAB_LYON_5
+#define NODE_NUM                                   5
 #elif IOTLAB_SITE == IOTLAB_LYON_8
 #define NODE_NUM                                   8
 #elif IOTLAB_SITE == IOTLAB_LYON_17

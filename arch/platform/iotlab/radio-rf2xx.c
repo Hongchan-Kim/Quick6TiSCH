@@ -464,7 +464,7 @@ rf2xx_wr_channel_clear(void)
              * - ENEGREST_OFF(ENERGEST_TYPE_LISTEN)
              */
             platform_enter_critical();
-            rf2xx_on  = 0;
+            rf2xx_on = 0;
             platform_exit_critical();
             idle();
 
