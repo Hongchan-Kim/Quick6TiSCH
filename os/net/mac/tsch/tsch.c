@@ -1045,7 +1045,13 @@ tsch_rx_process_pending()
     struct input_packet *current_input = &input_array[input_index];
 
 #if WITH_OST /* OST-09: Post process received N */
+#if WITH_PPSD
+    if(current_input->ppsd_received_in_ep == 0) {
+      ost_post_process_rx_N(current_input);
+    }
+#else
     ost_post_process_rx_N(current_input);
+#endif
 #endif
 
     frame802154_t frame;
@@ -1085,7 +1091,13 @@ tsch_tx_process_pending(void)
     struct tsch_packet *p = dequeued_array[dequeued_index];
 
 #if WITH_OST
+#if WITH_PPSD
+    if(p->ppsd_sent_in_ep == 0) { /* Sent in regular schcedule */
+      ost_post_process_rx_t_offset(p);
+    }
+#else
     ost_post_process_rx_t_offset(p);
+#endif
 #endif
 
     /* Put packet into packetbuf for packet_sent callback */

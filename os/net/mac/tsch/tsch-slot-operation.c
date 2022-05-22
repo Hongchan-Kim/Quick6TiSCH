@@ -2200,6 +2200,9 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
           ppsd_current_input->rx_asn = tsch_current_asn;
           ppsd_current_input->rssi = (signed)radio_last_rssi;
           ppsd_current_input->channel = tsch_current_channel;
+
+          ppsd_current_input->ppsd_received_in_ep = 1;
+
           ppsd_header_len = frame802154_parse((uint8_t *)ppsd_current_input->payload, ppsd_current_input->len, &ppsd_frame);
           ppsd_frame_valid = ppsd_header_len > 0 &&
             frame802154_check_dest_panid(&ppsd_frame) &&
@@ -2350,9 +2353,16 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
     ppsd_rx_slot_timestamp_ack[0] = RTIMER_NOW();
 #endif
 
+#if WITH_OST
+#if PPSD_HEADER_IE_IN_DATA_AND_ACK
+  ppsd_ack_len = tsch_packet_create_eack(ppsd_ack_buf, sizeof(ppsd_ack_buf),
+      &ppsd_source_address, /* frame.seq */0, /* estimated_drift */0, /* do_nack */0, NULL, ppsd_ack_bitmap);
+#endif
+#else
 #if PPSD_HEADER_IE_IN_DATA_AND_ACK
   ppsd_ack_len = tsch_packet_create_eack(ppsd_ack_buf, sizeof(ppsd_ack_buf),
       &ppsd_source_address, /* frame.seq */0, /* estimated_drift */0, /* do_nack */0, ppsd_ack_bitmap);
+#endif
 #endif
 
   if(ppsd_ack_len > 0) {
@@ -3464,6 +3474,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         current_input->rssi = (signed)radio_last_rssi;
         current_input->channel = tsch_current_channel;
 
+#if WITH_PPSD
+        current_input->ppsd_received_in_ep = 0;
+#endif
+
         /* OST-04-01: Parse received N */
         header_len = frame802154_parse((uint8_t *)current_input->payload, current_input->len, &frame);
         frame_valid = header_len > 0 &&
@@ -3636,14 +3650,16 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               regular_slot_timestamp_rx[7] = RTIMER_NOW();
 #endif
 
+#if !WITH_OST
 #if PPSD_HEADER_IE_IN_DATA_AND_ACK
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
                   ppsd_pkts_acceptable);
 #endif
+#endif
 
-#else /* WITH_PPSD */
+#endif /* WITH_PPSD */
 
 #if WITH_OST /* OST-05-01: Process received N */
               /* process received N before generate EACK */
@@ -3683,6 +3699,13 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack,
                   current_input, matching_slot);
+#elif WITH_PPSD
+#if PPSD_HEADER_IE_IN_DATA_AND_ACK
+              /* Build ACK frame */
+              ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
+                  &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
+                  current_input, ppsd_pkts_acceptable);
+#endif
 #else
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: create ACK */
@@ -3698,7 +3721,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               }
 #endif
 #endif
-#else
+#else /* WITH_OST */
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* Rx slot: create ACK */
               regular_slot_timestamp_rx[7] = RTIMER_NOW();
@@ -3707,7 +3730,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack);
 #endif
-#endif /* WITH_PPSD */
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING
               regular_slot_rx_ack_len = ack_len;
@@ -4379,7 +4401,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
               current_link->channel_offset = 3; /* default: 3 */
               current_link->channel_offset = current_link->channel_offset - minus_c_offset; /* 3 - 0 or 3 - 1 */
             } else {
-              goto ost_donothing;
+//              goto ost_donothing;
             }
           }
 #if OST_ON_DEMAND_PROVISION
@@ -4489,7 +4511,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif
         }
 
-#if WITH_OST
+#if 0//WITH_OST
 ost_donothing:
 #endif
 
@@ -4538,7 +4560,7 @@ ost_donothing:
             tsch_queue_update_all_backoff_windows(&current_link->addr);
           }
 #if WITH_PPSD
-      }
+        }
 #endif
 
 #if WITH_PPSD

@@ -84,7 +84,7 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
     150, /* CCA (radio-rf2xx requires 140 us or 5 ticks) */
    2860, /* TxOffset */
   (2860 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
-#if WITH_PPSD
+#if WITH_PPSD || WITH_OST
    1300, /* RxAckDelay - 1300 */
    1500, /* TxAckDelay - 1500 */
 #else
@@ -147,7 +147,11 @@ const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
    1200, /* TxAckDelay */
   PPSD_RX_WAIT, /* RxWait */
     400,
+#if WITH_OST
+    900, /* MaxAck (23 bytes) */
+#else
     800, /* MaxAck (21 bytes, 25 ticks, 763 us) */
+#endif
    4256, /* MaxTx */
 };
 #endif

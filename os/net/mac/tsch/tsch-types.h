@@ -193,6 +193,10 @@ struct input_packet {
   int16_t rssi; /* RSSI for this packet */
   uint8_t channel; /* Channel we received the packet on */
 
+#if WITH_PPSD
+  uint8_t ppsd_received_in_ep;
+#endif
+
 #if WITH_OST /* OST-09: Post process received N */
   uip_ds6_nbr_t *ost_prN_nbr;
   uint16_t ost_prN_new_N;

@@ -58,6 +58,24 @@
  * \param nack Value of the NACK bit
  * \return The length of the packet that was created. -1 if failure.
  */
+#if WITH_OST
+#if OST_ON_DEMAND_PROVISION
+int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
+                            const linkaddr_t *dest_addr, uint8_t seqno,
+                            int16_t drift, int nack, 
+                            struct input_packet *current_input, uint16_t matching_slot);
+#elif WITH_PPSD
+int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
+                            const linkaddr_t *dest_addr, uint8_t seqno,
+                            int16_t drift, int nack, 
+                            struct input_packet *current_input, uint16_t ppsd_acceptable_pkts);
+#else /* Periodic provisioning only */
+int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
+                            const linkaddr_t *dest_addr, uint8_t seqno,
+                            int16_t drift, int nack,
+                            struct input_packet *current_input);
+#endif /* ODP or EP */
+#else /* WITH_OST */
 #if WITH_PPSD
 #if PPSD_HEADER_IE_IN_DATA_AND_ACK
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
@@ -65,25 +83,12 @@ int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             int16_t drift, int nack, 
                             uint16_t ppsd_acceptable_pkts);
 #endif
-#else
-#if WITH_OST
-#if OST_ON_DEMAND_PROVISION
-int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
-                            const linkaddr_t *dest_addr, uint8_t seqno,
-                            int16_t drift, int nack, 
-                            struct input_packet *current_input, uint16_t matching_slot);
-#else
-int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
-                            const linkaddr_t *dest_addr, uint8_t seqno,
-                            int16_t drift, int nack,
-                            struct input_packet *current_input);
-#endif
-#else
+#elif /* WITH_PPSD */
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,
                             int16_t drift, int nack);
 #endif
-#endif
+#endif /* WITH_OST */
 /**
  * \brief Parse enhanced ACK packet
  * \param buf The buffer where to parse the EACK from
