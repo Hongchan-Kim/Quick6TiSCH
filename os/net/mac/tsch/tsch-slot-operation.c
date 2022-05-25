@@ -198,6 +198,10 @@ static struct pt slot_operation_pt;
 static PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t));
 static PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t));
 
+#if EVAL_CONTROL_NUM_OF_PKTS_IN_EP
+uint8_t eval_num_of_pkts_in_ep = 1;
+#endif
+
 #if WITH_PPSD
 static int ppsd_link_requested = 0;
 static int ppsd_link_scheduled = 0;
@@ -2597,10 +2601,19 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
         if(ppsd_pkts_to_request > 0
+#if EVAL_CONTROL_NUM_OF_PKTS_IN_EP
+            && ppsd_pkts_to_request >= eval_num_of_pkts_in_ep
+#endif
 #if PPSD_EP_POLICY_CELL_UTIL
             && (ep_request_advantageous == 1)
 #endif
             ) {
+#if EVAL_CONTROL_NUM_OF_PKTS_IN_EP
+          eval_num_of_pkts_in_ep++;
+          if(eval_num_of_pkts_in_ep > 6) {
+            eval_num_of_pkts_in_ep = 1;
+          }
+#endif
           ppsd_link_requested = 1;
           tsch_packet_set_frame_pending(packet, packet_len);
 
@@ -3650,16 +3663,16 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               regular_slot_timestamp_rx[7] = RTIMER_NOW();
 #endif
 
-#if !WITH_OST
+//#if !WITH_OST
 #if PPSD_HEADER_IE_IN_DATA_AND_ACK
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
                   ppsd_pkts_acceptable);
 #endif
-#endif
+//#endif
 
-#endif /* WITH_PPSD */
+#else//ndif /* WITH_PPSD */
 
 #if WITH_OST /* OST-05-01: Process received N */
               /* process received N before generate EACK */
@@ -3730,6 +3743,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack);
 #endif
+#endif /* WITH_PPSD */
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING
               regular_slot_rx_ack_len = ack_len;
