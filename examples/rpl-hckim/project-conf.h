@@ -7,6 +7,7 @@
  */
 #define WITH_TSCH_TX_CCA                           1
 #define WITH_PPSD                                  1
+#define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
 
 /* Orchestra or ALICE
    - Wihtout any: Max in single hop: 87, Max in multi hop: 70
@@ -24,7 +25,12 @@
 
 #define EVAL_CONTROL_NUM_OF_PKTS_IN_EP             1 /* Needs WITH_PPSD */
 
+
 #if WITH_PPSD
+
+#define PPSD_TURN_EP_RX_DEADLINE_OFF_OR_NOT        1
+#define PPSD_HANDLE_SKIPPED_SLOT                   1
+
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
 #define PPSD_EP_POLICY_CELL_UTIL                   1
 #define PPSD_TX_SLOT_FORWARD_OFFLOADING            1
@@ -66,6 +72,11 @@
 #define PPSD_FIRST_CCA                             1
 #define PPSD_SECOND_CCA                            1
 #define PPSD_THIRD_CCA                             1
+#endif
+
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+#undef TSCH_CONF_BURST_MAX_LEN
+#define TSCH_CONF_BURST_MAX_LEN                    16 /* turn burst off */
 #endif
 
 //#define PPSD_CONF_RX_WAIT                    800
@@ -164,11 +175,11 @@
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60 / 10)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 #define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (86 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 #endif
 
@@ -245,10 +256,10 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -272,7 +283,7 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              211 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 //#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 #define TSCH_CONF_BURST_MAX_LEN                    0
 /* for log messages */
@@ -298,7 +309,7 @@
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
+#define ORCHESTRA_CONF_UNICAST_PERIOD              311//23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define TSCH_CONF_BURST_MAX_LEN                    0
 
@@ -324,13 +335,7 @@
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        41 //31 broadcast and default slotframe length, original: 31
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 
-#define OST_ON_DEMAND_PROVISION                    1
-
-#define TSCH_DEFAULT_BURST_TRANSMISSION            0
-#if TSCH_DEFAULT_BURST_TRANSMISSION
-#undef TSCH_CONF_BURST_MAX_LEN
-#define TSCH_CONF_BURST_MAX_LEN                    16 /* turn burst off */
-#endif
+#define OST_ON_DEMAND_PROVISION                    0
 
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define OST_JSB_ADD                                1
