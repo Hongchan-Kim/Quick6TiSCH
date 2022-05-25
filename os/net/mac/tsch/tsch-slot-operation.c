@@ -2332,6 +2332,18 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
 
+#if PPSD_TURN_EP_RX_DEADLINE_OFF_OR_NOT
+    if(ppsd_last_rx_seq >= ppsd_pkts_to_receive) {
+      ppsd_rx_slot_all_reception_end = ppsd_rx_slot_curr_reception_start + ppsd_rx_slot_curr_duration;
+
+#if PPSD_DBG_EP_OPERATION
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "ep rx completed (final seq)"));
+#endif
+      break;
+    }
+#else
     if(ppsd_last_rx_seq >= ppsd_pkts_to_receive
       || !RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start
                                         + (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * ppsd_pkts_to_receive
@@ -2357,6 +2369,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
       }
       break;
     }
+#endif
   }
 
   ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_ts_tx_ack_delay];
@@ -4015,6 +4028,14 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
     if(current_link == NULL || tsch_lock_requested) { /* Skip slot operation if there is no link
                                                           or if there is a pending request for getting the lock */
+#if PPSD_HANDLE_SKIPPED_SLOT
+      if(ppsd_link_scheduled) {
+        ppsd_link_scheduled = 0;
+        ppsd_pkts_to_send = 0;
+        ppsd_pkts_to_receive = 0;
+
+      }
+#endif
       /* Issue a log whenever skipping a slot */
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
