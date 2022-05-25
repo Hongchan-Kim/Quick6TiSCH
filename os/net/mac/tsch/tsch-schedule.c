@@ -109,46 +109,6 @@ tsch_schedule_add_slotframe(uint16_t handle, uint16_t size)
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_OST && TSCH_DEFAULT_BURST_TRANSMISSION
-uint8_t
-tsch_schedule_get_next_timeslot_available_or_not(struct tsch_asn_t *asn, uint16_t *time_to_earliest)
-{
-  uint16_t minimum_time_to_timeslot = 0;
-
-  /* Check slotframe schedule */
-  if(!tsch_is_locked()) { 
-    struct tsch_slotframe *sf = list_head(slotframe_list);
-    while(sf != NULL) {
-      uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
-      struct tsch_link *l = list_head(sf->links_list);
-
-      while(l != NULL) {
-        uint16_t time_to_timeslot =
-          l->timeslot > timeslot ?
-          l->timeslot - timeslot :
-          sf->size.val + l->timeslot - timeslot;
-
-        if(minimum_time_to_timeslot == 0 || time_to_timeslot < minimum_time_to_timeslot) {
-          minimum_time_to_timeslot = time_to_timeslot;
-        }
-
-        if(time_to_timeslot == 1) {
-          *time_to_earliest = minimum_time_to_timeslot;
-          return 0;
-        }
-
-        l = list_item_next(l);
-      }
-      sf = list_item_next(sf);
-    }
-    *time_to_earliest = minimum_time_to_timeslot;
-    return 1;
-  }
-  *time_to_earliest = minimum_time_to_timeslot;
-  return 0; /* TSCH locked, unable to check slotframe schedule */
-}
-#endif
-/*---------------------------------------------------------------------------*/
 #if WITH_OST && OST_ON_DEMAND_PROVISION
 uint16_t
 tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn)

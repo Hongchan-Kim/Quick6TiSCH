@@ -176,14 +176,10 @@ static struct tsch_link *backup_link = NULL;
 static struct tsch_packet *current_packet = NULL;
 static struct tsch_neighbor *current_neighbor = NULL;
 
-#if !WITH_OST && !WITH_ALICE
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 /* Indicates whether an extra link is needed to handle the current burst */
 static int burst_link_scheduled = 0;
-#elif WITH_OST
-#if TSCH_DEFAULT_BURST_TRANSMISSION
-static int burst_link_scheduled = 0;
 static int is_burst_slot = 0;
-#endif
 #endif
 /* Counts the length of the current burst */
 int tsch_current_burst_count = 0;
@@ -1583,8 +1579,7 @@ ost_remove_reserved_ssq(uint16_t nbr_id) //hckim
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_PPSD
-#if PPSD_EP_POLICY_CELL_UTIL
+#if WITH_PPSD && PPSD_EP_POLICY_CELL_UTIL
 int
 tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr, 
                                        uint8_t num_of_pkts_to_request, 
@@ -1654,7 +1649,6 @@ tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr,
 
   return return_val;
 }
-#endif
 #endif
 /*---------------------------------------------------------------------------*/
 #if WITH_PPSD
@@ -2562,13 +2556,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* wait for ack? */
       static uint8_t do_wait_for_ack;
       static rtimer_clock_t tx_start_time;
-#if !WITH_OST && !WITH_ALICE
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
       /* Did we set the frame pending bit to request an extra burst link? */
       static int burst_link_requested;
-#elif WITH_OST
-#if TSCH_DEFAULT_BURST_TRANSMISSION
-      static int burst_link_requested;
-#endif
 #endif
 
 #if TSCH_CCA_ENABLED
@@ -2662,9 +2652,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
         }
       }
-#else /* WITH_PPSD */
-
-#if !WITH_OST && !WITH_ALICE
+#elif WITH_TSCH_DEFAULT_BURST_TRANSMISSION
       /* Unicast. More packets in queue for the neighbor? */
       burst_link_requested = 0;
       if(do_wait_for_ack
@@ -2674,12 +2662,16 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         tsch_packet_set_frame_pending(packet, packet_len);
       }
 #endif
-#endif /* WITH_PPSD */
+
       /* read seqno from payload */
       seqno = ((uint8_t *)(packet))[2];
 
 #if WITH_OST /* OST-03-07: Piggyback N */
-#if OST_ON_DEMAND_PROVISION
+#if !OST_ON_DEMAND_PROVISION
+
+      seqno = ((uint8_t *)(packet))[4];
+
+#else /* OST_ON_DEMAND_PROVISION */
       frame802154_fcf_t fcf;
       frame802154_parse_fcf((uint8_t *)(packet), &fcf);
 
@@ -2749,23 +2741,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
       seqno = ((uint8_t *)(packet))[6];
 
-#else /* OST_ON_DEMAND_PROVISION */
-
-#if TSCH_DEFAULT_BURST_TRANSMISSION
-      /* Unicast. More packets in queue for the neighbor? */
-      burst_link_requested = 0;
-      if(do_wait_for_ack
-             && tsch_current_burst_count + 1 < TSCH_BURST_MAX_LEN
-             && tsch_queue_nbr_packet_count(current_neighbor) > 1) {
-        uint16_t time_to_earliest_schedule = 0;
-        if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
-          burst_link_requested = 1;
-          tsch_packet_set_frame_pending(packet, packet_len);
-        }
-      }
-#endif
-      seqno = ((uint8_t *)(packet))[4];
-
 #endif /* OST_ON_DEMAND_PROVISION */
 #endif /* WITH_OST */
 
@@ -2817,7 +2792,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         regular_slot_timestamp_tx[4] = RTIMER_NOW();
 #endif
 
-#if PPSD_TRIPLE_CCA
+#if WITH_PPSD && PPSD_TRIPLE_CCA
         ppsd_first_cca_detected = 0;
         ppsd_second_cca_detected = 0;
         ppsd_third_cca_detected = 0;
@@ -2874,7 +2849,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           }
         }
 #endif
-#else /* PPSD_TRIPLE_CCA */
+#else /* WITH_PPSD && PPSD_TRIPLE_CCA */
 
         /* CCA */
         RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
@@ -2891,7 +2866,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         /*  NETSTACK_RADIO.off(); */
         if(cca_status == 0) {
 #if TSCH_TX_CCA_DBG_CCA_RESULT
-#if PPSD_TRIPLE_CCA
+#if WITH_PPSD && PPSD_TRIPLE_CCA
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca busy %u %u %u", ppsd_first_cca_detected, ppsd_second_cca_detected, ppsd_third_cca_detected));
@@ -2923,7 +2898,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         {
 
 #if TSCH_TX_CCA_DBG_CCA_RESULT
-#if PPSD_TRIPLE_CCA
+#if WITH_PPSD && PPSD_TRIPLE_CCA
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "tx cca idle %u %u %u", ppsd_first_cca_detected, ppsd_second_cca_detected, ppsd_third_cca_detected));
@@ -2978,17 +2953,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
 #endif
           /* calculate TX duration based on sent packet len */
-#if !WITH_OST
           tx_duration = TSCH_PACKET_DURATION(packet_len);
           /* limit tx_time to its max value */
           tx_duration = MIN(tx_duration, tsch_timing[tsch_ts_max_tx]);
-#else
+
+#if WITH_OST || (WITH_PPSD && PPSD_HEADER_IE_IN_DATA_AND_ACK)
           tx_duration = tsch_timing[tsch_ts_max_tx];
-#endif
-#if WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK
-          tx_duration = tsch_timing[tsch_ts_max_tx];
-#endif
 #endif
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* RegTx8: before turn_radio_off() */
@@ -3088,30 +3058,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                   ack_len = 0;
                 }
 
-#if WITH_PPSD
-                if(ack_len != 0) {
-                  uint16_t ppsd_pkts_allowed = 0;
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK
-                  ppsd_pkts_allowed = ack_ies.ie_ppsd_info;
-#endif
-#if PPSD_DBG_EP_ESSENTIAL
-                  if(ppsd_link_requested) {
-                    TSCH_LOG_ADD(tsch_log_message,
-                        snprintf(log->message, sizeof(log->message),
-                        "ep pol allowed %u", ppsd_pkts_allowed));
-                  }
-#endif
-                  if(ppsd_link_requested && ppsd_pkts_allowed > 0) {
-                    ppsd_link_scheduled = 1;
-                    ppsd_pkts_to_send = ppsd_pkts_allowed;
-                  } else {
-                    ppsd_link_scheduled = 0;
-                    ppsd_pkts_to_send = 0;
-                  }
-                  ppsd_link_requested = 0;
-                }
-#endif
-
+#if WITH_OST /* Process received t_offset */
 #if WITH_OST_LOG_DBG
                 uint16_t nbr_id = OST_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(current_neighbor));
                 TSCH_LOG_ADD(tsch_log_message,
@@ -3120,7 +3067,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 );
 #endif
 
-#if WITH_OST /* Process received t_offset */
                 if(ack_len != 0) {
                   ost_process_rx_t_offset(&frame);
 #if OST_ON_DEMAND_PROVISION
@@ -3176,25 +3122,36 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 }
                 mac_tx_status = MAC_TX_OK;
 
-#if !WITH_OST && !WITH_ALICE
+#if WITH_PPSD
+                if(ack_len != 0) {
+                  uint16_t ppsd_pkts_allowed = 0;
+#if PPSD_HEADER_IE_IN_DATA_AND_ACK
+                  ppsd_pkts_allowed = ack_ies.ie_ppsd_info;
+#endif
+#if PPSD_DBG_EP_ESSENTIAL
+                  if(ppsd_link_requested) {
+                    TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "ep pol allowed %u", ppsd_pkts_allowed));
+                  }
+#endif
+                  if(ppsd_link_requested && ppsd_pkts_allowed > 0) {
+                    ppsd_link_scheduled = 1;
+                    ppsd_pkts_to_send = ppsd_pkts_allowed;
+                  } else {
+                    ppsd_link_scheduled = 0;
+                    ppsd_pkts_to_send = 0;
+                  }
+                  ppsd_link_requested = 0;
+                }
+#elif WITH_TSCH_DEFAULT_BURST_TRANSMISSION
                 /* We requested an extra slot and got an ack. This means
                 the extra slot will be scheduled at the received */
                 if(burst_link_requested) {
                   burst_link_scheduled = 1;
                 }
-#elif WITH_OST
-#if TSCH_DEFAULT_BURST_TRANSMISSION
-                /* We requested an extra slot and got an ack. This means
-                the extra slot will be scheduled at the received */
-                if(burst_link_requested) {
-                  if(tsch_packet_get_frame_pending(ackbuf, ack_len)) {
-                    burst_link_scheduled = 1;
-                  } else {
-                    burst_link_scheduled = 0;
-                  }
-                }
 #endif
-#endif
+
               } else {
                 mac_tx_status = MAC_TX_NOACK;
               }
@@ -3214,6 +3171,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
     current_packet->transmissions++;
     current_packet->ret = mac_tx_status;
+
 #if WITH_PPSD
     current_packet->ppsd_sent_in_ep = 0;
 #endif
@@ -3321,7 +3279,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       ++tsch_unicast_slotframe_tx_operation_count;
     } 
 #else /* WITH_OST */
-#if !TSCH_DEFAULT_BURST_TRANSMISSION
+#if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
     if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
       ++tsch_eb_slotframe_tx_operation_count;
     } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
@@ -3532,17 +3490,13 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &rx_start_time, sizeof(rtimer_clock_t));
 #endif
 
-#if !WITH_OST /* OST: Extend packet duration */
+        /* calculate RX duration based on input packet len */
         packet_duration = TSCH_PACKET_DURATION(current_input->len);
         /* limit packet_duration to its max value */
         packet_duration = MIN(packet_duration, tsch_timing[tsch_ts_max_tx]);
-#else
+
+#if WITH_OST || (WITH_PPSD && PPSD_HEADER_IE_IN_DATA_AND_ACK)
         packet_duration = tsch_timing[tsch_ts_max_tx];
-#endif
-#if WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK
-        packet_duration = tsch_timing[tsch_ts_max_tx];
-#endif
 #endif
 
         if(!frame_valid) {
@@ -3611,6 +3565,20 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               static uint8_t ack_buf[TSCH_PACKET_MAX_LEN];
               static int ack_len;
 
+#if WITH_OST /* OST-05-01: Process received N */
+              /* process received N before generate EACK */
+              ost_process_rx_N(&frame, current_input);
+#if OST_ON_DEMAND_PROVISION              
+              uint16_t matching_slot = ost_process_rx_schedule_info(&frame);
+#if WITH_OST_LOG_INFO
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                  "ost odp: m_slot %u", matching_slot)
+              );
+#endif
+#endif /* OST_ON_DEMAND_PROVISION */
+#endif /* WITH_OST */
+
 #if WITH_PPSD
               ppsd_pkts_acceptable = 0;
 
@@ -3637,15 +3605,14 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                     snprintf(log->message, sizeof(log->message),
                     "ep pol requested %u %u", minimum_number_of_pkts_with_advantage, number_of_pkts_for_max_advantage));
 #endif
-
-#else
-
+#else /* PPSD_EP_POLICY_CELL_UTIL */
 #if PPSD_DBG_EP_ESSENTIAL
                 TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
                     "ep pol requested %d", ppsd_pkts_requested));
 #endif
-#endif
+#endif /* PPSD_EP_POLICY_CELL_UTIL */
+
                 /* consider current packet: ringbufindex_elements(&input_ringbuf) + 1 */
                 int ppsd_free_input_ringbuf
                         = ((int)TSCH_MAX_INCOMING_PACKETS - 1) - (ringbufindex_elements(&input_ringbuf) + 1) > 0 ?
@@ -3688,92 +3655,42 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                     ppsd_free_input_ringbuf, ppsd_free_any_queue));
 #endif
               }
+#endif /* WITH_PPSD */
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* RegRx7: before create ACK */
               regular_slot_timestamp_rx[7] = RTIMER_NOW();
 #endif
 
-//#if !WITH_OST
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK
+#if !WITH_OST
+#if WITH_PPSD && PPSD_HEADER_IE_IN_DATA_AND_ACK
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
                   ppsd_pkts_acceptable);
-#endif
-//#endif
-
-#else//ndif /* WITH_PPSD */
-
-#if WITH_OST /* OST-05-01: Process received N */
-              /* process received N before generate EACK */
-              ost_process_rx_N(&frame, current_input);
-#if OST_ON_DEMAND_PROVISION              
-              uint16_t matching_slot = ost_process_rx_schedule_info(&frame);
-#if WITH_OST_LOG_INFO
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                  "ost odp: m_slot %u", matching_slot)
-              );
-#endif
-#else /* OST_ON_DEMAND_PROVISION */
-#if TSCH_DEFAULT_BURST_TRANSMISSION
-              /* Schedule a burst link iff the frame pending bit was set */
-              int frame_pending_bit_set_or_not = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
-              if(frame_pending_bit_set_or_not) {
-                uint16_t time_to_earliest_schedule = 0;
-                if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
-                  burst_link_scheduled = 1;
-                } else {
-                  burst_link_scheduled = 0;
-                }
-              }
-#endif
-#endif /* OST_ON_DEMAND_PROVISION */
-#endif /* WITH_OST */
-
-#if WITH_OST
-#if OST_ON_DEMAND_PROVISION
-
-#if PPSD_DBG_REGULAR_SLOT_TIMING /* RegRx7: before create ACK */
-              regular_slot_timestamp_rx[7] = RTIMER_NOW();
-#endif
-
-              /* Build ACK frame */
-              ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
-                  &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack,
-                  current_input, matching_slot);
-#elif WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK
-              /* Build ACK frame */
-              ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
-                  &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
-                  current_input, ppsd_pkts_acceptable);
-#endif
-#else
-
-#if PPSD_DBG_REGULAR_SLOT_TIMING /* RegRx7: before create ACK */
-              regular_slot_timestamp_rx[7] = RTIMER_NOW();
-#endif
-              /* Build ACK frame */
-              ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
-                  &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
-                  current_input);
-#if TSCH_DEFAULT_BURST_TRANSMISSION
-              if(burst_link_scheduled == 1) {
-                tsch_packet_set_frame_pending(ack_buf, ack_len);
-              }
-#endif
-#endif
-#else /* WITH_OST */
-
-#if PPSD_DBG_REGULAR_SLOT_TIMING /* RegRx7: before create ACK */
-              regular_slot_timestamp_rx[7] = RTIMER_NOW();
-#endif
+#else /* Default burst transmission or no burst transmission */
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack);
 #endif
-#endif /* WITH_PPSD */
+#else /* !WITH_OST */
+#if OST_ON_DEMAND_PROVISION
+              /* Build ACK frame */
+              ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
+                  &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack,
+                  current_input, matching_slot);
+#elif WITH_PPSD &&  PPSD_HEADER_IE_IN_DATA_AND_ACK
+              /* Build ACK frame */
+              ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
+                  &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
+                  current_input, ppsd_pkts_acceptable);
+#else /* Default burst transmission or no burst transmission */
+              /* Build ACK frame */
+              ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
+                  &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
+                  current_input);
+#endif
+#endif /* !WITH_OST */
+
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* Store ack_len */
               regular_slot_rx_ack_len = ack_len;
@@ -3829,11 +3746,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                   ppsd_pkts_to_receive = 0;
                 }
                 ppsd_pkts_acceptable = 0;
-#else
-#if !WITH_OST && !WITH_ALICE
+#elif WITH_TSCH_DEFAULT_BURST_TRANSMISSION
                 /* Schedule a burst link iff the frame pending bit was set */
                 burst_link_scheduled = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
-#endif
 #endif
               }
             }
@@ -3941,7 +3856,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             ++tsch_unicast_slotframe_rx_operation_count;
           }
 #else /* WITH_OST */
-#if !TSCH_DEFAULT_BURST_TRANSMISSION
+#if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
           if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
             ++tsch_eb_slotframe_rx_operation_count;
           } else if(current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) {
@@ -4127,7 +4042,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         }
       } 
 #else /* !WITH_OST */
-#if !TSCH_DEFAULT_BURST_TRANSMISSION
+#if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
       if(current_link->slotframe_handle == ORCHESTRA_EB_SF_ID) {
         if(current_link->link_options & LINK_OPTION_TX) {
           ++tsch_unlocked_scheduled_eb_tx_cell_count;
@@ -4198,7 +4113,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           }
         }        
       }
-#endif /* !TSCH_DEFAULT_BURST_TRANSMISSION */
+#endif /* !WITH_TSCH_DEFAULT_BURST_TRANSMISSION */
 #endif /* !WITH_OST */
 #endif /* WITH_PPSD */
 
@@ -4210,6 +4125,19 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       /* Reset drift correction */
       drift_correction = 0;
       is_drift_correction_used = 0;
+
+#if WITH_OST && OST_ON_DEMAND_PROVISION
+      if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET 
+        && current_link->link_options == LINK_OPTION_TX) {
+        if(current_packet == NULL) {
+          if(tsch_is_locked()) { /* tsch-schedule is being changing, so locked - skip this slot */
+            ost_remove_matching_slot();
+          } else {
+            /* ERROR: ssq Tx schedule, but no packets to Tx */
+          }
+        }
+      }
+#endif
 
 #if WITH_PPSD
       /* Do not change current_neigbor in ppsd slot */
@@ -4224,19 +4152,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #else
       /* Get a packet ready to be sent */
       current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
-#endif
-
-#if WITH_OST && OST_ON_DEMAND_PROVISION
-      if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET 
-        && current_link->link_options == LINK_OPTION_TX) {
-        if(current_packet == NULL) {
-          if(tsch_is_locked()) { /* tsch-schedule is being changing, so locked - skip this slot */
-            ost_remove_matching_slot();
-          } else {
-            /* ERROR: ssq Tx schedule, but no packets to Tx */
-          }
-        }
-      }
 #endif
 
 #if WITH_PPSD
@@ -4494,25 +4409,18 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           /* If we are in a burst, we stick to current channel instead of
           * doing channel hopping, as per IEEE 802.15.4-2015 */
           tsch_current_timeslot = current_link->timeslot; // hckim
-#if !WITH_OST && !WITH_ALICE
-          if(burst_link_scheduled) {
-            /* Reset burst_link_scheduled flag. Will be set again if burst continue. */
-            burst_link_scheduled = 0;
-          } else 
-#elif WITH_OST
-#if TSCH_DEFAULT_BURST_TRANSMISSION
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
           if(burst_link_scheduled) {
             /* Reset burst_link_scheduled flag. Will be set again if burst continue. */
             burst_link_scheduled = 0;
             is_burst_slot = 1;
           } else 
 #endif
-#endif
           {
             /* Hop channel */
             tsch_current_channel_offset = tsch_get_channel_offset(current_link, current_packet);
             tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
-#if WITH_OST && TSCH_DEFAULT_BURST_TRANSMISSION
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
             is_burst_slot = 0;
 #endif
           }
@@ -4544,22 +4452,16 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
             static struct pt slot_rx_pt;
             PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
           }
-#if WITH_OST && TSCH_DEFAULT_BURST_TRANSMISSION
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
           if(is_burst_slot) {
             is_burst_slot = 0;
           }
 #endif
         } else {
-#if !WITH_OST && !WITH_ALICE
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
           /* Make sure to end the burst in cast, for some reason, we were
           * in a burst but now without any more packet to send. */
           burst_link_scheduled = 0;
-#elif WITH_OST
-#if TSCH_DEFAULT_BURST_TRANSMISSION
-          /* Make sure to end the burst in cast, for some reason, we were
-          * in a burst but now without any more packet to send. */
-          burst_link_scheduled = 0;
-#endif
 #endif
         }
 
@@ -4660,73 +4562,38 @@ ost_donothing:
         } else {
 #endif
 
-#if !WITH_OST && !WITH_ALICE
-          /* A burst link was scheduled. Replay the current link at the
-          next time offset */
-          if(burst_link_scheduled && current_link != NULL) {
+#if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+          /* Get next active link */
+          current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);
+          if(current_link == NULL) {
+            /* There is no next link. Fall back to default
+            * behavior: wake up at the next slot. */
             timeslot_diff = 1;
-            backup_link = NULL;
-            /* Keep track of the number of repetitions */
-            tsch_current_burst_count++;
           } else {
-            /* Get next active link */
-            current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);
-            if(current_link == NULL) {
-              /* There is no next link. Fall back to default
-              * behavior: wake up at the next slot. */
-              timeslot_diff = 1;
-            } else {
-              /* Reset burst index now that the link was scheduled from
-                normal schedule (as opposed to from ongoing burst) */
-              tsch_current_burst_count = 0;
-            }
-          }
-#elif WITH_OST
-#if TSCH_DEFAULT_BURST_TRANSMISSION
-          /* A burst link was scheduled. Replay the current link at the
-          next time offset */
-          if(burst_link_scheduled && current_link != NULL) {
-            timeslot_diff = 1;
-            backup_link = NULL;
-            /* Keep track of the number of repetitions */
-            tsch_current_burst_count++;
-          } else {
-            /* Get next active link */
-            current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);
-            if(current_link == NULL) {
-              /* There is no next link. Fall back to default
-              * behavior: wake up at the next slot. */
-              timeslot_diff = 1;
-            } else {
-              /* Reset burst index now that the link was scheduled from
-                normal schedule (as opposed to from ongoing burst) */
-              tsch_current_burst_count = 0;
-            }
+            /* Reset burst index now that the link was scheduled from
+              normal schedule (as opposed to from ongoing burst) */
+            tsch_current_burst_count = 0;
           }
 #else
-          /* Get next active link */
-          current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);
-          if(current_link == NULL) {
-            /* There is no next link. Fall back to default
-            * behavior: wake up at the next slot. */
+          /* A burst link was scheduled. Replay the current link at the
+          next time offset */
+          if(burst_link_scheduled && current_link != NULL) {
             timeslot_diff = 1;
+            backup_link = NULL;
+            /* Keep track of the number of repetitions */
+            tsch_current_burst_count++;
           } else {
-            /* Reset burst index now that the link was scheduled from
-              normal schedule (as opposed to from ongoing burst) */
-            tsch_current_burst_count = 0;
-          }
-#endif
-#else /* WITH_ALICE */
-          /* Get next active link */
-          current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);
-          if(current_link == NULL) {
-            /* There is no next link. Fall back to default
-            * behavior: wake up at the next slot. */
-            timeslot_diff = 1;
-          } else {
-            /* Reset burst index now that the link was scheduled from
-              normal schedule (as opposed to from ongoing burst) */
-            tsch_current_burst_count = 0;
+            /* Get next active link */
+            current_link = tsch_schedule_get_next_active_link(&tsch_current_asn, &timeslot_diff, &backup_link);
+            if(current_link == NULL) {
+              /* There is no next link. Fall back to default
+              * behavior: wake up at the next slot. */
+              timeslot_diff = 1;
+            } else {
+              /* Reset burst index now that the link was scheduled from
+                normal schedule (as opposed to from ongoing burst) */
+              tsch_current_burst_count = 0;
+            }
           }
 #endif
 

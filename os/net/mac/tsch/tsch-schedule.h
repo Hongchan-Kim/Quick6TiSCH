@@ -190,9 +190,6 @@ struct ost_ssq_schedule_t {
 struct tsch_slotframe *ost_tsch_schedule_get_slotframe_head(void);
 uint16_t tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn);
 void tsch_schedule_print_ost(void);
-#if TSCH_DEFAULT_BURST_TRANSMISSION
-uint8_t tsch_schedule_get_next_timeslot_available_or_not(struct tsch_asn_t *asn, uint16_t * time_to_earliest);
-#endif
 #endif
 
 #endif /* __TSCH_SCHEDULE_H__ */
