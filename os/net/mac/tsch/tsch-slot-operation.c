@@ -2082,6 +2082,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
   static rtimer_clock_t ppsd_rx_slot_curr_reception_start;
   static rtimer_clock_t ppsd_rx_slot_curr_duration;
   static rtimer_clock_t ppsd_rx_slot_curr_timeout;
+  static rtimer_clock_t ppsd_rx_slot_curr_deadline;
 
   /* last operation timing */
   static rtimer_clock_t ppsd_rx_slot_last_valid_reception_start;
@@ -2325,23 +2326,10 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
         "ep rx end (last seq %u)", ppsd_last_rx_seq));
 #endif
 
-
-#if PPSD_TURN_EP_RX_DEADLINE_OFF_OR_NOT
-    if(ppsd_last_rx_seq >= ppsd_pkts_to_receive) {
-      ppsd_rx_slot_all_reception_end = ppsd_rx_slot_curr_reception_start + ppsd_rx_slot_curr_duration;
-
-#if PPSD_DBG_EP_OPERATION
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "ep rx completed (final seq)"));
-#endif
-      break;
-    }
-#else
+    ppsd_rx_slot_curr_deadline = ppsd_rx_slot_curr_start + ppsd_rx_slot_curr_timeout;
+    
     if(ppsd_last_rx_seq >= ppsd_pkts_to_receive
-      || !RTIMER_CLOCK_LT(RTIMER_NOW(), current_slot_start
-                                        + (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) * ppsd_pkts_to_receive
-                                        + ppsd_timing[ppsd_ts_rx_offset])) {
+      || !RTIMER_CLOCK_LT(RTIMER_NOW(), ppsd_rx_slot_curr_deadline + RADIO_DELAY_BEFORE_DETECT)) {
       if(ppsd_last_rx_seq >= ppsd_pkts_to_receive) {
         ppsd_rx_slot_all_reception_end = ppsd_rx_slot_curr_reception_start + ppsd_rx_slot_curr_duration;
 
@@ -2351,9 +2339,7 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
             "ep rx completed (final seq)"));
 #endif
       } else {
-        ppsd_rx_slot_all_reception_end = current_slot_start
-                                        + (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) 
-                                        * ppsd_pkts_to_receive;
+        ppsd_rx_slot_all_reception_end = ppsd_rx_slot_curr_deadline;
 
 #if PPSD_DBG_EP_OPERATION
         TSCH_LOG_ADD(tsch_log_message,
@@ -2363,7 +2349,6 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
       }
       break;
     }
-#endif
   }
 
   ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_ts_tx_ack_delay];

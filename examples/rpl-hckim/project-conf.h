@@ -28,7 +28,6 @@
 
 #if WITH_PPSD
 
-#define PPSD_TURN_EP_RX_DEADLINE_OFF_OR_NOT        1
 #define PPSD_HANDLE_SKIPPED_SLOT                   1
 
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
