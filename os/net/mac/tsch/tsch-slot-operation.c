@@ -199,6 +199,13 @@ uint8_t eval_num_of_pkts_in_ep = 1;
 #endif
 
 #if WITH_PPSD
+#if PPSD_TEMPORAL_LINK
+struct tsch_link temporal_link;
+#endif
+#if PPSD_HANDLE_MISSED_EP_SLOT
+static int ppsd_link_scheduled_count = 0;
+#endif
+
 static int ppsd_link_requested = 0;
 static int ppsd_link_scheduled = 0;
 static int ppsd_pkts_acceptable = 0;
@@ -1622,7 +1629,7 @@ tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr,
                           / tsch_timing[tsch_ts_timeslot_length];
 #if PPSD_CONSIDER_RTIMER_GUARD
     if(check_timer_miss(0, 
-                        ep_expected_timeslots * tsch_timing[tsch_ts_timeslot_length] - RTIMER_GUARD, 
+                        ep_expected_timeslots * tsch_timing[tsch_ts_timeslot_length] - RTIMER_GUARD * PPSD_CONSIDER_RTIMER_GUARD, 
                         ep_expected_all_tx_duration)) {
       ep_expected_timeslots += 1;
     }
@@ -3928,14 +3935,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
     if(current_link == NULL || tsch_lock_requested) { /* Skip slot operation if there is no link
                                                           or if there is a pending request for getting the lock */
-#if PPSD_HANDLE_SKIPPED_SLOT
-      if(ppsd_link_scheduled) {
-        ppsd_link_scheduled = 0;
-        ppsd_pkts_to_send = 0;
-        ppsd_pkts_to_receive = 0;
-
-      }
-#endif
       /* Issue a log whenever skipping a slot */
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
@@ -3948,8 +3947,28 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if WITH_OST && OST_ON_DEMAND_PROVISION
       if(ost_exist_matching_slot(&tsch_current_asn)) {
         ost_remove_matching_slot();
+
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "!skipped ost odp");
+        );
       }
 #endif 
+
+#if PPSD_HANDLE_SKIPPED_EP_SLOT
+      if(ppsd_link_scheduled) {
+        ppsd_link_scheduled = 0;
+        ppsd_pkts_to_send = 0;
+        ppsd_pkts_to_receive = 0;
+
+#if PPSD_DBG_EP_ESSENTIAL
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "!skipped ep");
+        );
+#endif
+      }
+#endif
 
     } else {
 #if WITH_PPSD
@@ -4240,7 +4259,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                                 / tsch_timing[tsch_ts_timeslot_length]);
 #if PPSD_CONSIDER_RTIMER_GUARD
         if(check_timer_miss(current_slot_start, 
-                            ppsd_passed_timeslots * tsch_timing[tsch_ts_timeslot_length] - RTIMER_GUARD, 
+                            ppsd_passed_timeslots * tsch_timing[tsch_ts_timeslot_length] - RTIMER_GUARD * PPSD_CONSIDER_RTIMER_GUARD, 
                             ppsd_slot_end)) {
           ppsd_passed_timeslots += 1;
         }
@@ -4387,7 +4406,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
             );
 #endif
 
-        }
+          }
 #endif
 #endif
 
@@ -4486,26 +4505,58 @@ ost_donothing:
       rtimer_clock_t prev_slot_start;
       /* Time to next wake up */
       rtimer_clock_t time_to_next_active_slot;
+
+#if PPSD_HANDLE_MISSED_EP_SLOT
+      ppsd_link_scheduled_count = 0;
+#endif
       /* Schedule next wakeup skipping slots if missed deadline */
       do {
-#if WITH_PPSD
-        if(is_ppsd_slot == 0) {
+        if(current_link != NULL
+            && current_link->link_options & LINK_OPTION_TX
+            && current_link->link_options & LINK_OPTION_SHARED) {
+          /* Decrement the backoff window for all neighbors able to transmit over
+          * this Tx, Shared link. */
+          tsch_queue_update_all_backoff_windows(&current_link->addr);
+        }
+
+#if PPSD_HANDLE_MISSED_EP_SLOT
+        if(ppsd_link_scheduled_count > 0) { /* This means deadline of EP link has been missed */
+          ppsd_link_scheduled = 0;
+          ppsd_pkts_to_send = 0;
+          ppsd_pkts_to_receive = 0;
+          ppsd_link_scheduled_count = 0;
+
+#if PPSD_DBG_EP_ESSENTIAL
+          TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "!missed ep");
+          );
 #endif
-          if(current_link != NULL
-              && current_link->link_options & LINK_OPTION_TX
-              && current_link->link_options & LINK_OPTION_SHARED) {
-            /* Decrement the backoff window for all neighbors able to transmit over
-            * this Tx, Shared link. */
-            tsch_queue_update_all_backoff_windows(&current_link->addr);
-          }
-#if WITH_PPSD
         }
 #endif
 
 #if WITH_PPSD
         if(ppsd_link_scheduled && current_link != NULL) {
+#if PPSD_HANDLE_MISSED_EP_SLOT
+          ++ppsd_link_scheduled_count;
+#endif
           timeslot_diff = 1;
           backup_link = NULL;
+
+#if PPSD_TEMPORAL_LINK
+          temporal_link.next = NULL;
+          temporal_link.handle = current_link->handle;
+          linkaddr_copy(&(temporal_link.addr), &(current_link->addr));
+          temporal_link.slotframe_handle = current_link->slotframe_handle;
+          temporal_link.timeslot = (current_link->timeslot + 1) 
+                                % tsch_schedule_get_slotframe_by_handle(temporal_link.slotframe_handle)->size.val;
+          temporal_link.channel_offset = current_link->channel_offset;
+          temporal_link.link_options = current_link->link_options;
+          temporal_link.link_type = current_link->link_type;
+          temporal_link.data = current_link->data;
+
+          current_link = &temporal_link;
+#endif
 
 #if PPSD_TX_SLOT_FORWARD_OFFLOADING
           if(ppsd_pkts_to_send > 0) {
@@ -4589,11 +4640,17 @@ ost_donothing:
         /* Update ASN */
         TSCH_ASN_INC(tsch_current_asn, timeslot_diff);
 
+#if WITH_OST && OST_ON_DEMAND_PROVISION
+        if(current_link == NULL && tsch_is_locked() 
+          && ost_exist_matching_slot(&tsch_current_asn)) { /* tsch-schedule is being changing, so locked */
+          ost_remove_matching_slot();
+        }
+#endif        
+
 #if WITH_PPSD
         if(is_ppsd_slot) {
           timeslot_diff += (ppsd_passed_timeslots - 1);
           ppsd_passed_timeslots = 0;
-          //is_ppsd_slot = 0;
 #if PPSD_DBG_EP_OPERATION
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
@@ -4601,14 +4658,6 @@ ost_donothing:
 #endif
         }
 #endif
-
-
-#if WITH_OST && OST_ON_DEMAND_PROVISION
-        if(current_link == NULL && tsch_is_locked() 
-          && ost_exist_matching_slot(&tsch_current_asn)) { /* tsch-schedule is being changing, so locked */
-          ost_remove_matching_slot();
-        }
-#endif        
 
         /* Time to next wake up */
         time_to_next_active_slot = timeslot_diff * tsch_timing[tsch_ts_timeslot_length] + drift_correction;

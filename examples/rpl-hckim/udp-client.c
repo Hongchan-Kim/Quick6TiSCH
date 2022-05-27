@@ -88,7 +88,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer periodic_timer;
   static struct etimer send_timer;
 
-#if PPSD_APP_VARYING_PAYLOAD_LEN
+#if EVAL_CONTROL_APP_PAYLOAD_LEN
   static uint16_t current_payload_len = 0;
   static uint16_t current_len_tx_count = 0;
 #endif
@@ -190,7 +190,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_("\n");
 
 #if PPSD_APP_SET_PAYLOAD_LEN
-#if PPSD_APP_VARYING_PAYLOAD_LEN
+#if EVAL_CONTROL_APP_PAYLOAD_LEN
         snprintf(str, current_payload_len, "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
 
         ++current_len_tx_count;
