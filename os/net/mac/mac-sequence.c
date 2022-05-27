@@ -48,6 +48,86 @@
 #include "net/mac/mac-sequence.h"
 #include "net/packetbuf.h"
 
+#if MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
+
+#ifdef NETSTACK_CONF_MAC_SEQNO_MAX_AGE
+#define SEQNO_MAX_AGE NETSTACK_CONF_MAC_SEQNO_MAX_AGE
+#else /* NETSTACK_CONF_MAC_SEQNO_MAX_AGE */
+#define SEQNO_MAX_AGE (20 * CLOCK_SECOND)
+#endif /* NETSTACK_CONF_MAC_SEQNO_MAX_AGE */
+
+#ifdef NETSTACK_CONF_MAC_SEQNO_HISTORY
+#define MAX_SEQNOS NETSTACK_CONF_MAC_SEQNO_HISTORY
+#else /* NETSTACK_CONF_MAC_SEQNO_HISTORY */
+#define MAX_SEQNOS 16
+#endif /* NETSTACK_CONF_MAC_SEQNO_HISTORY */
+
+struct seqno {
+  clock_time_t timestamp;
+  uint8_t seqno;
+};
+struct seqnos_from_sender {
+  struct seqno seqno_array[MAX_SEQNOS];
+};
+
+static struct seqnos_from_sender received_seqnos[NODE_NUM];
+
+/*---------------------------------------------------------------------------*/
+int
+mac_sequence_is_duplicate(void)
+{
+  int i;
+  clock_time_t now = clock_time();
+
+  /*
+   * Check for duplicate packet by comparing the sequence number of the incoming
+   * packet with the last few ones we saw.
+   */
+  uint16_t sender_index = GET_NODE_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)) - 1;
+
+  for(i = 0; i < MAX_SEQNOS; ++i) {
+    if(packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO) == received_seqnos[sender_index].seqno_array[i].seqno) {
+#if SEQNO_MAX_AGE > 0
+      if(now - received_seqnos[sender_index].seqno_array[i].timestamp <= SEQNO_MAX_AGE) {
+        /* Duplicate packet. */
+        return 1;
+      }
+      break;
+#else /* SEQNO_MAX_AGE > 0 */
+      return 1;
+#endif /* SEQNO_MAX_AGE > 0 */
+    }
+  }
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
+void
+mac_sequence_register_seqno(void)
+{
+  int i, j;
+
+  uint16_t sender_index = GET_NODE_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)) - 1;
+
+  /* Locate possible previous sequence number for this address. */
+  for(i = 0; i < MAX_SEQNOS; ++i) {
+    if(packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO) == received_seqnos[sender_index].seqno_array[i].seqno) {
+      i++;
+      break;
+    }
+  }
+
+
+  /* Keep the last sequence number for each address as per 802.15.4e. */
+  for(j = i - 1; j > 0; --j) {
+    memcpy(&received_seqnos[sender_index].seqno_array[j], &received_seqnos[sender_index].seqno_array[j - 1], sizeof(struct seqno));
+  }
+  received_seqnos[sender_index].seqno_array[0].seqno = packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
+  received_seqnos[sender_index].seqno_array[0].timestamp = clock_time();
+}
+/*---------------------------------------------------------------------------*/
+
+#else /* MODIFIED_MAC_SEQNO_DUPLICATE_CHECK */
+
 struct seqno {
   linkaddr_t sender;
   clock_time_t timestamp;
@@ -71,30 +151,6 @@ static struct seqno received_seqnos[MAX_SEQNOS];
 int
 mac_sequence_is_duplicate(void)
 {
-#if MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
-  int i;
-  clock_time_t now = clock_time();
-
-  /*
-   * Check for duplicate packet by comparing the sequence number of the incoming
-   * packet with the last few ones we saw.
-   */
-  for(i = 0; i < MAX_SEQNOS; ++i) {
-    if(linkaddr_cmp(packetbuf_addr(PACKETBUF_ADDR_SENDER),
-                    &received_seqnos[i].sender)
-      && packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO) == received_seqnos[i].seqno) {
-#if SEQNO_MAX_AGE > 0
-      if(now - received_seqnos[i].timestamp <= SEQNO_MAX_AGE) {
-        /* Duplicate packet. */
-        return 1;
-      }
-#else /* SEQNO_MAX_AGE > 0 */
-      return 1;
-#endif /* SEQNO_MAX_AGE > 0 */
-    }
-  }
-  return 0;
-#else
   int i;
   clock_time_t now = clock_time();
 
@@ -119,22 +175,11 @@ mac_sequence_is_duplicate(void)
     }
   }
   return 0;
-#endif
 }
 /*---------------------------------------------------------------------------*/
 void
 mac_sequence_register_seqno(void)
 {
-#if MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
-  /* Keep the last sequence number for each address as per 802.15.4e. */
-  for(j = MAX_SEQNOS - 1; j > 0; --j) {
-    memcpy(&received_seqnos[j], &received_seqnos[j - 1], sizeof(struct seqno));
-  }
-  received_seqnos[0].seqno = packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO);
-  received_seqnos[0].timestamp = clock_time();
-  linkaddr_copy(&received_seqnos[0].sender,
-                packetbuf_addr(PACKETBUF_ADDR_SENDER));
-#else
   int i, j;
 
   /* Locate possible previous sequence number for this address. */
@@ -154,6 +199,6 @@ mac_sequence_register_seqno(void)
   received_seqnos[0].timestamp = clock_time();
   linkaddr_copy(&received_seqnos[0].sender,
                 packetbuf_addr(PACKETBUF_ADDR_SENDER));
-#endif
 }
 /*---------------------------------------------------------------------------*/
+#endif /* MODIFIED_MAC_SEQNO_DUPLICATE_CHECK */
