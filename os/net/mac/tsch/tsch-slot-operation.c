@@ -180,6 +180,16 @@ static struct tsch_neighbor *current_neighbor = NULL;
 /* Indicates whether an extra link is needed to handle the current burst */
 static int burst_link_scheduled = 0;
 static int is_burst_slot = 0;
+#if TSCH_DBT_TEMPORAL_LINK
+struct tsch_link temporal_burst_link;
+#endif
+#if TSCH_DBT_HANDLE_MISSED_EP_SLOT
+static int burst_link_scheduled_count = 0;
+#endif
+#if TSCH_DBT_HOLD_CURRENT_NBR
+static int burst_link_tx = 0;
+static int burst_link_rx = 0;
+#endif
 #endif
 /* Counts the length of the current burst */
 int tsch_current_burst_count = 0;
@@ -200,7 +210,7 @@ uint8_t eval_num_of_pkts_in_ep = 1;
 
 #if WITH_PPSD
 #if PPSD_TEMPORAL_LINK
-struct tsch_link temporal_link;
+struct tsch_link temporal_ep_link;
 #endif
 #if PPSD_HANDLE_MISSED_EP_SLOT
 static int ppsd_link_scheduled_count = 0;
@@ -233,7 +243,7 @@ static uint16_t ppsd_tx_seq = 1;
 struct tsch_neighbor *ep_rx_nbr;
 #endif
 
-#if PPSD_TRIPLE_CCA
+#if WITH_PPSD && PPSD_TRIPLE_CCA
 static uint8_t ppsd_first_cca_detected;
 static uint8_t ppsd_second_cca_detected;
 static uint8_t ppsd_third_cca_detected;
@@ -3141,6 +3151,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 the extra slot will be scheduled at the received */
                 if(burst_link_requested) {
                   burst_link_scheduled = 1;
+#if TSCH_DBT_HOLD_CURRENT_NBR
+                  burst_link_tx = 1;
+                  burst_link_rx = 0;
+#endif
                 }
 #endif
 
@@ -3741,6 +3755,12 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #elif WITH_TSCH_DEFAULT_BURST_TRANSMISSION
                 /* Schedule a burst link iff the frame pending bit was set */
                 burst_link_scheduled = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
+#if TSCH_DBT_HOLD_CURRENT_NBR
+                if(burst_link_scheduled == 1) {
+                  burst_link_tx = 0;
+                  burst_link_rx = 1;
+                }
+#endif
 #endif
               }
             }
@@ -3955,7 +3975,22 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
 #endif 
 
-#if PPSD_HANDLE_SKIPPED_EP_SLOT
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_SKIPPED_EP_SLOT
+      if(burst_link_scheduled) {
+        burst_link_scheduled = 0;
+        tsch_current_burst_count = 0;
+#if TSCH_DBT_HOLD_CURRENT_NBR
+        burst_link_tx = 0;
+        burst_link_rx = 0;
+#endif
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "!skipped dbt");
+        );
+      }
+#endif
+
+#if WITH_PPSD && PPSD_HANDLE_SKIPPED_EP_SLOT
       if(ppsd_link_scheduled) {
         ppsd_link_scheduled = 0;
         ppsd_pkts_to_send = 0;
@@ -4152,6 +4187,16 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       } else {
         /* Get a packet ready to be sent */
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+      }
+#elif WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HOLD_CURRENT_NBR
+      if(burst_link_scheduled && burst_link_tx) {
+        current_packet = tsch_queue_burst_get_next_packet_for_nbr(current_neighbor);
+      } else if(burst_link_scheduled && burst_link_rx) {
+        current_packet = NULL;
+      } else {
+        /* Get a packet ready to be sent */
+        current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+
       }
 #else
       /* Get a packet ready to be sent */
@@ -4417,6 +4462,10 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           if(burst_link_scheduled) {
             /* Reset burst_link_scheduled flag. Will be set again if burst continue. */
             burst_link_scheduled = 0;
+#if TSCH_DBT_HOLD_CURRENT_NBR
+            burst_link_tx = 0;
+            burst_link_rx = 0;
+#endif
             is_burst_slot = 1;
           } else 
 #endif
@@ -4466,6 +4515,10 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           /* Make sure to end the burst in cast, for some reason, we were
           * in a burst but now without any more packet to send. */
           burst_link_scheduled = 0;
+#if TSCH_DBT_HOLD_CURRENT_NBR
+          burst_link_tx = 0;
+          burst_link_rx = 0;
+#endif
 #endif
         }
 
@@ -4506,7 +4559,10 @@ ost_donothing:
       /* Time to next wake up */
       rtimer_clock_t time_to_next_active_slot;
 
-#if PPSD_HANDLE_MISSED_EP_SLOT
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_MISSED_EP_SLOT
+      burst_link_scheduled_count = 0;
+#endif
+#if WITH_PPSD && PPSD_HANDLE_MISSED_EP_SLOT
       ppsd_link_scheduled_count = 0;
 #endif
       /* Schedule next wakeup skipping slots if missed deadline */
@@ -4519,7 +4575,23 @@ ost_donothing:
           tsch_queue_update_all_backoff_windows(&current_link->addr);
         }
 
-#if PPSD_HANDLE_MISSED_EP_SLOT
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_MISSED_EP_SLOT
+        if(burst_link_scheduled_count > 0) { /* This means deadline of EP link has been missed */
+          burst_link_scheduled = 0;
+          burst_link_scheduled_count = 0;
+#if TSCH_DBT_HOLD_CURRENT_NBR
+          burst_link_tx = 0;
+          burst_link_rx = 0;
+#endif
+
+          TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "!missed dbt");
+          );
+        }
+#endif
+
+#if WITH_PPSD && PPSD_HANDLE_MISSED_EP_SLOT
         if(ppsd_link_scheduled_count > 0) { /* This means deadline of EP link has been missed */
           ppsd_link_scheduled = 0;
           ppsd_pkts_to_send = 0;
@@ -4544,18 +4616,18 @@ ost_donothing:
           backup_link = NULL;
 
 #if PPSD_TEMPORAL_LINK
-          temporal_link.next = NULL;
-          temporal_link.handle = current_link->handle;
-          linkaddr_copy(&(temporal_link.addr), &(current_link->addr));
-          temporal_link.slotframe_handle = current_link->slotframe_handle;
-          temporal_link.timeslot = (current_link->timeslot + 1) 
-                                % tsch_schedule_get_slotframe_by_handle(temporal_link.slotframe_handle)->size.val;
-          temporal_link.channel_offset = current_link->channel_offset;
-          temporal_link.link_options = current_link->link_options;
-          temporal_link.link_type = current_link->link_type;
-          temporal_link.data = current_link->data;
+          temporal_ep_link.next = NULL;
+          temporal_ep_link.handle = current_link->handle;
+          linkaddr_copy(&(temporal_ep_link.addr), &(current_link->addr));
+          temporal_ep_link.slotframe_handle = current_link->slotframe_handle;
+          temporal_ep_link.timeslot = (current_link->timeslot + 1) 
+                                % tsch_schedule_get_slotframe_by_handle(temporal_ep_link.slotframe_handle)->size.val;
+          temporal_ep_link.channel_offset = current_link->channel_offset;
+          temporal_ep_link.link_options = current_link->link_options;
+          temporal_ep_link.link_type = current_link->link_type;
+          temporal_ep_link.data = current_link->data;
 
-          current_link = &temporal_link;
+          current_link = &temporal_ep_link;
 #endif
 
 #if PPSD_TX_SLOT_FORWARD_OFFLOADING
@@ -4614,8 +4686,27 @@ ost_donothing:
           /* A burst link was scheduled. Replay the current link at the
           next time offset */
           if(burst_link_scheduled && current_link != NULL) {
+#if TSCH_DBT_HANDLE_MISSED_EP_SLOT
+            ++burst_link_scheduled_count;
+#endif
             timeslot_diff = 1;
             backup_link = NULL;
+
+#if TSCH_DBT_TEMPORAL_LINK
+            temporal_burst_link.next = NULL;
+            temporal_burst_link.handle = current_link->handle;
+            linkaddr_copy(&(temporal_burst_link.addr), &(current_link->addr));
+            temporal_burst_link.slotframe_handle = current_link->slotframe_handle;
+            temporal_burst_link.timeslot = (current_link->timeslot + 1) 
+                                  % tsch_schedule_get_slotframe_by_handle(temporal_burst_link.slotframe_handle)->size.val;
+            temporal_burst_link.channel_offset = current_link->channel_offset;
+            temporal_burst_link.link_options = current_link->link_options;
+            temporal_burst_link.link_type = current_link->link_type;
+            temporal_burst_link.data = current_link->data;
+
+            current_link = &temporal_burst_link;
+#endif
+
             /* Keep track of the number of repetitions */
             tsch_current_burst_count++;
           } else {

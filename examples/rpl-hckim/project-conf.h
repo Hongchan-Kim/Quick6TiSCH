@@ -75,6 +75,10 @@
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #define TSCH_CONF_BURST_MAX_LEN                    16 /* turn burst on */
+#define TSCH_DBT_TEMPORAL_LINK                     1
+#define TSCH_DBT_HANDLE_SKIPPED_EP_SLOT            1
+#define TSCH_DBT_HANDLE_MISSED_EP_SLOT             1
+#define TSCH_DBT_HOLD_CURRENT_NBR                  1
 #else
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 #endif

@@ -155,6 +155,10 @@ int tsch_queue_ppsd_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p, 
 struct tsch_packet *tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, uint8_t ppsd_last_tx_seq);
 #endif
 
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HOLD_CURRENT_NBR
+struct tsch_packet * tsch_queue_burst_get_next_packet_for_nbr(const struct tsch_neighbor *n);
+#endif
+
 /**
  * \brief Returns the first packet that can be sent from a queue on a given link
  * \param n The neighbor queue

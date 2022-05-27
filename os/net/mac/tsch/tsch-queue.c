@@ -705,6 +705,30 @@ tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, uint8_t p
 }
 #endif
 /*---------------------------------------------------------------------------*/
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HOLD_CURRENT_NBR
+/* Returns the first packet from a neighbor queue */
+struct tsch_packet *
+tsch_queue_burst_get_next_packet_for_nbr(const struct tsch_neighbor *n)
+{
+  if(!tsch_is_locked()) {
+    if(n != NULL) {
+      int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
+
+      if(get_index != -1) {
+        /* Even if this is a shared slot,
+         * backoff exponent and window are already reset 
+         * in the regular slot that triggered current burst slot */
+        /* Deactivate TSCH_WITH_LINK_SELECTOR in burst slot 
+         * because packets with predefined slotframe handle and timeoffset
+         * can be sent in burst slot with different slotframe handle and timeoffset */
+        return n->tx_array[get_index];
+      }
+    }
+  }
+  return NULL;
+}
+#endif
+/*---------------------------------------------------------------------------*/
 /* Returns the first packet from a neighbor queue */
 struct tsch_packet *
 tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *link)
