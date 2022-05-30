@@ -75,6 +75,73 @@ static struct simple_udp_connection udp_conn;
 extern uint8_t bootstrap_period;
 #endif
 
+/*---------------------------------------------------------------------------*/
+#if APP_SEQNO_DUPLICATE_CHECK
+struct app_up_seqno {
+  clock_time_t app_up_timestamp;
+  uint8_t app_up_seqno;
+};
+struct app_up_seqnos_from_sender {
+  struct app_up_seqno app_up_seqno_array[APP_SEQNO_HISTORY];
+};
+
+static struct app_up_seqnos_from_sender app_up_received_seqnos[NODE_NUM];
+
+/*---------------------------------------------------------------------------*/
+int
+app_up_sequence_is_duplicate(uint16_t sender_id, uint16_t current_app_up_seqno)
+{
+  int i;
+  clock_time_t now = clock_time();
+
+  /*
+   * Check for duplicate packet by comparing the sequence number of the incoming
+   * packet with the last few ones we saw.
+   */
+  uint16_t sender_index = sender_id - 1;
+
+  for(i = 0; i < APP_SEQNO_HISTORY; ++i) {
+    if(current_app_up_seqno == app_up_received_seqnos[sender_index].app_up_seqno_array[i].app_up_seqno) {
+#if APP_SEQNO_MAX_AGE > 0
+      if(now - app_up_received_seqnos[sender_index].app_up_seqno_array[i].app_up_timestamp <= APP_SEQNO_MAX_AGE) {
+        /* Duplicate packet. */
+        return 1;
+      }
+      break;
+#else /* APP_SEQNO_MAX_AGE > 0 */
+      return 1;
+#endif /* APP_SEQNO_MAX_AGE > 0 */
+    }
+  }
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
+void
+app_up_sequence_register_seqno(uint16_t sender_id, uint16_t current_app_up_seqno)
+{
+  int i, j;
+
+  uint16_t sender_index = sender_id - 1;
+
+  /* Locate possible previous sequence number for this address. */
+  for(i = 0; i < APP_SEQNO_HISTORY; ++i) {
+    if(current_app_up_seqno == app_up_received_seqnos[sender_index].app_up_seqno_array[i].app_up_seqno) {
+      i++;
+      break;
+    }
+  }
+
+
+  /* Keep the last sequence number for each address as per 802.15.4e. */
+  for(j = i - 1; j > 0; --j) {
+    memcpy(&app_up_received_seqnos[sender_index].app_up_seqno_array[j], &app_up_received_seqnos[sender_index].app_up_seqno_array[j - 1], sizeof(struct app_up_seqno));
+  }
+  app_up_received_seqnos[sender_index].app_up_seqno_array[0].app_up_seqno = current_app_up_seqno;
+  app_up_received_seqnos[sender_index].app_up_seqno_array[0].app_up_timestamp = clock_time();
+}
+#endif /* APP_SEQNO_DUPLICATE_CHECK */
+/*---------------------------------------------------------------------------*/
+
 PROCESS(udp_server_process, "UDP server");
 AUTOSTART_PROCESSES(&udp_server_process);
 /*---------------------------------------------------------------------------*/

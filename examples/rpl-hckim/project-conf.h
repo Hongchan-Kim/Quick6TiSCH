@@ -6,6 +6,8 @@
  * Exclusive period implementation
  */
 /* Need to be tested */
+#define APP_SEQNO_DUPLICATE_CHECK                  1
+
 #define MODIFIED_MAC_SEQNO_DUPLICATE_CHECK         1
 #define GET_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define GET_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
@@ -50,8 +52,13 @@
 
 #define ORCHESTRA_PACKET_OFFLOADING                1
 
+#if APP_SEQNO_DUPLICATE_CHECK
+#define APP_SEQNO_MAX_AGE                          (10 * CLOCK_SECOND)
+#define APP_SEQNO_HISTORY                          16
+#endif
+
 #if MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
-#define NETSTACK_CONF_MAC_SEQNO_MAX_AGE            10
+#define NETSTACK_CONF_MAC_SEQNO_MAX_AGE            (10 * CLOCK_SECOND)
 #define NETSTACK_CONF_MAC_SEQNO_HISTORY            16
 #endif
 

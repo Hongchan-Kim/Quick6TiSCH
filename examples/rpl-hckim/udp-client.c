@@ -45,6 +45,64 @@ extern uint8_t bootstrap_period;
 #endif
 
 /*---------------------------------------------------------------------------*/
+#if APP_SEQNO_DUPLICATE_CHECK
+struct app_down_seqno {
+  clock_time_t app_down_timestamp;
+  uint8_t app_down_seqno;
+};
+
+static struct app_down_seqno received_seqnos[APP_SEQNO_HISTORY];
+
+/*---------------------------------------------------------------------------*/
+int
+app_down_sequence_is_duplicate(uint16_t current_app_down_seqno)
+{
+  int i;
+  clock_time_t now = clock_time();
+
+  /*
+   * Check for duplicate packet by comparing the sequence number of the incoming
+   * packet with the last few ones we saw.
+   */
+  for(i = 0; i < APP_SEQNO_HISTORY; ++i) {
+    if(current_app_down_seqno == received_seqnos[i].app_down_seqno) {
+#if APP_SEQNO_MAX_AGE > 0
+      if(now - received_seqnos[i].app_down_timestamp <= APP_SEQNO_MAX_AGE) {
+        /* Duplicate packet. */
+        return 1;
+      }
+      break;
+#else /* APP_SEQNO_MAX_AGE > 0 */
+      return 1;
+#endif /* APP_SEQNO_MAX_AGE > 0 */
+    }
+  }
+  return 0;
+}
+/*---------------------------------------------------------------------------*/
+void
+app_down_sequence_register_seqno(uint16_t sender_id, uint16_t current_app_down_seqno)
+{
+  int i, j;
+
+  /* Locate possible previous sequence number for this address. */
+  for(i = 0; i < APP_SEQNO_HISTORY; ++i) {
+    if(current_app_down_seqno == received_seqnos[i].app_down_seqno) {
+      i++;
+      break;
+    }
+  }
+
+
+  /* Keep the last sequence number for each address as per 802.15.4e. */
+  for(j = i - 1; j > 0; --j) {
+    memcpy(&received_seqnos[j], &received_seqnos[j - 1], sizeof(struct app_down_seqno));
+  }
+  received_seqnos[0].app_down_seqno = current_app_down_seqno;
+  received_seqnos[0].app_down_timestamp = clock_time();
+}
+#endif /* APP_SEQNO_DUPLICATE_CHECK */
+/*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client");
 AUTOSTART_PROCESSES(&udp_client_process);
 /*---------------------------------------------------------------------------*/
