@@ -464,6 +464,10 @@ uint16_t tsch_timing_us[tsch_ts_elements_count];
 /* TSCH timeslot timing (in rtimer ticks) */
 rtimer_clock_t tsch_timing[tsch_ts_elements_count];
 
+#if WITH_ATL
+uint16_t tsch_next_timing_us[tsch_ts_elements_count];
+#endif
+
 #if WITH_PPSD
 static const uint16_t *ppsd_default_timing_us;
 uint16_t ppsd_timing_us[ppsd_ts_elements_count];
@@ -484,7 +488,7 @@ const linkaddr_t tsch_eb_address = { { 0, 0 } };
 /* Slotframe length change trigger ASN*/
 struct tsch_asn_t tsch_trigger_asn;
 /* Timeslot length adapted ?*/ 
-uint8_t length_next = 1;
+uint8_t tsch_timeslot_is_adapted = 1;
 #endif
 
 /* Is TSCH started? */
@@ -601,17 +605,28 @@ tsch_set_eb_period(uint32_t period)
 /*---------------------------------------------------------------------------*/
 #if WITH_ATL
 void
-tsch_coordinator_set_trigger_asn(void) 
+tsch_coordinator_adaptive_timeslot_length(void) 
 {
+  int i;
   tsch_trigger_asn.ms1b = 0x00;
-  if (tsch_current_asn.ls4b < 0x0000a410){
-    tsch_trigger_asn.ls4b = 0x0000a410;
-    length_next = 1;
+  if (tsch_current_asn.ls4b < 0x000668a0){
+    tsch_trigger_asn.ls4b = 0x000668a0;
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      tsch_next_timing_us[i] = tsch_timeslot_timing_us_9000[i];
+    }
   }
-  else if (tsch_current_asn.ls4b < 0x000106bf){
-    tsch_trigger_asn.ls4b = 0x000106bf;
-    length_next = 1;
+  else if (tsch_current_asn.ls4b < 0x0007ef40){
+    tsch_trigger_asn.ls4b = 0x0007ef40;
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      tsch_next_timing_us[i] = tsch_timeslot_timing_us_9500[i];
+    }
   } 
+  else if (tsch_current_asn.ls4b < 0x000a5806) {
+    tsch_trigger_asn.ls4b = 0x000a5806;
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      tsch_next_timing_us[i] = tsch_timeslot_timing_us_9000[i];
+    }
+  }
   else{
     tsch_trigger_asn.ls4b = 0xffffffff;
   }
@@ -620,43 +635,25 @@ tsch_coordinator_set_trigger_asn(void)
 /*---------------------------------------------------------------------------*/
 #if WITH_ATL
 void
-tsch_change_timeslot_length(uint8_t flag) 
+tsch_change_timeslot_length(uint8_t flag) /*1 for ATL, 0 for default */
 {
   int i;
   if(flag == 1){
-    if(tsch_default_timing_us == TSCH_DEFAULT_TIMESLOT_TIMING){
+    if(tsch_timing_us[tsch_ts_timeslot_length] == tsch_next_timing_us[tsch_ts_timeslot_length]){
       return;
     }
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+    tsch_timing_us[i] = tsch_next_timing_us[i];
+    tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
+    }
+  }
+  else{
   tsch_default_timing_us = TSCH_DEFAULT_TIMESLOT_TIMING;
   for(i = 0; i < tsch_ts_elements_count; i++) {
     tsch_timing_us[i] = tsch_default_timing_us[i];
     tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
   }
-  printf("timeslot length changed into 10ms : current ASN %02x.%08lx \n", tsch_current_asn.ms1b, tsch_current_asn.ls4b); 
-  }
-
-  else if (flag == 2){
-    if(tsch_default_timing_us == TSCH_9500_TIMESLOT_TIMING){
-      return;
-    }
-  tsch_default_timing_us = TSCH_9500_TIMESLOT_TIMING;
-  for(i = 0; i < tsch_ts_elements_count; i++) {
-    tsch_timing_us[i] = tsch_default_timing_us[i];
-    tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
-  }
-  printf("timeslot length changed into 9.5ms : current ASN %02x.%08lx \n", tsch_current_asn.ms1b, tsch_current_asn.ls4b); 
-  }
-
-  else if (flag == 3){
-    if(tsch_default_timing_us == TSCH_9000_TIMESLOT_TIMING){
-      return;
-    }
-  tsch_default_timing_us = TSCH_9000_TIMESLOT_TIMING;
-  for(i = 0; i < tsch_ts_elements_count; i++) {
-    tsch_timing_us[i] = tsch_default_timing_us[i];
-    tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
-  }
-  printf("timeslot length changed into 9ms : current ASN %02x.%08lx \n", tsch_current_asn.ms1b, tsch_current_asn.ls4b);
+    return;
   }
 }
 #endif
@@ -677,9 +674,8 @@ tsch_reset(void)
   tsch_join_priority = 0xff;
   TSCH_ASN_INIT(tsch_current_asn, 0, 0);
   current_link = NULL;
-  /* Reset timeslot timing to defaults 
-  tsch_change_timeslot_length(1);
-  printf("timeslot reset to %u", 1);*/
+  /* Reset timeslot timing to defaults */
+  tsch_change_timeslot_length(0);
 #if WITH_PPSD
   ppsd_default_timing_us = PPSD_DEFAULT_TIMESLOT_TIMING;
   for(i = 0; i < ppsd_ts_elements_count; i++) {
@@ -859,6 +855,7 @@ static void
 eb_input(struct input_packet *current_input)
 {
   /* LOG_INFO("EB received\n"); */
+  int i;
   frame802154_t frame;
   /* Verify incoming EB (does its ASN match our Rx time?),
    * and update our join priority. */
@@ -867,13 +864,15 @@ eb_input(struct input_packet *current_input)
   if(tsch_packet_parse_eb(current_input->payload, current_input->len,
                           &frame, &eb_ies, NULL, 1)) {
     /* PAN ID check and authentication done at rx time */
-
     #if WITH_ATL
-    printf("\n trigger asn is now %02x.%08lx from enhanced beacon, addr ", eb_ies.ie_trigger_asn.ms1b, eb_ies.ie_trigger_asn.ls4b); 
-    LOG_INFO_LLADDR((const linkaddr_t *)&frame.src_addr);
-    printf("\n");
+    
+    if(eb_ies.ie_trigger_asn.ls4b > tsch_trigger_asn.ls4b){
     tsch_trigger_asn = eb_ies.ie_trigger_asn; 
-    length_next = eb_ies.ie_tsch_timeslot_id;
+    tsch_timeslot_is_adapted = eb_ies.ie_tsch_timeslot_id;
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      tsch_next_timing_us[i] = eb_ies.ie_tsch_next_timeslot[i];
+    }
+    }
     #endif
 
     /* Got an EB from a different neighbor than our time source, keep enough data
@@ -1128,7 +1127,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   frame802154_t frame;
   struct ieee802154_ies ies;
   uint8_t hdrlen;
-  /*int i;*/
+  int i;
 
   if(input_eb == NULL || tsch_packet_parse_eb(input_eb->payload, input_eb->len,
                                               &frame, &ies, &hdrlen, 0) == 0) {
@@ -1136,17 +1135,6 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
         input_eb->len);
     return 0;
   }
-
-  #if WITH_ATL
-   printf("\n trigger asn is now %02x.%08lx from associate, addr ", ies.ie_trigger_asn.ms1b, ies.ie_trigger_asn.ls4b);
-   LOG_INFO_LLADDR((const linkaddr_t *)&frame.src_addr);
-   printf("\n");
-   /*
-   tsch_change_timeslot_length(ies.ie_tsch_timeslot_id);
-   printf("\nAssociate : timeslot changed to %u\n", ies.ie_tsch_timeslot_id);
-   */
-  #endif
-
   tsch_current_asn = ies.ie_asn;
   tsch_join_priority = ies.ie_join_priority + 1;
   #if TSCH_JOIN_SECURED_ONLY
@@ -1185,6 +1173,24 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
     return 0;
   }
 
+#if WITH_ATL
+    tsch_trigger_asn = ies.ie_trigger_asn; 
+    tsch_timeslot_is_adapted = ies.ie_tsch_timeslot_id;
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      tsch_next_timing_us[i] = ies.ie_tsch_next_timeslot[i];
+    }
+#endif
+
+  /* TSCH timeslot timing */
+  for(i = 0; i < tsch_ts_elements_count; i++) {
+    if(ies.ie_tsch_timeslot_id == 0) {
+      tsch_timing_us[i] = tsch_default_timing_us[i];
+    } else {
+      tsch_timing_us[i] = ies.ie_tsch_timeslot[i];
+    }
+    tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
+  }
+  
   /* TSCH hopping sequence */
   if(ies.ie_channel_hopping_sequence_id == 0) {
     memcpy(tsch_hopping_sequence, TSCH_DEFAULT_HOPPING_SEQUENCE, sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE));

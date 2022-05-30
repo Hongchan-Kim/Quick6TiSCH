@@ -324,22 +324,23 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
 #endif
 
   /* Add TSCH timeslot timing IE. */ 
-#if TSCH_PACKET_EB_WITH_TIMESLOT_TIMING && WITH_ATL
-  {
-    int i;
-    ies.ie_tsch_timeslot_id = length_next;
-    for(i = 0; i < tsch_ts_elements_count; i++) {
-      ies.ie_tsch_timeslot[i] = RTIMERTICKS_TO_US(tsch_timing[i]);
-    }
-  }
-#endif /* TSCH_PACKET_EB_WITH_TIMESLOT_TIMING */
-
 #if WITH_ATL
+  int i;
+  ies.ie_tsch_timeslot_id = 1; 
+  for(i = 0; i < tsch_ts_elements_count; i++) {
+    ies.ie_tsch_timeslot[i] = RTIMERTICKS_TO_US(tsch_timing[i]);
+  }
   if(tsch_is_coordinator){
-    tsch_coordinator_set_trigger_asn();
+    tsch_coordinator_adaptive_timeslot_length();
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      ies.ie_tsch_next_timeslot[i] = tsch_next_timing_us[i];
+    }
     ies.ie_trigger_asn = tsch_trigger_asn;
   }
   else{
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      ies.ie_tsch_next_timeslot[i] = tsch_next_timing_us[i];
+    }
     ies.ie_trigger_asn = tsch_trigger_asn;
   }
 #endif
@@ -403,6 +404,17 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
   }
   p += ie_len;
   packetbuf_set_datalen(packetbuf_datalen() + ie_len);
+
+#if WITH_ATL
+  ie_len = frame80215e_create_ie_tsch_next_timeslot(p,
+                                               packetbuf_remaininglen(),
+                                               &ies);
+  if(ie_len < 0) {
+    return -1;
+  }
+  p += ie_len;
+  packetbuf_set_datalen(packetbuf_datalen() + ie_len);
+#endif
 
   ie_len = frame80215e_create_ie_tsch_channel_hopping_sequence(p,
                                                                packetbuf_remaininglen(),

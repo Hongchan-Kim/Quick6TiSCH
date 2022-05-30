@@ -74,6 +74,7 @@ enum ieee802154e_mlme_short_subie_id {
   MLME_SHORT_IE_TSCH_SYNCHRONIZATION = 0x1a,
 #if WITH_ATL
   MLME_SHORT_IE_TSCH_ADAPTIVE_TIMESLOT_LENGTH,
+  MLME_SHORT_IE_TSCH_NEXT_TIMESLOT,
 #endif
   MLME_SHORT_IE_TSCH_SLOFTRAME_AND_LINK,
   MLME_SHORT_IE_TSCH_TIMESLOT,
@@ -364,6 +365,29 @@ frame80215e_create_ie_tsch_timeslot(uint8_t *buf, int len,
   }
 }
 
+#if WITH_ATL
+int
+frame80215e_create_ie_tsch_next_timeslot(uint8_t *buf, int len,
+    struct ieee802154_ies *ies)
+{
+  int ie_len;
+  if(ies == NULL) {
+    return -1;
+  }
+  ie_len = 24;
+  if(len >= 2 + ie_len) {
+    int i;
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      WRITE16(buf + 2 + 2 * i, ies->ie_tsch_next_timeslot[i]);
+    }
+    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_NEXT_TIMESLOT, ie_len);
+    return 2 + ie_len;
+  } else {
+    return -1;
+  }
+}
+#endif
+
 /* MLME sub-IE. TSCH channel hopping sequence. Used in EBs: hopping sequence */
 int
 frame80215e_create_ie_tsch_channel_hopping_sequence(uint8_t *buf, int len,
@@ -512,6 +536,20 @@ frame802154e_parse_mlme_short_ie(const uint8_t *buf, int len,
         }
         return len;
       }
+
+  #if WITH_ATL
+    case MLME_SHORT_IE_TSCH_NEXT_TIMESLOT:
+      if(len == 24) {
+        if(ies != NULL) {
+            int i;
+            for(i = 0; i < tsch_ts_elements_count; i++) {
+              READ16(buf+2*i, ies->ie_tsch_next_timeslot[i]);
+            }
+        }
+        return len;
+      }
+  #endif
+  
       break;
   }
   return -1;

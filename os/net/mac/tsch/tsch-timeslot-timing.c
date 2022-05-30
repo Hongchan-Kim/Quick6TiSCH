@@ -117,7 +117,7 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9500 = {
   (2500 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
 #else
     128, /* CCA */
-   2120 - 300, /* TxOffset */
+   2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
 #endif
 #if WITH_PPSD
@@ -134,7 +134,7 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9500 = {
     400, /* AckWait */
     192, /* RxTx */
    2400, /* MaxAck */
-   4256, /* MaxTx */
+   3756, /* MaxTx */
    9500, /* TimeslotLength */
 };
 
@@ -146,8 +146,8 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9000 = {
   (2500 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
 #else
     128, /* CCA */
-   2120 - 700, /* TxOffset */
-   2120 - 700 - (TSCH_CONF_RX_WAIT / 2), /* RxOffset */
+   2120, /* TxOffset */
+   2120 - (TSCH_CONF_RX_WAIT / 2), /* RxOffset */
 #endif
 #if WITH_PPSD
    1300,
@@ -163,7 +163,7 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9000 = {
     400, /* AckWait */
     192, /* RxTx */
    2400, /* MaxAck */
-   4256, /* MaxTx */
+   3256, /* MaxTx */
    9000, /* TimeslotLength */
 };
 #endif

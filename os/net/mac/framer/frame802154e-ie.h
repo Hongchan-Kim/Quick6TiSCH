@@ -83,6 +83,7 @@ struct ieee802154_ies {
   uint8_t ie_tsch_timeslot_id;
   uint16_t ie_tsch_timeslot[tsch_ts_elements_count];
 #if WITH_ATL
+  uint16_t ie_tsch_next_timeslot[tsch_ts_elements_count];
   struct tsch_asn_t ie_trigger_asn; 
 #endif
   struct tsch_slotframe_and_links ie_tsch_slotframe_and_link;
@@ -130,6 +131,8 @@ int frame80215e_create_ie_tsch_synchronization(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #if WITH_ATL
 int frame80215e_create_ie_tsch_adaptive_timeslot_length(uint8_t *buf, int len,
+    struct ieee802154_ies *ies);
+int frame80215e_create_ie_tsch_next_timeslot(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #endif
 /* MLME sub-IE. TSCH slotframe and link. Used in EBs: initial schedule */

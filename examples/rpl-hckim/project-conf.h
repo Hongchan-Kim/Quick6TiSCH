@@ -51,8 +51,8 @@
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 //#define IOTLAB_SITE                                IOTLAB_LYON_2
-#define IOTLAB_SITE                                IOTLAB_LYON_3
-//#define IOTLAB_SITE                                IOTLAB_LYON_8
+//#define IOTLAB_SITE                                IOTLAB_LYON_3
+#define IOTLAB_SITE                                IOTLAB_LYON_8
 //#define IOTLAB_SITE                                IOTLAB_LYON_17
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_L_79
 
@@ -93,7 +93,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0 /*test*/
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0 
 /*---------------------------------------------------------------------------*/
 
 
@@ -102,10 +102,10 @@
  * Configure App
  */
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
-#define DOWNWARD_TRAFFIC                           1
+#define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 6)
-#define APP_START_DELAY                            (5 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (15 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (90 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
@@ -205,7 +205,7 @@
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define WITH_ORCHESTRA                             1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71

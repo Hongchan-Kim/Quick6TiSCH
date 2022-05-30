@@ -261,10 +261,11 @@ extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000;
 #if WITH_ATL
 extern struct tsch_asn_t tsch_trigger_asn; 
 /* TSCH modified timeslot timing */
+extern tsch_timeslot_timing_usec tsch_next_timing_us;
+/* TSCH timeslot timing (in rtimer ticks) */
 extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9500;
 extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9000;
-extern uint8_t length_now;
-extern uint8_t length_next;
+extern uint8_t tsch_timeslot_is_adapted;
 #endif
 
 #if WITH_PPSD
@@ -349,7 +350,7 @@ void tsch_disassociate(void);
 
 #if WITH_ATL
 void tsch_change_timeslot_length(uint8_t flag);  /*Set trigger ASN*/
-void tsch_coordinator_set_trigger_asn(void); 
+void tsch_coordinator_adaptive_timeslot_length(void); 
 #endif
 
 #if WITH_OST
