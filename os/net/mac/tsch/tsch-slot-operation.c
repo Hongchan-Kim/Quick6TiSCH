@@ -274,7 +274,7 @@ static uint8_t regular_slot_tx_do_wait_for_ack;
 static uint8_t regular_slot_tx_ack_len;
 static rtimer_clock_t regular_slot_timestamp_tx[16];
 static uint8_t regular_slot_rx_ack_len;
-static rtimer_clock_t regular_slot_timestamp_rx[13];
+static rtimer_clock_t regular_slot_timestamp_rx[14];
 #endif
 
 #if WITH_OST /* OST-00-03: struct for t_offset */
@@ -3191,6 +3191,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       ringbufindex_put(&dequeued_ringbuf);
     }
 
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* RegTx15: after processing ACK */
+    regular_slot_timestamp_tx[15] = RTIMER_NOW();
+#endif
+
     /* If this is an unicast packet to timesource, update stats */
     if(current_neighbor != NULL && current_neighbor->is_time_source) {
       tsch_stats_tx_packet(current_neighbor, mac_tx_status, tsch_current_channel);
@@ -3216,10 +3220,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
     );
-
-#if PPSD_DBG_REGULAR_SLOT_TIMING /* RegTx15: after processing ACK */
-    regular_slot_timestamp_tx[15] = RTIMER_NOW();
-#endif
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* Print regular tx slot timing */
     TSCH_LOG_ADD(tsch_log_message,
@@ -3792,6 +3792,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             /* Add current input to ringbuf */
             ringbufindex_put(&input_ringbuf);
 
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* RegRx13: process rx result */
+                regular_slot_timestamp_rx[13] = RTIMER_NOW();
+#endif
+
             /* If the neighbor is known, update its stats */
             if(n != NULL) {
               NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_LINK_QUALITY, &radio_last_lqi);
@@ -3848,10 +3852,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "reg r_3 %u %u %u",
+              "reg r_3 %u %u %u %u",
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[10], current_slot_start),
               (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[11], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[12], current_slot_start)));
+              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[12], current_slot_start),
+              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[13], current_slot_start)));
 
           regular_slot_rx_ack_len = 0;
 
@@ -3859,7 +3864,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           for(j = 0; j < 2; j++) {
             regular_slot_timestamp_common[j] = 0;
           }
-          for(j = 0; j < 13; j++) {
+          for(j = 0; j < 14; j++) {
             regular_slot_timestamp_rx[j] = 0;
           }
 #endif

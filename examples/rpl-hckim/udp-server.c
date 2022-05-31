@@ -138,9 +138,6 @@ app_up_sequence_register_seqno(uint16_t sender_id, uint16_t current_app_up_seqno
 }
 #endif /* APP_SEQNO_DUPLICATE_CHECK */
 /*---------------------------------------------------------------------------*/
-PROCESS(udp_server_process, "UDP server");
-AUTOSTART_PROCESSES(&udp_server_process);
-/*---------------------------------------------------------------------------*/
 #if WITH_COOJA
 static void
 reset_cooja_nodes()
@@ -208,6 +205,9 @@ udp_rx_callback(struct simple_udp_connection *c,
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");
 }
+/*---------------------------------------------------------------------------*/
+PROCESS(udp_server_process, "UDP server");
+AUTOSTART_PROCESSES(&udp_server_process);
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_server_process, ev, data)
 {
