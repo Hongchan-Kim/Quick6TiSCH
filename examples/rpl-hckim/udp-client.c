@@ -16,6 +16,9 @@
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 #include "node-info.h"
+#if WITH_APP_DATA_FOOTER
+#include "sys/node-id.h"
+#endif
 
 #define UDP_CLIENT_PORT	8765
 #define UDP_SERVER_PORT	5678
@@ -146,17 +149,19 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer periodic_timer;
   static struct etimer send_timer;
 
-#if EVAL_CONTROL_APP_PAYLOAD_LEN
   static uint16_t current_payload_len = 0;
+#if EVAL_CONTROL_APP_PAYLOAD_LEN
   static uint16_t current_len_tx_count = 0;
 #endif
 
   static unsigned count = 1;
-#if PPSD_APP_SET_PAYLOAD_LEN
-  static char str[PPSD_APP_SET_PAYLOAD_LEN];
-#else
-  static char str[32];
+
+  static uint8_t app_payload[128];
+#if WITH_APP_DATA_FOOTER
+  static uint32_t app_seqno = 0;
+  static uint16_t app_magic = (uint16_t)APP_DATA_MAGIC;
 #endif
+
   uip_ipaddr_t dest_ipaddr;
 
 #if WITH_VARYING_PPM
@@ -249,20 +254,25 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
 #if PPSD_APP_SET_PAYLOAD_LEN
 #if EVAL_CONTROL_APP_PAYLOAD_LEN
-        snprintf(str, current_payload_len, "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
-
         ++current_len_tx_count;
         if(current_len_tx_count >= PPSD_SINGLE_LEN_MAX_TX) {
           current_len_tx_count = 0;
           ++current_payload_len;
         }
 #else
-        snprintf(str, sizeof(str), "hello %d 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111", count);
+        current_payload_len = PPSD_APP_SET_PAYLOAD_LEN;
 #endif
-#else
-        snprintf(str, sizeof(str), "hello %d", count);
+
+#if WITH_APP_DATA_FOOTER
+        app_seqno = UIP_HTONL((1 << 28) + ((uint32_t)node_id << 16) + count);
+        app_magic = UIP_HTONS((uint16_t)APP_DATA_MAGIC);
+
+        memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
+        memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 #endif
-        simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+
+        simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
+#endif
         count++;
       }
 #endif /* WITH_VARYING_PPM */

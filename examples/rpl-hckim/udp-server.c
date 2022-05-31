@@ -189,11 +189,24 @@ udp_rx_callback(struct simple_udp_connection *c,
   LOG_INFO("HCK rx_up %u from %u | Received message '%.*s' from ", 
             ++cooja_nodes[sender_index], sender_index + 1, datalen, (char *) data);
 #elif WITH_IOTLAB
+#if WITH_APP_DATA_FOOTER
+  uint32_t app_received_seqno = 0;
+  memcpy(&app_received_seqno, data + datalen - 6, 4);
+  app_received_seqno = UIP_HTONL(app_received_seqno);
+  
+  LOG_INFO("HCK rx_up %u from %u %x (%u %x) | Received message of %lx with len %u from ", 
+            ++iotlab_nodes[sender_index][2],
+            sender_index + 1, sender_index + 1, 
+            iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1],
+            app_received_seqno,
+            datalen);
+#else
   LOG_INFO("HCK rx_up %u from %u %x (%u %x) | Received message '%.*s' from ", 
             ++iotlab_nodes[sender_index][2],
             sender_index + 1, sender_index + 1, 
             iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1],
             datalen, (char *) data);
+#endif
 #endif
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");

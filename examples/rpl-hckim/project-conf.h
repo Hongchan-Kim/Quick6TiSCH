@@ -14,7 +14,7 @@
 
 
 #define WITH_TSCH_TX_CCA                           1
-#define WITH_PPSD                                  1
+#define WITH_PPSD                                  0
 #define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
 
 /* Orchestra or ALICE
@@ -30,12 +30,12 @@
 #if EVAL_CONTROL_APP_PAYLOAD_LEN
 #define PPSD_SINGLE_LEN_MAX_TX                     600
 #endif
-#define EVAL_CONTROL_NUM_OF_PKTS_IN_EP             1 /* Needs WITH_PPSD */
+#define EVAL_CONTROL_NUM_OF_PKTS_IN_EP             0 /* Needs WITH_PPSD */
 
 
 #if WITH_PPSD
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
-#define PPSD_EP_POLICY_CELL_UTIL                   0
+#define PPSD_EP_POLICY_CELL_UTIL                   1
 #define PPSD_TX_SLOT_FORWARD_OFFLOADING            1
 #define PPSD_TX_SLOT_BACKWARD_OFFLOADING           1
 #define PPSD_RX_SLOT_FORWARD_OFFLOADING            1
@@ -66,6 +66,11 @@
 #define PPSD_DBG_EP_SLOT_TIMING                    1
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
+
+#define WITH_APP_DATA_FOOTER                       1
+#if WITH_APP_DATA_FOOTER
+#define APP_DATA_MAGIC                             0x58FE
+#endif
 
 #if PPSD_EP_EXTRA_CHANNELS
 #define TSCH_PPSD_HOPPING_SEQUENCE_4_4 (uint8_t[]){ 11, 16, 19, 21 }
@@ -298,7 +303,7 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              311 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 /* for log messages */
 #define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
 #define ORCHESTRA_UNICAST_SF_ID                    1 //slotframe handle of unicast slotframe

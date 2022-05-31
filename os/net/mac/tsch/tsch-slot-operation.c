@@ -3211,6 +3211,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* LLSEC802154_ENABLED */
         linkaddr_copy(&log->tx.dest, queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER));
         log->tx.seqno = queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_MAC_SEQNO);
+#if WITH_APP_DATA_FOOTER
+        memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
+        memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
+#endif
     );
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* RegTx15: after processing ACK */
@@ -3806,6 +3810,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.estimated_drift = estimated_drift;
               log->rx.seqno = frame.seq;
               log->rx.rssi = current_input->rssi;
+#if WITH_APP_DATA_FOOTER
+              memcpy(&log->rx.app_magic, (uint8_t *)current_input->payload + current_input->len - 2, 2);
+              memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
+#endif
             );
           }
 

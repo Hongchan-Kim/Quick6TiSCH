@@ -97,6 +97,10 @@ struct tsch_log_t {
       uint8_t drift_used;
       uint8_t seqno;
       int16_t rssi; // hckim added
+#if WITH_APP_DATA_FOOTER
+      uint16_t app_magic;
+      uint32_t app_seqno;
+#endif
     } tx;
     struct {
       linkaddr_t  src;
@@ -109,6 +113,10 @@ struct tsch_log_t {
       uint8_t drift_used;
       uint8_t seqno;
       int16_t rssi; // hckim added
+#if WITH_APP_DATA_FOOTER
+      uint16_t app_magic;
+      uint32_t app_seqno;
+#endif
     } rx;
   };
 };
