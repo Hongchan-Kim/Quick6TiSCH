@@ -84,9 +84,7 @@ struct app_up_seqno {
 struct app_up_seqnos_from_sender {
   struct app_up_seqno app_up_seqno_array[APP_SEQNO_HISTORY];
 };
-
 static struct app_up_seqnos_from_sender app_up_received_seqnos[NODE_NUM];
-
 /*---------------------------------------------------------------------------*/
 int
 app_up_sequence_is_duplicate(uint16_t sender_id, uint16_t current_app_up_seqno)
@@ -131,7 +129,6 @@ app_up_sequence_register_seqno(uint16_t sender_id, uint16_t current_app_up_seqno
     }
   }
 
-
   /* Keep the last sequence number for each address as per 802.15.4e. */
   for(j = i - 1; j > 0; --j) {
     memcpy(&app_up_received_seqnos[sender_index].app_up_seqno_array[j], &app_up_received_seqnos[sender_index].app_up_seqno_array[j - 1], sizeof(struct app_up_seqno));
@@ -141,7 +138,6 @@ app_up_sequence_register_seqno(uint16_t sender_id, uint16_t current_app_up_seqno
 }
 #endif /* APP_SEQNO_DUPLICATE_CHECK */
 /*---------------------------------------------------------------------------*/
-
 PROCESS(udp_server_process, "UDP server");
 AUTOSTART_PROCESSES(&udp_server_process);
 /*---------------------------------------------------------------------------*/
@@ -180,7 +176,9 @@ udp_rx_callback(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {
-  uint16_t sender_index = ((sender_addr->u8[14]) << 8) + sender_addr->u8[15] - 1;
+  uint16_t sender_id = ((sender_addr->u8[14]) << 8) + sender_addr->u8[15];
+  uint16_t sender_index = sender_id - 1;
+
   if(sender_index == NODE_NUM) {
     LOG_INFO("Fail to receive: out of index\n");
     return;
@@ -189,24 +187,23 @@ udp_rx_callback(struct simple_udp_connection *c,
   LOG_INFO("HCK rx_up %u from %u | Received message '%.*s' from ", 
             ++cooja_nodes[sender_index], sender_index + 1, datalen, (char *) data);
 #elif WITH_IOTLAB
-#if WITH_APP_DATA_FOOTER
   uint32_t app_received_seqno = 0;
   memcpy(&app_received_seqno, data + datalen - 6, 4);
   app_received_seqno = UIP_HTONL(app_received_seqno);
-  
-  LOG_INFO("HCK rx_up %u from %u %x (%u %x) | Received message of %lx with len %u from ", 
-            ++iotlab_nodes[sender_index][2],
-            sender_index + 1, sender_index + 1, 
-            iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1],
-            app_received_seqno,
-            datalen);
-#else
-  LOG_INFO("HCK rx_up %u from %u %x (%u %x) | Received message '%.*s' from ", 
-            ++iotlab_nodes[sender_index][2],
-            sender_index + 1, sender_index + 1, 
-            iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1],
-            datalen, (char *) data);
-#endif
+
+  uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
+
+  if(app_up_sequence_is_duplicate(sender_id, app_received_seqno_count)) {
+    LOG_INFO("HCK !drop dup %u %lu from ", sender_id, app_received_seqno);
+  } else {
+    app_up_sequence_register_seqno(sender_id, app_received_seqno_count);
+    LOG_INFO("HCK rx_up %u from %u %x (%u %x) | Received message of %lx with len %u from ", 
+              ++iotlab_nodes[sender_index][2],
+              sender_index + 1, sender_index + 1, 
+              iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1],
+              app_received_seqno,
+              datalen);
+  }
 #endif
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");
@@ -227,7 +224,13 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #elif WITH_IOTLAB
   static unsigned dest_id = IOTLAB_ROOT_ID + 1;
 #endif
-  static char str[32];
+
+  static uint8_t app_payload[128];
+  static uint32_t app_seqno = 0;
+  static uint16_t app_magic = (uint16_t)APP_DATA_MAGIC;
+  static uint16_t current_payload_len = 0;
+
+
   uip_ipaddr_t dest_ipaddr;
 
 #if WITH_VARYING_PPM
@@ -313,8 +316,20 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #endif
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
-        snprintf(str, sizeof(str), "hello %d", count);
-        simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+
+#if PPSD_APP_SET_PAYLOAD_LEN
+        current_payload_len = PPSD_APP_SET_PAYLOAD_LEN;
+#else
+        current_payload_len = 6;
+#endif
+
+        app_seqno = UIP_HTONL((2 << 28) + ((uint32_t)dest_id << 16) + count);
+        app_magic = UIP_HTONS((uint16_t)APP_DATA_MAGIC);
+
+        memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
+        memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
+
+        simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
         dest_id++;
         if(dest_id > NODE_NUM) { /* the last non-root node */
@@ -345,8 +360,20 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #endif
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
-        snprintf(str, sizeof(str), "hello %d", count);
-        simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+
+#if PPSD_APP_SET_PAYLOAD_LEN
+        current_payload_len = PPSD_APP_SET_PAYLOAD_LEN;
+#else
+        current_payload_len = 6;
+#endif
+
+        app_seqno = UIP_HTONL((2 << 28) + ((uint32_t)dest_id << 16) + count);
+        app_magic = UIP_HTONS((uint16_t)APP_DATA_MAGIC);
+
+        memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
+        memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
+
+        simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
         dest_id++;
         if(dest_id > NODE_NUM) { /* the last non-root node */

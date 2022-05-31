@@ -6,32 +6,15 @@
  * Exclusive period implementation
  */
 /* Need to be tested */
-#define APP_SEQNO_DUPLICATE_CHECK                  1
-
 #define MODIFIED_MAC_SEQNO_DUPLICATE_CHECK         1
 #define GET_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define GET_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
-
 
 #define WITH_TSCH_TX_CCA                           1
 #define WITH_PPSD                                  0
 #define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
 
-/* Orchestra or ALICE
-   - Wihtout any: Max in single hop: 87, Max in multi hop: 70
-   - With EP: Max in single hop: 81, Max in multi hop: 64 
-   OST
-   - Without any: Max in single hop: 85, Max in multi hop: 58
-   - With EP: Max in single hop: 79, Max in multi hop: ???
-   - With ODP: ???
-   */
-#define PPSD_APP_SET_PAYLOAD_LEN                   81
-#define EVAL_CONTROL_APP_PAYLOAD_LEN               0
-#if EVAL_CONTROL_APP_PAYLOAD_LEN
-#define PPSD_SINGLE_LEN_MAX_TX                     600
-#endif
 #define EVAL_CONTROL_NUM_OF_PKTS_IN_EP             0 /* Needs WITH_PPSD */
-
 
 #if WITH_PPSD
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
@@ -52,11 +35,6 @@
 
 #define ORCHESTRA_PACKET_OFFLOADING                1
 
-#if APP_SEQNO_DUPLICATE_CHECK
-#define APP_SEQNO_MAX_AGE                          (10 * CLOCK_SECOND)
-#define APP_SEQNO_HISTORY                          16
-#endif
-
 #if MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
 #define NETSTACK_CONF_MAC_SEQNO_MAX_AGE            (10 * CLOCK_SECOND)
 #define NETSTACK_CONF_MAC_SEQNO_HISTORY            16
@@ -66,11 +44,6 @@
 #define PPSD_DBG_EP_SLOT_TIMING                    1
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
-
-#define WITH_APP_DATA_FOOTER                       1
-#if WITH_APP_DATA_FOOTER
-#define APP_DATA_MAGIC                             0x58FE
-#endif
 
 #if PPSD_EP_EXTRA_CHANNELS
 #define TSCH_PPSD_HOPPING_SEQUENCE_4_4 (uint8_t[]){ 11, 16, 19, 21 }
@@ -186,6 +159,18 @@
 /*
  * Configure App
  */
+
+
+/* Orchestra or ALICE
+   - Wihtout any: Max in single hop: 87, Max in multi hop: 70
+   - With EP: Max in single hop: 81, Max in multi hop: 64 
+   OST
+   - Without any: Max in single hop: 85, Max in multi hop: 58
+   - With EP: Max in single hop: 79, Max in multi hop: ???
+   - With ODP: ???
+   */
+#define PPSD_APP_SET_PAYLOAD_LEN                   81
+
 #if WITH_COOJA
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 30)
 #define DOWNWARD_TRAFFIC                           0
@@ -197,7 +182,7 @@
 #elif WITH_IOTLAB
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
 #define DOWNWARD_TRAFFIC                           0
-#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
+#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 60)
 #define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
@@ -209,6 +194,22 @@
 #define WITH_VARYING_PPM                           0
 #if WITH_VARYING_PPM
 #define VARY_LENGTH                                8
+#endif
+
+#define WITH_APP_DATA_FOOTER                       1
+#if WITH_APP_DATA_FOOTER
+#define APP_DATA_MAGIC                             0x58FE
+#endif
+
+#define APP_SEQNO_DUPLICATE_CHECK                  1
+#if APP_SEQNO_DUPLICATE_CHECK
+#define APP_SEQNO_MAX_AGE                          (10 * CLOCK_SECOND)
+#define APP_SEQNO_HISTORY                          16
+#endif
+
+#define EVAL_CONTROL_APP_PAYLOAD_LEN               0
+#if EVAL_CONTROL_APP_PAYLOAD_LEN
+#define PPSD_SINGLE_LEN_MAX_TX                     600
 #endif
 /*---------------------------------------------------------------------------*/
 

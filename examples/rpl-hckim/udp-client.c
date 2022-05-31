@@ -16,9 +16,7 @@
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 #include "node-info.h"
-#if WITH_APP_DATA_FOOTER
 #include "sys/node-id.h"
-#endif
 
 #define UDP_CLIENT_PORT	8765
 #define UDP_SERVER_PORT	5678
@@ -53,9 +51,7 @@ struct app_down_seqno {
   clock_time_t app_down_timestamp;
   uint8_t app_down_seqno;
 };
-
 static struct app_down_seqno received_seqnos[APP_SEQNO_HISTORY];
-
 /*---------------------------------------------------------------------------*/
 int
 app_down_sequence_is_duplicate(uint16_t current_app_down_seqno)
@@ -84,7 +80,7 @@ app_down_sequence_is_duplicate(uint16_t current_app_down_seqno)
 }
 /*---------------------------------------------------------------------------*/
 void
-app_down_sequence_register_seqno(uint16_t sender_id, uint16_t current_app_down_seqno)
+app_down_sequence_register_seqno(uint16_t current_app_down_seqno)
 {
   int i, j;
 
@@ -96,7 +92,6 @@ app_down_sequence_register_seqno(uint16_t sender_id, uint16_t current_app_down_s
     }
   }
 
-
   /* Keep the last sequence number for each address as per 802.15.4e. */
   for(j = i - 1; j > 0; --j) {
     memcpy(&received_seqnos[j], &received_seqnos[j - 1], sizeof(struct app_down_seqno));
@@ -105,9 +100,6 @@ app_down_sequence_register_seqno(uint16_t sender_id, uint16_t current_app_down_s
   received_seqnos[0].app_down_timestamp = clock_time();
 }
 #endif /* APP_SEQNO_DUPLICATE_CHECK */
-/*---------------------------------------------------------------------------*/
-PROCESS(udp_client_process, "UDP client");
-AUTOSTART_PROCESSES(&udp_client_process);
 /*---------------------------------------------------------------------------*/
 static void
 reset_log()
@@ -133,13 +125,30 @@ udp_rx_callback(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {
-  LOG_INFO("HCK rx_down %u | Received message '%.*s' from ", ++app_rxd_count, datalen, (char *) data);
+  uint32_t app_received_seqno = 0;
+  memcpy(&app_received_seqno, data + datalen - 6, 4);
+  app_received_seqno = UIP_HTONL(app_received_seqno);
+
+  uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
+
+  if(app_down_sequence_is_duplicate(app_received_seqno_count)) {
+    LOG_INFO("HCK !drop dup %lu from ", app_received_seqno);
+  } else {
+    app_down_sequence_register_seqno(app_received_seqno_count);
+    LOG_INFO("HCK rx_down %u | Received message of %lx with len %u from ",
+              ++app_rxd_count,
+              app_received_seqno,
+              datalen);
+  }
   LOG_INFO_6ADDR(sender_addr);
 #if LLSEC802154_CONF_ENABLED
   LOG_INFO_(" LLSEC LV:%d", uipbuf_get_attr(UIPBUF_ATTR_LLSEC_LEVEL));
 #endif
   LOG_INFO_("\n");
 }
+/*---------------------------------------------------------------------------*/
+PROCESS(udp_client_process, "UDP client");
+AUTOSTART_PROCESSES(&udp_client_process);
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_client_process, ev, data)
 {
@@ -157,10 +166,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static unsigned count = 1;
 
   static uint8_t app_payload[128];
-#if WITH_APP_DATA_FOOTER
   static uint32_t app_seqno = 0;
   static uint16_t app_magic = (uint16_t)APP_DATA_MAGIC;
-#endif
 
   uip_ipaddr_t dest_ipaddr;
 
@@ -192,6 +199,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
   etimer_set(&print_timer, APP_PRINT_DELAY);
   etimer_set(&reset_log_timer, APP_START_DELAY);
+
 #if WITH_OST && OST_HANDLE_QUEUED_PACKETS
   bootstrap_period = 1;
 #endif
@@ -229,11 +237,19 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_("\n");
 
 #if PPSD_APP_SET_PAYLOAD_LEN
-        snprintf(str, sizeof(str), "hello %d 111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111", count);
+        current_payload_len = PPSD_APP_SET_PAYLOAD_LEN;
 #else
-        snprintf(str, sizeof(str), "hello %d", count);
+        current_payload_len = 6;
 #endif
-        simple_udp_sendto(&udp_conn, str, strlen(str), &dest_ipaddr);
+
+        app_seqno = UIP_HTONL((1 << 28) + ((uint32_t)node_id << 16) + count);
+        app_magic = UIP_HTONS((uint16_t)APP_DATA_MAGIC);
+
+        memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
+        memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
+
+        simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
+
         count++;
         varycount++;
       } else if (index < VARY_LENGTH - 1){
@@ -262,17 +278,18 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #else
         current_payload_len = PPSD_APP_SET_PAYLOAD_LEN;
 #endif
+#else
+        current_payload_len = 6;
+#endif
 
-#if WITH_APP_DATA_FOOTER
         app_seqno = UIP_HTONL((1 << 28) + ((uint32_t)node_id << 16) + count);
         app_magic = UIP_HTONS((uint16_t)APP_DATA_MAGIC);
 
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
-#endif
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
-#endif
+
         count++;
       }
 #endif /* WITH_VARYING_PPM */
