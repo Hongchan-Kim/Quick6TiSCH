@@ -1,32 +1,3 @@
-/*
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the Institute nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * This file is part of the Contiki operating system.
- *
- */
-
 #include "contiki.h"
 #include "net/routing/routing.h"
 #include "lib/random.h"
@@ -65,14 +36,18 @@
 #define APP_DOWNWARD_MAX_TX          100
 #endif
 
-static struct simple_udp_connection udp_conn;
-
 #if DOWNWARD_TRAFFIC
 #define APP_DOWN_INTERVAL   (APP_DOWNWARD_SEND_INTERVAL / (NON_ROOT_NUM + 1))
 #endif
 
+static struct simple_udp_connection udp_conn;
+
 #if WITH_OST && OST_HANDLE_QUEUED_PACKETS
 extern uint8_t bootstrap_period;
+#endif
+
+#if PPSD_TEMP_1
+extern struct tsch_asn_t tsch_current_asn;
 #endif
 
 /*---------------------------------------------------------------------------*/
@@ -138,17 +113,6 @@ app_up_sequence_register_seqno(uint16_t sender_id, uint16_t current_app_up_seqno
 }
 #endif /* APP_SEQNO_DUPLICATE_CHECK */
 /*---------------------------------------------------------------------------*/
-#if WITH_COOJA
-static void
-reset_cooja_nodes()
-{
-  uint8_t i = 0;
-  for(i = 0; i < NODE_NUM; i++) {
-    cooja_nodes[i] = 0;
-  }
-}
-#endif
-/*---------------------------------------------------------------------------*/
 static void
 reset_log()
 {
@@ -173,6 +137,10 @@ udp_rx_callback(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {
+#if PPSD_TEMP_1
+  uint64_t app_rx_up_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
+#endif
+
   uint16_t sender_id = ((sender_addr->u8[14]) << 8) + sender_addr->u8[15];
   uint16_t sender_index = sender_id - 1;
 
@@ -180,10 +148,7 @@ udp_rx_callback(struct simple_udp_connection *c,
     LOG_INFO("Fail to receive: out of index\n");
     return;
   }
-#if WITH_COOJA
-  LOG_INFO("HCK rx_up %u from %u | Received message '%.*s' from ", 
-            ++cooja_nodes[sender_index], sender_index + 1, datalen, (char *) data);
-#elif WITH_IOTLAB
+
   uint32_t app_received_seqno = 0;
   memcpy(&app_received_seqno, data + datalen - 6, 4);
   app_received_seqno = UIP_HTONL(app_received_seqno);
@@ -191,17 +156,19 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_up_sequence_is_duplicate(sender_id, app_received_seqno_count)) {
-    LOG_INFO("HCK !drop dup %u %lu from ", sender_id, app_received_seqno);
+    LOG_INFO("HCK dup_up a_seq %lx asn %llu from ", 
+              app_received_seqno,
+              app_rx_up_asn);
   } else {
     app_up_sequence_register_seqno(sender_id, app_received_seqno_count);
-    LOG_INFO("HCK rx_up %u from %u %x (%u %x) | Received message of %lx with len %u from ", 
+    LOG_INFO("HCK rx_up %u from %u %x (%u %x) a_seq %lx asn %llu len %u | Received message from ", 
               ++iotlab_nodes[sender_index][2],
               sender_index + 1, sender_index + 1, 
               iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1],
               app_received_seqno,
+              app_rx_up_asn,
               datalen);
   }
-#endif
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");
 }
@@ -218,20 +185,15 @@ PROCESS_THREAD(udp_server_process, ev, data)
   static struct etimer start_timer;
   static struct etimer periodic_timer;
   static struct etimer send_timer;
+
   static unsigned count = 1;
-#if WITH_COOJA
-  static unsigned dest_id = COOJA_ROOT_ID + 1;
-#elif WITH_IOTLAB
-  static unsigned dest_id = IOTLAB_ROOT_ID + 1;
-#endif
+  uip_ipaddr_t dest_ipaddr;
+  static unsigned dest_id = APP_ROOT_ID + 1;
 
   static uint8_t app_payload[128];
+  static uint16_t current_payload_len = APP_PAYLOAD_LEN;
   static uint32_t app_seqno = 0;
   static uint16_t app_magic = (uint16_t)APP_DATA_MAGIC;
-  static uint16_t current_payload_len = 0;
-
-
-  uip_ipaddr_t dest_ipaddr;
 
 #if WITH_VARYING_PPM
   static int APP_DOWNWARD_SEND_VARYING_PPM[VARY_LENGTH] = {1, 8, 2, 4, 6, 8, 4, 1};
@@ -252,10 +214,6 @@ PROCESS_THREAD(udp_server_process, ev, data)
 
   PROCESS_BEGIN();
 
-#if WITH_COOJA
-  reset_cooja_nodes();
-#endif
-
   /* Initialize DAG root */
   NETSTACK_ROUTING.root_start();
 
@@ -273,6 +231,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
 
   etimer_set(&print_timer, APP_PRINT_DELAY);
   etimer_set(&reset_log_timer, APP_START_DELAY);
+
 #if WITH_OST && OST_HANDLE_QUEUED_PACKETS
   bootstrap_period = 1;
 #endif
@@ -303,24 +262,9 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #if WITH_VARYING_PPM
       if(varycount <= APP_DOWNWARD_VARYING_MAX_TX[index]) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
-        /* Send to clients */
-        uint16_t dest_index = dest_id - 1;
-#if WITH_COOJA
-        LOG_INFO("HCK tx_down %u to %u | Sending message %u to ", 
-                  count, dest_id, count);
-#elif WITH_IOTLAB
-        LOG_INFO("HCK tx_down %u to %u %x (%u %x) | Sending message %u to ", 
-                  count, dest_id, dest_id,
-                  iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
-                  count);
-#endif
-        LOG_INFO_6ADDR(&dest_ipaddr);
-        LOG_INFO_("\n");
 
-#if PPSD_APP_SET_PAYLOAD_LEN
-        current_payload_len = PPSD_APP_SET_PAYLOAD_LEN;
-#else
-        current_payload_len = 6;
+#if PPSD_TEMP_1
+        uint64_t app_tx_down_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
 #endif
 
         app_seqno = UIP_HTONL((2 << 28) + ((uint32_t)dest_id << 16) + count);
@@ -328,6 +272,16 @@ PROCESS_THREAD(udp_server_process, ev, data)
 
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
+
+        /* Send to clients */
+        uint16_t dest_index = dest_id - 1;
+        LOG_INFO("HCK tx_down %u to %u %x (%u %x) a_seq %lx asn %llu len %u | Sending message to ", 
+                  count, 
+                  dest_id, dest_id,
+                  iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
+                  app_seqno, app_tx_down_asn, current_payload_len);
+        LOG_INFO_6ADDR(&dest_ipaddr);
+        LOG_INFO_("\n");
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
@@ -347,31 +301,25 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #else /* WITH_VARYING_PPM */
       if(count <= APP_DOWNWARD_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
-        /* Send to clients */
-        uint16_t dest_index = dest_id - 1;
-#if WITH_COOJA
-        LOG_INFO("HCK tx_down %u to %u | Sending message %u to ", 
-                  count, dest_id, count);
-#elif WITH_IOTLAB
-        LOG_INFO("HCK tx_down %u to %u %x (%u %x) | Sending message %u to ", 
-                  count, dest_id, dest_id,
-                  iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
-                  count);
-#endif
-        LOG_INFO_6ADDR(&dest_ipaddr);
-        LOG_INFO_("\n");
 
-#if PPSD_APP_SET_PAYLOAD_LEN
-        current_payload_len = PPSD_APP_SET_PAYLOAD_LEN;
-#else
-        current_payload_len = 6;
+#if PPSD_TEMP_1
+        uint64_t app_tx_down_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
 #endif
-
         app_seqno = UIP_HTONL((2 << 28) + ((uint32_t)dest_id << 16) + count);
         app_magic = UIP_HTONS((uint16_t)APP_DATA_MAGIC);
 
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
+
+        /* Send to clients */
+        uint16_t dest_index = dest_id - 1;
+        LOG_INFO("HCK tx_down %u to %u %x (%u %x) a_seq %lx asn %llu len %u | Sending message to ", 
+                  count, 
+                  dest_id, dest_id,
+                  iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
+                  app_seqno, app_tx_down_asn, current_payload_len);
+        LOG_INFO_6ADDR(&dest_ipaddr);
+        LOG_INFO_("\n");
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 

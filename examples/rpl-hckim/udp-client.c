@@ -45,6 +45,10 @@ static uint16_t app_rxd_count;
 extern uint8_t bootstrap_period;
 #endif
 
+#if PPSD_TEMP_1
+extern struct tsch_asn_t tsch_current_asn;
+#endif
+
 /*---------------------------------------------------------------------------*/
 #if APP_SEQNO_DUPLICATE_CHECK
 struct app_down_seqno {
@@ -125,6 +129,10 @@ udp_rx_callback(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {
+#if PPSD_TEMP_1
+        uint64_t app_rx_down_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
+#endif
+
   uint32_t app_received_seqno = 0;
   memcpy(&app_received_seqno, data + datalen - 6, 4);
   app_received_seqno = UIP_HTONL(app_received_seqno);
@@ -132,18 +140,18 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_down_sequence_is_duplicate(app_received_seqno_count)) {
-    LOG_INFO("HCK !drop dup %lu from ", app_received_seqno);
+    LOG_INFO("HCK dup_down a_seq %lx asn %llu from ", 
+              app_received_seqno,
+              app_rx_down_asn);
   } else {
     app_down_sequence_register_seqno(app_received_seqno_count);
-    LOG_INFO("HCK rx_down %u | Received message of %lx with len %u from ",
+    LOG_INFO("HCK rx_down %u a_seq %lx asn %llu len %u | Received message from ",
               ++app_rxd_count,
               app_received_seqno,
+              app_rx_down_asn,
               datalen);
   }
   LOG_INFO_6ADDR(sender_addr);
-#if LLSEC802154_CONF_ENABLED
-  LOG_INFO_(" LLSEC LV:%d", uipbuf_get_attr(UIPBUF_ATTR_LLSEC_LEVEL));
-#endif
   LOG_INFO_("\n");
 }
 /*---------------------------------------------------------------------------*/
@@ -158,18 +166,14 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer periodic_timer;
   static struct etimer send_timer;
 
-  static uint16_t current_payload_len = 0;
-#if EVAL_CONTROL_APP_PAYLOAD_LEN
-  static uint16_t current_len_tx_count = 0;
-#endif
-
   static unsigned count = 1;
+  uip_ipaddr_t dest_ipaddr;
 
   static uint8_t app_payload[128];
+  static uint16_t current_payload_len = APP_PAYLOAD_LEN;
   static uint32_t app_seqno = 0;
   static uint16_t app_magic = (uint16_t)APP_DATA_MAGIC;
 
-  uip_ipaddr_t dest_ipaddr;
 
 #if WITH_VARYING_PPM
   static int APP_UPWARD_SEND_VARYING_PPM[VARY_LENGTH] = {1, 2, 4, 8, 6, 4, 1, 8};
@@ -226,20 +230,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
     } else if(data == &send_timer) {
 #if WITH_VARYING_PPM
       if(varycount < APP_UPWARD_VARYING_MAX_TX[index]) {
-#if WITH_COOJA
-        uip_ip6addr((&dest_ipaddr), 0xfe80, 0, 0, 0, 0, 0, 0, COOJA_ROOT_ID);
-#elif WITH_IOTLAB
-        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, IOTLAB_ROOT_ID);
-#endif
-        /* Send to DAG root */
-        LOG_INFO("HCK tx_up %u | Sending message %u to ", count, count);
-        LOG_INFO_6ADDR(&dest_ipaddr);
-        LOG_INFO_("\n");
+        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
 
-#if PPSD_APP_SET_PAYLOAD_LEN
-        current_payload_len = PPSD_APP_SET_PAYLOAD_LEN;
-#else
-        current_payload_len = 6;
+#if PPSD_TEMP_1
+        uint64_t app_tx_up_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
 #endif
 
         app_seqno = UIP_HTONL((1 << 28) + ((uint32_t)node_id << 16) + count);
@@ -247,39 +241,27 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
+
+        /* Send to DAG root */
+        LOG_INFO("HCK tx_up %u a_seq %lx asn %llu len %u | Sending message to ", 
+                  count, app_seqno, app_tx_up_asn, current_payload_len);
+        LOG_INFO_6ADDR(&dest_ipaddr);
+        LOG_INFO_("\n");
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
         count++;
         varycount++;
-      } else if (index < VARY_LENGTH - 1){
+      } else if (index < VARY_LENGTH - 1) {
         index++;
         varycount = 1;
       }
 #else /* WITH_VARYING_PPM */
       if(count <= APP_UPWARD_MAX_TX) {
-#if WITH_COOJA
-        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, COOJA_ROOT_ID);
-#elif WITH_IOTLAB
-        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, IOTLAB_ROOT_ID);
-#endif
-        /* Send to DAG root */
-        LOG_INFO("HCK tx_up %u | Sending message %u to ", count, count);
-        LOG_INFO_6ADDR(&dest_ipaddr);
-        LOG_INFO_("\n");
+        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
 
-#if PPSD_APP_SET_PAYLOAD_LEN
-#if EVAL_CONTROL_APP_PAYLOAD_LEN
-        ++current_len_tx_count;
-        if(current_len_tx_count >= PPSD_SINGLE_LEN_MAX_TX) {
-          current_len_tx_count = 0;
-          ++current_payload_len;
-        }
-#else
-        current_payload_len = PPSD_APP_SET_PAYLOAD_LEN;
-#endif
-#else
-        current_payload_len = 6;
+#if PPSD_TEMP_1
+        uint64_t app_tx_up_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
 #endif
 
         app_seqno = UIP_HTONL((1 << 28) + ((uint32_t)node_id << 16) + count);
@@ -287,6 +269,12 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
+
+        /* Send to DAG root */
+        LOG_INFO("HCK tx_up %u a_seq %lx asn %llu len %u | Sending message to ", 
+                  count, app_seqno, app_tx_up_asn, current_payload_len);
+        LOG_INFO_6ADDR(&dest_ipaddr);
+        LOG_INFO_("\n");
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
