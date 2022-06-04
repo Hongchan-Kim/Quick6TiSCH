@@ -445,6 +445,8 @@ struct tsch_packet *
 tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
                       mac_callback_t sent, void *ptr)
 {
+  uint64_t tsch_queue_add_packet_asn = tsch_calculate_current_asn();
+
   struct tsch_neighbor *n = NULL;
   int16_t put_index = -1;
   struct tsch_packet *p = NULL;
@@ -486,8 +488,13 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             ringbufindex_put(&n->tx_ringbuf);
             LOG_DBG("packet is added put_index %u, packet %p\n",
                    put_index, p);
+
+            LOG_INFO("HCK add_p_s at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
+
             return p;
           } else {
+            LOG_INFO("HCK add_p_f at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
+
             memb_free(&packet_memb, p);
           }
         }
@@ -495,6 +502,9 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     }
   }
   LOG_ERR("! add packet failed: %u %p %d %p %p\n", tsch_is_locked(), n, put_index, p, p ? p->qb : NULL);
+
+  LOG_INFO("HCK add_p_f at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
+
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
@@ -540,6 +550,9 @@ tsch_queue_free_packet(struct tsch_packet *p)
   if(p != NULL) {
     queuebuf_free(p->qb);
     memb_free(&packet_memb, p);
+
+    uint64_t tsch_queue_free_packet_asn = tsch_calculate_current_asn();
+    LOG_INFO("HCK free_p at %llu queue %u\n", tsch_queue_free_packet_asn, tsch_queue_global_packet_count());
   }
 }
 /*---------------------------------------------------------------------------*/

@@ -111,9 +111,9 @@ tsch_log_process_pending(void)
         if(log->tx.drift_used) {
           printf(", dr %3d", log->tx.drift);
         }
-#if WITH_APP_DATA_FOOTER
-        if(UIP_HTONS(log->tx.app_magic) == 0x58FE) {
-          printf(", a_seq %lx", UIP_HTONL(log->tx.app_seqno));
+#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+        if(log->tx.app_magic == APP_DATA_MAGIC) {
+          printf(", a_seq %lx", log->tx.app_seqno);
         }
 #endif
         printf("\n");
@@ -173,9 +173,9 @@ tsch_log_process_pending(void)
                 log->rx.datalen, log->rx.seqno);
         printf(", edr %3d", (int)log->rx.estimated_drift);
         printf(", rssi %3d", log->rx.rssi);
-#if WITH_APP_DATA_FOOTER
-        if(UIP_HTONS(log->rx.app_magic) == 0x58FE) {
-          printf(", a_seq %lx", UIP_HTONL(log->rx.app_seqno));
+#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+        if(log->rx.app_magic == APP_DATA_MAGIC) {
+          printf(", a_seq %lx", log->rx.app_seqno);
         }
 #endif
         if(log->rx.drift_used) {

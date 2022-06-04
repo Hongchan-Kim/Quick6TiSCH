@@ -11,12 +11,12 @@
 #define GET_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 
 #define WITH_TSCH_TX_CCA                           1
-#define WITH_PPSD                                  0
+#define WITH_PPSD                                  1
 #define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
 
+#if WITH_PPSD
 #define EVAL_CONTROL_NUM_OF_PKTS_IN_EP             0 /* Needs WITH_PPSD */
 
-#if WITH_PPSD
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
 #define PPSD_EP_POLICY_CELL_UTIL                   1
 #define PPSD_TX_SLOT_FORWARD_OFFLOADING            1
@@ -41,7 +41,7 @@
 #endif
 
 #define PPSD_DBG_REGULAR_SLOT_TIMING               0
-#define PPSD_DBG_EP_SLOT_TIMING                    1
+#define PPSD_DBG_EP_SLOT_TIMING                    0
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
 
@@ -152,6 +152,7 @@
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
 #define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
+#define ENABLE_LOG_TSCH_WITH_APP_FOOTER            1
 /*---------------------------------------------------------------------------*/
 
 
@@ -169,7 +170,6 @@
    - With EP: Max in single hop: 79, Max in multi hop: ???
    - With ODP: ???
    */
-#define PPSD_APP_SET_PAYLOAD_LEN                   81
 
 #if WITH_COOJA
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 30)
@@ -196,20 +196,13 @@
 #define VARY_LENGTH                                8
 #endif
 
-#define WITH_APP_DATA_FOOTER                       1
-#if WITH_APP_DATA_FOOTER
+#define APP_PAYLOAD_LEN                            80
 #define APP_DATA_MAGIC                             0x58FE
-#endif
 
 #define APP_SEQNO_DUPLICATE_CHECK                  1
 #if APP_SEQNO_DUPLICATE_CHECK
 #define APP_SEQNO_MAX_AGE                          (10 * CLOCK_SECOND)
 #define APP_SEQNO_HISTORY                          16
-#endif
-
-#define EVAL_CONTROL_APP_PAYLOAD_LEN               0
-#if EVAL_CONTROL_APP_PAYLOAD_LEN
-#define PPSD_SINGLE_LEN_MAX_TX                     600
 #endif
 /*---------------------------------------------------------------------------*/
 

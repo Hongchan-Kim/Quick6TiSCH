@@ -277,6 +277,24 @@ static uint8_t regular_slot_rx_ack_len;
 static rtimer_clock_t regular_slot_timestamp_rx[14];
 #endif
 
+/*---------------------------------------------------------------------------*/
+struct tsch_asn_t tsch_last_valid_asn;
+static rtimer_clock_t volatile last_valid_asn_start;
+/*---------------------------------------------------------------------------*/
+uint64_t
+tsch_calculate_current_asn()
+{
+  rtimer_clock_t now = RTIMER_NOW();
+
+  uint64_t last_valid_asn = (uint64_t)(tsch_last_valid_asn.ls4b) + ((uint64_t)(tsch_last_valid_asn.ms1b) << 32);
+
+  uint16_t passed_timeslots = ((RTIMER_CLOCK_DIFF(now, last_valid_asn_start) + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                        / tsch_timing[tsch_ts_timeslot_length]);
+
+  return last_valid_asn + passed_timeslots - 1;
+}
+/*---------------------------------------------------------------------------*/
+
 #if WITH_OST /* OST-00-03: struct for t_offset */
 typedef struct ost_t_offset_candidate {
   uint8_t installable;
@@ -1937,7 +1955,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
   }
 
-#if PPSD_DBG_EP_SLOT_TIMING /* EPTxE0: after RADI.read() for ACK, before tsch_radio_off() */
+#if PPSD_DBG_EP_SLOT_TIMING /* EPTxE0: after RADIO.read() for ACK, before tsch_radio_off() */
   ppsd_tx_slot_timestamp_end[0] = RTIMER_NOW();
 #endif
 
@@ -3215,7 +3233,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* LLSEC802154_ENABLED */
         linkaddr_copy(&log->tx.dest, queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER));
         log->tx.seqno = queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_MAC_SEQNO);
-#if WITH_APP_DATA_FOOTER
+#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
         memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
         memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
@@ -3814,7 +3832,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.estimated_drift = estimated_drift;
               log->rx.seqno = frame.seq;
               log->rx.rssi = current_input->rssi;
-#if WITH_APP_DATA_FOOTER
+#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
               memcpy(&log->rx.app_magic, (uint8_t *)current_input->payload + current_input->len - 2, 2);
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
@@ -3965,6 +3983,9 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
   /* Loop over all active slots */
   while(tsch_is_associated) {
+
+    TSCH_ASN_COPY(tsch_last_valid_asn, tsch_current_asn);
+    last_valid_asn_start = current_slot_start;
 
     if(current_link == NULL || tsch_lock_requested) { /* Skip slot operation if there is no link
                                                           or if there is a pending request for getting the lock */

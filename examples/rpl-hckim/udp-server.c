@@ -46,10 +46,6 @@ static struct simple_udp_connection udp_conn;
 extern uint8_t bootstrap_period;
 #endif
 
-#if PPSD_TEMP_1
-extern struct tsch_asn_t tsch_current_asn;
-#endif
-
 /*---------------------------------------------------------------------------*/
 #if APP_SEQNO_DUPLICATE_CHECK
 struct app_up_seqno {
@@ -137,9 +133,7 @@ udp_rx_callback(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {
-#if PPSD_TEMP_1
-  uint64_t app_rx_up_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
-#endif
+  uint64_t app_rx_up_asn = tsch_calculate_current_asn();
 
   uint16_t sender_id = ((sender_addr->u8[14]) << 8) + sender_addr->u8[15];
   uint16_t sender_index = sender_id - 1;
@@ -151,7 +145,6 @@ udp_rx_callback(struct simple_udp_connection *c,
 
   uint32_t app_received_seqno = 0;
   memcpy(&app_received_seqno, data + datalen - 6, 4);
-  app_received_seqno = UIP_HTONL(app_received_seqno);
 
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
@@ -263,12 +256,10 @@ PROCESS_THREAD(udp_server_process, ev, data)
       if(varycount <= APP_DOWNWARD_VARYING_MAX_TX[index]) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
 
-#if PPSD_TEMP_1
-        uint64_t app_tx_down_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
-#endif
+        uint64_t app_tx_down_asn = tsch_calculate_current_asn();
 
-        app_seqno = UIP_HTONL((2 << 28) + ((uint32_t)dest_id << 16) + count);
-        app_magic = UIP_HTONS((uint16_t)APP_DATA_MAGIC);
+        app_seqno = (2 << 28) + ((uint32_t)dest_id << 16) + count;
+        app_magic = (uint16_t)APP_DATA_MAGIC;
 
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
@@ -302,11 +293,10 @@ PROCESS_THREAD(udp_server_process, ev, data)
       if(count <= APP_DOWNWARD_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
 
-#if PPSD_TEMP_1
-        uint64_t app_tx_down_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
-#endif
-        app_seqno = UIP_HTONL((2 << 28) + ((uint32_t)dest_id << 16) + count);
-        app_magic = UIP_HTONS((uint16_t)APP_DATA_MAGIC);
+        uint64_t app_tx_down_asn = tsch_calculate_current_asn();
+
+        app_seqno = (2 << 28) + ((uint32_t)dest_id << 16) + count;
+        app_magic = (uint16_t)APP_DATA_MAGIC;
 
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));

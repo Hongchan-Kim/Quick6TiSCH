@@ -45,10 +45,6 @@ static uint16_t app_rxd_count;
 extern uint8_t bootstrap_period;
 #endif
 
-#if PPSD_TEMP_1
-extern struct tsch_asn_t tsch_current_asn;
-#endif
-
 /*---------------------------------------------------------------------------*/
 #if APP_SEQNO_DUPLICATE_CHECK
 struct app_down_seqno {
@@ -129,13 +125,10 @@ udp_rx_callback(struct simple_udp_connection *c,
          const uint8_t *data,
          uint16_t datalen)
 {
-#if PPSD_TEMP_1
-        uint64_t app_rx_down_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
-#endif
+  uint64_t app_rx_down_asn = tsch_calculate_current_asn();
 
   uint32_t app_received_seqno = 0;
   memcpy(&app_received_seqno, data + datalen - 6, 4);
-  app_received_seqno = UIP_HTONL(app_received_seqno);
 
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
@@ -232,12 +225,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
       if(varycount < APP_UPWARD_VARYING_MAX_TX[index]) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
 
-#if PPSD_TEMP_1
-        uint64_t app_tx_up_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
-#endif
+        uint64_t app_tx_up_asn = tsch_calculate_current_asn();
 
-        app_seqno = UIP_HTONL((1 << 28) + ((uint32_t)node_id << 16) + count);
-        app_magic = UIP_HTONS((uint16_t)APP_DATA_MAGIC);
+        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + count;
+        app_magic = (uint16_t)APP_DATA_MAGIC;
 
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
@@ -260,12 +251,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
       if(count <= APP_UPWARD_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
 
-#if PPSD_TEMP_1
-        uint64_t app_tx_up_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
-#endif
+        uint64_t app_tx_up_asn = tsch_calculate_current_asn();
 
-        app_seqno = UIP_HTONL((1 << 28) + ((uint32_t)node_id << 16) + count);
-        app_magic = UIP_HTONS((uint16_t)APP_DATA_MAGIC);
+        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + count;
+        app_magic = (uint16_t)APP_DATA_MAGIC;
 
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));

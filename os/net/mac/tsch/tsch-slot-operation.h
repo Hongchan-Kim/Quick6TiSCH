@@ -62,6 +62,8 @@ extern int tsch_current_burst_count;
 
 /********** Functions *********/
 
+uint64_t tsch_calculate_current_asn();
+
 /**
  * Checks if the TSCH lock is set. Accesses to global structures outside of
  * interrupts must be done through the lock, unless the sturcutre has

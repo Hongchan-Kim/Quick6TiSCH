@@ -97,7 +97,7 @@ struct tsch_log_t {
       uint8_t drift_used;
       uint8_t seqno;
       int16_t rssi; // hckim added
-#if WITH_APP_DATA_FOOTER
+#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
       uint16_t app_magic;
       uint32_t app_seqno;
 #endif
@@ -113,7 +113,7 @@ struct tsch_log_t {
       uint8_t drift_used;
       uint8_t seqno;
       int16_t rssi; // hckim added
-#if WITH_APP_DATA_FOOTER
+#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
       uint16_t app_magic;
       uint32_t app_seqno;
 #endif
