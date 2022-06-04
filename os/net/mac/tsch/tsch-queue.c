@@ -456,6 +456,9 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   if(TSCH_CALLBACK_PACKET_READY() < 0) {
     /* No scheduled slots for the packet available; drop it early to save queue space. */
     LOG_DBG("tsch_queue_add_packet(): rejected by the scheduler\n");
+
+    LOG_INFO("HCK add_p_f1 at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
+
     return NULL;
   }
 #endif
@@ -493,7 +496,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 
             return p;
           } else {
-            LOG_INFO("HCK add_p_f at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
+            LOG_INFO("HCK add_p_f2 at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
 
             memb_free(&packet_memb, p);
           }
@@ -503,7 +506,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
   LOG_ERR("! add packet failed: %u %p %d %p %p\n", tsch_is_locked(), n, put_index, p, p ? p->qb : NULL);
 
-  LOG_INFO("HCK add_p_f at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
+  LOG_INFO("HCK add_p_f3 at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
 
   return NULL;
 }

@@ -127,6 +127,9 @@ udp_rx_callback(struct simple_udp_connection *c,
 {
   uint64_t app_rx_down_asn = tsch_calculate_current_asn();
 
+  uint64_t app_tx_down_asn = 0;
+  memcpy(&app_tx_down_asn, data + datalen - 14, 8);
+
   uint32_t app_received_seqno = 0;
   memcpy(&app_received_seqno, data + datalen - 6, 4);
 
@@ -138,11 +141,13 @@ udp_rx_callback(struct simple_udp_connection *c,
               app_rx_down_asn);
   } else {
     app_down_sequence_register_seqno(app_received_seqno_count);
-    LOG_INFO("HCK rx_down %u a_seq %lx asn %llu len %u | Received message from ",
+    LOG_INFO("HCK rx_down %u a_seq %lx asn %llu len %u lt %llu %llu | Received message from ",
               ++app_rxd_count,
               app_received_seqno,
               app_rx_down_asn,
-              datalen);
+              datalen, 
+              app_rx_down_asn - app_tx_down_asn,
+              app_tx_down_asn);
   }
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");
@@ -230,6 +235,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
         app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
+        memcpy(app_payload + current_payload_len - sizeof(app_tx_up_asn) - sizeof(app_seqno) - sizeof(app_magic), 
+              &app_tx_up_asn, sizeof(app_tx_up_asn));
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 
@@ -256,6 +263,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
         app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
+        memcpy(app_payload + current_payload_len - sizeof(app_tx_up_asn) - sizeof(app_seqno) - sizeof(app_magic), 
+              &app_tx_up_asn, sizeof(app_tx_up_asn));
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 

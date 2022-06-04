@@ -135,6 +135,9 @@ udp_rx_callback(struct simple_udp_connection *c,
 {
   uint64_t app_rx_up_asn = tsch_calculate_current_asn();
 
+  uint64_t app_tx_up_asn = 0;
+  memcpy(&app_tx_up_asn, data + datalen - 14, 8);
+
   uint16_t sender_id = ((sender_addr->u8[14]) << 8) + sender_addr->u8[15];
   uint16_t sender_index = sender_id - 1;
 
@@ -154,13 +157,15 @@ udp_rx_callback(struct simple_udp_connection *c,
               app_rx_up_asn);
   } else {
     app_up_sequence_register_seqno(sender_id, app_received_seqno_count);
-    LOG_INFO("HCK rx_up %u from %u %x (%u %x) a_seq %lx asn %llu len %u | Received message from ", 
+    LOG_INFO("HCK rx_up %u from %u %x (%u %x) a_seq %lx asn %llu len %u lt %llu %llu | Received message from ", 
               ++iotlab_nodes[sender_index][2],
               sender_index + 1, sender_index + 1, 
               iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1],
               app_received_seqno,
               app_rx_up_asn,
-              datalen);
+              datalen, 
+              app_rx_up_asn - app_tx_up_asn,
+              app_tx_up_asn);
   }
   LOG_INFO_6ADDR(sender_addr);
   LOG_INFO_("\n");
@@ -261,6 +266,8 @@ PROCESS_THREAD(udp_server_process, ev, data)
         app_seqno = (2 << 28) + ((uint32_t)dest_id << 16) + count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
+        memcpy(app_payload + current_payload_len - sizeof(app_tx_down_asn) - sizeof(app_seqno) - sizeof(app_magic), 
+              &app_tx_down_asn, sizeof(app_tx_down_asn));
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 
@@ -298,6 +305,8 @@ PROCESS_THREAD(udp_server_process, ev, data)
         app_seqno = (2 << 28) + ((uint32_t)dest_id << 16) + count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
+        memcpy(app_payload + current_payload_len - sizeof(app_tx_down_asn) - sizeof(app_seqno) - sizeof(app_magic), 
+              &app_tx_down_asn, sizeof(app_tx_down_asn));
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 
