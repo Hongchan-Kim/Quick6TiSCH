@@ -62,9 +62,6 @@ void tsch_queue_change_attr_of_packets_in_queue(const struct tsch_neighbor *targ
 #if WITH_OST
 struct tsch_neighbor *tsch_queue_get_nbr_from_id(const uint16_t id);
 void ost_update_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N);
-#if OST_HANDLE_QUEUED_PACKETS
-void tsch_queue_flush_nbr_queue(struct tsch_neighbor *n);
-#endif
 #endif
 
 /**

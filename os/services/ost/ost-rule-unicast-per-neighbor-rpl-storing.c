@@ -80,11 +80,7 @@ static uint16_t local_channel_offset;
 static struct tsch_slotframe *sf_unicast;
 
 /* OST implementation */
-/*---------------------------------------------------------------------------*/
 #if WITH_OST
-#if  OST_HANDLE_QUEUED_PACKETS
-uint8_t bootstrap_period;
-#endif
 /*---------------------------------------------------------------------------*/
 void
 ost_print_nbr(void)
@@ -388,11 +384,7 @@ child_removed(const linkaddr_t *linkaddr)
   if(tsch_queue_is_empty(nbr) || nbr == NULL) {
     remove_uc_link(linkaddr); /* remove child immediately */
   } else {
-    if(bootstrap_period == 1) {
-      tsch_queue_flush_nbr_queue(nbr);
-    } else {
-      change_attr_in_tx_queue(linkaddr); /* use shared slotframe for queued packets */
-    }
+    change_attr_in_tx_queue(linkaddr); /* use shared slotframe for queued packets */
     remove_uc_link(linkaddr);
   }
 #else
@@ -496,11 +488,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       if(tsch_queue_is_empty(old) || old == NULL) {
         remove_uc_link(old_addr); /* No-path DAO can be sent in shared slots */
       } else {
-        if(bootstrap_period == 1) {
-          tsch_queue_flush_nbr_queue((struct tsch_neighbor *)old);
-        } else {
-          change_attr_in_tx_queue(old_addr);
-        }
+        change_attr_in_tx_queue(old_addr);
         remove_uc_link(old_addr);
       }
     }

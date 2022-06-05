@@ -400,13 +400,8 @@ tsch_queue_update_time_source(const linkaddr_t *new_addr)
 }
 /*---------------------------------------------------------------------------*/
 /* Flush a neighbor queue */
-#if WITH_OST && OST_HANDLE_QUEUED_PACKETS
-void
-tsch_queue_flush_nbr_queue(struct tsch_neighbor *n)
-#else
 static void
 tsch_queue_flush_nbr_queue(struct tsch_neighbor *n)
-#endif
 {
   while(!tsch_queue_is_empty(n)) {
     struct tsch_packet *p = tsch_queue_remove_packet_from_queue(n);
@@ -776,7 +771,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
         int packet_attr_channel_offset = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
 
 #ifdef ALICE_PACKET_CELL_MATCHING_ON_THE_FLY
-        if(packet_attr_slotframe == ALICE_UNICAST_SF_ID) {
+        if(packet_attr_slotframe == ALICE_UNICAST_SF_HANDLE) {
           linkaddr_t rx_linkaddr;
           linkaddr_copy(&rx_linkaddr, queuebuf_addr(n->tx_array[get_index]->qb, PACKETBUF_ADDR_RECEIVER));
           uint16_t packet_timeslot = link->timeslot; //alice final check
@@ -804,7 +799,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           } else
 #endif
           { //RPL neighbor
-            if(packet_attr_slotframe != 0xffff && link->slotframe_handle != ALICE_UNICAST_SF_ID) {
+            if(packet_attr_slotframe != 0xffff && link->slotframe_handle != ALICE_UNICAST_SF_HANDLE) {
               return NULL;
             }
             if(packet_attr_timeslot != 0xffff && packet_timeslot != link->timeslot) {

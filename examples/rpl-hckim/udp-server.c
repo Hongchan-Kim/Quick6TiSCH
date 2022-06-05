@@ -42,10 +42,6 @@
 
 static struct simple_udp_connection udp_conn;
 
-#if WITH_OST && OST_HANDLE_QUEUED_PACKETS
-extern uint8_t bootstrap_period;
-#endif
-
 /*---------------------------------------------------------------------------*/
 #if APP_SEQNO_DUPLICATE_CHECK
 struct app_up_seqno {
@@ -230,10 +226,6 @@ PROCESS_THREAD(udp_server_process, ev, data)
   etimer_set(&print_timer, APP_PRINT_DELAY);
   etimer_set(&reset_log_timer, APP_START_DELAY);
 
-#if WITH_OST && OST_HANDLE_QUEUED_PACKETS
-  bootstrap_period = 1;
-#endif
-
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_TIMER);
     if(data == &print_timer) {
@@ -241,9 +233,6 @@ PROCESS_THREAD(udp_server_process, ev, data)
       print_iotlab_node_info();
 #endif
     } else if(data == &reset_log_timer) {
-#if WITH_OST && OST_HANDLE_QUEUED_PACKETS
-      bootstrap_period = 0;
-#endif
       reset_log();
     }
 #if DOWNWARD_TRAFFIC

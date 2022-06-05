@@ -270,10 +270,10 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -298,30 +298,30 @@
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
-/* for log messages */
-#define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
-#define ORCHESTRA_UNICAST_SF_ID                    1 //slotframe handle of unicast slotframe
-#define ORCHESTRA_BROADCAST_SF_ID                  2 //slotframe handle of broadcast/default slotframe
+
+#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
+#define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
+#define TSCH_SCHED_COMMON_SF_HANDLE                2 //slotframe handle of broadcast/default slotframe
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_LB_ORCHESTRA
 #define WITH_ORCHESTRA                             1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_LB //link-based Orchestra
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
-/* for log messages */
-#define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
-#define ORCHESTRA_UNICAST_SF_ID                    1 //slotframe handle of unicast slotframe
-#define ORCHESTRA_BROADCAST_SF_ID                  2 //slotframe handle of broadcast/default slotframe
+#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
+
+#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
+#define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
+#define TSCH_SCHED_COMMON_SF_HANDLE                2 //slotframe handle of broadcast/default slotframe
 
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define WITH_ALICE                                 1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              311//23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
@@ -330,21 +330,21 @@
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
-/* for log messages */
-#define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
-#define ORCHESTRA_BROADCAST_SF_ID                  1 //slotframe handle of broadcast/default slotframe
-#define ORCHESTRA_UNICAST_SF_ID                    2 //slotframe handle of unicast slotframe
-#define ALICE_BROADCAST_SF_ID                      1
-#define ALICE_UNICAST_SF_ID                        2
 
-#elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST //OST
+#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
+#define TSCH_SCHED_COMMON_SF_HANDLE                1 //slotframe handle of broadcast/default slotframe
+#define TSCH_SCHED_UNICAST_SF_HANDLE               2 //slotframe handle of unicast slotframe
+#define ALICE_COMMON_SF_HANDLE                     TSCH_SCHED_COMMON_SF_HANDLE
+#define ALICE_UNICAST_SF_HANDLE                    TSCH_SCHED_UNICAST_SF_HANDLE
+
+#elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST
 #define WITH_OST                                   1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        41 //31 broadcast and default slotframe length, original: 31
 
-#define OST_ON_DEMAND_PROVISION                    0
+#define OST_ON_DEMAND_PROVISION                    1
 
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define OST_JSB_ADD                                1
@@ -370,9 +370,9 @@
 #define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) /* End of the periodic slotframe (Under-provision uses up to 2*NODE_NUM+2) */
 
 /* for log messages */
-#define ORCHESTRA_EB_SF_ID                         0 //slotframe handle of EB slotframe
-#define ORCHESTRA_UNICAST_SF_ID                    1 //slotframe handle of unicast slotframe
-#define ORCHESTRA_BROADCAST_SF_ID                  2 //slotframe handle of broadcast/default slotframe
+#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
+#define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
+#define TSCH_SCHED_COMMON_SF_HANDLE                2 //slotframe handle of broadcast/default slotframe
 #define OST_PERIODIC_SF_ID_OFFSET                  2
 #define OST_ONDEMAND_SF_ID_OFFSET                  SSQ_SCHEDULE_HANDLE_OFFSET
 

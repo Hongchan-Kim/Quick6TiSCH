@@ -289,7 +289,7 @@ alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offs
 #endif
   //this packet's receiver is not the node's RPL neighbor. 
   *timeslot = 0;
-  *channel_offset = ALICE_BROADCAST_SF_ID;
+  *channel_offset = ALICE_COMMON_SF_HANDLE;
 
   return is_neighbor; //returns 0 <-- ALICE EARLY PACKET DROP
 }
