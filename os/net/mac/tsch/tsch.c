@@ -129,92 +129,83 @@ uint16_t tsch_dequeued_ringbuf_full_count;
 uint16_t tsch_dequeued_ringbuf_available_count;
 
 /* hckim measure cell utilization during association */
-uint32_t tsch_scheduled_any_cell_count;
-uint32_t tsch_scheduled_eb_cell_count;
-uint32_t tsch_scheduled_broadcast_cell_count;
-uint32_t tsch_scheduled_unicast_cell_count;
+uint32_t tsch_scheduled_eb_sf_cell_count;
+uint32_t tsch_scheduled_common_sf_cell_count;
+uint32_t tsch_scheduled_unicast_sf_cell_count;
 #if WITH_OST
-uint32_t tsch_scheduled_ost_periodic_tx_cell_count;
-uint32_t tsch_scheduled_ost_periodic_rx_cell_count;
-uint32_t tsch_scheduled_ost_ondemand_tx_cell_count;
-uint32_t tsch_scheduled_ost_ondemand_rx_cell_count;
+uint32_t tsch_scheduled_ost_pp_sf_tx_cell_count;
+uint32_t tsch_scheduled_ost_pp_sf_rx_cell_count;
+uint32_t tsch_scheduled_ost_odp_sf_tx_cell_count;
+uint32_t tsch_scheduled_ost_odp_sf_rx_cell_count;
 #endif
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-uint32_t tsch_scheduled_burst_broadcast_tx_cell_count;
-uint32_t tsch_scheduled_burst_broadcast_rx_cell_count;
-uint32_t tsch_scheduled_burst_unicast_tx_cell_count;
-uint32_t tsch_scheduled_burst_unicast_rx_cell_count;
+uint32_t tsch_scheduled_common_sf_bst_tx_cell_count;
+uint32_t tsch_scheduled_common_sf_bst_rx_cell_count;
+uint32_t tsch_scheduled_unicast_sf_bst_tx_cell_count;
+uint32_t tsch_scheduled_unicast_sf_bst_rx_cell_count;
 #if WITH_OST
-uint32_t tsch_scheduled_burst_ost_periodic_tx_cell_count;
-uint32_t tsch_scheduled_burst_ost_periodic_rx_cell_count;
+uint32_t tsch_scheduled_ost_pp_sf_bst_tx_cell_count;
+uint32_t tsch_scheduled_ost_pp_sf_bst_rx_cell_count;
 #endif
 #endif
 #if WITH_PPSD
-uint32_t tsch_scheduled_ep_broadcast_tx_cell_count;
-uint32_t tsch_scheduled_ep_broadcast_rx_cell_count;
-uint32_t tsch_scheduled_ep_unicast_tx_cell_count;
-uint32_t tsch_scheduled_ep_unicast_rx_cell_count;
+uint32_t tsch_scheduled_common_sf_ep_tx_cell_count;
+uint32_t tsch_scheduled_common_sf_ep_rx_cell_count;
+uint32_t tsch_scheduled_unicast_sf_ep_tx_cell_count;
+uint32_t tsch_scheduled_unicast_sf_ep_rx_cell_count;
 #if WITH_OST
-uint32_t tsch_scheduled_ep_ost_periodic_tx_cell_count;
-uint32_t tsch_scheduled_ep_ost_periodic_rx_cell_count;
+uint32_t tsch_scheduled_ost_pp_sf_ep_tx_cell_count;
+uint32_t tsch_scheduled_ost_pp_sf_ep_rx_cell_count;
 #endif
 #endif
 
 /* hckim measure tx/rx operation counts */
-uint32_t tsch_any_slotframe_tx_operation_count;
-uint32_t tsch_any_slotframe_rx_operation_count;
-uint32_t tsch_eb_slotframe_tx_operation_count;
-uint32_t tsch_eb_slotframe_rx_operation_count;
-uint32_t tsch_broadcast_slotframe_tx_operation_count;
-uint32_t tsch_broadcast_slotframe_rx_operation_count;
-uint32_t tsch_unicast_slotframe_tx_operation_count;
-uint32_t tsch_unicast_slotframe_rx_operation_count;
+uint32_t tsch_eb_sf_tx_operation_count;
+uint32_t tsch_eb_sf_rx_operation_count;
+uint32_t tsch_common_sf_tx_operation_count;
+uint32_t tsch_common_sf_rx_operation_count;
+uint32_t tsch_unicast_sf_tx_operation_count;
+uint32_t tsch_unicast_sf_rx_operation_count;
 #if WITH_OST
-uint32_t tsch_ost_periodic_provisioning_tx_operation_count;
-uint32_t tsch_ost_periodic_provisioning_rx_operation_count;
-uint32_t tsch_ost_ondemand_provisioning_tx_operation_count;
-uint32_t tsch_ost_ondemand_provisioning_rx_operation_count;
+uint32_t tsch_ost_pp_sf_tx_operation_count;
+uint32_t tsch_ost_pp_sf_rx_operation_count;
+uint32_t tsch_ost_odp_sf_tx_operation_count;
+uint32_t tsch_ost_odp_sf_rx_operation_count;
 #endif
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-uint32_t tsch_broadcast_slotframe_burst_tx_operation_count;
-uint32_t tsch_broadcast_slotframe_burst_rx_operation_count;
-uint32_t tsch_unicast_slotframe_burst_tx_operation_count;
-uint32_t tsch_unicast_slotframe_burst_rx_operation_count;
+uint32_t tsch_common_sf_bst_tx_operation_count;
+uint32_t tsch_common_sf_bst_rx_operation_count;
+uint32_t tsch_unicast_sf_bst_tx_operation_count;
+uint32_t tsch_unicast_sf_bst_rx_operation_count;
 #if WITH_OST
-uint32_t tsch_ost_periodic_provisioning_burst_tx_operation_count;
-uint32_t tsch_ost_periodic_provisioning_burst_rx_operation_count;
+uint32_t tsch_ost_pp_sf_bst_tx_operation_count;
+uint32_t tsch_ost_pp_sf_bst_rx_operation_count;
 #endif
 #endif
 #if WITH_PPSD
-uint32_t tsch_any_sf_ep_tx_reserved_count;
-uint32_t tsch_any_sf_ep_rx_reserved_count;
-uint32_t tsch_bc_sf_ep_tx_reserved_count;
-uint32_t tsch_bc_sf_ep_rx_reserved_count;
-uint32_t tsch_uc_sf_ep_tx_reserved_count;
-uint32_t tsch_uc_sf_ep_rx_reserved_count;
+uint32_t tsch_common_sf_ep_tx_reserved_count;
+uint32_t tsch_common_sf_ep_rx_reserved_count;
+uint32_t tsch_unicast_sf_ep_tx_reserved_count;
+uint32_t tsch_unicast_sf_ep_rx_reserved_count;
 #if WITH_OST
-uint32_t tsch_pp_sf_ep_tx_reserved_count;
-uint32_t tsch_pp_sf_ep_rx_reserved_count;
+uint32_t tsch_ost_pp_sf_ep_tx_reserved_count;
+uint32_t tsch_ost_pp_sf_ep_rx_reserved_count;
 #endif
-uint32_t tsch_any_sf_ep_tx_ok_count;
-uint32_t tsch_any_sf_ep_rx_ok_count;
-uint32_t tsch_bc_sf_ep_tx_ok_count;
-uint32_t tsch_bc_sf_ep_rx_ok_count;
-uint32_t tsch_uc_sf_ep_tx_ok_count;
-uint32_t tsch_uc_sf_ep_rx_ok_count;
+uint32_t tsch_common_sf_ep_tx_ok_count;
+uint32_t tsch_common_sf_ep_rx_ok_count;
+uint32_t tsch_unicast_sf_ep_tx_ok_count;
+uint32_t tsch_unicast_sf_ep_rx_ok_count;
 #if WITH_OST
-uint32_t tsch_pp_sf_ep_tx_ok_count;
-uint32_t tsch_pp_sf_ep_rx_ok_count;
+uint32_t tsch_ost_pp_sf_ep_tx_ok_count;
+uint32_t tsch_ost_pp_sf_ep_rx_ok_count;
 #endif
-uint32_t tsch_any_sf_ep_tx_timeslots;
-uint32_t tsch_any_sf_ep_rx_timeslots;
-uint32_t tsch_bc_sf_ep_tx_timeslots;
-uint32_t tsch_bc_sf_ep_rx_timeslots;
-uint32_t tsch_uc_sf_ep_tx_timeslots;
-uint32_t tsch_uc_sf_ep_rx_timeslots;
+uint32_t tsch_common_sf_ep_tx_timeslots;
+uint32_t tsch_common_sf_ep_rx_timeslots;
+uint32_t tsch_unicast_sf_ep_tx_timeslots;
+uint32_t tsch_unicast_sf_ep_rx_timeslots;
 #if WITH_OST
-uint32_t tsch_pp_sf_ep_tx_timeslots;
-uint32_t tsch_pp_sf_ep_rx_timeslots;
+uint32_t tsch_ost_pp_sf_ep_tx_timeslots;
+uint32_t tsch_ost_pp_sf_ep_rx_timeslots;
 #endif
 #endif
 
@@ -242,149 +233,143 @@ void reset_log_tsch()
   uint32_t tsch_total_associated_timeslots = 
           tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
 
-  LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
+#if WITH_OST
+  LOG_INFO("HCK asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu sch_pp_tx %lu sch_pp_rx %lu sch_odp_tx %lu sch_odp_rx %lu |\n", 
           tsch_total_associated_timeslots, 
-          tsch_scheduled_any_cell_count, 
-          tsch_scheduled_eb_cell_count, 
-          tsch_scheduled_broadcast_cell_count, 
-          tsch_scheduled_unicast_cell_count);
-
-#if WITH_OST
-  LOG_INFO("HCK sch_op_tx %lu sch_op_rx %lu sch_oo_tx %lu sch_oo_rx %lu |\n", 
-          tsch_scheduled_ost_periodic_tx_cell_count, 
-          tsch_scheduled_ost_periodic_rx_cell_count, 
-          tsch_scheduled_ost_ondemand_tx_cell_count, 
-          tsch_scheduled_ost_ondemand_rx_cell_count);
+          tsch_scheduled_eb_sf_cell_count, 
+          tsch_scheduled_common_sf_cell_count, 
+          tsch_scheduled_unicast_sf_cell_count,
+          tsch_scheduled_ost_pp_sf_tx_cell_count, 
+          tsch_scheduled_ost_pp_sf_rx_cell_count, 
+          tsch_scheduled_ost_odp_sf_tx_cell_count, 
+          tsch_scheduled_ost_odp_sf_rx_cell_count);
+#else
+  LOG_INFO("HCK asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
+          tsch_total_associated_timeslots, 
+          tsch_scheduled_eb_sf_cell_count, 
+          tsch_scheduled_common_sf_cell_count, 
+          tsch_scheduled_unicast_sf_cell_count);
 #endif
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #if WITH_OST
-  LOG_INFO("HCK bst_bc_tx %lu bst_bc_rx %lu bst_uc_tx %lu bst_uc_rx %lu bst_op_tx %lu bst_op_rx %lu |\n", 
-          tsch_scheduled_burst_broadcast_tx_cell_count,
-          tsch_scheduled_burst_broadcast_rx_cell_count,
-          tsch_scheduled_burst_unicast_tx_cell_count,
-          tsch_scheduled_burst_unicast_rx_cell_count,
-          tsch_scheduled_burst_ost_periodic_tx_cell_count,
-          tsch_scheduled_burst_ost_periodic_rx_cell_count);
+  LOG_INFO("HCK sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu sch_pp_bst_tx %lu sch_pp_bst_rx %lu |\n", 
+          tsch_scheduled_common_sf_bst_tx_cell_count,
+          tsch_scheduled_common_sf_bst_rx_cell_count,
+          tsch_scheduled_unicast_sf_bst_tx_cell_count,
+          tsch_scheduled_unicast_sf_bst_rx_cell_count,
+          tsch_scheduled_ost_pp_sf_bst_tx_cell_count,
+          tsch_scheduled_ost_pp_sf_bst_rx_cell_count);
 #else
-  LOG_INFO("HCK bst_bc_tx %lu bst_bc_rx %lu bst_uc_tx %lu bst_uc_rx %lu |\n", 
-          tsch_scheduled_burst_broadcast_tx_cell_count,
-          tsch_scheduled_burst_broadcast_rx_cell_count,
-          tsch_scheduled_burst_unicast_tx_cell_count,
-          tsch_scheduled_burst_unicast_rx_cell_count);
+  LOG_INFO("HCK sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu |\n", 
+          tsch_scheduled_common_sf_bst_tx_cell_count,
+          tsch_scheduled_common_sf_bst_rx_cell_count,
+          tsch_scheduled_unicast_sf_bst_tx_cell_count,
+          tsch_scheduled_unicast_sf_bst_rx_cell_count);
 #endif
 #endif
 
 #if WITH_PPSD
 #if WITH_OST
-  LOG_INFO("HCK ep_bc_tx %lu ep_bc_rx %lu ep_uc_tx %lu ep_uc_rx %lu ep_op_tx %lu ep_op_rx %lu |\n", 
-          tsch_scheduled_ep_broadcast_tx_cell_count,
-          tsch_scheduled_ep_broadcast_rx_cell_count,
-          tsch_scheduled_ep_unicast_tx_cell_count,
-          tsch_scheduled_ep_unicast_rx_cell_count,
-          tsch_scheduled_ep_ost_periodic_tx_cell_count,
-          tsch_scheduled_ep_ost_periodic_rx_cell_count);
+  LOG_INFO("HCK sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu sch_pp_ep_tx %lu sch_pp_ep_rx %lu |\n", 
+          tsch_scheduled_common_sf_ep_tx_cell_count,
+          tsch_scheduled_common_sf_ep_rx_cell_count,
+          tsch_scheduled_unicast_sf_ep_tx_cell_count,
+          tsch_scheduled_unicast_sf_ep_rx_cell_count,
+          tsch_scheduled_ost_pp_sf_ep_tx_cell_count,
+          tsch_scheduled_ost_pp_sf_ep_rx_cell_count);
 #else
-  LOG_INFO("HCK ep_bc_tx %lu ep_bc_rx %lu ep_uc_tx %lu ep_uc_rx %lu |\n", 
-          tsch_scheduled_ep_broadcast_tx_cell_count,
-          tsch_scheduled_ep_broadcast_rx_cell_count,
-          tsch_scheduled_ep_unicast_tx_cell_count,
-          tsch_scheduled_ep_unicast_rx_cell_count);
+  LOG_INFO("HCK sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu |\n", 
+          tsch_scheduled_common_sf_ep_tx_cell_count,
+          tsch_scheduled_common_sf_ep_rx_cell_count,
+          tsch_scheduled_unicast_sf_ep_tx_cell_count,
+          tsch_scheduled_unicast_sf_ep_rx_cell_count);
 #endif
 #endif
-
-  LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
-          tsch_any_slotframe_tx_operation_count, 
-          tsch_any_slotframe_rx_operation_count, 
-          tsch_eb_slotframe_tx_operation_count, 
-          tsch_eb_slotframe_rx_operation_count, 
-          tsch_broadcast_slotframe_tx_operation_count, 
-          tsch_broadcast_slotframe_rx_operation_count, 
-          tsch_unicast_slotframe_tx_operation_count, 
-          tsch_unicast_slotframe_rx_operation_count);
-
 
 #if WITH_OST
-  LOG_INFO("HCK op_tx_op %lu op_rx_op %lu oo_tx_op %lu oo_rx_op %lu |\n", 
-          tsch_ost_periodic_provisioning_tx_operation_count, 
-          tsch_ost_periodic_provisioning_rx_operation_count, 
-          tsch_ost_ondemand_provisioning_tx_operation_count, 
-          tsch_ost_ondemand_provisioning_rx_operation_count);
+  LOG_INFO("HCK eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu pp_tx_op %lu pp_rx_op %lu odp_tx_op %lu odp_rx_op %lu |\n", 
+          tsch_eb_sf_tx_operation_count, 
+          tsch_eb_sf_rx_operation_count, 
+          tsch_common_sf_tx_operation_count, 
+          tsch_common_sf_rx_operation_count, 
+          tsch_unicast_sf_tx_operation_count, 
+          tsch_unicast_sf_rx_operation_count,
+          tsch_ost_pp_sf_tx_operation_count, 
+          tsch_ost_pp_sf_rx_operation_count, 
+          tsch_ost_odp_sf_tx_operation_count, 
+          tsch_ost_odp_sf_rx_operation_count);
+#else
+  LOG_INFO("HCK eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
+          tsch_eb_sf_tx_operation_count, 
+          tsch_eb_sf_rx_operation_count, 
+          tsch_common_sf_tx_operation_count, 
+          tsch_common_sf_rx_operation_count, 
+          tsch_unicast_sf_tx_operation_count, 
+          tsch_unicast_sf_rx_operation_count);
 #endif
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #if WITH_OST
-  LOG_INFO("HCK bc_b_tx_op %lu bc_b_rx_op %lu uc_b_tx_op %lu uc_b_rx_op %lu op_b_tx_op %lu op_b_rx_op %lu |\n", 
-          tsch_broadcast_slotframe_burst_tx_operation_count,
-          tsch_broadcast_slotframe_burst_rx_operation_count,
-          tsch_unicast_slotframe_burst_tx_operation_count,
-          tsch_unicast_slotframe_burst_rx_operation_count,
-          tsch_ost_periodic_provisioning_burst_tx_operation_count,
-          tsch_ost_periodic_provisioning_burst_rx_operation_count);
+  LOG_INFO("HCK bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu pp_bst_tx_op %lu pp_bst_rx_op %lu |\n", 
+          tsch_common_sf_bst_tx_operation_count,
+          tsch_common_sf_bst_rx_operation_count,
+          tsch_unicast_sf_bst_tx_operation_count,
+          tsch_unicast_sf_bst_rx_operation_count,
+          tsch_ost_pp_sf_bst_tx_operation_count,
+          tsch_ost_pp_sf_bst_rx_operation_count);
 #else
-  LOG_INFO("HCK bc_b_tx_op %lu bc_b_rx_op %lu uc_b_tx_op %lu uc_b_rx_op %lu |\n", 
-          tsch_broadcast_slotframe_burst_tx_operation_count,
-          tsch_broadcast_slotframe_burst_rx_operation_count,
-          tsch_unicast_slotframe_burst_tx_operation_count,
-          tsch_unicast_slotframe_burst_rx_operation_count);
+  LOG_INFO("HCK bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu |\n", 
+          tsch_common_sf_bst_tx_operation_count,
+          tsch_common_sf_bst_rx_operation_count,
+          tsch_unicast_sf_bst_tx_operation_count,
+          tsch_unicast_sf_bst_rx_operation_count);
 #endif
 #endif
 
 #if WITH_PPSD
 #if WITH_OST
-  LOG_INFO("HCK any_ep_tx_rs %lu any_ep_rx_rs %lu bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu pp_ep_tx_rs %lu pp_ep_rx_rs %lu |\n", 
-          tsch_any_sf_ep_tx_reserved_count,
-          tsch_any_sf_ep_rx_reserved_count,
-          tsch_bc_sf_ep_tx_reserved_count,
-          tsch_bc_sf_ep_rx_reserved_count,
-          tsch_uc_sf_ep_tx_reserved_count,
-          tsch_uc_sf_ep_rx_reserved_count,
-          tsch_pp_sf_ep_tx_reserved_count,
-          tsch_pp_sf_ep_rx_reserved_count);
+  LOG_INFO("HCK bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu pp_ep_tx_rs %lu pp_ep_rx_rs %lu |\n", 
+          tsch_common_sf_ep_tx_reserved_count,
+          tsch_common_sf_ep_rx_reserved_count,
+          tsch_unicast_sf_ep_tx_reserved_count,
+          tsch_unicast_sf_ep_rx_reserved_count,
+          tsch_ost_pp_sf_ep_tx_reserved_count,
+          tsch_ost_pp_sf_ep_rx_reserved_count);
 
-  LOG_INFO("HCK any_ep_tx_ok %lu any_ep_rx_ok %lu bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu pp_ep_tx_ok %lu pp_ep_rx_ok %lu |\n", 
-          tsch_any_sf_ep_tx_ok_count,
-          tsch_any_sf_ep_rx_ok_count,
-          tsch_bc_sf_ep_tx_ok_count,
-          tsch_bc_sf_ep_rx_ok_count,
-          tsch_uc_sf_ep_tx_ok_count,
-          tsch_uc_sf_ep_rx_ok_count,
-          tsch_pp_sf_ep_tx_ok_count,
-          tsch_pp_sf_ep_rx_ok_count);
+  LOG_INFO("HCK bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu pp_ep_tx_ok %lu pp_ep_rx_ok %lu |\n", 
+          tsch_common_sf_ep_tx_ok_count,
+          tsch_common_sf_ep_rx_ok_count,
+          tsch_unicast_sf_ep_tx_ok_count,
+          tsch_unicast_sf_ep_rx_ok_count,
+          tsch_ost_pp_sf_ep_tx_ok_count,
+          tsch_ost_pp_sf_ep_rx_ok_count);
 
-  LOG_INFO("HCK any_ep_tx_ts %lu any_ep_rx_ts %lu bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu pp_ep_tx_ts %lu pp_ep_rx_ts %lu |\n", 
-          tsch_any_sf_ep_tx_timeslots,
-          tsch_any_sf_ep_rx_timeslots,
-          tsch_bc_sf_ep_tx_timeslots,
-          tsch_bc_sf_ep_rx_timeslots,
-          tsch_uc_sf_ep_tx_timeslots,
-          tsch_uc_sf_ep_rx_timeslots, 
-          tsch_pp_sf_ep_tx_timeslots,
-          tsch_pp_sf_ep_rx_timeslots);
+  LOG_INFO("HCK bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu pp_ep_tx_ts %lu pp_ep_rx_ts %lu |\n", 
+          tsch_common_sf_ep_tx_timeslots,
+          tsch_common_sf_ep_rx_timeslots,
+          tsch_unicast_sf_ep_tx_timeslots,
+          tsch_unicast_sf_ep_rx_timeslots, 
+          tsch_ost_pp_sf_ep_tx_timeslots,
+          tsch_ost_pp_sf_ep_rx_timeslots);
 #else
-  LOG_INFO("HCK any_ep_tx_rs %lu any_ep_rx_rs %lu bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu |\n", 
-          tsch_any_sf_ep_tx_reserved_count,
-          tsch_any_sf_ep_rx_reserved_count,
-          tsch_bc_sf_ep_tx_reserved_count,
-          tsch_bc_sf_ep_rx_reserved_count,
-          tsch_uc_sf_ep_tx_reserved_count,
-          tsch_uc_sf_ep_rx_reserved_count);
+  LOG_INFO("HCK bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu |\n", 
+          tsch_common_sf_ep_tx_reserved_count,
+          tsch_common_sf_ep_rx_reserved_count,
+          tsch_unicast_sf_ep_tx_reserved_count,
+          tsch_unicast_sf_ep_rx_reserved_count);
 
-  LOG_INFO("HCK any_ep_tx_ok %lu any_ep_rx_ok %lu bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu |\n", 
-          tsch_any_sf_ep_tx_ok_count,
-          tsch_any_sf_ep_rx_ok_count,
-          tsch_bc_sf_ep_tx_ok_count,
-          tsch_bc_sf_ep_rx_ok_count,
-          tsch_uc_sf_ep_tx_ok_count,
-          tsch_uc_sf_ep_rx_ok_count);
+  LOG_INFO("HCK bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu |\n", 
+          tsch_common_sf_ep_tx_ok_count,
+          tsch_common_sf_ep_rx_ok_count,
+          tsch_unicast_sf_ep_tx_ok_count,
+          tsch_unicast_sf_ep_rx_ok_count);
 
-  LOG_INFO("HCK any_ep_tx_ts %lu any_ep_rx_ts %lu bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu |\n", 
-          tsch_any_sf_ep_tx_timeslots,
-          tsch_any_sf_ep_rx_timeslots,
-          tsch_bc_sf_ep_tx_timeslots,
-          tsch_bc_sf_ep_rx_timeslots,
-          tsch_uc_sf_ep_tx_timeslots,
-          tsch_uc_sf_ep_rx_timeslots);
+  LOG_INFO("HCK bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu |\n", 
+          tsch_common_sf_ep_tx_timeslots,
+          tsch_common_sf_ep_rx_timeslots,
+          tsch_unicast_sf_ep_tx_timeslots,
+          tsch_unicast_sf_ep_rx_timeslots);
 #endif
 #endif
 
@@ -438,92 +423,83 @@ void reset_log_tsch()
   tsch_dequeued_ringbuf_available_count = 0;
 
   /* hckim for measure cell utilization during association */
-  tsch_scheduled_any_cell_count = 0;;
-  tsch_scheduled_eb_cell_count = 0;
-  tsch_scheduled_broadcast_cell_count = 0;
-  tsch_scheduled_unicast_cell_count = 0;
+  tsch_scheduled_eb_sf_cell_count = 0;
+  tsch_scheduled_common_sf_cell_count = 0;
+  tsch_scheduled_unicast_sf_cell_count = 0;
 #if WITH_OST
-  tsch_scheduled_ost_periodic_tx_cell_count = 0;
-  tsch_scheduled_ost_periodic_rx_cell_count = 0;
-  tsch_scheduled_ost_ondemand_tx_cell_count = 0;
-  tsch_scheduled_ost_ondemand_rx_cell_count = 0;
+  tsch_scheduled_ost_pp_sf_tx_cell_count = 0;
+  tsch_scheduled_ost_pp_sf_rx_cell_count = 0;
+  tsch_scheduled_ost_odp_sf_tx_cell_count = 0;
+  tsch_scheduled_ost_odp_sf_rx_cell_count = 0;
 #endif
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-  tsch_scheduled_burst_broadcast_tx_cell_count = 0;
-  tsch_scheduled_burst_broadcast_rx_cell_count = 0;
-  tsch_scheduled_burst_unicast_tx_cell_count = 0;
-  tsch_scheduled_burst_unicast_rx_cell_count = 0;
+  tsch_scheduled_common_sf_bst_tx_cell_count = 0;
+  tsch_scheduled_common_sf_bst_rx_cell_count = 0;
+  tsch_scheduled_unicast_sf_bst_tx_cell_count = 0;
+  tsch_scheduled_unicast_sf_bst_rx_cell_count = 0;
 #if WITH_OST
-  tsch_scheduled_burst_ost_periodic_tx_cell_count = 0;
-  tsch_scheduled_burst_ost_periodic_rx_cell_count = 0;
+  tsch_scheduled_ost_pp_sf_bst_tx_cell_count = 0;
+  tsch_scheduled_ost_pp_sf_bst_rx_cell_count = 0;
 #endif
 #endif
 #if WITH_PPSD
-  tsch_scheduled_ep_broadcast_tx_cell_count = 0;
-  tsch_scheduled_ep_broadcast_rx_cell_count = 0;
-  tsch_scheduled_ep_unicast_tx_cell_count = 0;
-  tsch_scheduled_ep_unicast_rx_cell_count = 0;
+  tsch_scheduled_common_sf_ep_tx_cell_count = 0;
+  tsch_scheduled_common_sf_ep_rx_cell_count = 0;
+  tsch_scheduled_unicast_sf_ep_tx_cell_count = 0;
+  tsch_scheduled_unicast_sf_ep_rx_cell_count = 0;
 #if WITH_OST
-  tsch_scheduled_ep_ost_periodic_tx_cell_count = 0;
-  tsch_scheduled_ep_ost_periodic_rx_cell_count = 0;
+  tsch_scheduled_ost_pp_sf_ep_tx_cell_count = 0;
+  tsch_scheduled_ost_pp_sf_ep_rx_cell_count = 0;
 #endif
 #endif
 
 /* hckim measure tx/rx operation counts */
-  tsch_any_slotframe_tx_operation_count = 0;
-  tsch_any_slotframe_rx_operation_count = 0;
-  tsch_eb_slotframe_tx_operation_count = 0;
-  tsch_eb_slotframe_rx_operation_count = 0;
-  tsch_broadcast_slotframe_tx_operation_count = 0;
-  tsch_broadcast_slotframe_rx_operation_count = 0;
-  tsch_unicast_slotframe_tx_operation_count = 0;
-  tsch_unicast_slotframe_rx_operation_count = 0;
+  tsch_eb_sf_tx_operation_count = 0;
+  tsch_eb_sf_rx_operation_count = 0;
+  tsch_common_sf_tx_operation_count = 0;
+  tsch_common_sf_rx_operation_count = 0;
+  tsch_unicast_sf_tx_operation_count = 0;
+  tsch_unicast_sf_rx_operation_count = 0;
 #if WITH_OST
-  tsch_ost_periodic_provisioning_tx_operation_count = 0;
-  tsch_ost_periodic_provisioning_rx_operation_count = 0;
-  tsch_ost_ondemand_provisioning_tx_operation_count = 0;
-  tsch_ost_ondemand_provisioning_rx_operation_count = 0;
+  tsch_ost_pp_sf_tx_operation_count = 0;
+  tsch_ost_pp_sf_rx_operation_count = 0;
+  tsch_ost_odp_sf_tx_operation_count = 0;
+  tsch_ost_odp_sf_rx_operation_count = 0;
 #endif
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-  tsch_broadcast_slotframe_burst_tx_operation_count = 0;
-  tsch_broadcast_slotframe_burst_rx_operation_count = 0;
-  tsch_unicast_slotframe_burst_tx_operation_count = 0;
-  tsch_unicast_slotframe_burst_rx_operation_count = 0;
+  tsch_common_sf_bst_tx_operation_count = 0;
+  tsch_common_sf_bst_rx_operation_count = 0;
+  tsch_unicast_sf_bst_tx_operation_count = 0;
+  tsch_unicast_sf_bst_rx_operation_count = 0;
 #if WITH_OST
-  tsch_ost_periodic_provisioning_burst_tx_operation_count = 0;
-  tsch_ost_periodic_provisioning_burst_rx_operation_count = 0;
+  tsch_ost_pp_sf_bst_tx_operation_count = 0;
+  tsch_ost_pp_sf_bst_rx_operation_count = 0;
 #endif
 #endif
 #if WITH_PPSD
-  tsch_any_sf_ep_tx_reserved_count = 0;
-  tsch_any_sf_ep_rx_reserved_count = 0;
-  tsch_bc_sf_ep_tx_reserved_count = 0;
-  tsch_bc_sf_ep_rx_reserved_count = 0;
-  tsch_uc_sf_ep_tx_reserved_count = 0;
-  tsch_uc_sf_ep_rx_reserved_count = 0;
+  tsch_common_sf_ep_tx_reserved_count = 0;
+  tsch_common_sf_ep_rx_reserved_count = 0;
+  tsch_unicast_sf_ep_tx_reserved_count = 0;
+  tsch_unicast_sf_ep_rx_reserved_count = 0;
 #if WITH_OST
-  tsch_pp_sf_ep_tx_reserved_count = 0;
-  tsch_pp_sf_ep_rx_reserved_count = 0;
+  tsch_ost_pp_sf_ep_tx_reserved_count = 0;
+  tsch_ost_pp_sf_ep_rx_reserved_count = 0;
 #endif
-  tsch_any_sf_ep_tx_ok_count = 0;
-  tsch_any_sf_ep_rx_ok_count = 0;
-  tsch_bc_sf_ep_tx_ok_count = 0;
-  tsch_bc_sf_ep_rx_ok_count = 0;
-  tsch_uc_sf_ep_tx_ok_count = 0;
-  tsch_uc_sf_ep_rx_ok_count = 0;
+  tsch_common_sf_ep_tx_ok_count = 0;
+  tsch_common_sf_ep_rx_ok_count = 0;
+  tsch_unicast_sf_ep_tx_ok_count = 0;
+  tsch_unicast_sf_ep_rx_ok_count = 0;
 #if WITH_OST
-  tsch_pp_sf_ep_tx_ok_count = 0;
-  tsch_pp_sf_ep_rx_ok_count = 0;
+  tsch_ost_pp_sf_ep_tx_ok_count = 0;
+  tsch_ost_pp_sf_ep_rx_ok_count = 0;
 #endif
-  tsch_any_sf_ep_tx_timeslots = 0;
-  tsch_any_sf_ep_rx_timeslots = 0;
-  tsch_bc_sf_ep_tx_timeslots = 0;
-  tsch_bc_sf_ep_rx_timeslots = 0;
-  tsch_uc_sf_ep_tx_timeslots = 0;
-  tsch_uc_sf_ep_rx_timeslots = 0;
+  tsch_common_sf_ep_tx_timeslots = 0;
+  tsch_common_sf_ep_rx_timeslots = 0;
+  tsch_unicast_sf_ep_tx_timeslots = 0;
+  tsch_unicast_sf_ep_rx_timeslots = 0;
 #if WITH_OST
-  tsch_pp_sf_ep_tx_timeslots = 0;
-  tsch_pp_sf_ep_rx_timeslots = 0;
+  tsch_ost_pp_sf_ep_tx_timeslots = 0;
+  tsch_ost_pp_sf_ep_rx_timeslots = 0;
 #endif
 #endif
 
@@ -551,149 +527,143 @@ print_utilization()
   uint32_t tsch_total_associated_timeslots = 
           tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
 
-  LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
+#if WITH_OST
+  LOG_INFO("HCK asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu sch_pp_tx %lu sch_pp_rx %lu sch_odp_tx %lu sch_odp_rx %lu |\n", 
           tsch_total_associated_timeslots, 
-          tsch_scheduled_any_cell_count, 
-          tsch_scheduled_eb_cell_count, 
-          tsch_scheduled_broadcast_cell_count, 
-          tsch_scheduled_unicast_cell_count);
-
-#if WITH_OST
-  LOG_INFO("HCK sch_op_tx %lu sch_op_rx %lu sch_oo_tx %lu sch_oo_rx %lu |\n", 
-          tsch_scheduled_ost_periodic_tx_cell_count, 
-          tsch_scheduled_ost_periodic_rx_cell_count, 
-          tsch_scheduled_ost_ondemand_tx_cell_count, 
-          tsch_scheduled_ost_ondemand_rx_cell_count);
+          tsch_scheduled_eb_sf_cell_count, 
+          tsch_scheduled_common_sf_cell_count, 
+          tsch_scheduled_unicast_sf_cell_count,
+          tsch_scheduled_ost_pp_sf_tx_cell_count, 
+          tsch_scheduled_ost_pp_sf_rx_cell_count, 
+          tsch_scheduled_ost_odp_sf_tx_cell_count, 
+          tsch_scheduled_ost_odp_sf_rx_cell_count);
+#else
+  LOG_INFO("HCK asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
+          tsch_total_associated_timeslots, 
+          tsch_scheduled_eb_sf_cell_count, 
+          tsch_scheduled_common_sf_cell_count, 
+          tsch_scheduled_unicast_sf_cell_count);
 #endif
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #if WITH_OST
-  LOG_INFO("HCK bst_bc_tx %lu bst_bc_rx %lu bst_uc_tx %lu bst_uc_rx %lu bst_op_tx %lu bst_op_rx %lu |\n", 
-          tsch_scheduled_burst_broadcast_tx_cell_count,
-          tsch_scheduled_burst_broadcast_rx_cell_count,
-          tsch_scheduled_burst_unicast_tx_cell_count,
-          tsch_scheduled_burst_unicast_rx_cell_count,
-          tsch_scheduled_burst_ost_periodic_tx_cell_count,
-          tsch_scheduled_burst_ost_periodic_rx_cell_count);
+  LOG_INFO("HCK sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu sch_pp_bst_tx %lu sch_pp_bst_rx %lu |\n", 
+          tsch_scheduled_common_sf_bst_tx_cell_count,
+          tsch_scheduled_common_sf_bst_rx_cell_count,
+          tsch_scheduled_unicast_sf_bst_tx_cell_count,
+          tsch_scheduled_unicast_sf_bst_rx_cell_count,
+          tsch_scheduled_ost_pp_sf_bst_tx_cell_count,
+          tsch_scheduled_ost_pp_sf_bst_rx_cell_count);
 #else
-  LOG_INFO("HCK bst_bc_tx %lu bst_bc_rx %lu bst_uc_tx %lu bst_uc_rx %lu |\n", 
-          tsch_scheduled_burst_broadcast_tx_cell_count,
-          tsch_scheduled_burst_broadcast_rx_cell_count,
-          tsch_scheduled_burst_unicast_tx_cell_count,
-          tsch_scheduled_burst_unicast_rx_cell_count);
+  LOG_INFO("HCK sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu |\n", 
+          tsch_scheduled_common_sf_bst_tx_cell_count,
+          tsch_scheduled_common_sf_bst_rx_cell_count,
+          tsch_scheduled_unicast_sf_bst_tx_cell_count,
+          tsch_scheduled_unicast_sf_bst_rx_cell_count);
 #endif
 #endif
 
 #if WITH_PPSD
 #if WITH_OST
-  LOG_INFO("HCK ep_bc_tx %lu ep_bc_rx %lu ep_uc_tx %lu ep_uc_rx %lu ep_op_tx %lu ep_op_rx %lu |\n", 
-          tsch_scheduled_ep_broadcast_tx_cell_count,
-          tsch_scheduled_ep_broadcast_rx_cell_count,
-          tsch_scheduled_ep_unicast_tx_cell_count,
-          tsch_scheduled_ep_unicast_rx_cell_count,
-          tsch_scheduled_ep_ost_periodic_tx_cell_count,
-          tsch_scheduled_ep_ost_periodic_rx_cell_count);
+  LOG_INFO("HCK sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu sch_pp_ep_tx %lu sch_pp_ep_rx %lu |\n", 
+          tsch_scheduled_common_sf_ep_tx_cell_count,
+          tsch_scheduled_common_sf_ep_rx_cell_count,
+          tsch_scheduled_unicast_sf_ep_tx_cell_count,
+          tsch_scheduled_unicast_sf_ep_rx_cell_count,
+          tsch_scheduled_ost_pp_sf_ep_tx_cell_count,
+          tsch_scheduled_ost_pp_sf_ep_rx_cell_count);
 #else
-  LOG_INFO("HCK ep_bc_tx %lu ep_bc_rx %lu ep_uc_tx %lu ep_uc_rx %lu |\n", 
-          tsch_scheduled_ep_broadcast_tx_cell_count,
-          tsch_scheduled_ep_broadcast_rx_cell_count,
-          tsch_scheduled_ep_unicast_tx_cell_count,
-          tsch_scheduled_ep_unicast_rx_cell_count);
+  LOG_INFO("HCK sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu |\n", 
+          tsch_scheduled_common_sf_ep_tx_cell_count,
+          tsch_scheduled_common_sf_ep_rx_cell_count,
+          tsch_scheduled_unicast_sf_ep_tx_cell_count,
+          tsch_scheduled_unicast_sf_ep_rx_cell_count);
 #endif
 #endif
-
-  LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
-          tsch_any_slotframe_tx_operation_count, 
-          tsch_any_slotframe_rx_operation_count, 
-          tsch_eb_slotframe_tx_operation_count, 
-          tsch_eb_slotframe_rx_operation_count, 
-          tsch_broadcast_slotframe_tx_operation_count, 
-          tsch_broadcast_slotframe_rx_operation_count, 
-          tsch_unicast_slotframe_tx_operation_count, 
-          tsch_unicast_slotframe_rx_operation_count);
-
 
 #if WITH_OST
-  LOG_INFO("HCK op_tx_op %lu op_rx_op %lu oo_tx_op %lu oo_rx_op %lu |\n", 
-          tsch_ost_periodic_provisioning_tx_operation_count, 
-          tsch_ost_periodic_provisioning_rx_operation_count, 
-          tsch_ost_ondemand_provisioning_tx_operation_count, 
-          tsch_ost_ondemand_provisioning_rx_operation_count);
+  LOG_INFO("HCK eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu pp_tx_op %lu pp_rx_op %lu odp_tx_op %lu odp_rx_op %lu |\n", 
+          tsch_eb_sf_tx_operation_count, 
+          tsch_eb_sf_rx_operation_count, 
+          tsch_common_sf_tx_operation_count, 
+          tsch_common_sf_rx_operation_count, 
+          tsch_unicast_sf_tx_operation_count, 
+          tsch_unicast_sf_rx_operation_count,
+          tsch_ost_pp_sf_tx_operation_count, 
+          tsch_ost_pp_sf_rx_operation_count, 
+          tsch_ost_odp_sf_tx_operation_count, 
+          tsch_ost_odp_sf_rx_operation_count);
+#else
+  LOG_INFO("HCK eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
+          tsch_eb_sf_tx_operation_count, 
+          tsch_eb_sf_rx_operation_count, 
+          tsch_common_sf_tx_operation_count, 
+          tsch_common_sf_rx_operation_count, 
+          tsch_unicast_sf_tx_operation_count, 
+          tsch_unicast_sf_rx_operation_count);
 #endif
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #if WITH_OST
-  LOG_INFO("HCK bc_b_tx_op %lu bc_b_rx_op %lu uc_b_tx_op %lu uc_b_rx_op %lu op_b_tx_op %lu op_b_rx_op %lu |\n", 
-          tsch_broadcast_slotframe_burst_tx_operation_count,
-          tsch_broadcast_slotframe_burst_rx_operation_count,
-          tsch_unicast_slotframe_burst_tx_operation_count,
-          tsch_unicast_slotframe_burst_rx_operation_count,
-          tsch_ost_periodic_provisioning_burst_tx_operation_count,
-          tsch_ost_periodic_provisioning_burst_rx_operation_count);
+  LOG_INFO("HCK bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu pp_bst_tx_op %lu pp_bst_rx_op %lu |\n", 
+          tsch_common_sf_bst_tx_operation_count,
+          tsch_common_sf_bst_rx_operation_count,
+          tsch_unicast_sf_bst_tx_operation_count,
+          tsch_unicast_sf_bst_rx_operation_count,
+          tsch_ost_pp_sf_bst_tx_operation_count,
+          tsch_ost_pp_sf_bst_rx_operation_count);
 #else
-  LOG_INFO("HCK bc_b_tx_op %lu bc_b_rx_op %lu uc_b_tx_op %lu uc_b_rx_op %lu |\n", 
-          tsch_broadcast_slotframe_burst_tx_operation_count,
-          tsch_broadcast_slotframe_burst_rx_operation_count,
-          tsch_unicast_slotframe_burst_tx_operation_count,
-          tsch_unicast_slotframe_burst_rx_operation_count);
+  LOG_INFO("HCK bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu |\n", 
+          tsch_common_sf_bst_tx_operation_count,
+          tsch_common_sf_bst_rx_operation_count,
+          tsch_unicast_sf_bst_tx_operation_count,
+          tsch_unicast_sf_bst_rx_operation_count);
 #endif
 #endif
 
 #if WITH_PPSD
 #if WITH_OST
-  LOG_INFO("HCK any_ep_tx_rs %lu any_ep_rx_rs %lu bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu pp_ep_tx_rs %lu pp_ep_rx_rs %lu |\n", 
-          tsch_any_sf_ep_tx_reserved_count,
-          tsch_any_sf_ep_rx_reserved_count,
-          tsch_bc_sf_ep_tx_reserved_count,
-          tsch_bc_sf_ep_rx_reserved_count,
-          tsch_uc_sf_ep_tx_reserved_count,
-          tsch_uc_sf_ep_rx_reserved_count,
-          tsch_pp_sf_ep_tx_reserved_count,
-          tsch_pp_sf_ep_rx_reserved_count);
+  LOG_INFO("HCK bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu pp_ep_tx_rs %lu pp_ep_rx_rs %lu |\n", 
+          tsch_common_sf_ep_tx_reserved_count,
+          tsch_common_sf_ep_rx_reserved_count,
+          tsch_unicast_sf_ep_tx_reserved_count,
+          tsch_unicast_sf_ep_rx_reserved_count,
+          tsch_ost_pp_sf_ep_tx_reserved_count,
+          tsch_ost_pp_sf_ep_rx_reserved_count);
 
-  LOG_INFO("HCK any_ep_tx_ok %lu any_ep_rx_ok %lu bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu pp_ep_tx_ok %lu pp_ep_rx_ok %lu |\n", 
-          tsch_any_sf_ep_tx_ok_count,
-          tsch_any_sf_ep_rx_ok_count,
-          tsch_bc_sf_ep_tx_ok_count,
-          tsch_bc_sf_ep_rx_ok_count,
-          tsch_uc_sf_ep_tx_ok_count,
-          tsch_uc_sf_ep_rx_ok_count,
-          tsch_pp_sf_ep_tx_ok_count,
-          tsch_pp_sf_ep_rx_ok_count);
+  LOG_INFO("HCK bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu pp_ep_tx_ok %lu pp_ep_rx_ok %lu |\n", 
+          tsch_common_sf_ep_tx_ok_count,
+          tsch_common_sf_ep_rx_ok_count,
+          tsch_unicast_sf_ep_tx_ok_count,
+          tsch_unicast_sf_ep_rx_ok_count,
+          tsch_ost_pp_sf_ep_tx_ok_count,
+          tsch_ost_pp_sf_ep_rx_ok_count);
 
-  LOG_INFO("HCK any_ep_tx_ts %lu any_ep_rx_ts %lu bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu pp_ep_tx_ts %lu pp_ep_rx_ts %lu |\n", 
-          tsch_any_sf_ep_tx_timeslots,
-          tsch_any_sf_ep_rx_timeslots,
-          tsch_bc_sf_ep_tx_timeslots,
-          tsch_bc_sf_ep_rx_timeslots,
-          tsch_uc_sf_ep_tx_timeslots,
-          tsch_uc_sf_ep_rx_timeslots, 
-          tsch_pp_sf_ep_tx_timeslots,
-          tsch_pp_sf_ep_rx_timeslots);
+  LOG_INFO("HCK bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu pp_ep_tx_ts %lu pp_ep_rx_ts %lu |\n", 
+          tsch_common_sf_ep_tx_timeslots,
+          tsch_common_sf_ep_rx_timeslots,
+          tsch_unicast_sf_ep_tx_timeslots,
+          tsch_unicast_sf_ep_rx_timeslots, 
+          tsch_ost_pp_sf_ep_tx_timeslots,
+          tsch_ost_pp_sf_ep_rx_timeslots);
 #else
-  LOG_INFO("HCK any_ep_tx_rs %lu any_ep_rx_rs %lu bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu |\n", 
-          tsch_any_sf_ep_tx_reserved_count,
-          tsch_any_sf_ep_rx_reserved_count,
-          tsch_bc_sf_ep_tx_reserved_count,
-          tsch_bc_sf_ep_rx_reserved_count,
-          tsch_uc_sf_ep_tx_reserved_count,
-          tsch_uc_sf_ep_rx_reserved_count);
+  LOG_INFO("HCK bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu |\n", 
+          tsch_common_sf_ep_tx_reserved_count,
+          tsch_common_sf_ep_rx_reserved_count,
+          tsch_unicast_sf_ep_tx_reserved_count,
+          tsch_unicast_sf_ep_rx_reserved_count);
 
-  LOG_INFO("HCK any_ep_tx_ok %lu any_ep_rx_ok %lu bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu |\n", 
-          tsch_any_sf_ep_tx_ok_count,
-          tsch_any_sf_ep_rx_ok_count,
-          tsch_bc_sf_ep_tx_ok_count,
-          tsch_bc_sf_ep_rx_ok_count,
-          tsch_uc_sf_ep_tx_ok_count,
-          tsch_uc_sf_ep_rx_ok_count);
+  LOG_INFO("HCK bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu |\n", 
+          tsch_common_sf_ep_tx_ok_count,
+          tsch_common_sf_ep_rx_ok_count,
+          tsch_unicast_sf_ep_tx_ok_count,
+          tsch_unicast_sf_ep_rx_ok_count);
 
-  LOG_INFO("HCK any_ep_tx_ts %lu any_ep_rx_ts %lu bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu |\n", 
-          tsch_any_sf_ep_tx_timeslots,
-          tsch_any_sf_ep_rx_timeslots,
-          tsch_bc_sf_ep_tx_timeslots,
-          tsch_bc_sf_ep_rx_timeslots,
-          tsch_uc_sf_ep_tx_timeslots,
-          tsch_uc_sf_ep_rx_timeslots);
+  LOG_INFO("HCK bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu |\n", 
+          tsch_common_sf_ep_tx_timeslots,
+          tsch_common_sf_ep_rx_timeslots,
+          tsch_unicast_sf_ep_tx_timeslots,
+          tsch_unicast_sf_ep_rx_timeslots);
 #endif
 #endif
 
@@ -1664,149 +1634,143 @@ PROCESS_THREAD(tsch_process, ev, data)
     uint32_t tsch_total_associated_timeslots = 
             tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
 
-  LOG_INFO("HCK asso_ts %lu sch_any %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
+#if WITH_OST
+  LOG_INFO("HCK asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu sch_pp_tx %lu sch_pp_rx %lu sch_odp_tx %lu sch_odp_rx %lu |\n", 
           tsch_total_associated_timeslots, 
-          tsch_scheduled_any_cell_count, 
-          tsch_scheduled_eb_cell_count, 
-          tsch_scheduled_broadcast_cell_count, 
-          tsch_scheduled_unicast_cell_count);
-
-#if WITH_OST
-  LOG_INFO("HCK sch_op_tx %lu sch_op_rx %lu sch_oo_tx %lu sch_oo_rx %lu |\n", 
-          tsch_scheduled_ost_periodic_tx_cell_count, 
-          tsch_scheduled_ost_periodic_rx_cell_count, 
-          tsch_scheduled_ost_ondemand_tx_cell_count, 
-          tsch_scheduled_ost_ondemand_rx_cell_count);
+          tsch_scheduled_eb_sf_cell_count, 
+          tsch_scheduled_common_sf_cell_count, 
+          tsch_scheduled_unicast_sf_cell_count,
+          tsch_scheduled_ost_pp_sf_tx_cell_count, 
+          tsch_scheduled_ost_pp_sf_rx_cell_count, 
+          tsch_scheduled_ost_odp_sf_tx_cell_count, 
+          tsch_scheduled_ost_odp_sf_rx_cell_count);
+#else
+  LOG_INFO("HCK asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
+          tsch_total_associated_timeslots, 
+          tsch_scheduled_eb_sf_cell_count, 
+          tsch_scheduled_common_sf_cell_count, 
+          tsch_scheduled_unicast_sf_cell_count);
 #endif
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #if WITH_OST
-  LOG_INFO("HCK bst_bc_tx %lu bst_bc_rx %lu bst_uc_tx %lu bst_uc_rx %lu bst_op_tx %lu bst_op_rx %lu |\n", 
-          tsch_scheduled_burst_broadcast_tx_cell_count,
-          tsch_scheduled_burst_broadcast_rx_cell_count,
-          tsch_scheduled_burst_unicast_tx_cell_count,
-          tsch_scheduled_burst_unicast_rx_cell_count,
-          tsch_scheduled_burst_ost_periodic_tx_cell_count,
-          tsch_scheduled_burst_ost_periodic_rx_cell_count);
+  LOG_INFO("HCK sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu sch_pp_bst_tx %lu sch_pp_bst_rx %lu |\n", 
+          tsch_scheduled_common_sf_bst_tx_cell_count,
+          tsch_scheduled_common_sf_bst_rx_cell_count,
+          tsch_scheduled_unicast_sf_bst_tx_cell_count,
+          tsch_scheduled_unicast_sf_bst_rx_cell_count,
+          tsch_scheduled_ost_pp_sf_bst_tx_cell_count,
+          tsch_scheduled_ost_pp_sf_bst_rx_cell_count);
 #else
-  LOG_INFO("HCK bst_bc_tx %lu bst_bc_rx %lu bst_uc_tx %lu bst_uc_rx %lu |\n", 
-          tsch_scheduled_burst_broadcast_tx_cell_count,
-          tsch_scheduled_burst_broadcast_rx_cell_count,
-          tsch_scheduled_burst_unicast_tx_cell_count,
-          tsch_scheduled_burst_unicast_rx_cell_count);
+  LOG_INFO("HCK sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu |\n", 
+          tsch_scheduled_common_sf_bst_tx_cell_count,
+          tsch_scheduled_common_sf_bst_rx_cell_count,
+          tsch_scheduled_unicast_sf_bst_tx_cell_count,
+          tsch_scheduled_unicast_sf_bst_rx_cell_count);
 #endif
 #endif
 
 #if WITH_PPSD
 #if WITH_OST
-  LOG_INFO("HCK ep_bc_tx %lu ep_bc_rx %lu ep_uc_tx %lu ep_uc_rx %lu ep_op_tx %lu ep_op_rx %lu |\n", 
-          tsch_scheduled_ep_broadcast_tx_cell_count,
-          tsch_scheduled_ep_broadcast_rx_cell_count,
-          tsch_scheduled_ep_unicast_tx_cell_count,
-          tsch_scheduled_ep_unicast_rx_cell_count,
-          tsch_scheduled_ep_ost_periodic_tx_cell_count,
-          tsch_scheduled_ep_ost_periodic_rx_cell_count);
+  LOG_INFO("HCK sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu sch_pp_ep_tx %lu sch_pp_ep_rx %lu |\n", 
+          tsch_scheduled_common_sf_ep_tx_cell_count,
+          tsch_scheduled_common_sf_ep_rx_cell_count,
+          tsch_scheduled_unicast_sf_ep_tx_cell_count,
+          tsch_scheduled_unicast_sf_ep_rx_cell_count,
+          tsch_scheduled_ost_pp_sf_ep_tx_cell_count,
+          tsch_scheduled_ost_pp_sf_ep_rx_cell_count);
 #else
-  LOG_INFO("HCK ep_bc_tx %lu ep_bc_rx %lu ep_uc_tx %lu ep_uc_rx %lu |\n", 
-          tsch_scheduled_ep_broadcast_tx_cell_count,
-          tsch_scheduled_ep_broadcast_rx_cell_count,
-          tsch_scheduled_ep_unicast_tx_cell_count,
-          tsch_scheduled_ep_unicast_rx_cell_count);
+  LOG_INFO("HCK sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu |\n", 
+          tsch_scheduled_common_sf_ep_tx_cell_count,
+          tsch_scheduled_common_sf_ep_rx_cell_count,
+          tsch_scheduled_unicast_sf_ep_tx_cell_count,
+          tsch_scheduled_unicast_sf_ep_rx_cell_count);
 #endif
 #endif
-
-  LOG_INFO("HCK any_tx_op %lu any_rx_op %lu eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
-          tsch_any_slotframe_tx_operation_count, 
-          tsch_any_slotframe_rx_operation_count, 
-          tsch_eb_slotframe_tx_operation_count, 
-          tsch_eb_slotframe_rx_operation_count, 
-          tsch_broadcast_slotframe_tx_operation_count, 
-          tsch_broadcast_slotframe_rx_operation_count, 
-          tsch_unicast_slotframe_tx_operation_count, 
-          tsch_unicast_slotframe_rx_operation_count);
-
 
 #if WITH_OST
-  LOG_INFO("HCK op_tx_op %lu op_rx_op %lu oo_tx_op %lu oo_rx_op %lu |\n", 
-          tsch_ost_periodic_provisioning_tx_operation_count, 
-          tsch_ost_periodic_provisioning_rx_operation_count, 
-          tsch_ost_ondemand_provisioning_tx_operation_count, 
-          tsch_ost_ondemand_provisioning_rx_operation_count);
+  LOG_INFO("HCK eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu pp_tx_op %lu pp_rx_op %lu odp_tx_op %lu odp_rx_op %lu |\n", 
+          tsch_eb_sf_tx_operation_count, 
+          tsch_eb_sf_rx_operation_count, 
+          tsch_common_sf_tx_operation_count, 
+          tsch_common_sf_rx_operation_count, 
+          tsch_unicast_sf_tx_operation_count, 
+          tsch_unicast_sf_rx_operation_count,
+          tsch_ost_pp_sf_tx_operation_count, 
+          tsch_ost_pp_sf_rx_operation_count, 
+          tsch_ost_odp_sf_tx_operation_count, 
+          tsch_ost_odp_sf_rx_operation_count);
+#else
+  LOG_INFO("HCK eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
+          tsch_eb_sf_tx_operation_count, 
+          tsch_eb_sf_rx_operation_count, 
+          tsch_common_sf_tx_operation_count, 
+          tsch_common_sf_rx_operation_count, 
+          tsch_unicast_sf_tx_operation_count, 
+          tsch_unicast_sf_rx_operation_count);
 #endif
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #if WITH_OST
-  LOG_INFO("HCK bc_b_tx_op %lu bc_b_rx_op %lu uc_b_tx_op %lu uc_b_rx_op %lu op_b_tx_op %lu op_b_rx_op %lu |\n", 
-          tsch_broadcast_slotframe_burst_tx_operation_count,
-          tsch_broadcast_slotframe_burst_rx_operation_count,
-          tsch_unicast_slotframe_burst_tx_operation_count,
-          tsch_unicast_slotframe_burst_rx_operation_count,
-          tsch_ost_periodic_provisioning_burst_tx_operation_count,
-          tsch_ost_periodic_provisioning_burst_rx_operation_count);
+  LOG_INFO("HCK bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu pp_bst_tx_op %lu pp_bst_rx_op %lu |\n", 
+          tsch_common_sf_bst_tx_operation_count,
+          tsch_common_sf_bst_rx_operation_count,
+          tsch_unicast_sf_bst_tx_operation_count,
+          tsch_unicast_sf_bst_rx_operation_count,
+          tsch_ost_pp_sf_bst_tx_operation_count,
+          tsch_ost_pp_sf_bst_rx_operation_count);
 #else
-  LOG_INFO("HCK bc_b_tx_op %lu bc_b_rx_op %lu uc_b_tx_op %lu uc_b_rx_op %lu |\n", 
-          tsch_broadcast_slotframe_burst_tx_operation_count,
-          tsch_broadcast_slotframe_burst_rx_operation_count,
-          tsch_unicast_slotframe_burst_tx_operation_count,
-          tsch_unicast_slotframe_burst_rx_operation_count);
+  LOG_INFO("HCK bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu |\n", 
+          tsch_common_sf_bst_tx_operation_count,
+          tsch_common_sf_bst_rx_operation_count,
+          tsch_unicast_sf_bst_tx_operation_count,
+          tsch_unicast_sf_bst_rx_operation_count);
 #endif
 #endif
 
 #if WITH_PPSD
 #if WITH_OST
-  LOG_INFO("HCK any_ep_tx_rs %lu any_ep_rx_rs %lu bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu pp_ep_tx_rs %lu pp_ep_rx_rs %lu |\n", 
-          tsch_any_sf_ep_tx_reserved_count,
-          tsch_any_sf_ep_rx_reserved_count,
-          tsch_bc_sf_ep_tx_reserved_count,
-          tsch_bc_sf_ep_rx_reserved_count,
-          tsch_uc_sf_ep_tx_reserved_count,
-          tsch_uc_sf_ep_rx_reserved_count,
-          tsch_pp_sf_ep_tx_reserved_count,
-          tsch_pp_sf_ep_rx_reserved_count);
+  LOG_INFO("HCK bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu pp_ep_tx_rs %lu pp_ep_rx_rs %lu |\n", 
+          tsch_common_sf_ep_tx_reserved_count,
+          tsch_common_sf_ep_rx_reserved_count,
+          tsch_unicast_sf_ep_tx_reserved_count,
+          tsch_unicast_sf_ep_rx_reserved_count,
+          tsch_ost_pp_sf_ep_tx_reserved_count,
+          tsch_ost_pp_sf_ep_rx_reserved_count);
 
-  LOG_INFO("HCK any_ep_tx_ok %lu any_ep_rx_ok %lu bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu pp_ep_tx_ok %lu pp_ep_rx_ok %lu |\n", 
-          tsch_any_sf_ep_tx_ok_count,
-          tsch_any_sf_ep_rx_ok_count,
-          tsch_bc_sf_ep_tx_ok_count,
-          tsch_bc_sf_ep_rx_ok_count,
-          tsch_uc_sf_ep_tx_ok_count,
-          tsch_uc_sf_ep_rx_ok_count,
-          tsch_pp_sf_ep_tx_ok_count,
-          tsch_pp_sf_ep_rx_ok_count);
+  LOG_INFO("HCK bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu pp_ep_tx_ok %lu pp_ep_rx_ok %lu |\n", 
+          tsch_common_sf_ep_tx_ok_count,
+          tsch_common_sf_ep_rx_ok_count,
+          tsch_unicast_sf_ep_tx_ok_count,
+          tsch_unicast_sf_ep_rx_ok_count,
+          tsch_ost_pp_sf_ep_tx_ok_count,
+          tsch_ost_pp_sf_ep_rx_ok_count);
 
-  LOG_INFO("HCK any_ep_tx_ts %lu any_ep_rx_ts %lu bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu pp_ep_tx_ts %lu pp_ep_rx_ts %lu |\n", 
-          tsch_any_sf_ep_tx_timeslots,
-          tsch_any_sf_ep_rx_timeslots,
-          tsch_bc_sf_ep_tx_timeslots,
-          tsch_bc_sf_ep_rx_timeslots,
-          tsch_uc_sf_ep_tx_timeslots,
-          tsch_uc_sf_ep_rx_timeslots, 
-          tsch_pp_sf_ep_tx_timeslots,
-          tsch_pp_sf_ep_rx_timeslots);
+  LOG_INFO("HCK bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu pp_ep_tx_ts %lu pp_ep_rx_ts %lu |\n", 
+          tsch_common_sf_ep_tx_timeslots,
+          tsch_common_sf_ep_rx_timeslots,
+          tsch_unicast_sf_ep_tx_timeslots,
+          tsch_unicast_sf_ep_rx_timeslots, 
+          tsch_ost_pp_sf_ep_tx_timeslots,
+          tsch_ost_pp_sf_ep_rx_timeslots);
 #else
-  LOG_INFO("HCK any_ep_tx_rs %lu any_ep_rx_rs %lu bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu |\n", 
-          tsch_any_sf_ep_tx_reserved_count,
-          tsch_any_sf_ep_rx_reserved_count,
-          tsch_bc_sf_ep_tx_reserved_count,
-          tsch_bc_sf_ep_rx_reserved_count,
-          tsch_uc_sf_ep_tx_reserved_count,
-          tsch_uc_sf_ep_rx_reserved_count);
+  LOG_INFO("HCK bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu |\n", 
+          tsch_common_sf_ep_tx_reserved_count,
+          tsch_common_sf_ep_rx_reserved_count,
+          tsch_unicast_sf_ep_tx_reserved_count,
+          tsch_unicast_sf_ep_rx_reserved_count);
 
-  LOG_INFO("HCK any_ep_tx_ok %lu any_ep_rx_ok %lu bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu |\n", 
-          tsch_any_sf_ep_tx_ok_count,
-          tsch_any_sf_ep_rx_ok_count,
-          tsch_bc_sf_ep_tx_ok_count,
-          tsch_bc_sf_ep_rx_ok_count,
-          tsch_uc_sf_ep_tx_ok_count,
-          tsch_uc_sf_ep_rx_ok_count);
+  LOG_INFO("HCK bc_ep_tx_ok %lu bc_ep_rx_ok %lu uc_ep_tx_ok %lu uc_ep_rx_ok %lu |\n", 
+          tsch_common_sf_ep_tx_ok_count,
+          tsch_common_sf_ep_rx_ok_count,
+          tsch_unicast_sf_ep_tx_ok_count,
+          tsch_unicast_sf_ep_rx_ok_count);
 
-  LOG_INFO("HCK any_ep_tx_ts %lu any_ep_rx_ts %lu bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu |\n", 
-          tsch_any_sf_ep_tx_timeslots,
-          tsch_any_sf_ep_rx_timeslots,
-          tsch_bc_sf_ep_tx_timeslots,
-          tsch_bc_sf_ep_rx_timeslots,
-          tsch_uc_sf_ep_tx_timeslots,
-          tsch_uc_sf_ep_rx_timeslots);
+  LOG_INFO("HCK bc_ep_tx_ts %lu bc_ep_rx_ts %lu uc_ep_tx_ts %lu uc_ep_rx_ts %lu |\n", 
+          tsch_common_sf_ep_tx_timeslots,
+          tsch_common_sf_ep_rx_timeslots,
+          tsch_unicast_sf_ep_tx_timeslots,
+          tsch_unicast_sf_ep_rx_timeslots);
 #endif
 #endif
 
