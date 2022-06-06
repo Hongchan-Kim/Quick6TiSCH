@@ -347,7 +347,6 @@
 #define OST_ON_DEMAND_PROVISION                    1
 
 #define OST_HANDLE_QUEUED_PACKETS                  1
-#define OST_JSB_ADD                                1
 #define WITH_OST_LOG_INFO                          1
 #define WITH_OST_LOG_DBG                           0
 #define WITH_OST_LOG_NBR                           0

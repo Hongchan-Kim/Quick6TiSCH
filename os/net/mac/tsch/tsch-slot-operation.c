@@ -4110,7 +4110,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
         }
 
-#if OST_JSB_ADD
+#if WITH_OST
         /* Seungbeom Jeong added this else if block */
         /* In the case of there is no packet to send in the current best link,
            even if there is Rx option in the current best link,
