@@ -40,6 +40,7 @@
 static struct simple_udp_connection udp_conn;
 
 static uint16_t app_rxd_count;
+static uint64_t lt_down_sum = 0;
 
 /*---------------------------------------------------------------------------*/
 #if APP_SEQNO_DUPLICATE_CHECK
@@ -135,6 +136,8 @@ udp_rx_callback(struct simple_udp_connection *c,
     LOG_INFO("HCK dup_down a_seq %lx asn %llu from ", 
               app_received_seqno,
               app_rx_down_asn);
+    LOG_INFO_6ADDR(sender_addr);
+    LOG_INFO_("\n");
   } else {
     app_down_sequence_register_seqno(app_received_seqno_count);
     LOG_INFO("HCK rx_down %u a_seq %lx asn %llu len %u lt %llu %llu | Received message from ",
@@ -144,9 +147,12 @@ udp_rx_callback(struct simple_udp_connection *c,
               datalen, 
               app_rx_down_asn - app_tx_down_asn,
               app_tx_down_asn);
+    LOG_INFO_6ADDR(sender_addr);
+    LOG_INFO_("\n");
+
+    lt_down_sum += (app_rx_down_asn - app_tx_down_asn);
+    LOG_INFO("HCK lt_down_sum %llu |\n", lt_down_sum);
   }
-  LOG_INFO_6ADDR(sender_addr);
-  LOG_INFO_("\n");
 }
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client");

@@ -42,6 +42,8 @@
 
 static struct simple_udp_connection udp_conn;
 
+static uint64_t lt_up_sum = 0;
+
 /*---------------------------------------------------------------------------*/
 #if APP_SEQNO_DUPLICATE_CHECK
 struct app_up_seqno {
@@ -151,6 +153,8 @@ udp_rx_callback(struct simple_udp_connection *c,
     LOG_INFO("HCK dup_up a_seq %lx asn %llu from ", 
               app_received_seqno,
               app_rx_up_asn);
+    LOG_INFO_6ADDR(sender_addr);
+    LOG_INFO_("\n");
   } else {
     app_up_sequence_register_seqno(sender_id, app_received_seqno_count);
     LOG_INFO("HCK rx_up %u from %u %x (%u %x) a_seq %lx asn %llu len %u lt %llu %llu | Received message from ", 
@@ -162,9 +166,14 @@ udp_rx_callback(struct simple_udp_connection *c,
               datalen, 
               app_rx_up_asn - app_tx_up_asn,
               app_tx_up_asn);
+    LOG_INFO_6ADDR(sender_addr);
+    LOG_INFO_("\n");
+
+    lt_up_sum += (app_rx_up_asn - app_tx_up_asn);
+    LOG_INFO("HCK lt_up_sum %llu from %u %x (%u %x) |\n", lt_up_sum,
+              sender_index + 1, sender_index + 1, 
+              iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1]);
   }
-  LOG_INFO_6ADDR(sender_addr);
-  LOG_INFO_("\n");
 }
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_server_process, "UDP server");
