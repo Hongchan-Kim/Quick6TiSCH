@@ -169,6 +169,7 @@ enum ppsd_timeslot_timing_elements {
   ppsd_ts_ack_wait,
   ppsd_ts_max_ack,
   ppsd_ts_max_tx,
+  ppsd_ts_guard_time,
   ppsd_ts_elements_count, /* Not a timing element */
 };
 #endif

@@ -1651,7 +1651,8 @@ tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr,
     ep_expected_all_tx_duration = ep_expected_tx_duration
                                 + ppsd_timing[ppsd_ts_rx_ack_delay] 
                                 + ppsd_timing[ppsd_ts_ack_wait] 
-                                + ppsd_timing[ppsd_ts_max_ack];
+                                + ppsd_timing[ppsd_ts_max_ack]
+                                + ppsd_timing[ppsd_ts_guard_time];
 
     ep_expected_timeslots = (ep_expected_all_tx_duration + tsch_timing[tsch_ts_timeslot_length] - 1) 
                           / tsch_timing[tsch_ts_timeslot_length];

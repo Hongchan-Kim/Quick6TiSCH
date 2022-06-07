@@ -130,11 +130,12 @@ const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
   PPSD_RX_WAIT, /* RxWait */
     400,
 #if WITH_OST
-    900, /* MaxAck (23 bytes) */
+    900, /* MaxAck (23 bytes) + processing time */
 #else
-    800, /* MaxAck (21 bytes, 25 ticks, 763 us) */
+    800, /* MaxAck (21 bytes, 25 ticks, 763 us) + processing time */
 #endif
    4256, /* MaxTx */
+    100, /* Guard time */
 };
 #endif
 
