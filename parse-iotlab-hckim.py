@@ -10,19 +10,21 @@ non_root_address_list = list()
 
 # STEP-1-2: extract node info (id and address)
 parser = argparse.ArgumentParser()
-parser.add_argument('iter')
+parser.add_argument('any_iter')
 parser.add_argument('any_id')
+parser.add_argument('show_all')
 args = parser.parse_args()
 
-iter = args.iter
+any_iter = args.any_iter
 any_id = args.any_id
+show_all = args.show_all
 
 print('----- evaluation info -----')
-print('iter: ' + iter)
+print('any_iter: ' + any_iter)
 print('any_id: ' + any_id)
 print()
 
-file_name = 'log-' + iter + '-' + any_id + '.txt'
+file_name = 'log-' + any_iter + '-' + any_id + '.txt'
 f = open(file_name, 'r', errors='ignore')
 
 line = f.readline()
@@ -131,7 +133,7 @@ for node_id in non_root_id_list:
     bootstrap_period_parsed[node_index][metric_list.index('id')] = node_id
     bootstrap_period_parsed[node_index][metric_list.index('addr')] = non_root_address_list[non_root_id_list.index(node_id)]
 
-    file_name = 'log-' + iter + '-' + str(node_id) + '.txt'
+    file_name = 'log-' + any_iter + '-' + str(node_id) + '.txt'
     f = open(file_name, 'r', errors='ignore')
     bootstrap_period_finished_this = 0
 
@@ -177,7 +179,7 @@ ROOT_INDEX = 0
 bootstrap_period_parsed[ROOT_INDEX][metric_list.index('id')] = ROOT_ID
 bootstrap_period_parsed[ROOT_INDEX][metric_list.index('addr')] = ROOT_ADDR
 
-file_name = 'log-' + iter + '-' + str(ROOT_ID) + '.txt'
+file_name = 'log-' + any_iter + '-' + str(ROOT_ID) + '.txt'
 f = open(file_name, 'r', errors='ignore')
 bootstrap_period_finished_this = 0
 
@@ -258,17 +260,17 @@ for i in range(NODE_NUM):
             if int(bootstrap_period_parsed[i][metric_list.index('rx_up')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('lt_up_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('rx_up')]), 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('lt_up_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('rx_up')]))
         elif result_list[j] == 'dLT':
             if int(bootstrap_period_parsed[i][metric_list.index('rx_down')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('lt_down_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('rx_down')]), 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('lt_down_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('rx_down')]))
         elif result_list[j] == 'LT':
             if int(bootstrap_period_parsed[i][metric_list.index('rx_up')]) + int(bootstrap_period_parsed[i][metric_list.index('rx_down')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round((float(bootstrap_period_parsed[i][metric_list.index('lt_up_sum')]) + float(bootstrap_period_parsed[i][metric_list.index('lt_down_sum')])) / (float(bootstrap_period_parsed[i][metric_list.index('rx_up')]) + float(bootstrap_period_parsed[i][metric_list.index('rx_down')])), 2)
+                bootstrap_period_result[i][j] = round((float(bootstrap_period_parsed[i][metric_list.index('lt_up_sum')]) + float(bootstrap_period_parsed[i][metric_list.index('lt_down_sum')])) / (float(bootstrap_period_parsed[i][metric_list.index('rx_up')]) + float(bootstrap_period_parsed[i][metric_list.index('rx_down')])))
         elif result_list[j] == 'lastP':
             bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('lastP')]
         elif result_list[j] == 'ps':
@@ -526,14 +528,15 @@ for i in range(NODE_NUM):
     print(bootstrap_period_result[i][result_list.index('SCR') - 1])#-1])
 print()
 
-for i in range(result_list.index('SCR'), RESULT_NUM - 1): 
-    print(result_list[i], '\t', end='')
-print(result_list[-1])
-for i in range(NODE_NUM):
-    for j in range(result_list.index('SCR'), RESULT_NUM - 1): 
-        print(bootstrap_period_result[i][j], '\t', end='')
-    print(bootstrap_period_result[i][-1])                                                                                                                                                                                                                                     
-print()
+if show_all == '1':
+    for i in range(result_list.index('SCR'), RESULT_NUM - 1): 
+        print(result_list[i], '\t', end='')
+    print(result_list[-1])
+    for i in range(NODE_NUM):
+        for j in range(result_list.index('SCR'), RESULT_NUM - 1): 
+            print(bootstrap_period_result[i][j], '\t', end='')
+        print(bootstrap_period_result[i][-1])                                                                                                                                                                                                                                     
+    print()
 
 
 if bootstrap_period_finished_any == 0:
@@ -554,7 +557,7 @@ for i in range(PRESERVE_METRIC_NUM):
 for node_id in non_root_id_list:
     node_index = non_root_id_list.index(node_id) + 1 # index in parsed array
 
-    file_name = 'log-' + iter + '-' + str(node_id) + '.txt'
+    file_name = 'log-' + any_iter + '-' + str(node_id) + '.txt'
     f = open(file_name, 'r', errors='ignore')
     bootstrap_period_finished_this = 0
 
@@ -602,7 +605,7 @@ ROOT_INDEX = 0
 data_period_parsed[ROOT_INDEX][metric_list.index('id')] = ROOT_ID
 data_period_parsed[ROOT_INDEX][metric_list.index('addr')] = ROOT_ADDR
 
-file_name = 'log-' + iter + '-' + str(ROOT_ID) + '.txt'
+file_name = 'log-' + any_iter + '-' + str(ROOT_ID) + '.txt'
 f = open(file_name, 'r', errors='ignore')
 
 in_data_period = 0
@@ -684,17 +687,17 @@ for i in range(NODE_NUM):
             if int(data_period_parsed[i][metric_list.index('rx_up')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('lt_up_sum')]) / float(data_period_parsed[i][metric_list.index('rx_up')]), 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('lt_up_sum')]) / float(data_period_parsed[i][metric_list.index('rx_up')]))
         elif result_list[j] == 'dLT':
             if int(data_period_parsed[i][metric_list.index('rx_down')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('lt_down_sum')]) / float(data_period_parsed[i][metric_list.index('rx_down')]), 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('lt_down_sum')]) / float(data_period_parsed[i][metric_list.index('rx_down')]))
         elif result_list[j] == 'LT':
             if int(data_period_parsed[i][metric_list.index('rx_up')]) + int(data_period_parsed[i][metric_list.index('rx_down')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round((float(data_period_parsed[i][metric_list.index('lt_up_sum')]) + float(data_period_parsed[i][metric_list.index('lt_down_sum')])) / (float(data_period_parsed[i][metric_list.index('rx_up')]) + float(data_period_parsed[i][metric_list.index('rx_down')])), 2)
+                data_period_result[i][j] = round((float(data_period_parsed[i][metric_list.index('lt_up_sum')]) + float(data_period_parsed[i][metric_list.index('lt_down_sum')])) / (float(data_period_parsed[i][metric_list.index('rx_up')]) + float(data_period_parsed[i][metric_list.index('rx_down')])))
         elif result_list[j] == 'lastP':
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('lastP')]
         elif result_list[j] == 'ps':
@@ -955,11 +958,12 @@ for i in range(NODE_NUM):
     print(data_period_result[i][result_list.index('SCR') - 1])#-1])
 print()
 
-for i in range(result_list.index('SCR'), RESULT_NUM - 1): 
-    print(result_list[i], '\t', end='')
-print(result_list[-1])
-for i in range(NODE_NUM):
-    for j in range(result_list.index('SCR'), RESULT_NUM - 1): 
-        print(data_period_result[i][j], '\t', end='')
-    print(data_period_result[i][-1])                                                                                                                                                                                                                                     
-print()
+if show_all == '1':
+    for i in range(result_list.index('SCR'), RESULT_NUM - 1): 
+        print(result_list[i], '\t', end='')
+    print(result_list[-1])
+    for i in range(NODE_NUM):
+        for j in range(result_list.index('SCR'), RESULT_NUM - 1): 
+            print(data_period_result[i][j], '\t', end='')
+        print(data_period_result[i][-1])                                                                                                                                                                                                                                     
+    print()

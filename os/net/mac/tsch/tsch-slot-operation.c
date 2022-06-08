@@ -183,7 +183,7 @@ static int is_burst_slot = 0;
 #if TSCH_DBT_TEMPORAL_LINK
 struct tsch_link temporal_burst_link;
 #endif
-#if TSCH_DBT_HANDLE_MISSED_EP_SLOT
+#if TSCH_DBT_HANDLE_MISSED_DBT_SLOT
 static int burst_link_scheduled_count = 0;
 #endif
 #if TSCH_DBT_HOLD_CURRENT_NBR
@@ -1996,9 +1996,17 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
         log->tx.drift = 0;
         log->tx.drift_used = 0;
         log->tx.is_data = ((((uint8_t *)(queuebuf_dataptr(ppsd_array_packet[ppsd_seq]->qb)))[0]) & 7) == FRAME802154_DATAFRAME;
+#if LLSEC802154_ENABLED
+        log->tx.sec_level = queuebuf_attr(ppsd_array_packet[ppsd_seq]->qb, PACKETBUF_ATTR_SECURITY_LEVEL);
+#else /* LLSEC802154_ENABLED */
         log->tx.sec_level = 0;
+#endif /* LLSEC802154_ENABLED */
         linkaddr_copy(&log->tx.dest, queuebuf_addr(ppsd_array_packet[ppsd_seq]->qb, PACKETBUF_ADDR_RECEIVER));
         log->tx.seqno = queuebuf_attr(ppsd_array_packet[ppsd_seq]->qb, PACKETBUF_ATTR_MAC_SEQNO);
+#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+        memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(ppsd_array_packet[ppsd_seq]->qb) + queuebuf_datalen(ppsd_array_packet[ppsd_seq]->qb) - 2, 2);
+        memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(ppsd_array_packet[ppsd_seq]->qb) + queuebuf_datalen(ppsd_array_packet[ppsd_seq]->qb) - 2 - 4, 4);
+#endif
     );
 
     ppsd_array_in_queue[ppsd_seq] 
@@ -2343,6 +2351,10 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
                 log->rx.estimated_drift = 0;
                 log->rx.seqno = ppsd_frame.seq;
                 log->rx.rssi = ppsd_current_input->rssi;
+#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+                memcpy(&log->rx.app_magic, (uint8_t *)ppsd_current_input->payload + ppsd_current_input->len - 2, 2);
+                memcpy(&log->rx.app_seqno, (uint8_t *)ppsd_current_input->payload + ppsd_current_input->len - 2 - 4, 4);
+#endif
               );
             }
           }
@@ -4022,7 +4034,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
 #endif 
 
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_SKIPPED_EP_SLOT
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_SKIPPED_DBT_SLOT
       if(burst_link_scheduled) {
         burst_link_scheduled = 0;
         tsch_current_burst_count = 0;
@@ -4579,7 +4591,7 @@ ost_donothing:
       /* Time to next wake up */
       rtimer_clock_t time_to_next_active_slot;
 
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_MISSED_EP_SLOT
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_MISSED_DBT_SLOT
       burst_link_scheduled_count = 0;
 #endif
 #if WITH_PPSD && PPSD_HANDLE_MISSED_EP_SLOT
@@ -4595,7 +4607,7 @@ ost_donothing:
           tsch_queue_update_all_backoff_windows(&current_link->addr);
         }
 
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_MISSED_EP_SLOT
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_MISSED_DBT_SLOT
         if(burst_link_scheduled_count > 0) { /* This means deadline of EP link has been missed */
           burst_link_scheduled = 0;
           burst_link_scheduled_count = 0;
@@ -4706,7 +4718,7 @@ ost_donothing:
           /* A burst link was scheduled. Replay the current link at the
           next time offset */
           if(burst_link_scheduled && current_link != NULL) {
-#if TSCH_DBT_HANDLE_MISSED_EP_SLOT
+#if TSCH_DBT_HANDLE_MISSED_DBT_SLOT
             ++burst_link_scheduled_count;
 #endif
             timeslot_diff = 1;
