@@ -235,6 +235,11 @@ static uint16_t ppsd_passed_timeslots;
 static uint16_t current_ep_tx_ok_count;
 static uint16_t current_ep_rx_ok_count;
 
+static uint8_t was_ppsd_slot;
+static uint8_t ppsd_log_result_case;
+static rtimer_clock_t ppsd_slot_start;
+static rtimer_clock_t ppsd_slot_end;
+
 #if PPSD_TX_SLOT_FORWARD_OFFLOADING
 static uint8_t ppsd_array_hdr_len[TSCH_DEQUEUED_ARRAY_SIZE];
 static uint16_t ppsd_tx_seq = 1;
@@ -1649,20 +1654,13 @@ tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr,
 
     ep_expected_tx_duration += (ppsd_timing[ppsd_ts_tx_offset] + ep_expected_packet_duration);
     ep_expected_all_tx_duration = ep_expected_tx_duration
-                                + ppsd_timing[ppsd_ts_rx_ack_delay] 
-                                + ppsd_timing[ppsd_ts_ack_wait] 
+                                + ppsd_timing[ppsd_ts_tx_ack_delay] 
                                 + ppsd_timing[ppsd_ts_max_ack]
-                                + ppsd_timing[ppsd_ts_guard_time];
+                                + ppsd_timing[ppsd_ts_tx_process_b_ack];
+    ep_expected_all_tx_duration += PPSD_END_OF_EP_RTIMER_GUARD;
 
     ep_expected_timeslots = (ep_expected_all_tx_duration + tsch_timing[tsch_ts_timeslot_length] - 1) 
                           / tsch_timing[tsch_ts_timeslot_length];
-#if PPSD_CONSIDER_RTIMER_GUARD
-    if(check_timer_miss(0, 
-                        ep_expected_timeslots * tsch_timing[tsch_ts_timeslot_length] - RTIMER_GUARD * PPSD_CONSIDER_RTIMER_GUARD, 
-                        ep_expected_all_tx_duration)) {
-      ep_expected_timeslots += 1;
-    }
-#endif
 
     ep_expected_advantage = i * 100 / ep_expected_timeslots;
 
@@ -4295,132 +4293,38 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           PT_SPAWN(&slot_operation_pt, &slot_ppsd_rx_pt, tsch_ppsd_rx_slot(&slot_ppsd_rx_pt, t));
         }
 
-        rtimer_clock_t ppsd_slot_end = RTIMER_NOW();
-        ppsd_passed_timeslots = ((RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start) + tsch_timing[tsch_ts_timeslot_length] - 1) 
+        ppsd_slot_start = current_slot_start;
+        ppsd_slot_end = RTIMER_NOW();
+        ppsd_passed_timeslots = ((RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start) + tsch_timing[tsch_ts_timeslot_length] - 1) 
                                 / tsch_timing[tsch_ts_timeslot_length]);
-#if PPSD_CONSIDER_RTIMER_GUARD
-        if(check_timer_miss(current_slot_start, 
-                            ppsd_passed_timeslots * tsch_timing[tsch_ts_timeslot_length] - RTIMER_GUARD * PPSD_CONSIDER_RTIMER_GUARD, 
-                            ppsd_slot_end)) {
-          ppsd_passed_timeslots += 1;
-        }
-#endif
+
         TSCH_ASN_INC(tsch_current_asn, (ppsd_passed_timeslots - 1));
 
         if(ppsd_pkts_to_send > 0) {
           if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-            tsch_common_sf_ep_tx_timeslots += ppsd_passed_timeslots;
-#if PPSD_DBG_EP_ESSENTIAL
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                    "ep result bcsf tx %u %u %d %u %u %u", 
-                    ep_tx_first_packet_len,
-                    ep_tx_all_len_same,
-                    ppsd_pkts_to_send, 
-                    current_ep_tx_ok_count, 
-                    ppsd_passed_timeslots,
-                    (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start));
-            );
-            ep_tx_first_packet_len = 0;
-            ep_tx_all_len_same = 0;
-#endif
-          }
-          else if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
-            tsch_unicast_sf_ep_tx_timeslots += ppsd_passed_timeslots;
-#if PPSD_DBG_EP_ESSENTIAL
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                    "ep result ucsf tx %u %u %d %u %u %u", 
-                    ep_tx_first_packet_len,
-                    ep_tx_all_len_same,
-                    ppsd_pkts_to_send, 
-                    current_ep_tx_ok_count, 
-                    ppsd_passed_timeslots,
-                    (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start));
-            );
-            ep_tx_first_packet_len = 0;
-            ep_tx_all_len_same = 0;
-#endif
+            ppsd_log_result_case = 1;
+          } else if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
+            ppsd_log_result_case = 3;
           }
 #if WITH_OST
           else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
                 && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
-            tsch_ost_pp_sf_ep_tx_timeslots += ppsd_passed_timeslots;
-#if PPSD_DBG_EP_ESSENTIAL
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                    "ep result ppsf tx %u %u %d %u %u %u", 
-                    ep_tx_first_packet_len,
-                    ep_tx_all_len_same,
-                    ppsd_pkts_to_send, 
-                    current_ep_tx_ok_count, 
-                    ppsd_passed_timeslots,
-                    (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start));
-            );
-            ep_tx_first_packet_len = 0;
-            ep_tx_all_len_same = 0;
-#endif
+            ppsd_log_result_case = 5;
           }
 #endif
         } else {
           if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-            tsch_common_sf_ep_rx_timeslots += ppsd_passed_timeslots;
-#if PPSD_DBG_EP_ESSENTIAL
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                    "ep result bcsf rx %u %u %d %u %u %u", 
-                    ep_rx_first_packet_len,
-                    ep_rx_all_len_same,
-                    ppsd_pkts_to_receive, 
-                    current_ep_rx_ok_count, 
-                    ppsd_passed_timeslots,
-                    (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start));
-            );
-            ep_rx_first_packet_len = 0;
-            ep_rx_all_len_same = 0;
-#endif
-          }
-          else if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
-            tsch_unicast_sf_ep_rx_timeslots += ppsd_passed_timeslots;
-#if PPSD_DBG_EP_ESSENTIAL
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                    "ep result ucsf rx %u %u %d %u %u %u", 
-                    ep_rx_first_packet_len,
-                    ep_rx_all_len_same,
-                    ppsd_pkts_to_receive, 
-                    current_ep_rx_ok_count, 
-                    ppsd_passed_timeslots,
-                    (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start));
-            );
-            ep_rx_first_packet_len = 0;
-            ep_rx_all_len_same = 0;
-#endif
+            ppsd_log_result_case = 2;
+          } else if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
+            ppsd_log_result_case = 4;
           }
 #if WITH_OST
           else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
                 && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
-            tsch_ost_pp_sf_ep_rx_timeslots += ppsd_passed_timeslots;
-#if PPSD_DBG_EP_ESSENTIAL
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                    "ep result ppsf rx %u %u %d %u %u %u", 
-                    ep_rx_first_packet_len,
-                    ep_rx_all_len_same,
-                    ppsd_pkts_to_receive, 
-                    current_ep_rx_ok_count, 
-                    ppsd_passed_timeslots,
-                    (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, current_slot_start));
-            );
-            ep_rx_first_packet_len = 0;
-            ep_rx_all_len_same = 0;
-#endif
+            ppsd_log_result_case = 6;
           }
 #endif
         }
-
-        ppsd_pkts_to_send = 0;
-        ppsd_pkts_to_receive = 0;
       } else {
         ppsd_link_scheduled = 0; /* Reset ppsd_link_scheduled before regular link operation */
         is_ppsd_slot = 0;
@@ -4607,8 +4511,120 @@ ost_donothing:
           tsch_queue_update_all_backoff_windows(&current_link->addr);
         }
 
+#if WITH_PPSD
+        if(was_ppsd_slot) { /* Failed scheduling after EP */
+          was_ppsd_slot = 0;
+          ++ppsd_passed_timeslots;
+
+          if(ppsd_pkts_to_send > 0) {
+            if(ppsd_log_result_case == 1) {
+              tsch_common_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result bcsf tx %u %u %d %u %u %u !EoE", 
+                      ep_tx_first_packet_len,
+                      ep_tx_all_len_same,
+                      ppsd_pkts_to_send, 
+                      current_ep_tx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            } else if(ppsd_log_result_case == 3) {
+              tsch_unicast_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result ucsf tx %u %u %d %u %u %u !EoE", 
+                      ep_tx_first_packet_len,
+                      ep_tx_all_len_same,
+                      ppsd_pkts_to_send, 
+                      current_ep_tx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            }
+#if WITH_OST
+            else if(ppsd_log_result_case == 5) {
+              tsch_ost_pp_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result ppsf tx %u %u %d %u %u %u !EoE", 
+                      ep_tx_first_packet_len,
+                      ep_tx_all_len_same,
+                      ppsd_pkts_to_send, 
+                      current_ep_tx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            }
+#endif
+            ep_tx_first_packet_len = 0;
+            ep_tx_all_len_same = 0;
+          } else {
+            if(ppsd_log_result_case == 2) {
+              tsch_common_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result bcsf rx %u %u %d %u %u %u !EoE", 
+                      ep_rx_first_packet_len,
+                      ep_rx_all_len_same,
+                      ppsd_pkts_to_receive, 
+                      current_ep_rx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            }
+            else if(ppsd_log_result_case == 4) {
+              tsch_unicast_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result ucsf rx %u %u %d %u %u %u !EoE", 
+                      ep_rx_first_packet_len,
+                      ep_rx_all_len_same,
+                      ppsd_pkts_to_receive, 
+                      current_ep_rx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            }
+#if WITH_OST
+            else if(ppsd_log_result_case == 6) {
+              tsch_ost_pp_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result ppsf rx %u %u %d %u %u %u !EoE", 
+                      ep_rx_first_packet_len,
+                      ep_rx_all_len_same,
+                      ppsd_pkts_to_receive, 
+                      current_ep_rx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            }
+#endif
+            ep_rx_first_packet_len = 0;
+            ep_rx_all_len_same = 0;
+          }
+
+          ppsd_pkts_to_send = 0;
+          ppsd_pkts_to_receive = 0;
+          ppsd_passed_timeslots = 0;
+        }
+#endif
+
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_MISSED_DBT_SLOT
-        if(burst_link_scheduled_count > 0) { /* This means deadline of EP link has been missed */
+        if(burst_link_scheduled_count > 0) { /* This means deadline of DBT link has been missed */
           burst_link_scheduled = 0;
           burst_link_scheduled_count = 0;
 #if TSCH_DBT_HOLD_CURRENT_NBR
@@ -4773,7 +4789,6 @@ ost_donothing:
 #if WITH_PPSD
         if(is_ppsd_slot) {
           timeslot_diff += (ppsd_passed_timeslots - 1);
-          ppsd_passed_timeslots = 0;
 #if PPSD_DBG_EP_OPERATION
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
@@ -4787,6 +4802,7 @@ ost_donothing:
 #if WITH_PPSD
         if(is_ppsd_slot) {
           is_ppsd_slot = 0;
+          was_ppsd_slot = 1;
         } else {
           time_to_next_active_slot += tsch_timesync_adaptive_compensate(time_to_next_active_slot);
         }
@@ -4800,6 +4816,117 @@ ost_donothing:
         current_slot_start += time_to_next_active_slot;
 
       } while(!tsch_schedule_slot_operation(t, prev_slot_start, time_to_next_active_slot, "main"));
+
+#if WITH_PPSD
+      if(was_ppsd_slot) { /* Successful scheduling after EP */
+          was_ppsd_slot = 0;
+
+          if(ppsd_pkts_to_send > 0) {
+            if(ppsd_log_result_case == 1) {
+              tsch_common_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result bcsf tx %u %u %d %u %u %u", 
+                      ep_tx_first_packet_len,
+                      ep_tx_all_len_same,
+                      ppsd_pkts_to_send, 
+                      current_ep_tx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            } else if(ppsd_log_result_case == 3) {
+              tsch_unicast_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result ucsf tx %u %u %d %u %u %u", 
+                      ep_tx_first_packet_len,
+                      ep_tx_all_len_same,
+                      ppsd_pkts_to_send, 
+                      current_ep_tx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            }
+#if WITH_OST
+            else if(ppsd_log_result_case == 5) {
+              tsch_ost_pp_sf_ep_tx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result ppsf tx %u %u %d %u %u %u", 
+                      ep_tx_first_packet_len,
+                      ep_tx_all_len_same,
+                      ppsd_pkts_to_send, 
+                      current_ep_tx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            }
+            ep_tx_first_packet_len = 0;
+            ep_tx_all_len_same = 0;
+#endif
+          } else {
+            if(ppsd_log_result_case == 2) {
+              tsch_common_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result bcsf rx %u %u %d %u %u %u", 
+                      ep_rx_first_packet_len,
+                      ep_rx_all_len_same,
+                      ppsd_pkts_to_receive, 
+                      current_ep_rx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            }
+            else if(ppsd_log_result_case == 4) {
+              tsch_unicast_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result ucsf rx %u %u %d %u %u %u", 
+                      ep_rx_first_packet_len,
+                      ep_rx_all_len_same,
+                      ppsd_pkts_to_receive, 
+                      current_ep_rx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            }
+#if WITH_OST
+            else if(ppsd_log_result_case == 6) {
+              tsch_ost_pp_sf_ep_rx_timeslots += ppsd_passed_timeslots;
+#if PPSD_DBG_EP_ESSENTIAL
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "ep result ppsf rx %u %u %d %u %u %u", 
+                      ep_rx_first_packet_len,
+                      ep_rx_all_len_same,
+                      ppsd_pkts_to_receive, 
+                      current_ep_rx_ok_count, 
+                      ppsd_passed_timeslots,
+                      (unsigned)RTIMER_CLOCK_DIFF(ppsd_slot_end, ppsd_slot_start));
+              );
+#endif
+            }
+            ep_rx_first_packet_len = 0;
+            ep_rx_all_len_same = 0;
+#endif
+          }
+
+          ppsd_pkts_to_send = 0;
+          ppsd_pkts_to_receive = 0;
+          ppsd_passed_timeslots = 0;
+      }
+#endif
     }
 
     tsch_in_slot_operation = 0;

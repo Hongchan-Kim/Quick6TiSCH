@@ -7,17 +7,18 @@
  */
 /* Need to be tested */
 #define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
-#define WITH_PPSD                                  0
+#define WITH_PPSD                                  1
 
 #if WITH_PPSD
+#define PPSD_END_OF_EP_RTIMER_GUARD                2u
+
 #define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
 #define PPSD_EP_POLICY_CELL_UTIL                   1
 #define PPSD_TX_SLOT_FORWARD_OFFLOADING            1
 #define PPSD_TX_SLOT_BACKWARD_OFFLOADING           1
 #define PPSD_RX_SLOT_FORWARD_OFFLOADING            1
 #define PPSD_RX_SLOT_BACKWARD_OFFLOADING           1
-#define PPSD_CONSIDER_RTIMER_GUARD                 2
-#define PPSD_TRIPLE_CCA                            1
+#define PPSD_TRIPLE_CCA                            0
 #define PPSD_TEMPORAL_LINK                         1 /* To prevent current_link for EP from becomming NULL and skipped */
 #define PPSD_HANDLE_SKIPPED_EP_SLOT                1 /* To reset EP flags and stop EP in the case of skipped slot */
 #define PPSD_HANDLE_MISSED_EP_SLOT                 1 /* To reset EP flags and stop EP in the case of dl-miss main */
@@ -104,12 +105,12 @@
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
-//#define IOTLAB_SITE                                IOTLAB_LYON_2
+#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_5
 //#define IOTLAB_SITE                                IOTLAB_LYON_8
@@ -187,11 +188,14 @@
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
+//#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60 / 10)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 60)
-#define APP_START_DELAY                            (60 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+//#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
+//#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 #endif
 
@@ -283,9 +287,9 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
@@ -307,7 +311,7 @@
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define WITH_ORCHESTRA                             1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
