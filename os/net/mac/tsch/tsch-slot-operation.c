@@ -252,6 +252,9 @@ struct tsch_neighbor *ep_rx_nbr;
 static uint8_t ppsd_first_cca_detected;
 static uint8_t ppsd_second_cca_detected;
 static uint8_t ppsd_third_cca_detected;
+#if PPSD_DBG_TRIPLE_CCA_TIMING
+static rtimer_clock_t ppsd_triple_cca_timestamp[6];
+#endif
 #endif
 
 #if PPSD_DBG_EP_SLOT_TIMING /* Variables */
@@ -417,7 +420,7 @@ ost_add_matching_slot(uint16_t matching_slot, uint8_t is_tx, uint16_t nbr_id)
           TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),
                       "ost odp: add tx %u", ost_ssq_schedule_list[i].link.slotframe_handle);
-        );
+          );
 #endif
 
         } else {
@@ -428,7 +431,7 @@ ost_add_matching_slot(uint16_t matching_slot, uint8_t is_tx, uint16_t nbr_id)
           TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),
                       "ost odp: add rx %u", ost_ssq_schedule_list[i].link.slotframe_handle);
-        );
+          );
 #endif
 
         }
@@ -2845,10 +2848,17 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         ppsd_third_cca_detected = 0;
 
 #if PPSD_FIRST_CCA
+#if PPSD_DBG_TRIPLE_CCA_TIMING
+        ppsd_triple_cca_timestamp[0] = RTIMER_NOW();
+#endif
         /* CCA */
         RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
                            current_slot_start, tsch_timing[tsch_ts_cca_offset] + tsch_timing[tsch_ts_cca]);
         TSCH_DEBUG_TX_EVENT();
+
+#if PPSD_DBG_TRIPLE_CCA_TIMING
+        ppsd_triple_cca_timestamp[1] = RTIMER_NOW();
+#endif
 
         if(cca_status == 0) {
           ppsd_first_cca_detected = 1;
@@ -2864,11 +2874,19 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                                 tsch_timing[tsch_ts_cca_offset] + tsch_timing[ppsd_ts_inter_cca_offset], "cca2");
           TSCH_DEBUG_TX_EVENT();
 
+#if PPSD_DBG_TRIPLE_CCA_TIMING
+          ppsd_triple_cca_timestamp[2] = RTIMER_NOW();
+#endif
+
           /* 2nd CCA */
           RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
               current_slot_start, 
               tsch_timing[tsch_ts_cca_offset] + tsch_timing[ppsd_ts_inter_cca_offset] + tsch_timing[tsch_ts_cca]);
           TSCH_DEBUG_TX_EVENT();
+
+#if PPSD_DBG_TRIPLE_CCA_TIMING
+          ppsd_triple_cca_timestamp[3] = RTIMER_NOW();
+#endif
 
           if(cca_status == 0) {
             ppsd_second_cca_detected = 1;
@@ -2885,11 +2903,19 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                                 tsch_timing[tsch_ts_cca_offset] + tsch_timing[ppsd_ts_inter_cca_offset] * 2, "cca3");
           TSCH_DEBUG_TX_EVENT();
 
+#if PPSD_DBG_TRIPLE_CCA_TIMING
+          ppsd_triple_cca_timestamp[4] = RTIMER_NOW();
+#endif
+
           /* 3rd CCA */
           RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
               current_slot_start, 
               tsch_timing[tsch_ts_cca_offset] + tsch_timing[ppsd_ts_inter_cca_offset] * 2 + tsch_timing[tsch_ts_cca]);
           TSCH_DEBUG_TX_EVENT();
+
+#if PPSD_DBG_TRIPLE_CCA_TIMING
+          ppsd_triple_cca_timestamp[5] = RTIMER_NOW();
+#endif
 
           if(cca_status == 0) {
             ppsd_third_cca_detected = 1;
@@ -3265,6 +3291,23 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
     );
+
+#if PPSD_TRIPLE_CCA && PPSD_DBG_TRIPLE_CCA_TIMING
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "t_c %u %u %u %u %u %u ",
+        ppsd_triple_cca_timestamp[0] != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_triple_cca_timestamp[0], current_slot_start) : 0,
+        ppsd_triple_cca_timestamp[1] != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_triple_cca_timestamp[1], current_slot_start) : 0,
+        ppsd_triple_cca_timestamp[2] != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_triple_cca_timestamp[2], current_slot_start) : 0,
+        ppsd_triple_cca_timestamp[3] != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_triple_cca_timestamp[3], current_slot_start) : 0,
+        ppsd_triple_cca_timestamp[4] != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_triple_cca_timestamp[4], current_slot_start) : 0,
+        ppsd_triple_cca_timestamp[5] != 0 ? (unsigned)RTIMER_CLOCK_DIFF(ppsd_triple_cca_timestamp[5], current_slot_start) : 0));
+
+    uint8_t k = 0;
+    for(k = 0; k < 6; k++) {
+      ppsd_triple_cca_timestamp[k] = 0;
+    }
+#endif
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* Print regular tx slot timing */
     TSCH_LOG_ADD(tsch_log_message,
