@@ -452,8 +452,12 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     /* No scheduled slots for the packet available; drop it early to save queue space. */
     LOG_DBG("tsch_queue_add_packet(): rejected by the scheduler\n");
 
-    LOG_INFO("HCK add_p_f1 at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
-
+    TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+                "HCK add_p_f1 at %llu queue %u", 
+                tsch_queue_add_packet_asn, 
+                tsch_queue_global_packet_count());
+    );
     return NULL;
   }
 #endif
@@ -487,12 +491,14 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             LOG_DBG("packet is added put_index %u, packet %p\n",
                    put_index, p);
 
-            LOG_INFO("HCK add_p_s at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
-
+            TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                        "HCK add_p_s at %llu queue %u", 
+                        tsch_queue_add_packet_asn, 
+                        tsch_queue_global_packet_count());
+            );
             return p;
           } else {
-            LOG_INFO("HCK add_p_f2 at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
-
             memb_free(&packet_memb, p);
           }
         }
@@ -501,7 +507,12 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
   LOG_ERR("! add packet failed: %u %p %d %p %p\n", tsch_is_locked(), n, put_index, p, p ? p->qb : NULL);
 
-  LOG_INFO("HCK add_p_f3 at %llu queue %u\n", tsch_queue_add_packet_asn, tsch_queue_global_packet_count());
+  TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+              "HCK add_p_f2 at %llu queue %u", 
+              tsch_queue_add_packet_asn, 
+              tsch_queue_global_packet_count());
+  );
 
   return NULL;
 }
@@ -550,7 +561,12 @@ tsch_queue_free_packet(struct tsch_packet *p)
     memb_free(&packet_memb, p);
 
     uint64_t tsch_queue_free_packet_asn = tsch_calculate_current_asn();
-    LOG_INFO("HCK free_p at %llu queue %u\n", tsch_queue_free_packet_asn, tsch_queue_global_packet_count());
+    TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+                "HCK free_p at %llu queue %u", 
+                tsch_queue_free_packet_asn, 
+                tsch_queue_global_packet_count());
+    );
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -781,7 +797,11 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           //this function calculates time offset and channel offset 
           //on the basis of the link-level packet destiation (rx_linkaddr) and the current SFID.
           //Decides packet_timeslot and packet_channel_offset, checks rpl neighbor relations.
+#if ALICE_EARLY_PACKET_DROP
           int r = ALICE_PACKET_CELL_MATCHING_ON_THE_FLY(&packet_timeslot, &packet_channel_offset, rx_linkaddr);
+#else
+          ALICE_PACKET_CELL_MATCHING_ON_THE_FLY(&packet_timeslot, &packet_channel_offset, rx_linkaddr);
+#endif
 
 #if ENABLE_ALICE_PACKET_CELL_MATCHING_LOG
           TSCH_LOG_ADD(tsch_log_message,
@@ -795,6 +815,12 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           if(r == 0) { //no RPL neighbor --> ALICE EARLY PACKET DROP
             alice_early_packet_drop_count++;
 		        tsch_queue_free_packet(n->tx_array[get_index]);
+            ringbufindex_get(&(((struct tsch_neighbor *)n)->tx_ringbuf));
+
+            int16_t next_get_index = ringbufindex_peek_get(&n->tx_ringbuf);
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "ALICE early-packet-drop %d %d", get_index, next_get_index));
             return NULL;
           } else
 #endif
