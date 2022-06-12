@@ -192,5 +192,9 @@ uint16_t tsch_schedule_get_subsequent_schedule(struct tsch_asn_t *asn);
 void tsch_schedule_print_ost(void);
 #endif
 
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
+uint8_t tsch_schedule_get_next_timeslot_available_or_not(struct tsch_asn_t *asn, uint16_t * time_to_earliest);
+#endif
+
 #endif /* __TSCH_SCHEDULE_H__ */
 /** @} */

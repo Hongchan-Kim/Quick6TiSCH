@@ -531,11 +531,13 @@ print()
 if show_all == '1':
     for i in range(result_list.index('SCR'), RESULT_NUM - 1): 
         print(result_list[i], '\t', end='')
-    print(result_list[-1])
+    print(result_list[-1], '\t', end='')
+    print(result_list[0])
     for i in range(NODE_NUM):
         for j in range(result_list.index('SCR'), RESULT_NUM - 1): 
             print(bootstrap_period_result[i][j], '\t', end='')
-        print(bootstrap_period_result[i][-1])                                                                                                                                                                                                                                     
+        print(bootstrap_period_result[i][-1], '\t', end='')
+        print(bootstrap_period_result[i][0])
     print()
 
 
@@ -961,9 +963,11 @@ print()
 if show_all == '1':
     for i in range(result_list.index('SCR'), RESULT_NUM - 1): 
         print(result_list[i], '\t', end='')
-    print(result_list[-1])
+    print(result_list[-1], '\t', end='')
+    print(result_list[0])
     for i in range(NODE_NUM):
         for j in range(result_list.index('SCR'), RESULT_NUM - 1): 
             print(data_period_result[i][j], '\t', end='')
-        print(data_period_result[i][-1])                                                                                                                                                                                                                                     
+        print(data_period_result[i][-1], '\t', end='') 
+        print(data_period_result[i][0])
     print()

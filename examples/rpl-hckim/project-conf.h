@@ -18,8 +18,8 @@
 #define PPSD_TX_SLOT_BACKWARD_OFFLOADING           1
 #define PPSD_RX_SLOT_FORWARD_OFFLOADING            1
 #define PPSD_RX_SLOT_BACKWARD_OFFLOADING           1
-#define PPSD_TRIPLE_CCA                            0
-#define PPSD_TEMPORAL_LINK                         1 /* To prevent current_link for EP from becomming NULL and skipped */
+#define PPSD_TRIPLE_CCA                            1
+#define PPSD_TEMPORARY_LINK                        1 /* To prevent current_link for EP from becomming NULL and skipped */
 #define PPSD_HANDLE_SKIPPED_EP_SLOT                1 /* To reset EP flags and stop EP in the case of skipped slot */
 #define PPSD_HANDLE_MISSED_EP_SLOT                 1 /* To reset EP flags and stop EP in the case of dl-miss main */
 
@@ -54,6 +54,7 @@
 #define TSCH_TX_CCA_EARLY_TX_NODE                  0
 
 #if PPSD_TRIPLE_CCA
+#define PPSD_DBG_TRIPLE_CCA_TIMING                 0
 #define PPSD_FIRST_CCA                             1
 #define PPSD_SECOND_CCA                            1
 #define PPSD_THIRD_CCA                             1
@@ -61,9 +62,10 @@
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #define TSCH_CONF_BURST_MAX_LEN                    16 /* turn burst on */
-#define TSCH_DBT_TEMPORAL_LINK                     1
-#define TSCH_DBT_HANDLE_SKIPPED_EP_SLOT            1
-#define TSCH_DBT_HANDLE_MISSED_EP_SLOT             1
+#define MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION   1
+#define TSCH_DBT_TEMPORARY_LINK                    1
+#define TSCH_DBT_HANDLE_SKIPPED_DBT_SLOT           1
+#define TSCH_DBT_HANDLE_MISSED_DBT_SLOT            1
 #define TSCH_DBT_HOLD_CURRENT_NBR                  1
 #else
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
@@ -105,12 +107,12 @@
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
-#define IOTLAB_SITE                                IOTLAB_LYON_2
+//#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_5
 //#define IOTLAB_SITE                                IOTLAB_LYON_8
@@ -188,14 +190,11 @@
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
 
 #elif WITH_IOTLAB
-//#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60 / 10)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 60)
-//#define APP_START_DELAY                            (30 * 60 * CLOCK_SECOND)
-//#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
-#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (10 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (20 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 #endif
 
@@ -207,12 +206,17 @@
 #define VARY_LENGTH                                8
 #endif
 
-#define APP_PAYLOAD_LEN                            14 // Min len with App footer
+//#define APP_PAYLOAD_LEN                            14 // Min len with App footer
 //#define APP_PAYLOAD_LEN                            86 // Max len of Orchestra/ALICE in single hop
+//#define APP_PAYLOAD_LEN                            69 // Max len of Orchestra/ALICE in multi hop
 //#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + EP in single hop
+//#define APP_PAYLOAD_LEN                            63 // Max len of Orchestra/ALICE + EP in multi hop
 //#define APP_PAYLOAD_LEN                            84 // Max len of OST w/o ODP in single hop
+//#define APP_PAYLOAD_LEN                            67 // Max len of OST w/o ODP in multi hop
 //#define APP_PAYLOAD_LEN                            82 // Max len of OST in single hop
+//#define APP_PAYLOAD_LEN                            65 // Max len of OST in multi hop
 //#define APP_PAYLOAD_LEN                            78 // Max len of OST + EP in single hop
+#define APP_PAYLOAD_LEN                            61 // Max len of OST + EP in multi hop
 
 #define APP_DATA_MAGIC                             0x58FE
 
@@ -227,7 +231,8 @@
 /* 
  * Configure Contiki-NG system
  */
-#define NBR_TABLE_CONF_MAX_NEIGHBORS               (NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
+#define MAX_NBR_NODE_NUM                           20
+#define NBR_TABLE_CONF_MAX_NEIGHBORS               (MAX_NBR_NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
 /*---------------------------------------------------------------------------*/
 
 
@@ -343,7 +348,7 @@
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
 #define ALICE_EARLY_PACKET_DROP                    1
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
@@ -364,7 +369,7 @@
 #define OST_ON_DEMAND_PROVISION                    0
 
 #define OST_HANDLE_QUEUED_PACKETS                  1
-#define WITH_OST_LOG_INFO                          1
+#define WITH_OST_LOG_INFO                          0
 #define WITH_OST_LOG_DBG                           0
 #define WITH_OST_LOG_NBR                           0
 #define WITH_OST_LOG_SCH                           0
@@ -381,8 +386,8 @@
 #define OST_T_OFFSET_ALLOCATION_FAILURE            ((1 << OST_N_MAX) + 1)
 #define OST_T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST    ((1 << OST_N_MAX) + 2)
 #define OST_THRES_CONSECUTIVE_NEW_TX_SCHEDULE_REQUEST           10
-#define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          (3 + 4 * NODE_NUM + 2) /* EB, CS, RBUC, Periodic, Ondemand, 2 for spare */
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 1 + NODE_NUM + 4 * NODE_NUM + 2) /* EB (2), CS (1), RBUC (1 + NODE_NUM), Periodic, Ondemand, 2 for spare */
+#define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          (3 + 4 * MAX_NBR_NODE_NUM + 2) /* EB, CS, RBUC, Periodic, Ondemand, 2 for spare */
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 1 + MAX_NBR_NODE_NUM + 4 * MAX_NBR_NODE_NUM + 2) /* EB (2), CS (1), RBUC (1 + NODE_NUM), Periodic, Ondemand, 2 for spare */
 #define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) /* End of the periodic slotframe (Under-provision uses up to 2*NODE_NUM+2) */
 
 /* for log messages */
@@ -393,8 +398,6 @@
 #define OST_ONDEMAND_SF_ID_OFFSET                  SSQ_SCHEDULE_HANDLE_OFFSET
 
 /* OST only */
-#define OST_TSCH_TS_RX_ACK_DELAY                   1300
-#define OST_TSCH_TS_TX_ACK_DELAY                   1500
 #define TSCH_CONF_RX_WAIT                          800 /* ignore too late packets */
 #define OST_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define OST_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 

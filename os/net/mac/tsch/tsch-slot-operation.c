@@ -180,7 +180,7 @@ static struct tsch_neighbor *current_neighbor = NULL;
 /* Indicates whether an extra link is needed to handle the current burst */
 static int burst_link_scheduled = 0;
 static int is_burst_slot = 0;
-#if TSCH_DBT_TEMPORAL_LINK
+#if TSCH_DBT_TEMPORARY_LINK
 struct tsch_link temporal_burst_link;
 #endif
 #if TSCH_DBT_HANDLE_MISSED_DBT_SLOT
@@ -209,7 +209,7 @@ uint8_t eval_num_of_pkts_in_ep = 1;
 #endif
 
 #if WITH_PPSD
-#if PPSD_TEMPORAL_LINK
+#if PPSD_TEMPORARY_LINK
 struct tsch_link temporal_ep_link;
 #endif
 #if PPSD_HANDLE_MISSED_EP_SLOT
@@ -2708,8 +2708,15 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       if(do_wait_for_ack
              && tsch_current_burst_count + 1 < TSCH_BURST_MAX_LEN
              && tsch_queue_nbr_packet_count(current_neighbor) > 1) {
-        burst_link_requested = 1;
-        tsch_packet_set_frame_pending(packet, packet_len);
+#if MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
+        uint16_t time_to_earliest_schedule = 0;
+        if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
+#endif
+          burst_link_requested = 1;
+          tsch_packet_set_frame_pending(packet, packet_len);
+#if MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
+        }
+#endif
       }
 #endif
 
@@ -3844,7 +3851,17 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 ppsd_pkts_acceptable = 0;
 #elif WITH_TSCH_DEFAULT_BURST_TRANSMISSION
                 /* Schedule a burst link iff the frame pending bit was set */
-                burst_link_scheduled = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
+                int frame_pending_bit_set_or_not = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
+                if(frame_pending_bit_set_or_not) {
+                  uint16_t time_to_earliest_schedule = 0;
+                  if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
+                    burst_link_scheduled = 1;
+                  } else {
+                    burst_link_scheduled = 0;
+                  }
+                } else {
+                  burst_link_scheduled = 0;
+                }
 #if TSCH_DBT_HOLD_CURRENT_NBR
                 if(burst_link_scheduled == 1) {
                   burst_link_tx = 0;
@@ -4706,7 +4723,7 @@ ost_donothing:
           timeslot_diff = 1;
           backup_link = NULL;
 
-#if PPSD_TEMPORAL_LINK
+#if PPSD_TEMPORARY_LINK
           temporal_ep_link.next = NULL;
           temporal_ep_link.handle = current_link->handle;
           linkaddr_copy(&(temporal_ep_link.addr), &(current_link->addr));
@@ -4783,7 +4800,7 @@ ost_donothing:
             timeslot_diff = 1;
             backup_link = NULL;
 
-#if TSCH_DBT_TEMPORAL_LINK
+#if TSCH_DBT_TEMPORARY_LINK
             temporal_burst_link.next = NULL;
             temporal_burst_link.handle = current_link->handle;
             linkaddr_copy(&(temporal_burst_link.addr), &(current_link->addr));
