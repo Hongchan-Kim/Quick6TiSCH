@@ -818,9 +818,11 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
             ringbufindex_get(&(((struct tsch_neighbor *)n)->tx_ringbuf));
 
             int16_t next_get_index = ringbufindex_peek_get(&n->tx_ringbuf);
+#if ENABLE_ALICE_EARLY_PACKET_DROP_LOG
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "ALICE early-packet-drop %d %d", get_index, next_get_index));
+                    "ALICE e-p-d %d %d", get_index, next_get_index));
+#endif
             return NULL;
           } else
 #endif

@@ -2711,11 +2711,23 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
         uint16_t time_to_earliest_schedule = 0;
         if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
+#if ENABLE_MODIFIED_DBT_LOG
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "sched dbt tx req %d %d", burst_link_requested, time_to_earliest_schedule));
+#endif
 #endif
           burst_link_requested = 1;
           tsch_packet_set_frame_pending(packet, packet_len);
 #if MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
         }
+#if ENABLE_MODIFIED_DBT_LOG
+        else {
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "sched dbt tx coll %d %d", burst_link_requested, time_to_earliest_schedule));
+        }
+#endif
 #endif
       }
 #endif
@@ -3229,6 +3241,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 the extra slot will be scheduled at the received */
                 if(burst_link_requested) {
                   burst_link_scheduled = 1;
+#if ENABLE_MODIFIED_DBT_LOG
+                  TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                      "sched dbt tx succ %d", burst_link_scheduled));
+#endif
 #if TSCH_DBT_HOLD_CURRENT_NBR
                   burst_link_tx = 1;
                   burst_link_rx = 0;
@@ -3856,8 +3873,18 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                   uint16_t time_to_earliest_schedule = 0;
                   if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
                     burst_link_scheduled = 1;
+#if ENABLE_MODIFIED_DBT_LOG
+                    TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "sched dbt rx succ %d %d", burst_link_scheduled, time_to_earliest_schedule));
+#endif
                   } else {
                     burst_link_scheduled = 0;
+#if ENABLE_MODIFIED_DBT_LOG
+                    TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "sched dbt rx coll %d %d", burst_link_scheduled, time_to_earliest_schedule));
+#endif
                   }
                 } else {
                   burst_link_scheduled = 0;

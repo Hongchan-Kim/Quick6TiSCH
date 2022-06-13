@@ -63,6 +63,7 @@
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #define TSCH_CONF_BURST_MAX_LEN                    16 /* turn burst on */
 #define MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION   1
+#define ENABLE_MODIFIED_DBT_LOG                    0
 #define TSCH_DBT_TEMPORARY_LINK                    1
 #define TSCH_DBT_HANDLE_SKIPPED_DBT_SLOT           1
 #define TSCH_DBT_HANDLE_MISSED_DBT_SLOT            1
@@ -206,7 +207,7 @@
 #define VARY_LENGTH                                8
 #endif
 
-//#define APP_PAYLOAD_LEN                            14 // Min len with App footer
+#define APP_PAYLOAD_LEN                            14 // Min len with App footer
 //#define APP_PAYLOAD_LEN                            86 // Max len of Orchestra/ALICE in single hop
 //#define APP_PAYLOAD_LEN                            69 // Max len of Orchestra/ALICE in multi hop
 //#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + EP in single hop
@@ -216,9 +217,9 @@
 //#define APP_PAYLOAD_LEN                            82 // Max len of OST in single hop
 //#define APP_PAYLOAD_LEN                            65 // Max len of OST in multi hop
 //#define APP_PAYLOAD_LEN                            78 // Max len of OST + EP in single hop
-#define APP_PAYLOAD_LEN                            61 // Max len of OST + EP in multi hop
+//#define APP_PAYLOAD_LEN                            61 // Max len of OST + EP in multi hop
 
-#define APP_DATA_MAGIC                             0x58FE
+#define APP_DATA_MAGIC                             0x58FA
 
 #define APP_SEQNO_DUPLICATE_CHECK                  1
 #if APP_SEQNO_DUPLICATE_CHECK
@@ -271,7 +272,7 @@
  */
 #define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
 #define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* 8 in OST, originally 4 */
-#define IEEE802154_CONF_PANID                      0x58FE //22782 hckim //0x81a5 //ksh
+#define IEEE802154_CONF_PANID                      0x58FA //22782 hckim //0x81a5 //ksh
 //#define TSCH_CONF_AUTOSTART                        0 //ksh
 //#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH          3 //ksh 6TiSCH minimal schedule length.
 #ifndef WITH_SECURITY
@@ -316,7 +317,7 @@
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define WITH_ORCHESTRA                             1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        0 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
@@ -350,6 +351,7 @@
 #define ALICE_EARLY_PACKET_DROP                    1
 #define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
+#define ENABLE_ALICE_EARLY_PACKET_DROP_LOG         0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
 
