@@ -441,6 +441,12 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
                       mac_callback_t sent, void *ptr)
 {
   uint64_t tsch_queue_add_packet_asn = tsch_calculate_current_asn();
+  uint8_t is_unicast = !(linkaddr_cmp(addr, &tsch_eb_address)
+                        || linkaddr_cmp(addr, &tsch_broadcast_address));
+  int global_queued_pkts = 0;
+  int bc_queued_pkts = 0;
+  int eb_queued_pkts = 0;
+  int uc_queued_pkts = 0;
 
   struct tsch_neighbor *n = NULL;
   int16_t put_index = -1;
@@ -452,11 +458,20 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     /* No scheduled slots for the packet available; drop it early to save queue space. */
     LOG_DBG("tsch_queue_add_packet(): rejected by the scheduler\n");
 
+    global_queued_pkts = tsch_queue_global_packet_count();
+    bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
+    eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
+    uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
+
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "HCK add_p_f1 at %llu queue %u", 
-                tsch_queue_add_packet_asn, 
-                tsch_queue_global_packet_count());
+                "QU af1 uc %u at %llx q %d %d %d %d", 
+                is_unicast, 
+                tsch_queue_add_packet_asn,
+                global_queued_pkts,
+                uc_queued_pkts,
+                bc_queued_pkts,
+                eb_queued_pkts);
     );
     return NULL;
   }
@@ -491,11 +506,20 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             LOG_DBG("packet is added put_index %u, packet %p\n",
                    put_index, p);
 
+            global_queued_pkts = tsch_queue_global_packet_count();
+            bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
+            eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
+            uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
+
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                        "HCK add_p_s at %llu queue %u", 
-                        tsch_queue_add_packet_asn, 
-                        tsch_queue_global_packet_count());
+                        "QU as uc %u at %llx q %d %d %d %d", 
+                        is_unicast, 
+                        tsch_queue_add_packet_asn,
+                        global_queued_pkts,
+                        uc_queued_pkts,
+                        bc_queued_pkts,
+                        eb_queued_pkts);
             );
             return p;
           } else {
@@ -507,13 +531,21 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
   LOG_ERR("! add packet failed: %u %p %d %p %p\n", tsch_is_locked(), n, put_index, p, p ? p->qb : NULL);
 
+  global_queued_pkts = tsch_queue_global_packet_count();
+  bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
+  eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
+  uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
+
   TSCH_LOG_ADD(tsch_log_message,
           snprintf(log->message, sizeof(log->message),
-              "HCK add_p_f2 at %llu queue %u", 
-              tsch_queue_add_packet_asn, 
-              tsch_queue_global_packet_count());
+              "QU af2 uc %u at %llx q %d %d %d %d", 
+              is_unicast, 
+              tsch_queue_add_packet_asn,
+              global_queued_pkts,
+              uc_queued_pkts,
+              bc_queued_pkts,
+              eb_queued_pkts);
   );
-
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
@@ -557,15 +589,30 @@ void
 tsch_queue_free_packet(struct tsch_packet *p)
 {
   if(p != NULL) {
+    linkaddr_t addr;
+    linkaddr_copy(&addr, queuebuf_addr(p->qb, PACKETBUF_ADDR_RECEIVER));
+    uint8_t is_unicast = !(linkaddr_cmp(&addr, &tsch_eb_address)
+                        || linkaddr_cmp(&addr, &tsch_broadcast_address));
+
     queuebuf_free(p->qb);
     memb_free(&packet_memb, p);
 
     uint64_t tsch_queue_free_packet_asn = tsch_calculate_current_asn();
+
+    int global_queued_pkts = tsch_queue_global_packet_count();
+    int bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
+    int eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
+    int uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
+
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "HCK free_p at %llu queue %u", 
-                tsch_queue_free_packet_asn, 
-                tsch_queue_global_packet_count());
+                "QU f uc %u at %llx q %d %d %d %d", 
+                is_unicast, 
+                tsch_queue_free_packet_asn,
+                global_queued_pkts,
+                uc_queued_pkts,
+                bc_queued_pkts,
+                eb_queued_pkts);
     );
   }
 }

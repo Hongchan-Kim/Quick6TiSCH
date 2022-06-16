@@ -110,7 +110,8 @@ app_up_sequence_register_seqno(uint16_t sender_id, uint16_t current_app_up_seqno
 static void
 reset_log()
 {
-  LOG_INFO("HCK reset_log |\n");
+  uint64_t app_server_reset_log_asn = tsch_calculate_current_asn();
+  LOG_INFO("HCK reset_log at %llx |\n", app_server_reset_log_asn);
   reset_log_tcpip();              /* tcpip.c */
   reset_log_sicslowpan();         /* sicslowpan.c */
   reset_log_tsch();               /* tsch.c */
