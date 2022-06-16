@@ -3215,43 +3215,56 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 mac_tx_status = MAC_TX_OK;
 
 #if WITH_PPSD
-                if(ack_len != 0) {
-                  uint16_t ppsd_pkts_allowed = 0;
+                uint16_t ppsd_pkts_allowed = 0;
 #if PPSD_HEADER_IE_IN_DATA_AND_ACK
-                  ppsd_pkts_allowed = ack_ies.ie_ppsd_info;
+                ppsd_pkts_allowed = ack_ies.ie_ppsd_info;
 #endif
 #if PPSD_DBG_EP_ESSENTIAL
-                  if(ppsd_link_requested) {
-                    TSCH_LOG_ADD(tsch_log_message,
-                        snprintf(log->message, sizeof(log->message),
-                        "ep pol allowed %u", ppsd_pkts_allowed));
-                  }
-#endif
-                  if(ppsd_link_requested && ppsd_pkts_allowed > 0) {
-                    ppsd_link_scheduled = 1;
-                    ppsd_pkts_to_send = ppsd_pkts_allowed;
-                  } else {
-                    ppsd_link_scheduled = 0;
-                    ppsd_pkts_to_send = 0;
-                  }
-                  ppsd_link_requested = 0;
+                if(ppsd_link_requested) {
+                  TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                      "ep pol allowed %u", ppsd_pkts_allowed));
                 }
+#endif
+                if(ppsd_link_requested && ppsd_pkts_allowed > 0) {
+                  ppsd_link_scheduled = 1;
+                  ppsd_pkts_to_send = ppsd_pkts_allowed;
+                } else {
+                  ppsd_link_scheduled = 0;
+                  ppsd_pkts_to_send = 0;
+                }
+                ppsd_link_requested = 0;
+                
 #elif WITH_TSCH_DEFAULT_BURST_TRANSMISSION
                 /* We requested an extra slot and got an ack. This means
                 the extra slot will be scheduled at the received */
                 if(burst_link_requested) {
-                  burst_link_scheduled = 1;
+#if MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
+                  if(tsch_packet_get_frame_pending(ackbuf, ack_len)) {
 #if ENABLE_MODIFIED_DBT_LOG
-                  TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                      "sched dbt tx succ %d", burst_link_scheduled));
+                    TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "sched dbt tx succ %d", burst_link_scheduled));
 #endif
+#endif
+                    burst_link_scheduled = 1;
 #if TSCH_DBT_HOLD_CURRENT_NBR
-                  burst_link_tx = 1;
-                  burst_link_rx = 0;
+                    burst_link_tx = 1;
+                    burst_link_rx = 0;
+#endif
+#if MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
+                  } else {
+#if ENABLE_MODIFIED_DBT_LOG
+                    TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "sched dbt tx fail %d", burst_link_scheduled));
+#endif
+                    burst_link_scheduled = 0;
+                  }
 #endif
                 }
-#endif
+
+#endif /* WITH_TSCH_DEFAULT_BURST_TRANSMISSION */
 
               } else {
                 mac_tx_status = MAC_TX_NOACK;
@@ -3775,7 +3788,42 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                     ppsd_free_input_ringbuf, ppsd_free_any_queue));
 #endif
               }
-#endif /* WITH_PPSD */
+
+#elif WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+#if MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
+              /* Schedule a burst link iff the frame pending bit was set */
+              int frame_pending_bit_set_or_not = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
+              if(frame_pending_bit_set_or_not) {
+                uint16_t time_to_earliest_schedule = 0;
+                if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
+                  burst_link_scheduled = 1;
+#if ENABLE_MODIFIED_DBT_LOG
+                  TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                      "sched dbt rx succ %d %d", burst_link_scheduled, time_to_earliest_schedule));
+#endif
+                } else {
+                  burst_link_scheduled = 0;
+#if ENABLE_MODIFIED_DBT_LOG
+                  TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                      "sched dbt rx coll %d %d", burst_link_scheduled, time_to_earliest_schedule));
+#endif
+                }
+              } else {
+                burst_link_scheduled = 0;
+              }
+#else
+              /* Schedule a burst link iff the frame pending bit was set */
+              burst_link_scheduled = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
+#endif
+#if TSCH_DBT_HOLD_CURRENT_NBR
+              if(burst_link_scheduled == 1) {
+                burst_link_tx = 0;
+                burst_link_rx = 1;
+              }
+#endif
+#endif
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* RegRx7: before create ACK */
               regular_slot_timestamp_rx[7] = RTIMER_NOW();
@@ -3791,6 +3839,13 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               /* Build ACK frame */
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack);
+
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
+              if(burst_link_scheduled == 1) {
+                tsch_packet_set_frame_pending(ack_buf, ack_len);
+              }
+#endif
+
 #endif
 #else /* !WITH_OST */
 #if OST_ON_DEMAND_PROVISION
@@ -3808,6 +3863,13 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               ack_len = tsch_packet_create_eack(ack_buf, sizeof(ack_buf),
                   &source_address, frame.seq, (int16_t)RTIMERTICKS_TO_US(estimated_drift), do_nack, 
                   current_input);
+
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
+              if(burst_link_scheduled == 1) {
+                tsch_packet_set_frame_pending(ack_buf, ack_len);
+              }
+#endif
+
 #endif
 #endif /* !WITH_OST */
 
@@ -3867,34 +3929,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 }
                 ppsd_pkts_acceptable = 0;
 #elif WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-                /* Schedule a burst link iff the frame pending bit was set */
-                int frame_pending_bit_set_or_not = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
-                if(frame_pending_bit_set_or_not) {
-                  uint16_t time_to_earliest_schedule = 0;
-                  if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
-                    burst_link_scheduled = 1;
-#if ENABLE_MODIFIED_DBT_LOG
-                    TSCH_LOG_ADD(tsch_log_message,
-                        snprintf(log->message, sizeof(log->message),
-                        "sched dbt rx succ %d %d", burst_link_scheduled, time_to_earliest_schedule));
-#endif
-                  } else {
-                    burst_link_scheduled = 0;
-#if ENABLE_MODIFIED_DBT_LOG
-                    TSCH_LOG_ADD(tsch_log_message,
-                        snprintf(log->message, sizeof(log->message),
-                        "sched dbt rx coll %d %d", burst_link_scheduled, time_to_earliest_schedule));
-#endif
-                  }
-                } else {
-                  burst_link_scheduled = 0;
-                }
-#if TSCH_DBT_HOLD_CURRENT_NBR
-                if(burst_link_scheduled == 1) {
-                  burst_link_tx = 0;
-                  burst_link_rx = 1;
-                }
-#endif
 #endif
               }
             }
