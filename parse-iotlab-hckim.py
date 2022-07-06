@@ -345,6 +345,8 @@ for i in range(NODE_NUM):
                 bootstrap_period_result[i][j] = 'NaN'
             else:
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('dc_total_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('dc_count')]) / 100, 2)
+        elif result_list[j] == 'e_drop':
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('e_drop')]
         elif result_list[j] == 'SCR':
             if float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
@@ -774,6 +776,8 @@ for i in range(NODE_NUM):
                 data_period_result[i][j] = 'NaN'
             else:
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('dc_total_sum')]) / float(data_period_parsed[i][metric_list.index('dc_count')]) / 100, 2)
+        elif result_list[j] == 'e_drop':
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('e_drop')]
         elif result_list[j] == 'SCR':
             if float(data_period_parsed[i][metric_list.index('asso_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
@@ -902,7 +906,6 @@ for i in range(NODE_NUM):
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_ep_tx_rs')]
         elif result_list[j] == 'PERR':
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_ep_rx_rs')]
-
         elif result_list[j] == 'CETO':
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('bc_ep_tx_ok')]
         elif result_list[j] == 'CERO':
@@ -915,8 +918,6 @@ for i in range(NODE_NUM):
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_ep_tx_ok')]
         elif result_list[j] == 'PERO':
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_ep_rx_ok')]
-
-
         elif result_list[j] == 'CETE':
             if float(data_period_parsed[i][metric_list.index('bc_ep_tx_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
