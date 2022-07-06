@@ -126,7 +126,7 @@ uint16_t iotlab_nodes[NODE_NUM][3] = {
   {265, 0xa470, 0},
   {264, 0x9575, 0},
   {263, 0x8470, 0},
-//  {261, 0x9483, 0},
+  {261, 0x9483, 0}, // once problematic node
   {260, 0xa478, 0},
   {259, 0xa580, 0},
   {258, 0x1860, 0},
@@ -177,8 +177,8 @@ uint16_t iotlab_nodes[NODE_NUM][3] = {
   {212, 0xb280, 0},
   {211, 0x8875, 0},
   {210, 0xc081, 0},
-  {209, 0xb379, 0},
-  {208, 0x9076, 0},
+  {209, 0xb379, 0}
+//  {208, 0x9076, 0} // substitute of 261 node
 //  {207, 0xa379, 0},
 //  {205, 0x8967, 0},
 //  {204, 0xb877, 0}
@@ -186,8 +186,8 @@ uint16_t iotlab_nodes[NODE_NUM][3] = {
 #elif IOTLAB_SITE == IOTLAB_GRENOBLE_79_R_CORNER_D
 uint16_t iotlab_nodes[NODE_NUM][3] = {
   // {host name, uid, rx count}
-  {208, 0x9076, 0}, // root node
-  {209, 0xb379, 0},
+//  {208, 0x9076, 0}, // substitute of root node
+  {209, 0xb379, 0}, // root node
   {210, 0xc081, 0},
   {211, 0x8875, 0},
   {212, 0xb280, 0},
@@ -238,6 +238,7 @@ uint16_t iotlab_nodes[NODE_NUM][3] = {
   {258, 0x1860, 0},
   {259, 0xa580, 0},
   {260, 0xa478, 0},
+  {261, 0x9483, 0}, // once problematic node
   {263, 0x8470, 0},
   {264, 0x9575, 0},
   {265, 0xa470, 0},

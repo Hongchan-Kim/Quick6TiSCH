@@ -3551,11 +3551,19 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
 
     if(!packet_seen) {
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* RegRx3: rx start time */
+      regular_slot_timestamp_rx[3] = RTIMER_NOW();
+#endif
+
       /* Check if receiving within guard time */
       RTIMER_BUSYWAIT_UNTIL_ABS((packet_seen = (NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet())),
           current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + RADIO_DELAY_BEFORE_DETECT);
     }
     if(!packet_seen) {
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* RegRx3: rx start time */
+      regular_slot_timestamp_rx[4] = RTIMER_NOW();
+#endif
+
       /* no packets on air */
       tsch_radio_off(TSCH_RADIO_CMD_OFF_FORCE);
 
@@ -3565,6 +3573,30 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           "!no packet seen"));
 #endif
 
+#if PPSD_DBG_REGULAR_SLOT_TIMING /* Print regular rx slot timing */
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "reg r_c %u %u",
+          (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_common[0], current_slot_start),
+          (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_common[1], current_slot_start)));
+
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "reg r_1 %u %u %u %u %u",
+          (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[0], current_slot_start),
+          (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[1], current_slot_start),
+          (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[2], current_slot_start),
+          (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[3], current_slot_start),
+          (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[4], current_slot_start)));
+
+      uint8_t j = 0;
+      for(j = 0; j < 2; j++) {
+        regular_slot_timestamp_common[j] = 0;
+      }
+      for(j = 0; j < 5; j++) {
+        regular_slot_timestamp_rx[j] = 0;
+      }
+#endif
     } else {
       TSCH_DEBUG_RX_EVENT();
       /* Save packet timestamp */

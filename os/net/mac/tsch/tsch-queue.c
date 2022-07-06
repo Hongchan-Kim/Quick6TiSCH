@@ -440,6 +440,7 @@ struct tsch_packet *
 tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
                       mac_callback_t sent, void *ptr)
 {
+#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
   uint64_t tsch_queue_add_packet_asn = tsch_calculate_current_asn();
   uint8_t is_unicast = !(linkaddr_cmp(addr, &tsch_eb_address)
                         || linkaddr_cmp(addr, &tsch_broadcast_address));
@@ -447,6 +448,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   int bc_queued_pkts = 0;
   int eb_queued_pkts = 0;
   int uc_queued_pkts = 0;
+#endif
 
   struct tsch_neighbor *n = NULL;
   int16_t put_index = -1;
@@ -458,6 +460,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     /* No scheduled slots for the packet available; drop it early to save queue space. */
     LOG_DBG("tsch_queue_add_packet(): rejected by the scheduler\n");
 
+#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
     global_queued_pkts = tsch_queue_global_packet_count();
     bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
     eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
@@ -473,6 +476,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
                 bc_queued_pkts,
                 eb_queued_pkts);
     );
+#endif
     return NULL;
   }
 #endif
@@ -506,6 +510,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             LOG_DBG("packet is added put_index %u, packet %p\n",
                    put_index, p);
 
+#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
             global_queued_pkts = tsch_queue_global_packet_count();
             bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
             eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
@@ -521,6 +526,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
                         bc_queued_pkts,
                         eb_queued_pkts);
             );
+#endif
             return p;
           } else {
             memb_free(&packet_memb, p);
@@ -531,6 +537,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
   LOG_ERR("! add packet failed: %u %p %d %p %p\n", tsch_is_locked(), n, put_index, p, p ? p->qb : NULL);
 
+#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
   global_queued_pkts = tsch_queue_global_packet_count();
   bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
   eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
@@ -546,6 +553,8 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
               bc_queued_pkts,
               eb_queued_pkts);
   );
+#endif
+
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
@@ -589,14 +598,17 @@ void
 tsch_queue_free_packet(struct tsch_packet *p)
 {
   if(p != NULL) {
+#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
     linkaddr_t addr;
     linkaddr_copy(&addr, queuebuf_addr(p->qb, PACKETBUF_ADDR_RECEIVER));
     uint8_t is_unicast = !(linkaddr_cmp(&addr, &tsch_eb_address)
                         || linkaddr_cmp(&addr, &tsch_broadcast_address));
+#endif
 
     queuebuf_free(p->qb);
     memb_free(&packet_memb, p);
 
+#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
     uint64_t tsch_queue_free_packet_asn = tsch_calculate_current_asn();
 
     int global_queued_pkts = tsch_queue_global_packet_count();
@@ -614,6 +626,7 @@ tsch_queue_free_packet(struct tsch_packet *p)
                 bc_queued_pkts,
                 eb_queued_pkts);
     );
+#endif
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -864,8 +877,8 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
 		        tsch_queue_free_packet(n->tx_array[get_index]);
             ringbufindex_get(&(((struct tsch_neighbor *)n)->tx_ringbuf));
 
-            int16_t next_get_index = ringbufindex_peek_get(&n->tx_ringbuf);
 #if ENABLE_ALICE_EARLY_PACKET_DROP_LOG
+            int16_t next_get_index = ringbufindex_peek_get(&n->tx_ringbuf);
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
                     "ALICE e-p-d %d %d", get_index, next_get_index));

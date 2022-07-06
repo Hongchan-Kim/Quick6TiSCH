@@ -42,7 +42,7 @@
 
 static struct simple_udp_connection udp_conn;
 
-static uint64_t lt_up_sum = 0;
+static uint64_t lt_up_sum[NODE_NUM];
 
 /*---------------------------------------------------------------------------*/
 #if APP_SEQNO_DUPLICATE_CHECK
@@ -170,8 +170,8 @@ udp_rx_callback(struct simple_udp_connection *c,
     LOG_INFO_6ADDR(sender_addr);
     LOG_INFO_("\n");
 
-    lt_up_sum += (app_rx_up_asn - app_tx_up_asn);
-    LOG_INFO("HCK lt_up_sum %llu from %u %x (%u %x) |\n", lt_up_sum,
+    lt_up_sum[sender_index] += (app_rx_up_asn - app_tx_up_asn);
+    LOG_INFO("HCK lt_up_sum %llu from %u %x (%u %x) |\n", lt_up_sum[sender_index],
               sender_index + 1, sender_index + 1, 
               iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1]);
   }
