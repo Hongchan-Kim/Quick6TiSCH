@@ -4015,103 +4015,103 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
             );
-          }
 
 #if PPSD_DBG_REGULAR_SLOT_TIMING /* Print regular rx slot timing */
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "reg r_r %u %u a_l %u", current_input->len, frame.fcf.ack_required, regular_slot_rx_ack_len));
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "reg r_r %u %u a_l %u", current_input->len, frame.fcf.ack_required, regular_slot_rx_ack_len));
 
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "reg r_c %u %u",
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_common[0], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_common[1], current_slot_start)));
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "reg r_c %u %u",
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_common[0], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_common[1], current_slot_start)));
 
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "reg r_1 %u %u %u %u %u",
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[0], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[1], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[2], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[3], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[4], current_slot_start)));
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "reg r_1 %u %u %u %u %u",
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[0], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[1], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[2], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[3], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[4], current_slot_start)));
 
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "reg r_2 %u %u %u %u %u",
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[5], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[6], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[7], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[8], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[9], current_slot_start)));
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "reg r_2 %u %u %u %u %u",
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[5], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[6], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[7], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[8], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[9], current_slot_start)));
 
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "reg r_3 %u %u %u %u",
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[10], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[11], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[12], current_slot_start),
-              (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[13], current_slot_start)));
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "reg r_3 %u %u %u %u",
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[10], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[11], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[12], current_slot_start),
+                (unsigned)RTIMER_CLOCK_DIFF(regular_slot_timestamp_rx[13], current_slot_start)));
 
-          regular_slot_rx_ack_len = 0;
+            regular_slot_rx_ack_len = 0;
 
-          uint8_t j = 0;
-          for(j = 0; j < 2; j++) {
-            regular_slot_timestamp_common[j] = 0;
-          }
-          for(j = 0; j < 14; j++) {
-            regular_slot_timestamp_rx[j] = 0;
-          }
+            uint8_t j = 0;
+            for(j = 0; j < 2; j++) {
+              regular_slot_timestamp_common[j] = 0;
+            }
+            for(j = 0; j < 14; j++) {
+              regular_slot_timestamp_rx[j] = 0;
+            }
 #endif
 
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-          /* hckim measure rx operation counts */
-          if(current_link->slotframe_handle == TSCH_SCHED_EB_SF_HANDLE) {
-            ++tsch_eb_sf_rx_operation_count;
-          } else if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-            ++tsch_common_sf_rx_operation_count;
-          } else if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
-            ++tsch_unicast_sf_rx_operation_count;
-          }
-#if WITH_OST
-          else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
-            && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
-            ++tsch_ost_pp_sf_rx_operation_count;
-          } else if(current_link->slotframe_handle > OST_ONDEMAND_SF_ID_OFFSET) {
-            ++tsch_ost_odp_sf_rx_operation_count;
-          }
-#endif
-#else /*  !WITH_TSCH_DEFAULT_BURST_TRANSMISSION */
-          /* hckim measure rx operation counts */
-          if(!is_burst_slot) {
+            /* hckim measure rx operation counts */
             if(current_link->slotframe_handle == TSCH_SCHED_EB_SF_HANDLE) {
               ++tsch_eb_sf_rx_operation_count;
             } else if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
               ++tsch_common_sf_rx_operation_count;
             } else if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
               ++tsch_unicast_sf_rx_operation_count;
-            } 
+            }
 #if WITH_OST
             else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
               && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
               ++tsch_ost_pp_sf_rx_operation_count;
+            } else if(current_link->slotframe_handle > OST_ONDEMAND_SF_ID_OFFSET) {
+              ++tsch_ost_odp_sf_rx_operation_count;
             }
 #endif
-          } else {
-            if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-              ++tsch_common_sf_bst_rx_operation_count;
-            } else if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
-              ++tsch_unicast_sf_bst_rx_operation_count;
-            } 
+#else /*  !WITH_TSCH_DEFAULT_BURST_TRANSMISSION */
+            /* hckim measure rx operation counts */
+            if(!is_burst_slot) {
+              if(current_link->slotframe_handle == TSCH_SCHED_EB_SF_HANDLE) {
+                ++tsch_eb_sf_rx_operation_count;
+              } else if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+                ++tsch_common_sf_rx_operation_count;
+              } else if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
+                ++tsch_unicast_sf_rx_operation_count;
+              } 
 #if WITH_OST
-            else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
-              && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
-              ++tsch_ost_pp_sf_bst_rx_operation_count;
+              else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+                && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+                ++tsch_ost_pp_sf_rx_operation_count;
+              }
+#endif
+            } else {
+              if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+                ++tsch_common_sf_bst_rx_operation_count;
+              } else if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
+                ++tsch_unicast_sf_bst_rx_operation_count;
+              } 
+#if WITH_OST
+              else if(current_link->slotframe_handle > OST_PERIODIC_SF_ID_OFFSET 
+                && current_link->slotframe_handle <= OST_ONDEMAND_SF_ID_OFFSET) {
+                ++tsch_ost_pp_sf_bst_rx_operation_count;
+              }
+#endif
             }
 #endif
           }
-#endif
 
           /* Poll process for processing of pending input and logs */
           process_poll(&tsch_pending_events_process);
