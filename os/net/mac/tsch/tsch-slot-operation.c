@@ -1380,18 +1380,6 @@ tsch_calculate_channel(struct tsch_asn_t *asn, uint16_t channel_offset)
   return tsch_hopping_sequence[index_of_offset];
 }
 /*---------------------------------------------------------------------------*/
-#if PPSD_EP_EXTRA_CHANNELS
-static uint8_t
-tsch_ppsd_calculate_channel(struct tsch_asn_t *asn, uint16_t channel_offset)
-{
-  uint16_t index_of_0, index_of_offset;
-  index_of_0 = TSCH_ASN_MOD(*asn, tsch_ppsd_hopping_sequence_length);
-  index_of_offset = (index_of_0 + channel_offset) % tsch_ppsd_hopping_sequence_length.val;
-  return tsch_ppsd_hopping_sequence[index_of_offset];
-}
-#endif
-
-/*---------------------------------------------------------------------------*/
 /* Timing utility functions */
 
 /* Checks if the current time has passed a ref time + offset. Assumes
@@ -1793,12 +1781,8 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
           if(ppsd_tx_seq == 1) { /* the first transmission */
             ppsd_tx_slot_curr_start = current_slot_start;
             ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_ts_tx_offset];
-#if PPSD_USE_BUSYWAIT
-            RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_tx_slot_curr_start, ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX);
-#else
             TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start, 
                                     ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX, "epTx1");
-#endif
           } else {
             ppsd_tx_slot_prev_start = ppsd_tx_slot_curr_start;
             ppsd_tx_slot_prev_offset = ppsd_tx_slot_curr_offset;
@@ -1809,12 +1793,8 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
                                     + ppsd_tx_slot_prev_duration;
 
             ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_ts_tx_offset];
-#if PPSD_USE_BUSYWAIT
-            RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_tx_slot_curr_start, ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX);
-#else
             TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start, 
                                     ppsd_tx_slot_curr_offset - RADIO_DELAY_BEFORE_TX, "epTx2");
-#endif
           }
 
 #if PPSD_DBG_EP_SLOT_TIMING /* EPTxT2: before RADIO.transmit() */
@@ -1895,11 +1875,7 @@ PT_THREAD(tsch_ppsd_tx_slot(struct pt *pt, struct rtimer *t))
                           + ppsd_tx_slot_prev_duration;
   ppsd_tx_slot_curr_offset = ppsd_timing[ppsd_ts_rx_ack_delay];
 
-#if PPSD_USE_BUSYWAIT
-  RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_tx_slot_curr_start, ppsd_tx_slot_curr_offset);
-#else
   TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_tx_slot_curr_start, ppsd_tx_slot_curr_offset, "epTx3");
-#endif
 
 #if PPSD_DBG_EP_SLOT_TIMING /* EPTxA1: after ts_rx_ack_delay */
   ppsd_tx_slot_timestamp_ack[1] = RTIMER_NOW();
@@ -2203,21 +2179,13 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
         ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_ts_rx_offset];
         ppsd_rx_slot_curr_timeout = (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) 
                                     * ppsd_pkts_to_receive;
-#if PPSD_USE_BUSYWAIT
-        RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_rx_slot_curr_start, ppsd_rx_slot_curr_offset);
-#else
         TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_rx_slot_curr_start, ppsd_rx_slot_curr_offset, "epRx1");
-#endif
       } else {
         ppsd_rx_slot_curr_start = ppsd_rx_slot_last_valid_reception_start + ppsd_rx_slot_last_valid_duration;
         ppsd_rx_slot_curr_offset = ppsd_timing[ppsd_ts_rx_offset];
         ppsd_rx_slot_curr_timeout = (ppsd_timing[ppsd_ts_tx_offset] + ppsd_timing[ppsd_ts_max_tx]) 
                                     * (ppsd_pkts_to_receive - ppsd_last_rx_seq);
-#if PPSD_USE_BUSYWAIT
-        RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_rx_slot_curr_start, ppsd_rx_slot_curr_offset);
-#else
         TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_rx_slot_curr_start, ppsd_rx_slot_curr_offset, "epRx2");
-#endif
       }
 
 #if PPSD_DBG_EP_SLOT_TIMING /* EPRxR1: start to listen */
@@ -2442,12 +2410,8 @@ PT_THREAD(tsch_ppsd_rx_slot(struct pt *pt, struct rtimer *t))
     ppsd_rx_slot_timestamp_ack[2] = RTIMER_NOW();
 #endif
 
-#if PPSD_USE_BUSYWAIT
-    RTIMER_BUSYWAIT_UNTIL_ABS(0, ppsd_rx_slot_all_reception_end, ppsd_rx_slot_curr_offset - RADIO_DELAY_BEFORE_TX);
-#else
     TSCH_SCHEDULE_AND_YIELD(pt, t, ppsd_rx_slot_all_reception_end,
                             ppsd_rx_slot_curr_offset - RADIO_DELAY_BEFORE_TX, "epRx3");
-#endif
 
 #if PPSD_DBG_EP_SLOT_TIMING /* EPRxA3: before RADIO.transmit() for ACK */
     ppsd_rx_slot_timestamp_ack[3] = RTIMER_NOW();
@@ -4420,13 +4384,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         is_ppsd_slot = 1;
 
         tsch_current_timeslot = current_link->timeslot;
-
-#if PPSD_EP_EXTRA_CHANNELS
-        /* Hop channel */
-        //tsch_current_channel_offset = tsch_get_channel_offset(current_link, current_packet);
-        tsch_current_channel = tsch_ppsd_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
-        NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, tsch_current_channel);
-#endif
 
         /* Turn the radio on already here if configured so; necessary for radios with slow startup */
         tsch_radio_on(TSCH_RADIO_CMD_ON_START_OF_TIMESLOT);

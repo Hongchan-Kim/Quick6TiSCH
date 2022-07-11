@@ -7,7 +7,7 @@
  */
 /* Need to be tested */
 #define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
-#define WITH_PPSD                                  1
+#define WITH_PPSD                                  0
 
 #if WITH_PPSD
 #define PPSD_END_OF_EP_RTIMER_GUARD                2u
@@ -17,7 +17,6 @@
 #define PPSD_TX_SLOT_FORWARD_OFFLOADING            1
 #define PPSD_TX_SLOT_BACKWARD_OFFLOADING           1
 #define PPSD_RX_SLOT_FORWARD_OFFLOADING            1
-#define PPSD_RX_SLOT_BACKWARD_OFFLOADING           1
 #define PPSD_TRIPLE_CCA                            1
 #define PPSD_TEMPORARY_LINK                        1 /* To prevent current_link for EP from becomming NULL and skipped */
 #define PPSD_HANDLE_SKIPPED_EP_SLOT                1 /* To reset EP flags and stop EP in the case of skipped slot */
@@ -25,8 +24,6 @@
 
 #define EVAL_CONTROL_NUM_OF_PKTS_IN_EP             0 /* Needs WITH_PPSD */
 
-#define PPSD_EP_EXTRA_CHANNELS                     0 /* Extra channel hopping */
-#define PPSD_USE_BUSYWAIT                          0
 #endif /* WITH_PPSD */
 
 #define ORCHESTRA_PACKET_OFFLOADING                1
@@ -40,10 +37,6 @@
 #define PPSD_DBG_EP_SLOT_TIMING                    0
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
-
-#if PPSD_EP_EXTRA_CHANNELS
-#define TSCH_PPSD_HOPPING_SEQUENCE_4_4 (uint8_t[]){ 11, 16, 19, 21 }
-#endif
 
 #define WITH_TSCH_TX_CCA                           1
 #if WITH_TSCH_TX_CCA
@@ -164,6 +157,7 @@
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
 #define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
 #define ENABLE_LOG_TSCH_WITH_APP_FOOTER            1
+#define ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE        1
 /*---------------------------------------------------------------------------*/
 
 
@@ -193,9 +187,9 @@
 #elif WITH_IOTLAB
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
 #define DOWNWARD_TRAFFIC                           0
-#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 60)
-#define APP_START_DELAY                            (10 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (20 * 60 * CLOCK_SECOND)
+#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
+#define APP_START_DELAY                            (57 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 #endif
 
@@ -259,7 +253,8 @@
 #define RPL_FIRST_MEASURE_PERIOD                   (1 * 60)
 #define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
-#define RPL_RELAXED_ETX_NOACK_PENALTY              1
+#define RPL_RELAXED_ETX_NOACK_PENALTY              0
+#define RPL_MRHOF_CONF_SQUARED_ETX                 0
 #define RPL_MODIFIED_DAO_OPERATION_1               1 /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 //#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /*  original: 0, set 1 in ALICE to enable local repair, quickly find another parent. */
@@ -413,13 +408,15 @@
  * Configure radio
  */
 /* m17dBm, m12dBm, m9dBm, m7dBm, m5dBm, m4dBm, m3dBm, m2dBm, m1dBm, 
-   0dBm, 0_7dBm, 1_3dBm, 1_8dBm, 2_3dBm, 2_8dBm, 3dBm, 0dBm */
+   0dBm, 0_7dBm, 1_3dBm, 1_8dBm, 2_3dBm, 2_8dBm, 3dBm */
 #define RF2XX_TX_POWER                             PHY_POWER_m17dBm
 //#define RF2XX_TX_POWER                             PHY_POWER_3dBm
 
 /* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
    m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
-#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
+//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m78dBm
+//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
+#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m101dBm
 /*---------------------------------------------------------------------------*/
 
 #endif /* PROJECT_CONF_H_ */ 
