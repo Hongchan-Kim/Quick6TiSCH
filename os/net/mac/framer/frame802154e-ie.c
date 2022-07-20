@@ -47,10 +47,8 @@
 
 /* c.f. IEEE 802.15.4e Table 4b */
 enum ieee802154e_header_ie_id {
-#if WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK
+#if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
   HEADER_IE_PPSD_INFO = 0x01,
-#endif
 #endif
   HEADER_IE_LE_CSL = 0x1a,
   HEADER_IE_LE_RIT,
@@ -92,14 +90,12 @@ enum ieee802154e_ietf_subie_id {
   IETF_IE_6TOP = SIXTOP_SUBIE_ID,
 };
 
-#if WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK
+#if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
 #define WRITE8(buf, val) \
   do { ((uint8_t *)(buf))[0] = (val) & 0xff;} while(0);
 
 #define READ8(buf, var) \
   (var) = ((uint8_t *)(buf))[0]
-#endif
 #endif
 
 #define WRITE16(buf, val) \
@@ -149,8 +145,7 @@ create_mlme_long_ie_descriptor(uint8_t *buf, uint8_t sub_id, int ie_len)
   WRITE16(buf, ie_desc);
 }
 
-#if WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK
+#if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
 int
 frame80215e_create_ie_header_ppsd_info(uint8_t *buf, int len,
     struct ieee802154_ies *ies)
@@ -165,7 +160,6 @@ frame80215e_create_ie_header_ppsd_info(uint8_t *buf, int len,
     return -1;
   }
 }
-#endif
 #endif
 
 /* Header IE. ACK/NACK time correction. Used in enhanced ACKs */
@@ -380,8 +374,7 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
     uint8_t element_id, struct ieee802154_ies *ies)
 {
   switch(element_id) {
-#if WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK
+#if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
     case HEADER_IE_PPSD_INFO:
       if(len == 2) {
         if(ies != NULL) {
@@ -392,7 +385,6 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
         return len;
       }
       break;
-#endif
 #endif
     case HEADER_IE_ACK_NACK_TIME_CORRECTION:
       if(len == 2) {

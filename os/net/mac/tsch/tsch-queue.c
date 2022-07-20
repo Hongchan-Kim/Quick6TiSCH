@@ -94,7 +94,7 @@ static struct ctimer ost_select_N_timer;
 #endif
 
 /*---------------------------------------------------------------------------*/
-#if ORCHESTRA_PACKET_OFFLOADING
+#if HCK_ORCHESTRA_PACKET_OFFLOADING
 void
 tsch_queue_change_attr_of_packets_in_queue(const struct tsch_neighbor *target_nbr, 
                                            uint16_t sf_handle, uint16_t timeslot)

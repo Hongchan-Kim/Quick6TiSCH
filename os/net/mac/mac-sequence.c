@@ -48,7 +48,7 @@
 #include "net/mac/mac-sequence.h"
 #include "net/packetbuf.h"
 
-#if MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
+#if HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
 
 #ifdef NETSTACK_CONF_MAC_SEQNO_MAX_AGE
 #define SEQNO_MAX_AGE NETSTACK_CONF_MAC_SEQNO_MAX_AGE
@@ -83,7 +83,7 @@ mac_sequence_is_duplicate(void)
    * Check for duplicate packet by comparing the sequence number of the incoming
    * packet with the last few ones we saw.
    */
-  uint16_t sender_index = GET_NODE_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)) - 1;
+  uint16_t sender_index = HCK_GET_NODE_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)) - 1;
 
   for(i = 0; i < MAX_SEQNOS; ++i) {
     if(packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO) == received_seqnos[sender_index].seqno_array[i].seqno) {
@@ -106,7 +106,7 @@ mac_sequence_register_seqno(void)
 {
   int i, j;
 
-  uint16_t sender_index = GET_NODE_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)) - 1;
+  uint16_t sender_index = HCK_GET_NODE_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)) - 1;
 
   /* Locate possible previous sequence number for this address. */
   for(i = 0; i < MAX_SEQNOS; ++i) {
@@ -126,7 +126,7 @@ mac_sequence_register_seqno(void)
 }
 /*---------------------------------------------------------------------------*/
 
-#else /* MODIFIED_MAC_SEQNO_DUPLICATE_CHECK */
+#else /* HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK */
 
 struct seqno {
   linkaddr_t sender;
@@ -201,4 +201,4 @@ mac_sequence_register_seqno(void)
                 packetbuf_addr(PACKETBUF_ADDR_SENDER));
 }
 /*---------------------------------------------------------------------------*/
-#endif /* MODIFIED_MAC_SEQNO_DUPLICATE_CHECK */
+#endif /* HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK */

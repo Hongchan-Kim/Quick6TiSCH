@@ -1987,10 +1987,8 @@ send_packet(mac_callback_t sent, void *ptr)
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, tsch_packet_seqno);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, 1);
 
-#if WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK
+#if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
-#endif
 #endif
 
   } else {

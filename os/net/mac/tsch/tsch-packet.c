@@ -99,7 +99,7 @@ tsch_packet_eackbuf_attr(uint8_t type)
 /*---------------------------------------------------------------------------*/
 /* Construct enhanced ACK packet and return ACK length */
 #if !WITH_OST
-#if WITH_PPSD && PPSD_HEADER_IE_IN_DATA_AND_ACK
+#if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
 int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
@@ -118,7 +118,7 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
                         int16_t drift, int nack, 
                         struct input_packet *current_input, uint16_t matching_slot)
-#elif WITH_PPSD && PPSD_HEADER_IE_IN_DATA_AND_ACK
+#elif WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
 int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
@@ -137,11 +137,9 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   struct ieee802154_ies ies;
   int hdr_len;
   int ack_len;
-#if WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK /* ACK */
+#if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
   int ies_len;
   int current_ie_len;
-#endif
 #endif
 
   if(buf == NULL) {
@@ -210,8 +208,7 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   ies.ie_time_correction = drift;
   ies.ie_is_nack = nack;
 
-#if WITH_PPSD
-#if PPSD_HEADER_IE_IN_DATA_AND_ACK /* ACK */
+#if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
   ies.ie_ppsd_info = ppsd_acceptable_pkts;
   ies_len = 0;
   
@@ -235,7 +232,6 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
 
   ack_len = hdr_len + ies_len;
 
-#endif
 #else /* WITH_PPSD */
 
   ack_len =

@@ -69,19 +69,6 @@ frequency hopping for enhanced reliability.
 extern uint16_t alice_early_packet_drop_count;
 #endif
 
-#if TSCH_TX_CCA_DBG_CCA_STATUS
-extern uint8_t global_rf2xx_on;
-extern uint8_t global_rf2xx_state;
-extern uint8_t global_rf2xx_status;
-extern uint8_t global_phy_cc_cca;
-extern uint8_t global_rf2xx_pa;
-extern uint8_t global_rf2xx_dig2;
-extern uint8_t global_trx_status;
-extern uint8_t global_cca_done;
-extern uint8_t global_cca_status;
-extern uint8_t global_phy_cc_cca_2;
-#endif
-
 extern uint16_t tsch_input_ringbuf_full_count;
 extern uint16_t tsch_input_ringbuf_available_count;
 extern uint16_t tsch_dequeued_ringbuf_full_count;

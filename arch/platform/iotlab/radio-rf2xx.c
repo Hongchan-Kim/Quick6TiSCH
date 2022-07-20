@@ -79,19 +79,6 @@ static uint8_t tx_buf[RF2XX_MAX_PAYLOAD];
 #endif /* RF2XX_SOFT_PREPARE */
 static uint8_t tx_len;
 
-#if TSCH_TX_CCA_DBG_CCA_STATUS
-uint8_t global_rf2xx_on;
-uint8_t global_rf2xx_state;
-uint8_t global_rf2xx_status;
-uint8_t global_phy_cc_cca;
-uint8_t global_rf2xx_pa;
-uint8_t global_rf2xx_dig2;
-uint8_t global_trx_status;
-uint8_t global_cca_done;
-uint8_t global_cca_status;
-uint8_t global_phy_cc_cca_2;
-#endif
-
 enum rf2xx_state
 {
     RF_IDLE = 0,
@@ -369,15 +356,6 @@ rf2xx_wr_channel_clear(void)
     {
         uint8_t reg;
         case RF_LISTEN:
-#if TSCH_TX_CCA_DBG_CCA_STATUS
-            global_rf2xx_on = rf2xx_on;
-            global_rf2xx_state = rf2xx_state;
-            global_rf2xx_status = rf2xx_get_status(RF2XX_DEVICE);
-            global_phy_cc_cca = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA);
-            global_rf2xx_pa = rf2xx_has_pa(RF2XX_DEVICE);
-            global_rf2xx_dig2 = rf2xx_has_dig2(RF2XX_DEVICE);
-#endif
-
             //initiate a cca request
             platform_enter_critical();
             reg = RF2XX_PHY_CC_CCA_DEFAULT__CCA_MODE |
@@ -395,13 +373,6 @@ rf2xx_wr_channel_clear(void)
             }
             while (rf2xx_state == RF_LISTEN && !(reg & RF2XX_TRX_STATUS_MASK__CCA_DONE));
 
-#if TSCH_TX_CCA_DBG_CCA_STATUS
-            global_trx_status = reg;
-            global_cca_done = reg & RF2XX_TRX_STATUS_MASK__CCA_DONE;
-            global_cca_status = reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS;
-            global_phy_cc_cca_2 = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA);
-#endif
-
             // get result
             if (!(reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS))
             {
@@ -414,15 +385,6 @@ rf2xx_wr_channel_clear(void)
          * Perform CCA in a way similar to the case of RF_LISTEN.
          */
         case RF_TX:
-#if TSCH_TX_CCA_DBG_CCA_STATUS
-            global_rf2xx_on = rf2xx_on;
-            global_rf2xx_state = rf2xx_state;
-            global_rf2xx_status = rf2xx_get_status(RF2XX_DEVICE);
-            global_phy_cc_cca = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA);
-            global_rf2xx_pa = rf2xx_has_pa(RF2XX_DEVICE);
-            global_rf2xx_dig2 = rf2xx_has_dig2(RF2XX_DEVICE);
-#endif
-
             //initiate a cca request
             platform_enter_critical();
             reg = RF2XX_PHY_CC_CCA_DEFAULT__CCA_MODE |
@@ -439,13 +401,6 @@ rf2xx_wr_channel_clear(void)
                 platform_exit_critical();
             }
             while (rf2xx_state == RF_TX && !(reg & RF2XX_TRX_STATUS_MASK__CCA_DONE));
-
-#if TSCH_TX_CCA_DBG_CCA_STATUS
-            global_trx_status = reg;
-            global_cca_done = reg & RF2XX_TRX_STATUS_MASK__CCA_DONE;
-            global_cca_status = reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS;
-            global_phy_cc_cca_2 = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_CC_CCA);
-#endif
 
             // get result
             if (!(reg & RF2XX_TRX_STATUS_MASK__CCA_STATUS))
