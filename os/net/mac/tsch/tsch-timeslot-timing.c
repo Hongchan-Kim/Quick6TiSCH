@@ -81,7 +81,7 @@
 const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 #if TSCH_CONF_CCA_ENABLED
 #if PPSD_TRIPLE_CCA
-    910, /* CCAOffset (52 ticks) */
+    910, /* CCAOffset */
     150, /* CCA (radio-rf2xx requires 140 us or 5 ticks) */
    2950, /* TxOffset */
   (2950 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
@@ -97,7 +97,10 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
    2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
 #endif
-#if WITH_PPSD || WITH_OST
+#if WITH_PPSD
+   1100, /* RxAckDelay - 1000 */
+   1300, /* TxAckDelay - 1200 */
+#elif WITH_OST
    1000, /* RxAckDelay - 1000 */
    1200, /* TxAckDelay - 1200 */
 #else
@@ -115,16 +118,13 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 #endif
 };
 
-#ifdef PPSD_CONF_RX_WAIT
-#define PPSD_RX_WAIT PPSD_CONF_RX_WAIT
-#else
-#define PPSD_RX_WAIT 300
-#endif
-
 #if WITH_PPSD
+#define PPSD_RX_WAIT 300
 const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
-   1000, /* ppsd_ts_tx_offset (30 ticks required, 1000 == 33 ticks) */
-   (1000 - (PPSD_RX_WAIT / 2)), /* ppsd_ts_rx_offset */
+   1250, /* ppsd_ts_tx_offset_1 (41 ticks required) */
+   (1250 - (PPSD_RX_WAIT / 2)), /* ppsd_ts_rx_offset_1 */
+   1000, /* ppsd_ts_tx_offset_2 (30 ticks required, 1000 == 33 ticks) */
+   (1000 - (PPSD_RX_WAIT / 2)), /* ppsd_ts_rx_offset_2 */
    1050, /* ppsd_ts_rx_ack_delay */
    1250, /* ppsd_ts_tx_ack_delay */
   PPSD_RX_WAIT, /* ppsd_ts_rx_wait */

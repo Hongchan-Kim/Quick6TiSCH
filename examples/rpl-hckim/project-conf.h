@@ -6,52 +6,53 @@
  * Exclusive period implementation
  */
 /* Need to be tested */
-#define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
-#define WITH_PPSD                                  0
+#define WITH_PPSD                                  1
 
 #if WITH_PPSD
+
+#define PPSD_TRIPLE_CCA                            1
+#define PPSD_EP_POLICY_CELL_UTIL                   0
+
 #define PPSD_END_OF_EP_RTIMER_GUARD                2u
 
-#define PPSD_HEADER_IE_IN_DATA_AND_ACK             1 /* Must be 1 if WITH_PPSD is 1*/
-#define PPSD_EP_POLICY_CELL_UTIL                   1
-#define PPSD_TX_SLOT_FORWARD_OFFLOADING            1
-#define PPSD_TX_SLOT_BACKWARD_OFFLOADING           1
-#define PPSD_RX_SLOT_FORWARD_OFFLOADING            1
-#define PPSD_TRIPLE_CCA                            1
-#define PPSD_TEMPORARY_LINK                        1 /* To prevent current_link for EP from becomming NULL and skipped */
-#define PPSD_HANDLE_SKIPPED_EP_SLOT                1 /* To reset EP flags and stop EP in the case of skipped slot */
-#define PPSD_HANDLE_MISSED_EP_SLOT                 1 /* To reset EP flags and stop EP in the case of dl-miss main */
-
-#define EVAL_CONTROL_NUM_OF_PKTS_IN_EP             0 /* Needs WITH_PPSD */
-
-#endif /* WITH_PPSD */
-
-#define ORCHESTRA_PACKET_OFFLOADING                1
-
-#if MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
-#define NETSTACK_CONF_MAC_SEQNO_MAX_AGE            (10 * CLOCK_SECOND)
-#define NETSTACK_CONF_MAC_SEQNO_HISTORY            16
-#endif
-
-#define PPSD_DBG_REGULAR_SLOT_TIMING               0
-#define PPSD_DBG_EP_SLOT_TIMING                    0
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #define PPSD_DBG_EP_OPERATION                      0
+#define PPSD_DBG_TRIPLE_CCA_TIMING                 0
+#define PPSD_DBG_EP_SLOT_TIMING                    0
+
+#define EVAL_CONTROL_NUM_OF_PKTS_IN_EP             1 /* Needs WITH_PPSD */
+#endif /* WITH_PPSD */
 
 #define WITH_TSCH_TX_CCA                           1
 #if WITH_TSCH_TX_CCA
 #define TSCH_CONF_CCA_ENABLED                      1
-#define TSCH_TX_CCA_DBG_CCA_RESULT                 0
-#define TSCH_TX_CCA_DBG_CCA_STATUS                 0
 #endif
-#define TSCH_TX_CCA_EARLY_TX_NODE                  0
+/*---------------------------------------------------------------------------*/
 
-#if PPSD_TRIPLE_CCA
-#define PPSD_DBG_TRIPLE_CCA_TIMING                 0
-#define PPSD_FIRST_CCA                             1
-#define PPSD_SECOND_CCA                            1
-#define PPSD_THIRD_CCA                             1
+
+/*---------------------------------------------------------------------------*/
+/*
+ * HCK modifications independent of proposed scheme
+ */
+#define HCK_ORCHESTRA_PACKET_OFFLOADING            1
+
+#define HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK     1
+#if HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
+#define NETSTACK_CONF_MAC_SEQNO_MAX_AGE            (10 * CLOCK_SECOND)
+#define NETSTACK_CONF_MAC_SEQNO_HISTORY            16
 #endif
+
+#define HCK_DBG_REGULAR_SLOT_TIMING                0
+#define HCK_DBG_REGULAR_SLOT_TIMING_RX_NO_PKT_SEEN 1
+#define HCK_GET_NODE_ID_FROM_IPADDR(addr)          ((((addr)->u8[14]) << 8) | (addr)->u8[15])
+#define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*
+ * Default burst transmission implementation
+ */
+#define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #define TSCH_CONF_BURST_MAX_LEN                    16 /* turn burst on */
@@ -64,11 +65,6 @@
 #else
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 #endif
-
-#define MODIFIED_MAC_SEQNO_DUPLICATE_CHECK         1
-#define GET_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
-#define GET_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
-//#define PPSD_CONF_RX_WAIT                    800
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
@@ -101,12 +97,12 @@
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
-//#define IOTLAB_SITE                                IOTLAB_LYON_2
+#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_5
 //#define IOTLAB_SITE                                IOTLAB_LYON_8
@@ -147,7 +143,7 @@
  * Configure log
  */
 #define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO //LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
@@ -165,17 +161,6 @@
 /*
  * Configure App
  */
-
-
-/* Orchestra or ALICE
-   - Wihtout any: Max in single hop: 87, Max in multi hop: 70
-   - With EP: Max in single hop: 81, Max in multi hop: 64 
-   OST
-   - Without any: Max in single hop: 85, Max in multi hop: 58
-   - With EP: Max in single hop: 79, Max in multi hop: ???
-   - With ODP: ???
-   */
-
 #if WITH_COOJA
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 30)
 #define DOWNWARD_TRAFFIC                           0
@@ -185,11 +170,13 @@
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (57 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+//#define APP_START_DELAY                            (57 * 60 * CLOCK_SECOND)
+//#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 #endif
 
@@ -201,10 +188,18 @@
 #define VARY_LENGTH                                8
 #endif
 
-#define APP_PAYLOAD_LEN                            14 // Min len with App footer
+/* Orchestra or ALICE
+   - Wihtout any: Max in single hop: 87, Max in multi hop: 70
+   - With EP: Max in single hop: 81, Max in multi hop: 64 
+   OST
+   - Without any: Max in single hop: 85, Max in multi hop: 58
+   - With EP: Max in single hop: 79, Max in multi hop: ???
+   - With ODP: ???
+   */
+//#define APP_PAYLOAD_LEN                            14 // Min len with App footer
 //#define APP_PAYLOAD_LEN                            86 // Max len of Orchestra/ALICE in single hop
 //#define APP_PAYLOAD_LEN                            69 // Max len of Orchestra/ALICE in multi hop
-//#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + EP in single hop
+#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + EP in single hop
 //#define APP_PAYLOAD_LEN                            63 // Max len of Orchestra/ALICE + EP in multi hop
 //#define APP_PAYLOAD_LEN                            84 // Max len of OST w/o ODP in single hop
 //#define APP_PAYLOAD_LEN                            67 // Max len of OST w/o ODP in multi hop
@@ -315,7 +310,8 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+//#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              311 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 
 #define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
 #define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
@@ -414,7 +410,6 @@
 
 /* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
    m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
-//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m78dBm
 //#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
 #define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m101dBm
 /*---------------------------------------------------------------------------*/

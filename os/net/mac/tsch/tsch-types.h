@@ -161,8 +161,10 @@ enum tsch_timeslot_timing_elements {
 
 #if WITH_PPSD
 enum ppsd_timeslot_timing_elements {
-  ppsd_ts_tx_offset,
-  ppsd_ts_rx_offset,
+  ppsd_ts_tx_offset_1,
+  ppsd_ts_rx_offset_1,
+  ppsd_ts_tx_offset_2,
+  ppsd_ts_rx_offset_2,
   ppsd_ts_rx_ack_delay,
   ppsd_ts_tx_ack_delay,
   ppsd_ts_rx_wait,
