@@ -236,6 +236,7 @@ static uint16_t ppsd_tx_seq = 1;
 static uint8_t ppsd_ack_seen = 0;
 static int current_input_len = 0;
 
+static uint8_t ppsd_rx_info[TSCH_MAX_INCOMING_PACKETS];
 
 
 
@@ -1662,34 +1663,39 @@ ost_remove_reserved_ssq(uint16_t nbr_id) //hckim
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if WITH_PPSD && PPSD_EP_POLICY_CELL_UTIL
-int
-tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr, 
-                                       uint8_t num_of_pkts_to_request, 
-                                       uint8_t *minimum_number_of_pkts_with_advantage,
-                                       uint8_t *number_of_pkts_for_max_advantage)
+#if WITH_PPSD
+uint8_t
+tsch_apt_encode_tx_info(struct tsch_neighbor *curr_nbr,
+                        struct tsch_packet *triggering_pkt,
+                        uint8_t num_of_pkts_to_request)
 {
-  uint8_t upper_bound = MIN(num_of_pkts_to_request, (((int)TSCH_MAX_INCOMING_PACKETS - 1) - 1));
-  uint8_t pkts1 = 0; /* minimum_number_of_pkts_with_advantage */
-  uint8_t pkts1_updated = 0;
+  uint8_t apt_tx_bitmap = 0;
+  int apt_all_operation_timeslots = 0; /* include triggering slot */
 
-  uint8_t pkts2 = 0; /* number_of_pkts_for_max_advantage */
+  int triggering_pkt_len = queuebuf_datalen(triggering_pkt->qb);
+  int triggering_ack_len = 21;
 
-  int return_val = 0;
+  rtimer_clock_t triggering_slot_operation_duration = 0;
+  triggering_slot_operation_duration = tsch_timing[tsch_ts_tx_offset] 
+                                     + TSCH_PACKET_DURATION(triggering_pkt_len)
+                                     + tsch_timing[tsch_ts_tx_ack_delay]
+                                     + TSCH_PACKET_DURATION(triggering_ack_len);
+
+  apt_all_operation_timeslots = (triggering_slot_operation_duration + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                        / tsch_timing[tsch_ts_timeslot_length];
+  if(apt_all_operation_timeslots > 1) {
+    apt_tx_bitmap = apt_tx_bitmap | (1 << 0);
+  }
 
   int ep_expected_packet_len = 0;
-  rtimer_clock_t ep_expected_packet_duration = 0;
+  int ep_expected_timeslots = 0;
 
+  rtimer_clock_t ep_expected_packet_duration = 0;
   rtimer_clock_t ep_expected_tx_duration = 0;
   rtimer_clock_t ep_expected_all_tx_duration = 0;
 
-  int ep_expected_timeslots = 0;
-
-  int ep_expected_advantage = 0;
-  int ep_expected_max_advantage = 0;
-
   uint8_t i = 1;
-  for(i = 1; i <= upper_bound; i++) {
+  for(i = 1; i <= num_of_pkts_to_request; i++) {
     struct tsch_packet *ep_packet = tsch_queue_ppsd_get_next_packet_for_nbr(curr_nbr, i);
 
     ep_expected_packet_len = queuebuf_datalen(ep_packet->qb);
@@ -1706,29 +1712,17 @@ tsch_is_ep_request_advantageous_or_not(struct tsch_neighbor *curr_nbr,
                                 + ppsd_timing[ppsd_ts_tx_process_b_ack];
     ep_expected_all_tx_duration += PPSD_END_OF_EP_RTIMER_GUARD;
 
-    ep_expected_timeslots = (ep_expected_all_tx_duration + tsch_timing[tsch_ts_timeslot_length] - 1) 
+    ep_expected_timeslots = (triggering_slot_operation_duration 
+                            + ep_expected_all_tx_duration + tsch_timing[tsch_ts_timeslot_length] - 1) 
                           / tsch_timing[tsch_ts_timeslot_length];
 
-    ep_expected_advantage = i * 100 / ep_expected_timeslots;
-
-    if(ep_expected_advantage > 100) {
-      return_val = 1;
-
-      if(pkts1_updated == 0) {
-        pkts1 = i;
-        pkts1_updated = 1;
-      }
-      if(ep_expected_advantage >= ep_expected_max_advantage) {
-        pkts2 = i;
-        ep_expected_max_advantage = ep_expected_advantage;
-      }
+    if(ep_expected_timeslots > apt_all_operation_timeslots) {
+      apt_all_operation_timeslots = ep_expected_timeslots;
+      apt_tx_bitmap = apt_tx_bitmap | (1 << i);
     }
   }
 
-  *minimum_number_of_pkts_with_advantage = pkts1;
-  *number_of_pkts_for_max_advantage = pkts2;
-
-  return return_val;
+  return apt_tx_bitmap;
 }
 #endif
 /*---------------------------------------------------------------------------*/
@@ -1816,34 +1810,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                   ((int)TSCH_DEQUEUED_ARRAY_SIZE - 1) - (ringbufindex_elements(&dequeued_ringbuf) + 1) : 0;
 
         uint16_t ppsd_pkts_to_request = (uint16_t)MIN(ppsd_pkts_pending, ppsd_free_dequeued_ringbuf);
+        ppsd_pkts_to_request = (uint16_t)MIN(ppsd_pkts_to_request, (((int)TSCH_MAX_INCOMING_PACKETS - 1) - 1));
 
-#if PPSD_EP_POLICY_CELL_UTIL
-        uint8_t minimum_number_of_pkts_with_advantage = 0;
-        uint8_t number_of_pkts_for_max_advantage = 0;
-        uint8_t ep_request_advantageous = tsch_is_ep_request_advantageous_or_not(current_neighbor, ppsd_pkts_to_request, 
-                                                                                &minimum_number_of_pkts_with_advantage, 
-                                                                                &number_of_pkts_for_max_advantage);
-
-        uint16_t ep_request_info = (minimum_number_of_pkts_with_advantage << 8) + number_of_pkts_for_max_advantage;
-#if PPSD_DBG_EP_ESSENTIAL
-        TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-            "ep pol req %u (%u %u, %x) (%d %d %u)", ep_request_advantageous,
-                                            minimum_number_of_pkts_with_advantage, 
-                                            number_of_pkts_for_max_advantage,
-                                            ep_request_info,
-                                            ppsd_pkts_pending,
-                                            ppsd_free_dequeued_ringbuf,
-                                            ppsd_pkts_to_request));
-#endif
-#endif
+        uint8_t apt_tx_bitmap = tsch_apt_encode_tx_info(current_neighbor, current_packet, ppsd_pkts_to_request);
+        uint16_t ep_request_info = (ppsd_pkts_to_request << 8) + apt_tx_bitmap;
 
         if(ppsd_pkts_to_request > 0
 #if EVAL_CONTROL_NUM_OF_PKTS_IN_EP
             && ppsd_pkts_to_request >= eval_num_of_pkts_in_ep
-#endif
-#if PPSD_EP_POLICY_CELL_UTIL
-            && (ep_request_advantageous == 1)
 #endif
             ) {
 #if EVAL_CONTROL_NUM_OF_PKTS_IN_EP
@@ -1855,25 +1829,20 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           ppsd_link_requested = 1;
           tsch_packet_set_frame_pending(packet, packet_len);
 
-#if PPSD_EP_POLICY_CELL_UTIL
           frame802154_t exclusive_frame;
           int exclusive_hdr_len;
           exclusive_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &exclusive_frame);
           ((uint8_t *)(packet))[exclusive_hdr_len + 2] = (uint8_t)(ep_request_info & 0xFF);
           ((uint8_t *)(packet))[exclusive_hdr_len + 3] = (uint8_t)((ep_request_info >> 8) & 0xFF);
-#else
-          frame802154_t exclusive_frame;
-          int exclusive_hdr_len;
-          exclusive_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &exclusive_frame);
-          ((uint8_t *)(packet))[exclusive_hdr_len + 2] = (uint8_t)(ppsd_pkts_to_request & 0xFF);
-          ((uint8_t *)(packet))[exclusive_hdr_len + 3] = (uint8_t)((ppsd_pkts_to_request >> 8) & 0xFF);
 
 #if PPSD_DBG_EP_ESSENTIAL
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "ep pkts to request %u (%d, %d)", ppsd_pkts_to_request, 
-              ppsd_pkts_pending, ppsd_free_dequeued_ringbuf));
-#endif
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "ep pol req %u %x %x (%d %d)", ppsd_pkts_to_request,
+                                           apt_tx_bitmap, 
+                                           ep_request_info,
+                                           ppsd_pkts_pending,
+                                           ppsd_free_dequeued_ringbuf));
 #endif
         }
       }
@@ -2947,8 +2916,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
   for(j = 0; j < 16; j++) {
     regular_slot_timestamp_tx[j] = 0;
   }
-
-  process_poll(&tsch_pending_events_process);
 #endif
 
 #if WITH_PPSD
@@ -3034,8 +3001,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       ppsd_tx_slot_timestamp_end[l] = 0;
     }
   }
-
-  process_poll(&tsch_pending_events_process);
 #endif
 #endif
 
@@ -3354,23 +3319,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                   ppsd_pkts_requested = 0;
                 }
 
-#if PPSD_EP_POLICY_CELL_UTIL
-                uint8_t minimum_number_of_pkts_with_advantage
-                        = (uint8_t)((ppsd_pkts_requested >> 8) & 0xFF);
-                uint8_t number_of_pkts_for_max_advantage  
-                        = (uint8_t)(ppsd_pkts_requested & 0xFF);
-#if PPSD_DBG_EP_ESSENTIAL
-                TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                    "ep pol requested %u %u", minimum_number_of_pkts_with_advantage, number_of_pkts_for_max_advantage));
-#endif
-#else /* PPSD_EP_POLICY_CELL_UTIL */
-#if PPSD_DBG_EP_ESSENTIAL
-                TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                    "ep pol requested %d", ppsd_pkts_requested));
-#endif
-#endif /* PPSD_EP_POLICY_CELL_UTIL */
+                uint8_t num_of_pkts_requested = (uint8_t)((ppsd_pkts_requested >> 8) & 0xFF);
+                uint8_t apt_requested_bitmap = (uint8_t)(ppsd_pkts_requested & 0xFF);
 
                 /* consider current packet: ringbufindex_elements(&input_ringbuf) + 1 */
                 int ppsd_free_input_ringbuf
@@ -3394,24 +3344,70 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                   minimum_free_ringbuf_or_queue = (int)MIN(ppsd_free_input_ringbuf, ppsd_free_any_queue);
                 }
 
-#if PPSD_EP_POLICY_CELL_UTIL
-                if(minimum_free_ringbuf_or_queue >= number_of_pkts_for_max_advantage) {
-                  ppsd_pkts_acceptable = number_of_pkts_for_max_advantage;
-                } else if(minimum_free_ringbuf_or_queue >= minimum_number_of_pkts_with_advantage) {
-                  ppsd_pkts_acceptable = minimum_number_of_pkts_with_advantage;
-                } else {
-                  ppsd_pkts_acceptable = 0;
+                uint8_t maximum_acceptable_pkts = MIN(num_of_pkts_requested, minimum_free_ringbuf_or_queue);
+
+                uint8_t i = 0;
+                for(i = 0; i < TSCH_MAX_INCOMING_PACKETS; i++) {
+                  ppsd_rx_info[i] = 0;
                 }
-#else
-                ppsd_pkts_acceptable = MIN(ppsd_pkts_requested, minimum_free_ringbuf_or_queue);
+
+                int number_of_timeslots_for_triggering = 1;
+                uint8_t timeslot_info = (apt_requested_bitmap & (1 << 0)) >> 0;
+                if(timeslot_info == 1) {
+                  number_of_timeslots_for_triggering += 1;
+                }
+                ppsd_rx_info[0] = number_of_timeslots_for_triggering;
+
+                for(i = 1; i <= maximum_acceptable_pkts; i++) {
+                  timeslot_info = (apt_requested_bitmap & (1 << i)) >> i;
+                  if(timeslot_info == 1) {
+                    ppsd_rx_info[i] = ppsd_rx_info[i - 1] + 1;
+                  } else {
+                    ppsd_rx_info[i] = ppsd_rx_info[i - 1];
+                  }
+                }
+
+                ppsd_pkts_acceptable = MIN(num_of_pkts_requested, minimum_free_ringbuf_or_queue);
+
+#if PPSD_EP_POLICY_1
+                uint16_t num_of_pkts_with_max_gain = 0;
+                int max_gain = 100;
+                int curr_gain;
+
+                for(i = 1; i <= maximum_acceptable_pkts; i++) {
+                  curr_gain = (1 + i) * 100 /  ppsd_rx_info[i];
+                  if((curr_gain > 100) && (curr_gain >= max_gain)) {
+                    max_gain = curr_gain;
+                    num_of_pkts_with_max_gain = i;
+                  }
+                }
+
+                ppsd_pkts_acceptable = num_of_pkts_with_max_gain;
+#endif
+#if PPSD_EP_POLICY_2
+                uint16_t num_of_maximum_pkts_with_gain = 0;
+                int curr_gain;
+
+                for(i = 1; i <= maximum_acceptable_pkts; i++) {
+                  curr_gain = (1 + i) * 100 /  ppsd_rx_info[i];
+                  if(curr_gain > 100) {
+                    num_of_maximum_pkts_with_gain = i;
+                  }
+                }
+
+                ppsd_pkts_acceptable = num_of_maximum_pkts_with_gain;
 #endif
 
 #if PPSD_DBG_EP_ESSENTIAL
                 TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                    "ep pol acceptable %d (%d %d, %d) (%d %d)", ppsd_pkts_acceptable, 
-                    ep_is_root, ep_has_no_children, is_rpl_root_or_has_no_children,
-                    ppsd_free_input_ringbuf, ppsd_free_any_queue));
+                    "ep pol acc %d (%u %x) (%d %d %d)", 
+                    ppsd_pkts_acceptable, 
+                    num_of_pkts_requested, 
+                    apt_requested_bitmap,
+                    is_rpl_root_or_has_no_children,
+                    ppsd_free_input_ringbuf,
+                    ppsd_free_any_queue));
 #endif
               }
 
@@ -4042,8 +4038,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
   for(j = 0; j < 14; j++) {
     regular_slot_timestamp_rx[j] = 0;
   }
-
-  process_poll(&tsch_pending_events_process);
 #endif
 
 #if WITH_PPSD && PPSD_DBG_EP_SLOT_TIMING /* Print EP rx slot timing */
@@ -4108,8 +4102,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       ppsd_rx_slot_timestamp_end[l] = 0;
     }
   }
-
-  process_poll(&tsch_pending_events_process);
 #endif
 
 #if WITH_OST && OST_ON_DEMAND_PROVISION
