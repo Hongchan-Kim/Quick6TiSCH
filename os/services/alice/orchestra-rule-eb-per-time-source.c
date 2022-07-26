@@ -121,7 +121,7 @@ init(uint16_t sf_handle)
                          LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
                          get_node_timeslot(&linkaddr_node_addr), ORCHESTRA_EB_CHANNEL_OFFSET, 1);
 
-  LOG_INFO("AILCE: EB sf length: %u\n", ORCHESTRA_EBSF_PERIOD);
+  LOG_INFO("ALICE: EB sf length: %u\n", ORCHESTRA_EBSF_PERIOD);
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule eb_per_time_source = {

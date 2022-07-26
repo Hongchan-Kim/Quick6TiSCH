@@ -128,7 +128,7 @@ init(uint16_t sf_handle)
       ORCHESTRA_COMMON_SHARED_TYPE, &tsch_broadcast_address,
       0, channel_offset, 1);
 
-  LOG_INFO("AILCE: Broadcast/Default sf length: %u\n", ORCHESTRA_COMMON_SHARED_PERIOD);
+  LOG_INFO("ALICE: Broadcast/Default sf length: %u\n", ORCHESTRA_COMMON_SHARED_PERIOD);
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule default_common = {

@@ -314,6 +314,10 @@ child_added(const linkaddr_t *linkaddr)
 static void
 child_removed(const linkaddr_t *linkaddr)
 {
+#if HCK_ORCHESTRA_PACKET_OFFLOADING
+    const struct tsch_neighbor *removed_child = tsch_queue_get_nbr(linkaddr);
+    tsch_queue_change_attr_of_packets_in_queue(removed_child, 2, 0);
+#endif
   alice_schedule_unicast_slotframe();
 }
 /*---------------------------------------------------------------------------*/
@@ -348,6 +352,10 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
 
+#if HCK_ORCHESTRA_PACKET_OFFLOADING
+    tsch_queue_change_attr_of_packets_in_queue(old, 2, 0);
+#endif
+
 #ifdef ALICE_TIME_VARYING_SCHEDULING
     uint16_t mod = TSCH_ASN_MOD(tsch_current_asn, sf_unicast->size);
     struct tsch_asn_t new_asn;
@@ -373,7 +381,7 @@ init(uint16_t sf_handle)
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
 
-  LOG_INFO("AILCE: unicast sf length: %u\n", ORCHESTRA_UNICAST_PERIOD);
+  LOG_INFO("ALICE: unicast sf length: %u\n", ORCHESTRA_UNICAST_PERIOD);
 
 #ifdef ALICE_TIME_VARYING_SCHEDULING
   /* upper bound of ASFN - 65535 = 4Byte max value (0,65535) #65536 */

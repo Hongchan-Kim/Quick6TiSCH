@@ -6,12 +6,12 @@
  * Exclusive period implementation
  */
 /* Need to be tested */
-#define WITH_PPSD                                  1
+#define WITH_PPSD                                  0
 
 #if WITH_PPSD
-
 #define PPSD_TRIPLE_CCA                            1
-#define PPSD_EP_POLICY_CELL_UTIL                   0
+#define PPSD_EP_POLICY_1                           1 /* Maximum gain */
+#define PPSD_EP_POLICY_2                           0 /* Maximum number of packets */
 
 #define PPSD_END_OF_EP_RTIMER_GUARD                2u
 
@@ -98,11 +98,11 @@
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
-#define IOTLAB_SITE                                IOTLAB_LYON_2
+//#define IOTLAB_SITE                                IOTLAB_LYON_2
 //#define IOTLAB_SITE                                IOTLAB_LYON_3
 //#define IOTLAB_SITE                                IOTLAB_LYON_5
 //#define IOTLAB_SITE                                IOTLAB_LYON_8
@@ -170,13 +170,13 @@
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-//#define APP_START_DELAY                            (57 * 60 * CLOCK_SECOND)
-//#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
-#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
+#define APP_START_DELAY                            (57 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+//#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
+//#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
 #endif
 
@@ -196,10 +196,10 @@
    - With EP: Max in single hop: 79, Max in multi hop: ???
    - With ODP: ???
    */
-//#define APP_PAYLOAD_LEN                            14 // Min len with App footer
+#define APP_PAYLOAD_LEN                            14 // Min len with App footer
 //#define APP_PAYLOAD_LEN                            86 // Max len of Orchestra/ALICE in single hop
 //#define APP_PAYLOAD_LEN                            69 // Max len of Orchestra/ALICE in multi hop
-#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + EP in single hop
+//#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + EP in single hop
 //#define APP_PAYLOAD_LEN                            63 // Max len of Orchestra/ALICE + EP in multi hop
 //#define APP_PAYLOAD_LEN                            84 // Max len of OST w/o ODP in single hop
 //#define APP_PAYLOAD_LEN                            67 // Max len of OST w/o ODP in multi hop
@@ -249,7 +249,7 @@
 #define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
 #define RPL_RELAXED_ETX_NOACK_PENALTY              0
-#define RPL_MRHOF_CONF_SQUARED_ETX                 0
+#define RPL_MRHOF_CONF_SQUARED_ETX                 1
 #define RPL_MODIFIED_DAO_OPERATION_1               1 /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 //#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /*  original: 0, set 1 in ALICE to enable local repair, quickly find another parent. */
@@ -310,8 +310,7 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-//#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
-#define ORCHESTRA_CONF_UNICAST_PERIOD              311 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 
 #define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
 #define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
@@ -339,7 +338,7 @@
 
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
-#define ALICE_EARLY_PACKET_DROP                    1
+#define ALICE_EARLY_PACKET_DROP                    0
 #define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #define ENABLE_ALICE_EARLY_PACKET_DROP_LOG         0
