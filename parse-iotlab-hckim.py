@@ -10,21 +10,24 @@ non_root_address_list = list()
 
 # STEP-1-2: extract node info (id and address)
 parser = argparse.ArgumentParser()
+parser.add_argument('any_scheduler')
 parser.add_argument('any_iter')
 parser.add_argument('any_id')
 parser.add_argument('show_all')
 args = parser.parse_args()
 
+any_scheduler = args.any_scheduler
 any_iter = args.any_iter
 any_id = args.any_id
 show_all = args.show_all
 
 print('----- evaluation info -----')
+print('any_scheduler: ' + any_scheduler)
 print('any_iter: ' + any_iter)
 print('any_id: ' + any_id)
 print()
 
-file_name = 'log-' + any_iter + '-' + any_id + '.txt'
+file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + any_id + '.txt'
 f = open(file_name, 'r', errors='ignore')
 
 line = f.readline()
@@ -109,7 +112,7 @@ result_list = ['id', 'addr',
             'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 'uLT', 'dLT', 'LT',
             'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
             'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
-            'leave', 'dc', 'e_drop',
+            'leave', 'dc', #'e_drop',
             'SCR', 'CTOR', 'CROR', 'UTOR', 'UROR', 'PTOR', 'PROR',
             'BTOR', 'BROR', 'OTOR', 'OROR', 'ETOR', 'EROR', 
             'CETR', 'CERR', 'UETR', 'UERR', 'PETR', 'PERR',
@@ -133,7 +136,7 @@ for node_id in non_root_id_list:
     bootstrap_period_parsed[node_index][metric_list.index('id')] = node_id
     bootstrap_period_parsed[node_index][metric_list.index('addr')] = non_root_address_list[non_root_id_list.index(node_id)]
 
-    file_name = 'log-' + any_iter + '-' + str(node_id) + '.txt'
+    file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
     f = open(file_name, 'r', errors='ignore')
     bootstrap_period_finished_this = 0
 
@@ -179,7 +182,7 @@ ROOT_INDEX = 0
 bootstrap_period_parsed[ROOT_INDEX][metric_list.index('id')] = ROOT_ID
 bootstrap_period_parsed[ROOT_INDEX][metric_list.index('addr')] = ROOT_ADDR
 
-file_name = 'log-' + any_iter + '-' + str(ROOT_ID) + '.txt'
+file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
 f = open(file_name, 'r', errors='ignore')
 bootstrap_period_finished_this = 0
 
@@ -561,7 +564,7 @@ for i in range(PRESERVE_METRIC_NUM):
 for node_id in non_root_id_list:
     node_index = non_root_id_list.index(node_id) + 1 # index in parsed array
 
-    file_name = 'log-' + any_iter + '-' + str(node_id) + '.txt'
+    file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
     f = open(file_name, 'r', errors='ignore')
     bootstrap_period_finished_this = 0
 
@@ -609,7 +612,7 @@ ROOT_INDEX = 0
 data_period_parsed[ROOT_INDEX][metric_list.index('id')] = ROOT_ID
 data_period_parsed[ROOT_INDEX][metric_list.index('addr')] = ROOT_ADDR
 
-file_name = 'log-' + any_iter + '-' + str(ROOT_ID) + '.txt'
+file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
 f = open(file_name, 'r', errors='ignore')
 
 in_data_period = 0

@@ -144,13 +144,15 @@ alice_schedule_unicast_slotframe(void)
     channel_offset_for_parent_up = get_node_channel_offset(&linkaddr_node_addr, &orchestra_parent_linkaddr);
     link_option_up = link_option_tx;
     alice_tsch_schedule_add_link(sf_unicast, link_option_up, LINK_TYPE_NORMAL, 
-                                &tsch_broadcast_address, timeslot_for_parent_up, channel_offset_for_parent_up);
+                                &tsch_broadcast_address, timeslot_for_parent_up, channel_offset_for_parent_up,
+                                HCK_GET_NODE_ID_FROM_LINKADDR(&orchestra_parent_linkaddr));
 
     timeslot_for_parent_down = get_node_timeslot(&orchestra_parent_linkaddr, &linkaddr_node_addr);
     channel_offset_for_parent_down = get_node_channel_offset(&orchestra_parent_linkaddr, &linkaddr_node_addr);
     link_option_down = link_option_rx;
     alice_tsch_schedule_add_link(sf_unicast, link_option_down, LINK_TYPE_NORMAL, 
-                                &tsch_broadcast_address, timeslot_for_parent_down, channel_offset_for_parent_down);
+                                &tsch_broadcast_address, timeslot_for_parent_down, channel_offset_for_parent_down,
+                                HCK_GET_NODE_ID_FROM_LINKADDR(&orchestra_parent_linkaddr));
   }
 
   /* Schedule the links between child node and current node - lookup all route next hops */
@@ -174,26 +176,30 @@ alice_schedule_unicast_slotframe(void)
       channel_offset_for_child_up = get_node_channel_offset(addr, &linkaddr_node_addr);
       link_option_up = link_option_rx;
       alice_tsch_schedule_add_link(sf_unicast, link_option_up, LINK_TYPE_NORMAL, 
-                                  &tsch_broadcast_address, timeslot_for_child_up, channel_offset_for_child_up);
+                                  &tsch_broadcast_address, timeslot_for_child_up, channel_offset_for_child_up,
+                                  HCK_GET_NODE_ID_FROM_LINKADDR(addr));
 
       timeslot_for_child_down = get_node_timeslot(&linkaddr_node_addr, addr); 
       channel_offset_for_child_down = get_node_channel_offset(&linkaddr_node_addr, addr);
       link_option_down = link_option_tx;
       alice_tsch_schedule_add_link(sf_unicast, link_option_down, LINK_TYPE_NORMAL, 
-                                  &tsch_broadcast_address, timeslot_for_child_down, channel_offset_for_child_down);
+                                  &tsch_broadcast_address, timeslot_for_child_down, channel_offset_for_child_down,
+                                  HCK_GET_NODE_ID_FROM_LINKADDR(addr));
     }      
 #else
     timeslot_for_child_up = get_node_timeslot(addr, &linkaddr_node_addr); 
     channel_offset_for_child_up = get_node_channel_offset(addr, &linkaddr_node_addr);
     link_option_up = link_option_rx;
     alice_tsch_schedule_add_link(sf_unicast, link_option_up, LINK_TYPE_NORMAL, 
-                                &tsch_broadcast_address, timeslot_for_child_up, channel_offset_for_child_up);
+                                &tsch_broadcast_address, timeslot_for_child_up, channel_offset_for_child_up,
+                                HCK_GET_NODE_ID_FROM_LINKADDR(addr));
 
     timeslot_for_child_down = get_node_timeslot(&linkaddr_node_addr, addr); 
     channel_offset_for_child_down = get_node_channel_offset(&linkaddr_node_addr, addr);
     link_option_down = link_option_tx;
     alice_tsch_schedule_add_link(sf_unicast, link_option_down, LINK_TYPE_NORMAL, 
-                                &tsch_broadcast_address, timeslot_for_child_down, channel_offset_for_child_down);
+                                &tsch_broadcast_address, timeslot_for_child_down, channel_offset_for_child_down,
+                                HCK_GET_NODE_ID_FROM_LINKADDR(addr));
 #endif
 
     /* move to the next item for while loop. */

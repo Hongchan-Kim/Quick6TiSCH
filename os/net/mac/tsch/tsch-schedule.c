@@ -371,7 +371,7 @@ tsch_schedule_get_link_by_handle(uint16_t handle)
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
-#if ENABLE_LOG_TSCH_LINK_ADD_REMOVE
+#if ENABLE_LOG_TSCH_LINK_ADD_REMOVE || ENABLE_LOG_ALICE_LINK_ADD_REMOVE
 static const char *
 print_link_options(uint16_t link_options)
 {
@@ -410,7 +410,7 @@ print_link_type(uint16_t link_type)
     return "?";
   }
 }
-#endif /* ENABLE_LOG_TSCH_LINK_ADD_REMOVE */
+#endif /* ENABLE_LOG_TSCH_LINK_ADD_REMOVE || ENABLE_LOG_ALICE_LINK_ADD_REMOVE */
 /*---------------------------------------------------------------------------*/
 /* Adds a link to a slotframe, return a pointer to it (NULL if failure) */
 struct tsch_link *
@@ -525,7 +525,8 @@ alice_tsch_schedule_set_link_option_by_ts_choff(struct tsch_slotframe *slotframe
 struct tsch_link *
 alice_tsch_schedule_add_link(struct tsch_slotframe *slotframe,
                        uint8_t link_options, enum link_type link_type, const linkaddr_t *address, 
-                       uint16_t timeslot, uint16_t channel_offset)
+                       uint16_t timeslot, uint16_t channel_offset,
+                       uint16_t target_id)
 {
   struct tsch_link *l = NULL;
   if(slotframe != NULL) {
@@ -573,14 +574,17 @@ alice_tsch_schedule_add_link(struct tsch_slotframe *slotframe,
         }
         linkaddr_copy(&l->addr, address);
 
-#if ENABLE_LOG_TSCH_LINK_ADD_REMOVE
-        LOG_INFO("add_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
-                 slotframe->handle,
-                 print_link_options(link_options),
-                 print_link_type(link_type), timeslot, channel_offset);
-        LOG_INFO_LLADDR(address);
-        LOG_INFO_("\n");
-#endif /* ENABLE_LOG_TSCH_LINK_ADD_REMOVE */
+#if ENABLE_LOG_ALICE_LINK_ADD_REMOVE
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "a_l id=%u ts=%u ch=%u op=%s ty=%s",
+                    target_id,
+                    timeslot, 
+                    channel_offset,
+                    print_link_options(link_options),
+                    print_link_type(link_type));
+        );
+#endif
 
         /* Release the lock before we update the neighbor (will take the lock) */
         tsch_release_lock();

@@ -151,7 +151,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
 #define ENABLE_LOG_TSCH_WITH_APP_FOOTER            1
 #define ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE        1
 /*---------------------------------------------------------------------------*/
@@ -170,7 +170,7 @@
 #define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 6)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 1)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 #define APP_START_DELAY                            (57 * 60 * CLOCK_SECOND)
@@ -249,7 +249,7 @@
 #define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
 #define RPL_RELAXED_ETX_NOACK_PENALTY              0
-#define RPL_MRHOF_CONF_SQUARED_ETX                 1
+#define RPL_MRHOF_CONF_SQUARED_ETX                 0
 #define RPL_MODIFIED_DAO_OPERATION_1               1 /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 //#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /*  original: 0, set 1 in ALICE to enable local repair, quickly find another parent. */
@@ -344,6 +344,7 @@
 #define ENABLE_ALICE_EARLY_PACKET_DROP_LOG         0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
+#define ENABLE_LOG_ALICE_LINK_ADD_REMOVE           0
 
 #define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
 #define TSCH_SCHED_COMMON_SF_HANDLE                1 //slotframe handle of broadcast/default slotframe
@@ -409,8 +410,9 @@
 
 /* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
    m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
-//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
 #define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m101dBm
+//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m90dBm
+//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
 /*---------------------------------------------------------------------------*/
 
 #endif /* PROJECT_CONF_H_ */ 
