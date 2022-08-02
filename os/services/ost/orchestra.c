@@ -56,6 +56,10 @@
 #error "Mismatched scheduler configuration. See Makefile and project-conf.h"
 #endif
 
+#if HCK_ORCHESTRA_PARENT_KNOWS_US_UPDATED
+static uint8_t first_time_one_orchestra_parent_knows_us = 1;
+#endif
+
 /* A net-layer sniffer for packets sent and received */
 static void orchestra_packet_received(void);
 static void orchestra_packet_sent(int mac_status);
@@ -87,6 +91,15 @@ orchestra_packet_sent(int mac_status)
     if(!linkaddr_cmp(&orchestra_parent_linkaddr, &linkaddr_null)
        && linkaddr_cmp(&orchestra_parent_linkaddr, packetbuf_addr(PACKETBUF_ADDR_RECEIVER))) {
       orchestra_parent_knows_us = 1;
+#if HCK_ORCHESTRA_PARENT_KNOWS_US_UPDATED
+      uint64_t orchestra_one_parent_knows_us_asn = tsch_calculate_current_asn();
+      if(first_time_one_orchestra_parent_knows_us) {
+        first_time_one_orchestra_parent_knows_us = 0;
+        LOG_INFO("HCK opku 1f at %llx |\n", orchestra_one_parent_knows_us_asn);
+      } else {
+        LOG_INFO("HCK opku 1 at %llx |\n", orchestra_one_parent_knows_us_asn);
+      }
+#endif
     }
   }
 }
@@ -158,6 +171,10 @@ orchestra_callback_new_time_source(const struct tsch_neighbor *old, const struct
   int i;
   if(new != old) {
     orchestra_parent_knows_us = 0;
+#if HCK_ORCHESTRA_PARENT_KNOWS_US_UPDATED
+    uint64_t orchestra_zero_parent_knows_us_asn = tsch_calculate_current_asn();
+    LOG_INFO("HCK opku 0 at %llx |\n", orchestra_zero_parent_knows_us_asn);
+#endif
   }
   for(i = 0; i < NUM_RULES; i++) {
     if(all_rules[i]->new_time_source != NULL) {

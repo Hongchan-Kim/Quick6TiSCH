@@ -134,14 +134,14 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_down_sequence_is_duplicate(app_received_seqno_count)) {
-    LOG_INFO("HCK dup_down a_seq %lx asn %llu from ", 
+    LOG_INFO("HCK dup_down a_seq %lx asn %llx from ", 
               app_received_seqno,
               app_rx_down_asn);
     LOG_INFO_6ADDR(sender_addr);
     LOG_INFO_("\n");
   } else {
     app_down_sequence_register_seqno(app_received_seqno_count);
-    LOG_INFO("HCK rx_down %u a_seq %lx asn %llu len %u lt %llu %llu | Received message from ",
+    LOG_INFO("HCK rx_down %u a_seq %lx asn %llx len %u lt %llu %llx | Received message from ",
               ++app_rxd_count,
               app_received_seqno,
               app_rx_down_asn,
@@ -237,7 +237,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 
         /* Send to DAG root */
-        LOG_INFO("HCK tx_up %u a_seq %lx asn %llu len %u | Sending message to ", 
+        LOG_INFO("HCK tx_up %u a_seq %lx asn %llx len %u | Sending message to ", 
                   count, app_seqno, app_tx_up_asn, current_payload_len);
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
@@ -265,7 +265,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 
         /* Send to DAG root */
-        LOG_INFO("HCK tx_up %u a_seq %lx asn %llu len %u | Sending message to ", 
+        LOG_INFO("HCK tx_up %u a_seq %lx asn %llx len %u | Sending message to ", 
                   count, app_seqno, app_tx_up_asn, current_payload_len);
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");

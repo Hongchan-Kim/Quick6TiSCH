@@ -151,14 +151,14 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_up_sequence_is_duplicate(sender_id, app_received_seqno_count)) {
-    LOG_INFO("HCK dup_up a_seq %lx asn %llu from ", 
+    LOG_INFO("HCK dup_up a_seq %lx asn %llx from ", 
               app_received_seqno,
               app_rx_up_asn);
     LOG_INFO_6ADDR(sender_addr);
     LOG_INFO_("\n");
   } else {
     app_up_sequence_register_seqno(sender_id, app_received_seqno_count);
-    LOG_INFO("HCK rx_up %u from %u %x (%u %x) a_seq %lx asn %llu len %u lt %llu %llu | Received message from ", 
+    LOG_INFO("HCK rx_up %u from %u %x (%u %x) a_seq %lx asn %llx len %u lt %llu %llx | Received message from ", 
               ++iotlab_nodes[sender_index][2],
               sender_index + 1, sender_index + 1, 
               iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1],
@@ -272,7 +272,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
 
         /* Send to clients */
         uint16_t dest_index = dest_id - 1;
-        LOG_INFO("HCK tx_down %u to %u %x (%u %x) a_seq %lx asn %llu len %u | Sending message to ", 
+        LOG_INFO("HCK tx_down %u to %u %x (%u %x) a_seq %lx asn %llx len %u | Sending message to ", 
                   count, 
                   dest_id, dest_id,
                   iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
@@ -311,7 +311,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
 
         /* Send to clients */
         uint16_t dest_index = dest_id - 1;
-        LOG_INFO("HCK tx_down %u to %u %x (%u %x) a_seq %lx asn %llu len %u | Sending message to ", 
+        LOG_INFO("HCK tx_down %u to %u %x (%u %x) a_seq %lx asn %x len %u | Sending message to ", 
                   count, 
                   dest_id, dest_id,
                   iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
