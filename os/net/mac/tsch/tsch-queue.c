@@ -713,6 +713,8 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 void
 tsch_queue_reset(void)
 {
+  LOG_INFO("Reset tsch queue\n");
+
   /* Deallocate unneeded neighbors */
   if(!tsch_is_locked()) {
     struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
@@ -731,6 +733,8 @@ tsch_queue_reset(void)
 void
 tsch_queue_free_unused_neighbors(void)
 {
+  LOG_INFO("Free tsch unused neighbors\n");
+
   /* Deallocate unneeded neighbors */
   if(!tsch_is_locked()) {
     struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);

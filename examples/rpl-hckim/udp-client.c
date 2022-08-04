@@ -21,16 +21,20 @@
 #define UDP_CLIENT_PORT	8765
 #define UDP_SERVER_PORT	5678
 
-#ifndef APP_START_DELAY
-#define APP_START_DELAY     (1 * 60 * CLOCK_SECOND)
+#ifndef APP_PRINT_NODE_INFO_DELAY
+#define APP_PRINT_NODE_INFO_DELAY (1 * 30 * CLOCK_SECOND)
 #endif
 
-#ifndef APP_PRINT_DELAY
-#define APP_PRINT_DELAY     (1 * 30 * CLOCK_SECOND)
+#ifndef APP_RESET_LOG_DELAY
+#define APP_RESET_LOG_DELAY       (25 * 60 * CLOCK_SECOND)
+#endif
+
+#ifndef APP_DATA_START_DELAY
+#define APP_DATA_START_DELAY      (30 * 60 * CLOCK_SECOND)
 #endif
 
 #ifndef APP_UPWARD_SEND_INTERVAL
-#define APP_UPWARD_SEND_INTERVAL   (1 * 60 * CLOCK_SECOND)
+#define APP_UPWARD_SEND_INTERVAL  (1 * 60 * CLOCK_SECOND)
 #endif
 
 #ifndef APP_UPWARD_MAX_TX
@@ -39,6 +43,7 @@
 
 static struct simple_udp_connection udp_conn;
 
+static unsigned count = 1;
 static uint16_t app_rxd_count;
 static uint64_t lt_down_sum = 0;
 
@@ -99,10 +104,18 @@ app_down_sequence_register_seqno(uint16_t current_app_down_seqno)
 #endif /* APP_SEQNO_DUPLICATE_CHECK */
 /*---------------------------------------------------------------------------*/
 static void
+reset_log_app_client()
+{
+  count = 1;
+}
+/*---------------------------------------------------------------------------*/
+static void
 reset_log()
 {
-  uint64_t app_client_reset_log_asn = tsch_calculate_current_asn();
-  LOG_INFO("HCK reset_log at %llx |\n", app_client_reset_log_asn);
+  tsch_queue_reset();
+  tsch_queue_free_unused_neighbors();
+
+  reset_log_app_client();         /* udp-client.c */
   reset_log_tcpip();              /* tcpip.c */
   reset_log_sicslowpan();         /* sicslowpan.c */
   reset_log_tsch();               /* tsch.c */
@@ -112,6 +125,9 @@ reset_log()
   reset_log_rpl();                /* rpl.c */
   reset_log_rpl_ext_header();     /* rpl-ext-header.c */
   reset_log_simple_energest();    /* simple-energest.c */
+
+  uint64_t app_client_reset_log_asn = tsch_calculate_current_asn();
+  LOG_INFO("HCK reset_log %d at %llx |\n", tsch_queue_global_packet_count(), app_client_reset_log_asn);
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -161,13 +177,18 @@ AUTOSTART_PROCESSES(&udp_client_process);
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(udp_client_process, ev, data)
 {
-  static struct etimer start_timer;
-  static struct etimer print_timer;
+  static struct etimer print_node_info_timer;
   static struct etimer reset_log_timer;
-  static struct etimer periodic_timer;
-  static struct etimer send_timer;
 
-  static unsigned count = 1;
+#if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+  static struct etimer opt_start_timer;
+  static struct etimer opt_periodic_timer;
+#endif
+
+  static struct etimer data_start_timer;
+  static struct etimer data_periodic_timer;
+  static struct etimer data_send_timer;
+
   uip_ipaddr_t dest_ipaddr;
 
   static uint8_t app_payload[128];
@@ -196,32 +217,71 @@ PROCESS_THREAD(udp_client_process, ev, data)
   simple_udp_register(&udp_conn, UDP_CLIENT_PORT, NULL,
                       UDP_SERVER_PORT, udp_rx_callback);
 
-#if WITH_VARYING_PPM
-  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % APP_UPWARD_SEND_VARYING_INTERVAL[0]));
-#else
-  etimer_set(&start_timer, (APP_START_DELAY + random_rand() % (APP_UPWARD_SEND_INTERVAL)));
+  etimer_set(&print_node_info_timer, APP_PRINT_NODE_INFO_DELAY);
+  etimer_set(&reset_log_timer, APP_RESET_LOG_DELAY);
+
+#if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+  etimer_set(&opt_start_timer, (APP_TOPOLOGY_OPT_START_DELAY + random_rand() % (APP_TOPOLOGY_OPT_SEND_INTERVAL / 2)));
 #endif
 
-  etimer_set(&print_timer, APP_PRINT_DELAY);
-  etimer_set(&reset_log_timer, APP_START_DELAY);
+#if WITH_VARYING_PPM
+  etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % APP_UPWARD_SEND_VARYING_INTERVAL[0]));
+#else
+  etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % (APP_UPWARD_SEND_INTERVAL)));
+#endif
 
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_TIMER);
-    if(data == &print_timer) {
+    if(data == &print_node_info_timer) {
 #if WITH_IOTLAB
       print_iotlab_node_info();
 #endif
-    } else if(data == &reset_log_timer) {
-      reset_log();
-    } else if(data == &start_timer || data == &periodic_timer) {
-#if WITH_VARYING_PPM
-      etimer_set(&send_timer, random_rand() % (APP_UPWARD_SEND_VARYING_INTERVAL[index] / 2));
-      etimer_set(&periodic_timer, APP_UPWARD_SEND_VARYING_INTERVAL[index]);
-#else
-      etimer_set(&send_timer, random_rand() % (APP_UPWARD_SEND_INTERVAL / 2));
-      etimer_set(&periodic_timer, APP_UPWARD_SEND_INTERVAL);
+    }
+#if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+    else if(data == &opt_start_timer || data == &opt_periodic_timer) {
+      if(data == &opt_start_timer) {
+        uint64_t app_opt_start_asn = tsch_calculate_current_asn();
+        LOG_INFO("HCK opt_start at %llx |\n", app_opt_start_asn);
+      }
+      if(count <= APP_TOPOLOGY_OPT_MAX_TX) {
+        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
+
+        uint64_t app_tx_up_asn = tsch_calculate_current_asn();
+
+        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + count;
+        app_magic = (uint16_t)APP_DATA_MAGIC;
+
+        memcpy(app_payload + current_payload_len - sizeof(app_tx_up_asn) - sizeof(app_seqno) - sizeof(app_magic), 
+              &app_tx_up_asn, sizeof(app_tx_up_asn));
+        memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
+        memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
+
+        /* Send to DAG root */
+        LOG_INFO("HCK tx_up %u a_seq %lx asn %llx len %u opt | Sending message to ", 
+                  count, app_seqno, app_tx_up_asn, current_payload_len);
+        LOG_INFO_6ADDR(&dest_ipaddr);
+        LOG_INFO_("\n");
+
+        simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
+
+        count++;
+      }
+      if(count <= APP_TOPOLOGY_OPT_MAX_TX) {
+        etimer_set(&opt_periodic_timer, APP_TOPOLOGY_OPT_SEND_INTERVAL);
+      }
+    }
 #endif
-    } else if(data == &send_timer) {
+    else if(data == &reset_log_timer) {
+      reset_log();
+    } else if(data == &data_start_timer || data == &data_periodic_timer) {
+#if WITH_VARYING_PPM
+      etimer_set(&data_send_timer, random_rand() % (APP_UPWARD_SEND_VARYING_INTERVAL[index] / 2));
+      etimer_set(&data_periodic_timer, APP_UPWARD_SEND_VARYING_INTERVAL[index]);
+#else
+      etimer_set(&data_send_timer, random_rand() % (APP_UPWARD_SEND_INTERVAL / 2));
+      etimer_set(&data_periodic_timer, APP_UPWARD_SEND_INTERVAL);
+#endif
+    } else if(data == &data_send_timer) {
 #if WITH_VARYING_PPM
       if(varycount < APP_UPWARD_VARYING_MAX_TX[index]) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);

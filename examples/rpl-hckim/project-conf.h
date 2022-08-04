@@ -153,7 +153,7 @@
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          1
+#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
 #define ENABLE_LOG_TSCH_WITH_APP_FOOTER            1
 #define ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE        1
 /*---------------------------------------------------------------------------*/
@@ -167,19 +167,38 @@
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 30)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
+
+#define APP_PRINT_NODE_INFO_DELAY                  (1 * 60 * CLOCK_SECOND / 2)
+#define APP_RESET_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (2 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
-#define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND / 2)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 1)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-#define APP_START_DELAY                            (57 * 60 * CLOCK_SECOND)
+
+#define APP_PRINT_NODE_INFO_DELAY                  (1 * 60 * CLOCK_SECOND / 2)
+
+#define APP_TOPOLOGY_OPT_DURING_BOOTSTRAP          1
+
+#if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+#define APP_TOPOLOGY_OPT_START_DELAY               (5 * 60 * CLOCK_SECOND)
+#define APP_TOPOLOGY_OPT_PERIOD                    (30 * 60 * CLOCK_SECOND)
+#define APP_TOPOLOGY_OPT_SEND_INTERVAL             (1 * 60 * CLOCK_SECOND / 1)
+#define APP_TOPOLOGY_OPT_MAX_TX                    (APP_TOPOLOGY_OPT_PERIOD / APP_TOPOLOGY_OPT_SEND_INTERVAL)
+
+#define APP_RESET_LOG_DELAY                        (40 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (45 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
-//#define APP_START_DELAY                            (2 * 60 * CLOCK_SECOND)
+#else
+#define APP_RESET_LOG_DELAY                        (52 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (57 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+//#define APP_DATA_START_DELAY                       (2 * 60 * CLOCK_SECOND)
 //#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
-#define APP_PRINT_DELAY                            (1 * 60 * CLOCK_SECOND)
+#endif
+
 #endif
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
@@ -312,7 +331,7 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              23 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 
 #define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
 #define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe

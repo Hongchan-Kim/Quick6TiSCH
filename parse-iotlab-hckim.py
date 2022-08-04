@@ -25,6 +25,7 @@ print('----- evaluation info -----')
 print('any_scheduler: ' + any_scheduler)
 print('any_iter: ' + any_iter)
 print('any_id: ' + any_id)
+print('show_all: ' + show_all)
 print()
 
 file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + any_id + '.txt'
@@ -54,9 +55,9 @@ NODE_NUM = 1 + len(non_root_id_list) # root + non-root nodes
 # STEP-1-3: print node info (id and address)
 print('----- node info -----')
 print('root id: ', ROOT_ID)
-print('root addr: ', ROOT_ADDR)
+#print('root addr: ', ROOT_ADDR)
 print('non-root ids: ', non_root_id_list)
-print('non-root addr:', non_root_address_list)
+#print('non-root addr:', non_root_address_list)
 print()
 
 
@@ -102,9 +103,10 @@ metric_list = ['id', 'addr',
 METRIC_NUM = len(metric_list)
 
 # STEP-2-3: define metric indicators to preserve
-preserve_metric_list = ['id', 'addr',
+preserve_metric_list = ['id', 'addr', 'lastP']
+"""preserve_metric_list = ['id', 'addr',
                     'tx_up', 'rx_up', 'lt_up_sum', 'tx_down', 'rx_down', 'lt_down_sum',
-                    'lastP']
+                    'lastP']"""
 PRESERVE_METRIC_NUM = len(preserve_metric_list)
 
 # STEP-2-4: define result list
@@ -121,7 +123,113 @@ result_list = ['id', 'addr',
             ]
 RESULT_NUM = len(result_list)
 
+orchestra_parent_knows_us_first_before_opt = [0 for i in range(NODE_NUM)]
+orchestra_parent_knows_us_before_opt = [0 for i in range(NODE_NUM)]
+opt_started_count = 0
 
+for node_id in non_root_id_list:
+    node_index = non_root_id_list.index(node_id) + 1
+
+    file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
+    f = open(file_name, 'r', errors='ignore')
+
+    line = f.readline()
+    while line:
+        if len(line) > 1:
+            line = line.replace('\n', '')
+            line_s = line.split('] ')
+            if len(line_s) > 1:
+                message = line_s[1].split(' ')
+                if message[HCK] == 'HCK':
+                    ind_loc = IND
+                    val_loc = VAL
+                    current_metric = message[ind_loc]
+                    if current_metric == 'opt_start':
+                        opt_started_count += 1
+                        break
+                    elif current_metric == 'opku':
+                        current_value = message[val_loc]
+                        if current_value == '1f' or current_value == '1':
+                            orchestra_parent_knows_us_before_opt[node_index] = 1
+                            if current_value == '1f':
+                                orchestra_parent_knows_us_first_before_opt[node_index] = 1
+                        elif current_value == '0':
+                            orchestra_parent_knows_us_before_opt[node_index] = 0
+        line = f.readline()
+    f.close()
+
+for node_id in non_root_id_list:
+    node_index = non_root_id_list.index(node_id) + 1
+
+
+if opt_started_count == len(non_root_id_list):
+    print('----- all opt started -----')
+else:
+    print('----- not all opt started -----')
+
+orchestra_parent_knows_us_first_before_opt_sum = sum(orchestra_parent_knows_us_first_before_opt)
+if orchestra_parent_knows_us_first_before_opt_sum == len(non_root_id_list):
+    print('opku f 1: ', end='')
+else:
+    print('opku f 0: ', end='')
+print(orchestra_parent_knows_us_first_before_opt)
+
+orchestra_parent_knows_us_before_opt_sum = sum(orchestra_parent_knows_us_before_opt)
+if orchestra_parent_knows_us_before_opt_sum == len(non_root_id_list):
+    print('opku 1: ', end='')
+else:
+    print('opku 0: ', end='')
+print(orchestra_parent_knows_us_before_opt)
+print()
+
+orchestra_parent_knows_us_before_reset_log = [0 for i in range(NODE_NUM)]
+queue_global_pkt_count_at_reset_log = [0 for i in range(NODE_NUM)]
+log_reset_count = 0
+
+for node_id in non_root_id_list:
+    node_index = non_root_id_list.index(node_id) + 1 # index in bootstrap_period_parsed array
+
+    file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
+    f = open(file_name, 'r', errors='ignore')
+
+    line = f.readline()
+    while line:
+        if len(line) > 1:
+            line = line.replace('\n', '')
+            line_s = line.split('] ')
+            if len(line_s) > 1:
+                message = line_s[1].split(' ')
+                if message[HCK] == 'HCK':
+                    ind_loc = IND
+                    val_loc = VAL
+                    current_metric = message[ind_loc]
+                    if current_metric == 'reset_log':
+                        log_reset_count += 1
+                        queue_global_pkt_count_at_reset_log[node_index] = int(message[val_loc])
+                        break
+                    elif current_metric == 'opku':
+                        current_value = message[val_loc]
+                        if current_value == '1f' or current_value == '1':
+                            orchestra_parent_knows_us_before_reset_log[node_index] = 1
+                        elif current_value == '0':
+                            orchestra_parent_knows_us_before_reset_log[node_index] = 0
+        line = f.readline()
+    f.close()
+
+if log_reset_count == len(non_root_id_list):
+    print('----- log reset done -----')
+else:
+    print('----- log reset not done -----')
+
+orchestra_parent_knows_us_before_reset_log_sum = sum(orchestra_parent_knows_us_before_reset_log)
+if orchestra_parent_knows_us_before_reset_log_sum == len(non_root_id_list):
+    print('opku 1: ', end='')
+else:
+    print('opku 0: ', end='')
+print(orchestra_parent_knows_us_before_reset_log)
+print('queue: ', end='')
+print(queue_global_pkt_count_at_reset_log)
+print()
 
 
 ########## STEP-3: parse BOOTSTRAP PERIOD data ##########
