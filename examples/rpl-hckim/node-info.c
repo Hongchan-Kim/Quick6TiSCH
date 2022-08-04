@@ -599,60 +599,11 @@ uint16_t iotlab_nodes[NODE_NUM][3] = {
   {147, 0x2151, 0},
   {148, 0xb370, 0}
 };
-#elif IOTLAB_SITE == IOTLAB_LYON_2
+#elif IOTLAB_SITE == IOTLAB_SACLAY_2
 uint16_t iotlab_nodes[NODE_NUM][3] = {
   // {host name, uid, rx count}
-  {15, 0xa377, 0}, // root node
-  {14, 0x2860, 0}
-};
-#elif IOTLAB_SITE == IOTLAB_LYON_3
-uint16_t iotlab_nodes[NODE_NUM][3] = {
-  // {host name, uid, rx count}
-  {15, 0xa377, 0}, // root node
-  {14, 0x2860, 0},
-  {16, 0xb978, 0}
-};
-#elif IOTLAB_SITE == IOTLAB_LYON_8
-uint16_t iotlab_nodes[NODE_NUM][3] = {
-  // {host name, uid, rx count}
-  {1, 0x9768, 0},
-  {2, 0x8867, 0},
-  {3, 0x8676, 0},
-  {4, 0xb181, 0},
-  {5, 0x8968, 0},
-  {6, 0xc279, 0},
-  {7, 0xa371, 0},
-  {8, 0xa683, 0},
-};
-#elif IOTLAB_SITE == IOTLAB_LYON_17
-uint16_t iotlab_nodes[NODE_NUM][3] = {
-  // {host name, uid, rx count}
-  {18, 0x3261, 0}, // root node
-  {1, 0x9768, 0},
-  {2, 0x8867, 0},
-  {3, 0x8676, 0},
-  {4, 0xb181, 0},
-  {5, 0x8968, 0},
-  {6, 0xc279, 0},
-  {7, 0xa371, 0},
-  {8, 0xa683, 0},
-  {10, 0x8976, 0},
-  {11, 0x8467, 0},
-  {12, 0xb682, 0},
-  {13, 0xb176, 0},
-  {14, 0x2860, 0},
-  {15, 0xa377, 0},
-  {16, 0xb978, 0},
-  {17, 0xa168, 0}
-};
-#elif IOTLAB_SITE == IOTLAB_LYON_5
-uint16_t iotlab_nodes[NODE_NUM][3] = {
-  // {host name, uid, rx count}
-  {14, 0x2860, 0}, // root node
-  {15, 0xa377, 0},
-  {16, 0xb978, 0},
-  {13, 0xb176, 0},
-  {12, 0xb682, 0},
+  {1, 0x2053, 0}, // root node
+  {2, 0x2661, 0}
 };
 #endif /* IOTLAB_SITE */
 /*---------------------------------------------------------------------------*/
