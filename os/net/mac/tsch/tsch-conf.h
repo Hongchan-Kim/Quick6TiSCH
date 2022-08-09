@@ -225,11 +225,11 @@
 #define TSCH_CHANNEL_SCAN_DURATION CLOCK_SECOND
 #endif
 
-/* TSCH EB: include timeslot timing Information Element? */ 
+/* TSCH EB: include timeslot timing Information Element? */
 #ifdef TSCH_PACKET_CONF_EB_WITH_TIMESLOT_TIMING
 #define TSCH_PACKET_EB_WITH_TIMESLOT_TIMING TSCH_PACKET_CONF_EB_WITH_TIMESLOT_TIMING
 #else
-#define TSCH_PACKET_EB_WITH_TIMESLOT_TIMING 1
+#define TSCH_PACKET_EB_WITH_TIMESLOT_TIMING 0
 #endif
 
 /* TSCH EB: include hopping sequence Information Element? */

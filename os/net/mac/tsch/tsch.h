@@ -344,10 +344,10 @@ uint64_t tsch_get_network_uptime_ticks(void);
   * Leave the TSCH network we are currently in
   */
 void tsch_disassociate(void);
+
 /**
  *  Change timeslot length 
  */
-
 #if WITH_ATL
 void tsch_change_timeslot_length(uint8_t flag);  /*Set trigger ASN*/
 void tsch_coordinator_adaptive_timeslot_length(void); 

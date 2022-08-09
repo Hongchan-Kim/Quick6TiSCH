@@ -28,7 +28,10 @@
 /*
  * Adaptive timeslot length
  */
-#define WITH_ATL                    1
+#define WITH_ATL                                   1
+#if WITH_ATL
+#define TSCH_PACKET_CONF_EB_WITH_TIMESLOT_TIMING   1
+#endif
 /*---------------------------------------------------------------------------*/
 /*
  * Configure testbed site, node num, topology

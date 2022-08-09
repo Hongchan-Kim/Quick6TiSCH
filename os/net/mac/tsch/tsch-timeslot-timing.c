@@ -78,7 +78,6 @@
  * (TxOffset - (RxWait / 2)) instead
  */
 
-
 const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
    1800, /* CCAOffset */
 #if TSCH_CONF_CCA_ENABLED
