@@ -112,9 +112,10 @@ reset_log_app_client()
 static void
 reset_log()
 {
-  tsch_queue_reset();
+#if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+  tsch_queue_reset_except_n_eb();
   tsch_queue_free_unused_neighbors();
-
+#endif
   reset_log_app_client();         /* udp-client.c */
   reset_log_tcpip();              /* tcpip.c */
   reset_log_sicslowpan();         /* sicslowpan.c */

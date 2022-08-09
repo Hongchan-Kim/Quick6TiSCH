@@ -709,12 +709,59 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
   return in_queue;
 }
 /*---------------------------------------------------------------------------*/
+#if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+/* Flush all neighbor queues */
+void
+tsch_queue_reset_except_n_eb(void)
+{
+  int global_queued_pkts = 0;
+  int bc_queued_pkts = 0;
+  int eb_queued_pkts = 0;
+  int uc_queued_pkts = 0;
+
+  global_queued_pkts = tsch_queue_global_packet_count();
+  bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
+  eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
+  uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
+
+  LOG_INFO("Reset tsch queue %d %d %d %d\n",
+            global_queued_pkts,
+            uc_queued_pkts,
+            bc_queued_pkts,
+            eb_queued_pkts);
+
+  /* Deallocate unneeded neighbors */
+  if(!tsch_is_locked()) {
+    struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
+    while(n != NULL) {
+      struct tsch_neighbor *next_n = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, n);
+      if(n != n_eb) {
+        /* Flush queue */
+        tsch_queue_flush_nbr_queue(n);
+        /* Reset backoff exponent */
+        tsch_queue_backoff_reset(n);
+      }
+      n = next_n;
+    }
+  }
+
+  global_queued_pkts = tsch_queue_global_packet_count();
+  bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
+  eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
+  uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
+
+  LOG_INFO("Done Reset tsch queue %d %d %d %d\n",
+            global_queued_pkts,
+            uc_queued_pkts,
+            bc_queued_pkts,
+            eb_queued_pkts);
+}
+#endif
+/*---------------------------------------------------------------------------*/
 /* Flush all neighbor queues */
 void
 tsch_queue_reset(void)
 {
-  LOG_INFO("Reset tsch queue\n");
-
   /* Deallocate unneeded neighbors */
   if(!tsch_is_locked()) {
     struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
@@ -733,8 +780,6 @@ tsch_queue_reset(void)
 void
 tsch_queue_free_unused_neighbors(void)
 {
-  LOG_INFO("Free tsch unused neighbors\n");
-
   /* Deallocate unneeded neighbors */
   if(!tsch_is_locked()) {
     struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);

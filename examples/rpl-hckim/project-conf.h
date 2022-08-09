@@ -1,6 +1,8 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+#define HCK_APPLY_LATEST_CONTIKI                   1
+
 /*---------------------------------------------------------------------------*/
 /*
  * Exclusive period implementation
@@ -96,11 +98,11 @@
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
-#define IOTLAB_SITE                                IOTLAB_SACLAY_2
+//#define IOTLAB_SITE                                IOTLAB_SACLAY_2
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_R_CORNER
 #define NODE_NUM                                   83
@@ -226,7 +228,7 @@
 /* 
  * Configure Contiki-NG system
  */
-#define MAX_NBR_NODE_NUM                           20
+#define MAX_NBR_NODE_NUM                           60
 #define NBR_TABLE_CONF_MAX_NEIGHBORS               (MAX_NBR_NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
 /*---------------------------------------------------------------------------*/
 
@@ -415,8 +417,8 @@
 
 /* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
    m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
-//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m101dBm
-#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m90dBm
+#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m101dBm
+//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m90dBm
 //#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
 /*---------------------------------------------------------------------------*/
 
