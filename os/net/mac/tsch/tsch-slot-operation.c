@@ -4133,6 +4133,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 static
 PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 {
+#if WITH_ATL
+  if(tsch_current_asn.ls4b > tsch_trigger_asn.ls4b && (current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID || backup_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) ) {
+    tsch_change_timeslot_length(tsch_timeslot_is_adapted);
+  }     
+#endif
   TSCH_DEBUG_INTERRUPT();
   PT_BEGIN(&slot_operation_pt);
 
@@ -4787,6 +4792,12 @@ ost_donothing:
 #endif
         }
 #endif
+
+/*#if WITH_ATL
+        if(tsch_current_asn.ls4b > tsch_trigger_asn.ls4b && (current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID || backup_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) ){
+          tsch_change_timeslot_length(tsch_timeslot_is_adapted);
+        }     
+#endif*/
 
         /* Time to next wake up */
         time_to_next_active_slot = timeslot_diff * tsch_timing[tsch_ts_timeslot_length] + drift_correction;

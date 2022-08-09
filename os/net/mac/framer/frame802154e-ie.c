@@ -71,6 +71,10 @@ enum ieee802154e_payload_ie_id {
 
 /* c.f. IEEE 802.15.4e Table 4d */
 enum ieee802154e_mlme_short_subie_id {
+#if WITH_ATL //checked
+  MLME_SHORT_IE_TSCH_ATL_TRIGGERING_ASN = 0x10,
+  MLME_SHORT_IE_TSCH_ATL_NEXT_TIMESLOT_TEMPLATE,
+#endif
   MLME_SHORT_IE_TSCH_SYNCHRONIZATION = 0x1a,
   MLME_SHORT_IE_TSCH_SLOFTRAME_AND_LINK,
   MLME_SHORT_IE_TSCH_TIMESLOT,
@@ -278,6 +282,48 @@ frame80215e_create_ie_tsch_synchronization(uint8_t *buf, int len,
   }
 }
 
+#if WITH_ATL //checked
+int
+frame80215e_create_ie_tsch_atl_triggering_asn(uint8_t *buf, int len, 
+    struct ieee802154_ies *ies)
+{
+  int ie_len = 5;
+  if(len >= 2 + ie_len && ies != NULL) {
+    buf[2] = ies->ie_atl_triggering_asn.ls4b;
+    buf[3] = ies->ie_atl_triggering_asn.ls4b >> 8;
+    buf[4] = ies->ie_atl_triggering_asn.ls4b >> 16;
+    buf[5] = ies->ie_atl_triggering_asn.ls4b >> 24;
+    buf[6] = ies->ie_atl_triggering_asn.ms1b;
+    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_ATL_TRIGGERING_ASN, ie_len);
+    return 2 + ie_len;
+  } else {
+    return -1;
+  }
+}
+
+int
+frame80215e_create_ie_tsch_atl_next_timeslot_template(uint8_t *buf, int len,
+    struct ieee802154_ies *ies)
+{
+  int ie_len;
+  if(ies == NULL) {
+    return -1;
+  }
+  ie_len = 1 + 2 * tsch_ts_elements_count; /* typically 1 + 2 * 12 */
+  if(len >= 2 + ie_len) {
+    buf[2] = ies->ie_tsch_atl_next_timeslot_id;
+    int i;
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      WRITE16(buf + 3 + 2 * i, ies->ie_tsch_atl_next_timeslot[i]);
+    }
+    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_ATL_NEXT_TIMESLOT_TEMPLATE, ie_len);
+    return 2 + ie_len;
+  } else {
+    return -1;
+  }
+}
+#endif
+
 /* MLME sub-IE. TSCH slotframe and link. Used in EBs: initial schedule */
 int
 frame80215e_create_ie_tsch_slotframe_and_link(uint8_t *buf, int len,
@@ -474,6 +520,32 @@ frame802154e_parse_mlme_short_ie(const uint8_t *buf, int len,
         return len;
       }
       break;
+#if WITH_ATL //checked
+    case MLME_SHORT_IE_TSCH_ATL_TRIGGERING_ASN: 
+      if(len == 5) {
+        if(ies != NULL) {
+          ies->ie_atl_triggering_asn.ls4b = (uint32_t)buf[0];
+          ies->ie_atl_triggering_asn.ls4b |= (uint32_t)buf[1] << 8;
+          ies->ie_atl_triggering_asn.ls4b |= (uint32_t)buf[2] << 16;
+          ies->ie_atl_triggering_asn.ls4b |= (uint32_t)buf[3] << 24;
+          ies->ie_atl_triggering_asn.ms1b = (uint8_t)buf[4];
+        }
+        return len;
+      }
+      break;
+    case MLME_SHORT_IE_TSCH_ATL_NEXT_TIMESLOT_TEMPLATE:
+      if(len == 1 + 2 * tsch_ts_elements_count) { /* typically 1 + 2 * 12 */
+        if(ies != NULL) {
+          ies->ie_tsch_atl_next_timeslot_id = buf[0];
+          int i;
+          for(i = 0; i < tsch_ts_elements_count; i++) {
+            READ16(buf+1+2*i, ies->ie_tsch_atl_next_timeslot[i]);
+          }
+        }
+        return len;
+      }
+      break;
+#endif
   }
   return -1;
 }

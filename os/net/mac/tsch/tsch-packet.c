@@ -333,6 +333,29 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
 #endif
 
   /* Add TSCH timeslot timing IE. */
+#if WITH_ATL //checked
+  int i;
+/*
+  ies.ie_tsch_timeslot_id = 1;
+  for(i = 0; i < tsch_ts_elements_count; i++) {
+    ies.ie_tsch_timeslot[i] = RTIMERTICKS_TO_US(tsch_timing[i]);
+  }
+*/
+  if(tsch_is_coordinator) {
+    tsch_coordinator_adaptive_timeslot_length();
+    ies.ie_tsch_atl_next_timeslot_id = 1;
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      ies.ie_tsch_atl_next_timeslot[i] = tsch_next_timing_us[i];
+    }
+    ies.ie_atl_triggering_asn = tsch_trigger_asn;
+  } else {
+    ies.ie_tsch_atl_next_timeslot_id = 1;
+    for(i = 0; i < tsch_ts_elements_count; i++) {
+      ies.ie_tsch_atl_next_timeslot[i] = tsch_next_timing_us[i];
+    }
+    ies.ie_atl_triggering_asn = tsch_trigger_asn;
+  }
+#else
 #if TSCH_PACKET_EB_WITH_TIMESLOT_TIMING
   {
     int i;
@@ -342,6 +365,7 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
     }
   }
 #endif /* TSCH_PACKET_EB_WITH_TIMESLOT_TIMING */
+#endif
 
   /* Add TSCH hopping sequence IE */
 #if TSCH_PACKET_EB_WITH_HOPPING_SEQUENCE
@@ -383,6 +407,26 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
   }
   p += ie_len;
   packetbuf_set_datalen(packetbuf_datalen() + ie_len);
+
+#if WITH_ATL //checked
+  ie_len = frame80215e_create_ie_tsch_atl_triggering_asn(p,
+                                                      packetbuf_remaininglen(),
+                                                      &ies);
+  if(ie_len < 0) {
+    return -1;
+  }
+  p += ie_len;
+  packetbuf_set_datalen(packetbuf_datalen() + ie_len);
+
+  ie_len = frame80215e_create_ie_tsch_atl_next_timeslot_template(p,
+                                               packetbuf_remaininglen(),
+                                               &ies);
+  if(ie_len < 0) {
+    return -1;
+  }
+  p += ie_len;
+  packetbuf_set_datalen(packetbuf_datalen() + ie_len);
+#endif
 
   ie_len = frame80215e_create_ie_tsch_timeslot(p,
                                                packetbuf_remaininglen(),
