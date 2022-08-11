@@ -4134,7 +4134,7 @@ static
 PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 {
 #if WITH_ATL
-  if(tsch_current_asn.ls4b > tsch_trigger_asn.ls4b && (current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID || backup_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) ) {
+  if(tsch_current_asn.ls4b > tsch_trigger_asn.ls4b && (current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE || backup_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) ) {
     tsch_change_timeslot_length(tsch_timeslot_is_adapted);
   }     
 #endif

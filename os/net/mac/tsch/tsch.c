@@ -71,6 +71,12 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+#if WITH_ATL
+static struct ctimer atl_timer;
+static uint8_t atl_current_window_index = 0;
+static uint16_t atl_observed_frame_length[ATL_OBSERVATION_WINDOW_ROW_NUM][ATL_OBSERVATION_WINDOW_COLUMN_NUM];
+#endif
+
 /* hckim periodically measure utilization */
 static struct ctimer utilization_timer;
 
@@ -670,6 +676,63 @@ print_utilization()
   ctimer_reset(&utilization_timer);
 }
 
+#if WITH_ATL
+int
+atl_quantize_frame_length_into_index(int frame_len)
+{
+  /*
+   * Frame len 21-35: 0
+   * Frame len 36-45: 1
+   * Frame len 46-55: 2
+   * Frame len 56-65: 3
+   * Frame len 66-75: 4
+   * Frame len 76-85: 5
+   * Frame len 86-95: 6
+   * Frame len 96-105: 7
+   * Frame len 106-115: 8
+   * Frame len 116-125: 9
+   */
+  int offset = 26;
+  int frame_len_minus_offset = frame_len - offset > 0 ? frame_len - offset : 0;
+  int quantized_index = frame_len_minus_offset / 10;
+  return quantized_index;
+}
+
+static void
+atl_record_frame_len(int frame_len)
+{
+  uint8_t quantized_index = atl_quantize_frame_length_into_index(frame_len);
+  atl_observed_frame_length[atl_current_window_index][quantized_index] += 1;
+}
+
+static void
+atl_determine_timeslot_length()
+{
+  /* print recorded frame length distribution */
+/*
+  uint64_t atl_determine_asn = tsch_calculate_current_asn();
+  LOG_INFO("khc current_window_index %u at %llx\n", atl_current_window_index, atl_determine_asn);
+  int i = 0;
+  int j = 0;
+  for(i = 0; i < ATL_OBSERVATION_WINDOW_ROW_NUM; i++) {
+    LOG_INFO("khc window %u |", i);
+    for(j = 0; j < 10; j++) {
+      LOG_INFO_("%u |", atl_observed_frame_length[i][j]);
+    }
+    LOG_INFO_("\n");
+  }
+*/
+  /* determine timeslot template */
+
+  atl_current_window_index = (atl_current_window_index + 1) % ATL_OBSERVATION_WINDOW_ROW_NUM;
+  uint8_t i = 0;
+  for(i = 0; i < ATL_OBSERVATION_WINDOW_COLUMN_NUM; i++) {
+    atl_observed_frame_length[atl_current_window_index][i] = 0;
+  }
+  ctimer_reset(&atl_timer);
+}
+#endif
+
 /* The address of the last node we received an EB from (other than our time source).
  * Used for recovery */
 static linkaddr_t last_eb_nbr_addr;
@@ -1209,6 +1272,12 @@ tsch_rx_process_pending()
   while((input_index = ringbufindex_peek_get(&input_ringbuf)) != -1) {
     struct input_packet *current_input = &input_array[input_index];
 
+#if WITH_ATL
+    if(tsch_is_coordinator) {
+      atl_record_frame_len(current_input->len);
+    }
+#endif
+
 #if WITH_OST /* OST-09: Post process received N */
 #if WITH_PPSD
     if(current_input->ppsd_received_in_ep == 0) {
@@ -1254,6 +1323,12 @@ tsch_tx_process_pending(void)
   /* Loop on accessing (without removing) a pending input packet */
   while((dequeued_index = ringbufindex_peek_get(&dequeued_ringbuf)) != -1) {
     struct tsch_packet *p = dequeued_array[dequeued_index];
+
+#if WITH_ATL
+    if(tsch_is_coordinator) {
+      atl_record_frame_len(queuebuf_datalen(p->qb));
+    }
+#endif
 
 #if WITH_OST
 #if WITH_PPSD
@@ -1675,6 +1750,12 @@ PROCESS_THREAD(tsch_process, ev, data)
     TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
     //hckim start ctimer to record utilization
     ctimer_set(&utilization_timer, TSCH_NEXT_PRINT_PERIOD, print_utilization, NULL);
+
+#if WITH_ATL
+    if(tsch_is_coordinator) {
+      ctimer_set(&atl_timer, ATL_FRAME_LEN_OBSERVATION_PERIOD, atl_determine_timeslot_length, NULL);
+    }
+#endif
 
 
     /* We are part of a TSCH network, start slot operation */

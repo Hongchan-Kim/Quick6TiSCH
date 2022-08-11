@@ -78,6 +78,11 @@
  */
 #define WITH_ATL                                   1
 #if WITH_ATL
+#define ATL_FRAME_LEN_OBSERVATION_PERIOD           (1 * 60 * CLOCK_SECOND)
+#define ATL_MAX_FRAME_LEN                          125
+#define ATL_MIN_FRAME_LEN                          21
+#define ATL_OBSERVATION_WINDOW_COLUMN_NUM          10 /* Quantize 0-125 */
+#define ATL_OBSERVATION_WINDOW_ROW_NUM             3
 #define TSCH_PACKET_CONF_EB_WITH_TIMESLOT_TIMING   1
 #endif
 /*---------------------------------------------------------------------------*/
