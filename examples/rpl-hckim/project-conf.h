@@ -43,7 +43,7 @@
 
 #define HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK     1
 #if HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
-#define NETSTACK_CONF_MAC_SEQNO_MAX_AGE            (10 * CLOCK_SECOND)
+#define NETSTACK_CONF_MAC_SEQNO_MAX_AGE            (20 * CLOCK_SECOND)
 #define NETSTACK_CONF_MAC_SEQNO_HISTORY            16
 #endif
 
@@ -76,7 +76,7 @@
 /*
  * Adaptive timeslot length
  */
-#define WITH_ATL                                   1
+#define WITH_ATL                                   0
 #if WITH_ATL
 #define TSCH_PACKET_CONF_EB_WITH_TIMESLOT_TIMING   1
 #endif
@@ -228,7 +228,7 @@
 
 #define APP_SEQNO_DUPLICATE_CHECK                  1
 #if APP_SEQNO_DUPLICATE_CHECK
-#define APP_SEQNO_MAX_AGE                          (10 * CLOCK_SECOND)
+#define APP_SEQNO_MAX_AGE                          (20 * CLOCK_SECOND)
 #define APP_SEQNO_HISTORY                          16
 #endif
 /*---------------------------------------------------------------------------*/
