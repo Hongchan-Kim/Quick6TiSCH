@@ -77,10 +77,12 @@ struct ieee802154_ies {
   uint8_t ie_payload_ie_offset;
   uint16_t ie_mlme_len;
   /* Payload Short MLME IEs */
-#if WITH_ATL //checked
-  uint8_t ie_tsch_atl_next_timeslot_id;
-  uint16_t ie_tsch_atl_next_timeslot[tsch_ts_elements_count];
-  struct tsch_asn_t ie_atl_triggering_asn; 
+#if WITH_ATL /* Variables */
+  struct tsch_asn_t ie_atl_triggering_asn;
+  uint8_t ie_atl_curr_frame_len_index;
+  uint8_t ie_atl_curr_ack_len_index;
+  uint8_t ie_atl_next_frame_len_index;
+  uint8_t ie_atl_next_ack_len_index;
 #endif
   uint8_t ie_tsch_synchronization_offset;
   struct tsch_asn_t ie_asn;
@@ -128,10 +130,10 @@ int frame80215e_create_ie_ietf(uint8_t *buf, int len,
 int frame80215e_create_ie_mlme(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 /* MLME sub-IE. TSCH synchronization. Used in EBs: ASN and join priority */
-#if WITH_ATL //checked
+#if WITH_ATL /* Functions */
 int frame80215e_create_ie_tsch_atl_triggering_asn(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
-int frame80215e_create_ie_tsch_atl_next_timeslot_template(uint8_t *buf, int len,
+int frame80215e_create_ie_tsch_frame_ack_len_index(uint8_t *buf, int len, 
     struct ieee802154_ies *ies);
 #endif
 int frame80215e_create_ie_tsch_synchronization(uint8_t *buf, int len,

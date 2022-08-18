@@ -1973,6 +1973,13 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* if this is an EB, then update its Sync-IE */
       if(current_neighbor == n_eb) {
         packet_ready = tsch_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset);
+#if WITH_ATL /* Coordinator/non-coordinator: update information in EB before transmission */
+        if(packet_ready && atl_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset)) {
+          packet_ready = 1;
+        } else {
+          packet_ready = 0;
+        }
+#endif
       } else {
         packet_ready = 1;
       }
@@ -2265,6 +2272,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* LLSEC802154_ENABLED */
               }
 
+#if WITH_ATL /* Coordinator: record received ACK length */
+              if(tsch_is_coordinator && ack_len != 0) {
+                atl_record_ack_len(ack_len);
+              }
+#endif
 
 #if WITH_PPSD
               if(ack_len != 0) {
@@ -3557,6 +3569,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 regular_slot_timestamp_rx[12] = RTIMER_NOW();
 #endif
 
+#if WITH_ATL /* Coordinator: record transmitted ACK length */
+                if(tsch_is_coordinator && ack_len != 0) {
+                  atl_record_ack_len(ack_len);
+                }
+#endif
 #if WITH_PPSD
                 if(tsch_packet_get_frame_pending(current_input->payload, current_input->len)
                   && ppsd_pkts_acceptable > 0) {
@@ -4133,16 +4150,30 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 static
 PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 {
-#if WITH_ATL
-  if(tsch_current_asn.ls4b > tsch_trigger_asn.ls4b && (current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE || backup_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) ) {
-    tsch_change_timeslot_length(tsch_timeslot_is_adapted);
-  }     
-#endif
   TSCH_DEBUG_INTERRUPT();
   PT_BEGIN(&slot_operation_pt);
 
   /* Loop over all active slots */
   while(tsch_is_associated) {
+
+#if WITH_ATL /* Coordinator/non-coordinator: at triggering asn, apply next timeslot length */
+  if(((tsch_current_asn.ls4b == atl_triggering_asn.ls4b) 
+      && (tsch_current_asn.ms1b == atl_triggering_asn.ms1b))
+     && ((atl_curr_frame_len_index != atl_next_frame_len_index)
+        || (atl_curr_ack_len_index != atl_next_ack_len_index))) {
+    atl_apply_next_timeslot_length();
+
+    atl_curr_frame_len_index = atl_next_frame_len_index;
+    atl_curr_ack_len_index = atl_next_ack_len_index;
+
+#if ATL_DBG
+    TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                        "atl apply next ts");
+    );
+#endif
+  }     
+#endif
 
     TSCH_ASN_COPY(tsch_last_valid_asn, tsch_current_asn);
     last_valid_asn_start = current_slot_start;
@@ -4792,12 +4823,6 @@ ost_donothing:
 #endif
         }
 #endif
-
-/*#if WITH_ATL
-        if(tsch_current_asn.ls4b > tsch_trigger_asn.ls4b && (current_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID || backup_link->slotframe_handle == ORCHESTRA_BROADCAST_SF_ID) ){
-          tsch_change_timeslot_length(tsch_timeslot_is_adapted);
-        }     
-#endif*/
 
         /* Time to next wake up */
         time_to_next_active_slot = timeslot_diff * tsch_timing[tsch_ts_timeslot_length] + drift_correction;

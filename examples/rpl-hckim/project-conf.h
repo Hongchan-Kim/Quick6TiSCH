@@ -32,6 +32,35 @@
 /*---------------------------------------------------------------------------*/
 
 
+/*---------------------------------------------------------------------------*/
+/*
+ * Adaptive timeslot length
+ */
+#define WITH_ATL                                   1
+#if WITH_ATL
+#define ATL_DBG                                    1
+
+#define ATL_OBSERVATION_PERIOD                     (5 * 60 * CLOCK_SECOND)
+
+#define ATL_MAX_FRAME_LEN                          125 /* Except for RADIO_PHY_OVERHEAD (3 bytes) */
+#define ATL_MIN_FRAME_LEN                          21 /* Except for RADIO_PHY_OVERHEAD (3 bytes) */
+#define ATL_MAX_ACK_LEN                            67 /* Except for RADIO_PHY_OVERHEAD (3 bytes) */
+#define ATL_MIN_ACK_LEN                            17 /* Except for RADIO_PHY_OVERHEAD (3 bytes) */
+#define ATL_FRAME_LEN_QUANTIZATION_INTERVAL        8
+#define ATL_ACK_LEN_QUANTIZATION_INTERVAL          8
+
+#define ATL_OBSERVATION_WINDOWS                    2
+#define ATL_FRAME_LEN_QUANTIZED_LEVELS             ((ATL_MAX_FRAME_LEN - ATL_MIN_FRAME_LEN) / ATL_FRAME_LEN_QUANTIZATION_INTERVAL + 1)
+#define ATL_ACK_LEN_QUANTIZED_LEVELS               ((ATL_MAX_ACK_LEN - ATL_MIN_ACK_LEN) / ATL_ACK_LEN_QUANTIZATION_INTERVAL + 1)
+
+#define ATL_INITIAL_FRAME_LEN_INDEX                (ATL_FRAME_LEN_QUANTIZED_LEVELS - 1)
+#define ATL_INITIAL_ACK_LEN_INDEX                  (ATL_ACK_LEN_QUANTIZED_LEVELS - 1)
+
+#define ATL_ZERO_HOP_DISTANCE_OFFSET               1
+#define ATL_TRIGGERING_ASN_MULTIPLIER              2
+#endif
+/*---------------------------------------------------------------------------*/
+
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -53,6 +82,7 @@
 #define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 /*---------------------------------------------------------------------------*/
 
+
 /*---------------------------------------------------------------------------*/
 /*
  * Default burst transmission implementation
@@ -72,19 +102,7 @@
 #endif
 /*---------------------------------------------------------------------------*/
 
-/*---------------------------------------------------------------------------*/
-/*
- * Adaptive timeslot length
- */
-#define WITH_ATL                                   1
-#if WITH_ATL
-#define ATL_FRAME_LEN_OBSERVATION_PERIOD           (1 * 60 * CLOCK_SECOND)
-#define ATL_MAX_FRAME_LEN                          125
-#define ATL_MIN_FRAME_LEN                          21
-#define ATL_OBSERVATION_WINDOW_COLUMN_NUM          10 /* Quantize 0-125 */
-#define ATL_OBSERVATION_WINDOW_ROW_NUM             3
-#define TSCH_PACKET_CONF_EB_WITH_TIMESLOT_TIMING   1
-#endif
+
 /*---------------------------------------------------------------------------*/
 /*
  * Configure testbed site, node num, topology

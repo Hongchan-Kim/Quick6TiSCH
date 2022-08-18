@@ -48,11 +48,6 @@ static struct simple_udp_connection udp_conn;
 
 static uint64_t lt_up_sum[NODE_NUM];
 
-#if WITH_ATL
-extern uip_ds6_netif_t uip_ds6_if;
-//#define UIP_IP_BUF   ((struct uip_ip_hdr *)&uip_buf[UIP_LLH_LEN])
-#endif
-
 /*---------------------------------------------------------------------------*/
 #if APP_SEQNO_DUPLICATE_CHECK
 struct app_up_seqno {
@@ -208,10 +203,6 @@ udp_rx_callback(struct simple_udp_connection *c,
               sender_index + 1, sender_index + 1, 
               iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1]);
   }
-
-#if WITH_ATL
-  uint8_t hops = uip_ds6_if.cur_hop_limit - UIP_IP_BUF->ttl + 1;
-#endif
 }
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_server_process, "UDP server");
