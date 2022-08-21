@@ -377,6 +377,7 @@ void tsch_disassociate(void);
 void atl_record_ack_len(int ack_len);
 void atl_update_max_hop_distance(uint8_t hops);
 void atl_apply_next_timeslot_length();
+void atl_finish_rapid_eb_broadcasting();
 #endif
 
 #if WITH_OST

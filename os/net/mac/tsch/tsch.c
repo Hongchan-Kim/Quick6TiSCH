@@ -73,6 +73,7 @@
 
 #if WITH_ATL /* Variables */
 static struct ctimer atl_timer;
+static struct ctimer atl_eb_send_timer;
 static uint8_t atl_current_window_index = 0;
 static uint16_t atl_observed_frame_length[ATL_OBSERVATION_WINDOWS][ATL_FRAME_LEN_QUANTIZED_LEVELS];
 static uint16_t atl_observed_ack_length[ATL_OBSERVATION_WINDOWS][ATL_ACK_LEN_QUANTIZED_LEVELS];
@@ -783,6 +784,59 @@ PROCESS(tsch_pending_events_process, "pending events process");
 static void packet_input(void);
 
 /*---------------------------------------------------------------------------*/
+#if WITH_ATL
+static void
+atl_start_rapid_eb_broadcasting()
+{
+  if(tsch_is_associated //&& tsch_current_eb_period > 0
+#ifdef TSCH_RPL_CHECK_DODAG_JOINED
+    /* Implementation section 6.3 of RFC 8180 */
+    && TSCH_RPL_CHECK_DODAG_JOINED()
+#endif /* TSCH_RPL_CHECK_DODAG_JOINED */
+    /* don't send when in leaf mode */
+    && !NETSTACK_ROUTING.is_in_leaf_mode()
+      ) {
+    /* Enqueue EB only if there isn't already one in queue */
+    if(tsch_queue_nbr_packet_count(n_eb) == 0) {
+      uint8_t hdr_len = 0;
+      uint8_t tsch_sync_ie_offset;
+      /* Prepare the EB packet and schedule it to be sent */
+      if(tsch_packet_create_eb(&hdr_len, &tsch_sync_ie_offset) > 0) {
+        struct tsch_packet *p;
+        /* Enqueue EB packet, for a single transmission only */
+        if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
+          LOG_ERR("HCK eb_qloss %u | atl ! could not enqueue EB packet\n", ++tsch_eb_packet_qloss_count);
+        } else {
+            LOG_INFO("HCK eb_enq %u | atl TSCH: enqueue EB packet %u %u\n", ++tsch_eb_packet_enqueue_count,
+                      packetbuf_totlen(), packetbuf_hdrlen());
+          p->tsch_sync_ie_offset = tsch_sync_ie_offset;
+          p->header_len = hdr_len;
+        }
+      }
+    }
+#if ATL_DBG
+    else {
+      LOG_INFO("atl send_eb !eb exists\n");
+    }
+#endif
+    // call ctimer_stop if triggering_asn passed
+    uint32_t atl_asn_diff = TSCH_ASN_DIFF(tsch_current_asn, atl_triggering_asn);
+    if(atl_asn_diff >= 0) {
+      atl_finish_rapid_eb_broadcasting();
+    } else {
+      ctimer_set(&atl_eb_send_timer, ATL_RAPID_EB_PERIOD, atl_start_rapid_eb_broadcasting, NULL);
+    }
+  }
+}
+/*---------------------------------------------------------------------------*/
+void
+atl_finish_rapid_eb_broadcasting()
+{
+  ctimer_stop(&atl_eb_send_timer);
+}
+/*---------------------------------------------------------------------------*/
+#endif
+/*---------------------------------------------------------------------------*/
 #if WITH_ATL /* Coordinator/non-coordinator: record hop distnace, frame/ACK len */
 void
 atl_update_max_hop_distance(uint8_t hops)
@@ -920,6 +974,11 @@ atl_policy_calculate_triggering_asn()
 static void
 atl_determine_next_timeslot_length()
 {
+  /* 
+   * 1. Coordinator determines next representative frame/ACK length.
+   * 2. Only if next rep frame/ACK lengths are different from current ones,
+   *    coordinator starts rapid EB broadcasting.
+   */
   int i = 0;
 
 #if ATL_DBG
@@ -952,17 +1011,23 @@ atl_determine_next_timeslot_length()
   int next_frame_len = atl_policy_calculate_next_frame_len();
   int next_ack_len = atl_policy_calculate_next_ack_len();
 
-  /* Initialize tsch_next_timing_us */
-  for(i = 0; i < tsch_ts_elements_count; i++) {
-    tsch_next_timing_us[i] = tsch_default_timing_us[i];
-  }
-
-  /* Update tsch_next_timing_us */
+  /* 
+   * Update tsch_next_timing_us 
+   * - At the beginning, tsch_reset() initializes 'tsch_next_timing_us' array.
+   * - Therefore, we do not need to update the rest elements of 'tsch_next_timing_us' array.
+   */
   tsch_next_timing_us[tsch_ts_max_tx] = 32 * (5 + next_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
   tsch_next_timing_us[tsch_ts_max_ack] = 32 * (5 + next_ack_len + 3);
   tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
                       - ((tsch_default_timing_us[tsch_ts_max_ack] - tsch_next_timing_us[tsch_ts_max_ack])
                           + (tsch_default_timing_us[tsch_ts_max_tx] - tsch_next_timing_us[tsch_ts_max_tx]));
+
+  /* 
+   * Regardless of whether next frame_len and ack_len are updated or not,
+   * coordinator calculates triggering asn.
+   */
+  atl_policy_calculate_triggering_asn();
+
 
 #if ATL_DBG
   LOG_INFO("atl determine curr_ts");
@@ -976,15 +1041,21 @@ atl_determine_next_timeslot_length()
     LOG_INFO_(" | %u", tsch_next_timing_us[i]);
   }
   LOG_INFO_("\n");
-#endif
 
-  /* Calculate triggering asn */
-  atl_policy_calculate_triggering_asn();
-
-#if ATL_DBG
   LOG_INFO("atl determine t_asn %llx\n", 
           (uint64_t)(atl_triggering_asn.ls4b) + ((uint64_t)(atl_triggering_asn.ms1b) << 32));
 #endif
+
+
+  /*
+   * Only when representative frame length and ack length arae changed,
+   * coordinator starts rapid eb broadcasting.
+   */
+  if((atl_curr_frame_len_index != atl_next_frame_len_index)
+      || (atl_curr_ack_len_index != atl_next_ack_len_index)) {
+    /* Starts rapid eb broadcasting */
+    atl_start_rapid_eb_broadcasting();
+  }
 
   /* Reset next observation array */
   atl_current_window_index = (atl_current_window_index + 1) % ATL_OBSERVATION_WINDOWS;
@@ -996,6 +1067,7 @@ atl_determine_next_timeslot_length()
   }
   atl_max_hop_distance[atl_current_window_index] = 0;
 
+  /* Reset and restart atl_timer */
   ctimer_reset(&atl_timer);
 }
 #endif
@@ -1121,11 +1193,9 @@ tsch_reset(void)
     LOG_INFO_("\n");
 #endif
 
-  /* Calculate curr and next frame_len and ack_len */
+  /* Calculate curr frame_len and ack_len */
   int curr_frame_len = atl_get_representative_frame_len_from_quantized_index(atl_curr_frame_len_index);
   int curr_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_curr_ack_len_index);
-  int next_frame_len = atl_get_representative_frame_len_from_quantized_index(atl_next_frame_len_index);
-  int next_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_next_ack_len_index);
 
   /* Update tsch_timing_us and tsch_timing */
   tsch_timing_us[tsch_ts_max_tx] = 32 * (5 + curr_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
@@ -1149,6 +1219,10 @@ tsch_reset(void)
   for(i = 0; i < tsch_ts_elements_count; i++) {
     tsch_next_timing_us[i] = tsch_default_timing_us[i];
   }
+
+  /* Calculate next frame_len and ack_len */
+  int next_frame_len = atl_get_representative_frame_len_from_quantized_index(atl_next_frame_len_index);
+  int next_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_next_ack_len_index);
 
   /* Update tsch_next_timing_us */
   tsch_next_timing_us[tsch_ts_max_tx] = 32 * (5 + next_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
@@ -1354,91 +1428,6 @@ eb_input(struct input_packet *current_input)
                           &frame, &eb_ies, NULL, 1)) {
     /* PAN ID check and authentication done at rx time */
 
-#if WITH_ATL /* Non-coordinator: update ATL variables and timeslot length */
-    if((atl_curr_frame_len_index != eb_ies.ie_atl_curr_frame_len_index)
-        || (atl_curr_ack_len_index != eb_ies.ie_atl_curr_ack_len_index)) {
-      LOG_INFO("atl eb_input invalid info c_f %u %u c_a %u %u\n",
-              atl_curr_frame_len_index,
-              eb_ies.ie_atl_curr_frame_len_index,
-              atl_curr_ack_len_index,
-              eb_ies.ie_atl_curr_ack_len_index);
-      tsch_disassociate();
-    } else {
-      atl_triggering_asn = eb_ies.ie_atl_triggering_asn;
-      atl_curr_frame_len_index = eb_ies.ie_atl_curr_frame_len_index;
-      atl_curr_ack_len_index = eb_ies.ie_atl_curr_ack_len_index;
-      atl_next_frame_len_index = eb_ies.ie_atl_next_frame_len_index;
-      atl_next_ack_len_index = eb_ies.ie_atl_next_ack_len_index;
-
-#if ATL_DBG
-      LOG_INFO("atl eb_input t_asn %llx c_f %u c_a %u n_f %u n_a %u\n", 
-              (uint64_t)(atl_triggering_asn.ls4b) + ((uint64_t)(atl_triggering_asn.ms1b) << 32),
-              atl_curr_frame_len_index,
-              atl_curr_ack_len_index,
-              atl_next_frame_len_index,
-              atl_next_ack_len_index);
-#endif
-
-#if ATL_DBG
-      int i = 0;
-      LOG_INFO("atl eb_input curr_ts_1");
-      for(i = 0; i < tsch_ts_elements_count; i++) {
-        LOG_INFO_(" | %u", tsch_timing_us[i]);
-      }
-      LOG_INFO_("\n");
-#endif
-
-      /* calculate curr and next frame_len and ack_len */
-      //int curr_frame_len = atl_get_representative_frame_len_from_quantized_index(atl_curr_frame_len_index);
-      //int curr_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_curr_ack_len_index);
-      int next_frame_len = atl_get_representative_frame_len_from_quantized_index(atl_next_frame_len_index);
-      int next_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_next_ack_len_index);
-
-#if ATL_DBG
-      LOG_INFO("atl eb_input curr_ts");
-      for(i = 0; i < tsch_ts_elements_count; i++) {
-        LOG_INFO_(" | %u", tsch_timing_us[i]);
-      }
-      LOG_INFO_("\n");
-#endif
-      /* Update tsch_timing_us and tsch_timing */
-      /*
-      tsch_timing_us[tsch_ts_max_tx] = 32 * (5 + curr_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
-      tsch_timing_us[tsch_ts_max_ack] = 32 * (5 + curr_ack_len + 3);
-      tsch_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
-                          - ((tsch_default_timing_us[tsch_ts_max_ack] - tsch_timing_us[tsch_ts_max_ack])
-                              + (tsch_default_timing_us[tsch_ts_max_tx] - tsch_timing_us[tsch_ts_max_tx]));
-      tsch_timing[tsch_ts_max_tx] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_max_tx]);
-      tsch_timing[tsch_ts_max_ack] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_max_ack]);
-      tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
-      */
-
-      
-      /* Initialize tsch_next_timing_us */
-      /*
-      int i = 0;
-      for(i = 0; i < tsch_ts_elements_count; i++) {
-        tsch_next_timing_us[i] = tsch_default_timing_us[i];
-      }
-      */
-
-      /* Update tsch_next_timing_us */
-      tsch_next_timing_us[tsch_ts_max_tx] = 32 * (5 + next_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
-      tsch_next_timing_us[tsch_ts_max_ack] = 32 * (5 + next_ack_len + 3);
-      tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
-                          - ((tsch_default_timing_us[tsch_ts_max_ack] - tsch_next_timing_us[tsch_ts_max_ack])
-                              + (tsch_default_timing_us[tsch_ts_max_tx] - tsch_next_timing_us[tsch_ts_max_tx]));
-
-#if ATL_DBG
-      LOG_INFO("atl eb_input next_ts");
-      for(i = 0; i < tsch_ts_elements_count; i++) {
-        LOG_INFO_(" | %u", tsch_next_timing_us[i]);
-      }
-      LOG_INFO_("\n");
-#endif
-    }
-#endif
-
     /* Got an EB from a different neighbor than our time source, keep enough data
      * to switch to it in case we lose the link to our time source */
     struct tsch_neighbor *ts = tsch_queue_get_time_source();
@@ -1522,6 +1511,77 @@ eb_input(struct input_packet *current_input)
           }
         }
       }
+
+#if WITH_ATL /* Non-coordinator: update ATL variables and timeslot length */
+      if((atl_curr_frame_len_index != eb_ies.ie_atl_curr_frame_len_index)
+          || (atl_curr_ack_len_index != eb_ies.ie_atl_curr_ack_len_index)) {
+        LOG_INFO("atl eb_input invalid info c_f %u %u c_a %u %u\n",
+                atl_curr_frame_len_index,
+                eb_ies.ie_atl_curr_frame_len_index,
+                atl_curr_ack_len_index,
+                eb_ies.ie_atl_curr_ack_len_index);
+        tsch_disassociate();
+      } else {
+        /*
+         * curr_frame_length and curr_ack_len are equal to info piggybacked in EB
+         * now update triggering_asn, next_frame_len, and next_ack_len,
+         * which are assigned by coordinator.
+         */
+        atl_triggering_asn = eb_ies.ie_atl_triggering_asn;
+        atl_next_frame_len_index = eb_ies.ie_atl_next_frame_len_index;
+        atl_next_ack_len_index = eb_ies.ie_atl_next_ack_len_index;
+
+#if ATL_DBG
+        LOG_INFO("atl eb_input t_asn %llx c_f %u c_a %u n_f %u n_a %u\n", 
+                (uint64_t)(atl_triggering_asn.ls4b) + ((uint64_t)(atl_triggering_asn.ms1b) << 32),
+                atl_curr_frame_len_index,
+                atl_curr_ack_len_index,
+                atl_next_frame_len_index,
+                atl_next_ack_len_index);
+#endif
+
+#if ATL_DBG
+        int i = 0;
+        LOG_INFO("atl eb_input curr_ts");
+        for(i = 0; i < tsch_ts_elements_count; i++) {
+          LOG_INFO_(" | %u", tsch_timing_us[i]);
+        }
+        LOG_INFO_("\n");
+#endif
+
+        /* calculate next frame_len and ack_len */
+        int next_frame_len = atl_get_representative_frame_len_from_quantized_index(atl_next_frame_len_index);
+        int next_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_next_ack_len_index);
+
+        /* Update tsch_next_timing_us */
+        tsch_next_timing_us[tsch_ts_max_tx] = 32 * (5 + next_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
+        tsch_next_timing_us[tsch_ts_max_ack] = 32 * (5 + next_ack_len + 3);
+        tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
+                            - ((tsch_default_timing_us[tsch_ts_max_ack] - tsch_next_timing_us[tsch_ts_max_ack])
+                                + (tsch_default_timing_us[tsch_ts_max_tx] - tsch_next_timing_us[tsch_ts_max_tx]));
+
+#if ATL_DBG
+        LOG_INFO("atl eb_input next_ts");
+        for(i = 0; i < tsch_ts_elements_count; i++) {
+          LOG_INFO_(" | %u", tsch_next_timing_us[i]);
+        }
+        LOG_INFO_("\n");
+#endif
+      }
+
+      if((atl_curr_frame_len_index != atl_next_frame_len_index)
+          || (atl_curr_ack_len_index != atl_next_ack_len_index)) {
+        atl_start_rapid_eb_broadcasting();
+//      } else {
+//        atl_finish_rapid_eb_broadcasting();
+      }
+/*
+      uint32_t atl_asn_diff = TSCH_ASN_DIFF(tsch_current_asn, atl_triggering_asn);
+      if(atl_asn_diff >= 0) {
+        atl_finish_rapid_eb_broadcasting();
+      }
+*/
+#endif
     }
   }
 }
@@ -1797,11 +1857,9 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
     LOG_INFO_("\n");
 #endif
 
-  /* Calculate curr and next frame_len and ack_len */
+  /* Calculate curr frame_len and ack_len */
   int curr_frame_len = atl_get_representative_frame_len_from_quantized_index(atl_curr_frame_len_index);
   int curr_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_curr_ack_len_index);
-  int next_frame_len = atl_get_representative_frame_len_from_quantized_index(atl_next_frame_len_index);
-  int next_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_next_ack_len_index);
 
   /* Update tsch_timing_us and tsch_timing */
   tsch_timing_us[tsch_ts_max_tx] = 32 * (5 + curr_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
@@ -1825,6 +1883,10 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   for(i = 0; i < tsch_ts_elements_count; i++) {
     tsch_next_timing_us[i] = tsch_default_timing_us[i];
   }
+
+  /* Calculate next frame_len and ack_len */
+  int next_frame_len = atl_get_representative_frame_len_from_quantized_index(atl_next_frame_len_index);
+  int next_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_next_ack_len_index);
 
   /* Update tsch_next_timing_us */
   tsch_next_timing_us[tsch_ts_max_tx] = 32 * (5 + next_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
@@ -2312,6 +2374,11 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
           }
         }
       }
+#if ATL_DBG
+      else {
+        LOG_INFO("atl send_eb_process !eb exists");
+      }
+#endif
     }
     if(tsch_current_eb_period > 0) {
       /* Next EB transmission with a random delay

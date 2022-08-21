@@ -4157,22 +4157,31 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
   while(tsch_is_associated) {
 
 #if WITH_ATL /* Coordinator/non-coordinator: at triggering asn, apply next timeslot length */
-  if(((tsch_current_asn.ls4b == atl_triggering_asn.ls4b) 
-      && (tsch_current_asn.ms1b == atl_triggering_asn.ms1b))
-     && ((atl_curr_frame_len_index != atl_next_frame_len_index)
-        || (atl_curr_ack_len_index != atl_next_ack_len_index))) {
-    atl_apply_next_timeslot_length();
+  if((tsch_current_asn.ls4b == atl_triggering_asn.ls4b) 
+      && (tsch_current_asn.ms1b == atl_triggering_asn.ms1b)) {
+    if((atl_curr_frame_len_index != atl_next_frame_len_index)
+        || (atl_curr_ack_len_index != atl_next_ack_len_index)) {
+      atl_apply_next_timeslot_length();
 
-    atl_curr_frame_len_index = atl_next_frame_len_index;
-    atl_curr_ack_len_index = atl_next_ack_len_index;
+      atl_curr_frame_len_index = atl_next_frame_len_index;
+      atl_curr_ack_len_index = atl_next_ack_len_index;
 
 #if ATL_DBG
-    TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "atl apply next ts");
-    );
+      TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "atl apply next ts");
+      );
 #endif
-  }     
+    } else {
+#if ATL_DBG
+      TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "atl not apply next ts (same len) / stop rapid eb");
+      );
+#endif
+    }
+    atl_finish_rapid_eb_broadcasting();
+  }
 #endif
 
     TSCH_ASN_COPY(tsch_last_valid_asn, tsch_current_asn);
