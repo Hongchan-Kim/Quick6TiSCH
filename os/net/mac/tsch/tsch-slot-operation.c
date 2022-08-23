@@ -327,6 +327,14 @@ uint8_t eval_num_of_pkts_in_ep = 1;
 
 #endif /* WITH_PPSD */
 
+#if WITH_ATL /* Variables */
+static volatile int atl_in_guard_time;
+static rtimer_clock_t atl_slot_start;
+static rtimer_clock_t atl_slot_end;
+static uint16_t atl_passed_timeslots; /* Includes triggering slot */
+static uint16_t atl_timeslots_except_triggering_slot;
+#endif
+
 #if HCK_DBG_REGULAR_SLOT_TIMING /* Variables */
 static rtimer_clock_t regular_slot_timestamp_common[2];
 static uint8_t regular_slot_tx_packet_len;
@@ -4169,27 +4177,68 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if ATL_DBG
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "atl apply next ts");
+                          "atl apply next ts %u", tsch_timing_us[tsch_ts_timeslot_length]);
       );
 #endif
     } else {
 #if ATL_DBG
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "atl not apply next ts (same len) / stop rapid eb");
+                          "atl not apply next ts (same len) stop rapid eb");
       );
 #endif
     }
+#if ATL_GUARD_TIME
+    atl_in_guard_time = 0;
+#endif
     atl_finish_rapid_eb_broadcasting();
+#if ATL_GUARD_TIME
+  } else if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn)) > 0
+            //|| ((tsch_current_asn.ms1b == atl_triggering_asn.ms1b)) // ATL-TODO: needs to consider ASN overflow
+            ) {
+    if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn) <= ATL_GUARD_TIME_DURATION)) {
+      if((atl_curr_frame_len_index != atl_next_frame_len_index)
+          || (atl_curr_ack_len_index != atl_next_ack_len_index)) {
+        atl_in_guard_time = 1;
+      } else {
+        atl_in_guard_time = 0;
+      }
+    } else {
+      atl_in_guard_time = 0;
+    }
+  } else {
+    atl_in_guard_time = 0;
+#endif
   }
 #endif
 
     TSCH_ASN_COPY(tsch_last_valid_asn, tsch_current_asn);
     last_valid_asn_start = current_slot_start;
 
-    if(current_link == NULL || tsch_lock_requested) { /* Skip slot operation if there is no link
+    if(current_link == NULL || tsch_lock_requested
+#if WITH_ATL
+#if ATL_GUARD_TIME
+      || atl_in_guard_time
+#endif
+#endif
+      ) { /* Skip slot operation if there is no link
                                                           or if there is a pending request for getting the lock */
       /* Issue a log whenever skipping a slot */
+
+#if WITH_ATL
+#if ATL_GUARD_TIME
+#if ATL_DBG
+      TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "!skipped slot %u %u %u atl %u",
+                            tsch_locked,
+                            tsch_lock_requested,
+                            current_link == NULL,
+                            atl_in_guard_time);
+      );
+#endif
+#endif
+#else
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
                           "!skipped slot %u %u %u",
@@ -4197,6 +4246,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                             tsch_lock_requested,
                             current_link == NULL);
       );
+#endif
 
 #if WITH_OST && OST_ON_DEMAND_PROVISION
       if(ost_exist_matching_slot(&tsch_current_asn)) {
@@ -4587,6 +4637,37 @@ ost_donothing:
     }
 #endif
 
+#if WITH_ATL
+#if ATL_FLEXIBLE_DEADLINE
+    atl_slot_start = current_slot_start;
+    atl_slot_end = RTIMER_NOW();
+    if(RTIMER_CLOCK_DIFF(atl_slot_end, atl_slot_start) == 0) {
+      atl_passed_timeslots = 1;
+    } else {
+      atl_passed_timeslots = ((RTIMER_CLOCK_DIFF(atl_slot_end, atl_slot_start) + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                              / tsch_timing[tsch_ts_timeslot_length]);
+    }
+    atl_timeslots_except_triggering_slot = atl_passed_timeslots - 1;
+
+    TSCH_ASN_INC(tsch_current_asn, (atl_timeslots_except_triggering_slot));
+
+#if ATL_DBG
+    if(atl_timeslots_except_triggering_slot > 0) {
+      TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "!atl overflow %u %u %d", RTIMER_CLOCK_DIFF(atl_slot_end, atl_slot_start), tsch_timing[tsch_ts_timeslot_length], atl_passed_timeslots);
+      );
+/*
+    } else {
+      TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "atl no-overf %u %u %d", RTIMER_CLOCK_DIFF(atl_slot_end, atl_slot_start), tsch_timing[tsch_ts_timeslot_length], atl_passed_timeslots);
+      );
+*/
+    }
+#endif
+#endif
+#endif
 
     /* End of slot operation, schedule next slot or resynchronize */
 
@@ -4831,6 +4912,15 @@ ost_donothing:
               "after ep: ts to next %u", timeslot_diff));
 #endif
         }
+#endif
+
+#if WITH_ATL
+#if ATL_FLEXIBLE_DEADLINE
+        if(atl_timeslots_except_triggering_slot > 0) {
+          timeslot_diff += atl_timeslots_except_triggering_slot;
+          atl_timeslots_except_triggering_slot = 0;
+        }
+#endif
 #endif
 
         /* Time to next wake up */

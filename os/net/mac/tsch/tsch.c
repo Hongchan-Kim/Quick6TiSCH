@@ -784,7 +784,7 @@ PROCESS(tsch_pending_events_process, "pending events process");
 static void packet_input(void);
 
 /*---------------------------------------------------------------------------*/
-#if WITH_ATL
+#if WITH_ATL /* Coordinator/non-coordinator: rapidly broadcast EB */
 static void
 atl_start_rapid_eb_broadcasting()
 {
@@ -820,7 +820,7 @@ atl_start_rapid_eb_broadcasting()
     }
 #endif
     // call ctimer_stop if triggering_asn passed
-    uint32_t atl_asn_diff = TSCH_ASN_DIFF(tsch_current_asn, atl_triggering_asn);
+    int32_t atl_asn_diff = TSCH_ASN_DIFF(tsch_current_asn, atl_triggering_asn);
     if(atl_asn_diff >= 0) {
       atl_finish_rapid_eb_broadcasting();
     } else {
@@ -1007,7 +1007,7 @@ atl_determine_next_timeslot_length()
   }
 #endif
 
-  /* Determine target frame_len and ack_len */
+  /* Determine next frame_len and ack_len */
   int next_frame_len = atl_policy_calculate_next_frame_len();
   int next_ack_len = atl_policy_calculate_next_ack_len();
 
@@ -1016,18 +1016,22 @@ atl_determine_next_timeslot_length()
    * - At the beginning, tsch_reset() initializes 'tsch_next_timing_us' array.
    * - Therefore, we do not need to update the rest elements of 'tsch_next_timing_us' array.
    */
+#if ATL_FLEXIBLE_DEADLINE
+  tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
+                      - ((tsch_default_timing_us[tsch_ts_max_ack] - ATL_CALCULATE_DURATION(next_ack_len))
+                          + (tsch_default_timing_us[tsch_ts_max_tx] - ATL_CALCULATE_DURATION(next_frame_len)));
+#else
   tsch_next_timing_us[tsch_ts_max_tx] = 32 * (5 + next_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
   tsch_next_timing_us[tsch_ts_max_ack] = 32 * (5 + next_ack_len + 3);
   tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
                       - ((tsch_default_timing_us[tsch_ts_max_ack] - tsch_next_timing_us[tsch_ts_max_ack])
                           + (tsch_default_timing_us[tsch_ts_max_tx] - tsch_next_timing_us[tsch_ts_max_tx]));
-
+#endif
   /* 
    * Regardless of whether next frame_len and ack_len are updated or not,
    * coordinator calculates triggering asn.
    */
   atl_policy_calculate_triggering_asn();
-
 
 #if ATL_DBG
   LOG_INFO("atl determine curr_ts");
@@ -1045,7 +1049,6 @@ atl_determine_next_timeslot_length()
   LOG_INFO("atl determine t_asn %llx\n", 
           (uint64_t)(atl_triggering_asn.ls4b) + ((uint64_t)(atl_triggering_asn.ms1b) << 32));
 #endif
-
 
   /*
    * Only when representative frame length and ack length arae changed,
@@ -1076,11 +1079,16 @@ atl_determine_next_timeslot_length()
 void
 atl_apply_next_timeslot_length()
 {
+#if ATL_FLEXIBLE_DEADLINE
+  tsch_timing_us[tsch_ts_timeslot_length] = tsch_next_timing_us[tsch_ts_timeslot_length];
+  tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
+#else
   int i;
   for(i = 0; i < tsch_ts_elements_count; i++) {
     tsch_timing_us[i] = tsch_next_timing_us[i];
     tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
   }
+#endif
 }
 #endif
 /*---------------------------------------------------------------------------*/
@@ -1198,6 +1206,12 @@ tsch_reset(void)
   int curr_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_curr_ack_len_index);
 
   /* Update tsch_timing_us and tsch_timing */
+#if ATL_FLEXIBLE_DEADLINE
+  tsch_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
+                      - ((tsch_default_timing_us[tsch_ts_max_ack] - ATL_CALCULATE_DURATION(curr_ack_len))
+                          + (tsch_default_timing_us[tsch_ts_max_tx] - ATL_CALCULATE_DURATION(curr_frame_len)));
+  tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
+#else
   tsch_timing_us[tsch_ts_max_tx] = 32 * (5 + curr_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
   tsch_timing_us[tsch_ts_max_ack] = 32 * (5 + curr_ack_len + 3);
   tsch_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
@@ -1206,6 +1220,7 @@ tsch_reset(void)
   tsch_timing[tsch_ts_max_tx] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_max_tx]);
   tsch_timing[tsch_ts_max_ack] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_max_ack]);
   tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
+#endif
 
 #if ATL_DBG
   LOG_INFO("atl tsch_reset curr_ts_2");
@@ -1225,11 +1240,17 @@ tsch_reset(void)
   int next_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_next_ack_len_index);
 
   /* Update tsch_next_timing_us */
+#if ATL_FLEXIBLE_DEADLINE
+  tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
+                      - ((tsch_default_timing_us[tsch_ts_max_ack] - ATL_CALCULATE_DURATION(next_ack_len))
+                          + (tsch_default_timing_us[tsch_ts_max_tx] - ATL_CALCULATE_DURATION(next_frame_len)));
+#else
   tsch_next_timing_us[tsch_ts_max_tx] = 32 * (5 + next_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
   tsch_next_timing_us[tsch_ts_max_ack] = 32 * (5 + next_ack_len + 3);
   tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
                       - ((tsch_default_timing_us[tsch_ts_max_ack] - tsch_next_timing_us[tsch_ts_max_ack])
                           + (tsch_default_timing_us[tsch_ts_max_tx] - tsch_next_timing_us[tsch_ts_max_tx]));
+#endif
 
 #if ATL_DBG
   LOG_INFO("atl tsch_reset next_ts");
@@ -1554,11 +1575,17 @@ eb_input(struct input_packet *current_input)
         int next_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_next_ack_len_index);
 
         /* Update tsch_next_timing_us */
+#if ATL_FLEXIBLE_DEADLINE
+        tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
+                            - ((tsch_default_timing_us[tsch_ts_max_ack] - ATL_CALCULATE_DURATION(next_ack_len))
+                                + (tsch_default_timing_us[tsch_ts_max_tx] - ATL_CALCULATE_DURATION(next_frame_len)));
+#else
         tsch_next_timing_us[tsch_ts_max_tx] = 32 * (5 + next_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
         tsch_next_timing_us[tsch_ts_max_ack] = 32 * (5 + next_ack_len + 3);
         tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
                             - ((tsch_default_timing_us[tsch_ts_max_ack] - tsch_next_timing_us[tsch_ts_max_ack])
                                 + (tsch_default_timing_us[tsch_ts_max_tx] - tsch_next_timing_us[tsch_ts_max_tx]));
+#endif
 
 #if ATL_DBG
         LOG_INFO("atl eb_input next_ts");
@@ -1576,7 +1603,7 @@ eb_input(struct input_packet *current_input)
 //        atl_finish_rapid_eb_broadcasting();
       }
 /*
-      uint32_t atl_asn_diff = TSCH_ASN_DIFF(tsch_current_asn, atl_triggering_asn);
+      int32_t atl_asn_diff = TSCH_ASN_DIFF(tsch_current_asn, atl_triggering_asn);
       if(atl_asn_diff >= 0) {
         atl_finish_rapid_eb_broadcasting();
       }
@@ -1862,6 +1889,12 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   int curr_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_curr_ack_len_index);
 
   /* Update tsch_timing_us and tsch_timing */
+#if ATL_FLEXIBLE_DEADLINE
+  tsch_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
+                      - ((tsch_default_timing_us[tsch_ts_max_ack] - ATL_CALCULATE_DURATION(curr_ack_len))
+                          + (tsch_default_timing_us[tsch_ts_max_tx] - ATL_CALCULATE_DURATION(curr_frame_len)));
+  tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
+#else
   tsch_timing_us[tsch_ts_max_tx] = 32 * (5 + curr_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
   tsch_timing_us[tsch_ts_max_ack] = 32 * (5 + curr_ack_len + 3);
   tsch_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
@@ -1870,6 +1903,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   tsch_timing[tsch_ts_max_tx] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_max_tx]);
   tsch_timing[tsch_ts_max_ack] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_max_ack]);
   tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
+#endif
 
 #if ATL_DBG
   LOG_INFO("atl tsch_associate curr_ts_2");
@@ -1889,11 +1923,17 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   int next_ack_len = atl_get_representative_ack_len_from_quantized_index(atl_next_ack_len_index);
 
   /* Update tsch_next_timing_us */
+#if ATL_FLEXIBLE_DEADLINE
+  tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
+                      - ((tsch_default_timing_us[tsch_ts_max_ack] - ATL_CALCULATE_DURATION(next_ack_len))
+                          + (tsch_default_timing_us[tsch_ts_max_tx] - ATL_CALCULATE_DURATION(next_frame_len)));
+#else
   tsch_next_timing_us[tsch_ts_max_tx] = 32 * (5 + next_frame_len + 3); // 5: synch header, 3: RADIO_PHY_OVERHEAD
   tsch_next_timing_us[tsch_ts_max_ack] = 32 * (5 + next_ack_len + 3);
   tsch_next_timing_us[tsch_ts_timeslot_length] = tsch_default_timing_us[tsch_ts_timeslot_length]
                       - ((tsch_default_timing_us[tsch_ts_max_ack] - tsch_next_timing_us[tsch_ts_max_ack])
                           + (tsch_default_timing_us[tsch_ts_max_tx] - tsch_next_timing_us[tsch_ts_max_tx]));
+#endif
 
 #if ATL_DBG
   LOG_INFO("atl tsch_associate next_ts");

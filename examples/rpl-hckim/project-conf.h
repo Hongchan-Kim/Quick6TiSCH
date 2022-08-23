@@ -40,6 +40,11 @@
 #if WITH_ATL
 #define ATL_DBG                                    1
 
+#define ATL_GUARD_TIME                             1
+#define ATL_GUARD_TIME_DURATION                    1
+#define ATL_FLEXIBLE_DEADLINE                      1
+#define ATL_CALCULATE_DURATION(len)                (32 * (5 + len + 3))
+
 #define ATL_OBSERVATION_PERIOD                     (1 * 60 * CLOCK_SECOND)
 #define ATL_RAPID_EB_PERIOD                        (3 * CLOCK_SECOND)
 
@@ -131,11 +136,11 @@
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
-#define IOTLAB_SITE                                IOTLAB_SACLAY_2
+//#define IOTLAB_SITE                                IOTLAB_SACLAY_2
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_R_CORNER
 #define NODE_NUM                                   83
