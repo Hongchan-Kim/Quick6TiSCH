@@ -79,6 +79,8 @@ static uint16_t atl_observed_frame_length[ATL_OBSERVATION_WINDOWS][ATL_FRAME_LEN
 static uint16_t atl_observed_ack_length[ATL_OBSERVATION_WINDOWS][ATL_ACK_LEN_QUANTIZED_LEVELS];
 static uint16_t atl_max_hop_distance[ATL_OBSERVATION_WINDOWS];
 
+static uint16_t atl_curr_ref_hop_distance = ATL_INITIAL_HOP_DISTANCE;
+
 uint16_t tsch_next_timing_us[tsch_ts_elements_count];
 struct tsch_asn_t atl_triggering_asn;
 
@@ -954,12 +956,19 @@ atl_policy_calculate_triggering_asn()
 
   TSCH_ASN_INIT(atl_triggering_asn, atl_current_asn >> 32, atl_current_asn & 0xFFFFFFFF);
 
-  uint16_t current_hop_distance 
+  uint16_t atl_curr_max_hop_distance 
             = atl_max_hop_distance[atl_current_window_index] != 0 ?
               atl_max_hop_distance[atl_current_window_index] : ATL_ZERO_HOP_DISTANCE_OFFSET;
 
+  if(atl_curr_ref_hop_distance <= atl_curr_max_hop_distance) {
+    atl_curr_ref_hop_distance = atl_curr_max_hop_distance;
+  } else {
+    atl_curr_ref_hop_distance = MAX(atl_curr_ref_hop_distance - 1, atl_curr_max_hop_distance);
+
+  }
+
   uint16_t expected_propagation_duration 
-            = current_hop_distance * ORCHESTRA_CONF_EBSF_PERIOD * ATL_TRIGGERING_ASN_MULTIPLIER;
+            = atl_curr_ref_hop_distance * ORCHESTRA_CONF_EBSF_PERIOD * ATL_TRIGGERING_ASN_MULTIPLIER;
             
   TSCH_ASN_INC(atl_triggering_asn, expected_propagation_duration);
 
@@ -1071,7 +1080,7 @@ atl_determine_next_timeslot_length()
   atl_max_hop_distance[atl_current_window_index] = 0;
 
   /* Reset and restart atl_timer */
-  ctimer_reset(&atl_timer);
+  ctimer_set(&atl_timer, ATL_OBSERVATION_PERIOD, atl_determine_next_timeslot_length, NULL);
 }
 #endif
 /*---------------------------------------------------------------------------*/
@@ -2180,7 +2189,7 @@ PROCESS_THREAD(tsch_process, ev, data)
 
 #if WITH_ATL /* Coordinator: start atl_timer for frame/ACK length observation */
     if(tsch_is_coordinator) {
-      ctimer_set(&atl_timer, ATL_OBSERVATION_PERIOD, atl_determine_next_timeslot_length, NULL);
+      ctimer_set(&atl_timer, ATL_START_DELAY, atl_determine_next_timeslot_length, NULL);
     }
 #endif
 
@@ -2416,7 +2425,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
       }
 #if ATL_DBG
       else {
-        LOG_INFO("atl send_eb_process !eb exists");
+        LOG_INFO("atl send_eb_process !eb exists\n");
       }
 #endif
     }
