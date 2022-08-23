@@ -281,13 +281,15 @@ extern int32_t max_drift_seen;
 /* The TSCH standard 10ms timeslot timing */
 extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000;
 
-#if WITH_ATL
-extern struct tsch_asn_t tsch_trigger_asn; 
-/* TSCH modified timeslot timing */
+#if WITH_ATL /* Variables */
+extern struct tsch_asn_t atl_triggering_asn;
 extern tsch_timeslot_timing_usec tsch_next_timing_us;
-/* TSCH timeslot timing (in rtimer ticks) */
-extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9500;
-extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_9000;
+
+extern uint8_t atl_curr_frame_len_index;
+extern uint8_t atl_curr_ack_len_index;
+extern uint8_t atl_next_frame_len_index;
+extern uint8_t atl_next_ack_len_index;
+
 extern uint8_t tsch_timeslot_is_adapted;
 #endif
 
@@ -371,9 +373,11 @@ void tsch_disassociate(void);
 /**
  *  Change timeslot length 
  */
-#if WITH_ATL
-void tsch_change_timeslot_length(uint8_t flag);  /*Set trigger ASN*/
-void tsch_coordinator_adaptive_timeslot_length(void); 
+#if WITH_ATL /* Functions */
+void atl_record_ack_len(int ack_len);
+void atl_update_max_hop_distance(uint8_t hops);
+void atl_apply_next_timeslot_length();
+void atl_finish_rapid_eb_broadcasting();
 #endif
 
 #if WITH_OST

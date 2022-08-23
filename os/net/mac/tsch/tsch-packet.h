@@ -126,6 +126,9 @@ int tsch_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offse
  * \param frame_without_mic When set, the security MIC will not be parsed
  * \return The length of the parsed EB
   */
+#if WITH_ATL /* Functions */
+int atl_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset);
+#endif
 int tsch_packet_parse_eb(const uint8_t *buf, int buf_size,
     frame802154_t *frame, struct ieee802154_ies *ies,
     uint8_t *hdrlen, int frame_without_mic);

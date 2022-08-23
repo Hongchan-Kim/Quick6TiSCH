@@ -32,6 +32,46 @@
 /*---------------------------------------------------------------------------*/
 
 
+/*---------------------------------------------------------------------------*/
+/*
+ * Adaptive timeslot length
+ */
+#define WITH_ATL                                   1
+#if WITH_ATL
+#define ATL_DBG                                    1
+
+#if WITH_PPSD
+#define ATL_GUARD_TIME_TIMESLOTS                   10
+#else
+#define ATL_GUARD_TIME_TIMESLOTS                   1
+#endif
+#define ATL_FLEXIBLE_DEADLINE                      1
+#define ATL_CALCULATE_DURATION(len)                (32 * (5 + len + 3))
+
+#define ATL_START_DELAY                            (10 * 60 * CLOCK_SECOND)
+#define ATL_OBSERVATION_PERIOD                     (10 * 60 * CLOCK_SECOND)
+#define ATL_RAPID_EB_PERIOD                        (3 * CLOCK_SECOND)
+
+#define ATL_MAX_FRAME_LEN                          125 /* Except for RADIO_PHY_OVERHEAD (3 bytes) */
+#define ATL_MIN_FRAME_LEN                          21 /* Except for RADIO_PHY_OVERHEAD (3 bytes) */
+#define ATL_MAX_ACK_LEN                            67 /* Except for RADIO_PHY_OVERHEAD (3 bytes) */
+#define ATL_MIN_ACK_LEN                            17 /* Except for RADIO_PHY_OVERHEAD (3 bytes) */
+#define ATL_FRAME_LEN_QUANTIZATION_INTERVAL        8
+#define ATL_ACK_LEN_QUANTIZATION_INTERVAL          8
+
+#define ATL_OBSERVATION_WINDOWS                    3
+#define ATL_FRAME_LEN_QUANTIZED_LEVELS             ((ATL_MAX_FRAME_LEN - ATL_MIN_FRAME_LEN) / ATL_FRAME_LEN_QUANTIZATION_INTERVAL + 1)
+#define ATL_ACK_LEN_QUANTIZED_LEVELS               ((ATL_MAX_ACK_LEN - ATL_MIN_ACK_LEN) / ATL_ACK_LEN_QUANTIZATION_INTERVAL + 1)
+
+#define ATL_INITIAL_HOP_DISTANCE                   10
+#define ATL_INITIAL_FRAME_LEN_INDEX                (ATL_FRAME_LEN_QUANTIZED_LEVELS - 1)
+#define ATL_INITIAL_ACK_LEN_INDEX                  (ATL_ACK_LEN_QUANTIZED_LEVELS - 1)
+
+#define ATL_ZERO_HOP_DISTANCE_OFFSET               1
+#define ATL_TRIGGERING_ASN_MULTIPLIER              2
+#endif
+/*---------------------------------------------------------------------------*/
+
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -72,14 +112,6 @@
 #endif
 /*---------------------------------------------------------------------------*/
 
-/*---------------------------------------------------------------------------*/
-/*
- * Adaptive timeslot length
- */
-#define WITH_ATL                                   0
-#if WITH_ATL
-#define TSCH_PACKET_CONF_EB_WITH_TIMESLOT_TIMING   1
-#endif
 /*---------------------------------------------------------------------------*/
 /*
  * Configure testbed site, node num, topology
