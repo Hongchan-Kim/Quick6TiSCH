@@ -40,8 +40,7 @@
 #if WITH_ATL
 #define ATL_DBG                                    1
 
-#define ATL_GUARD_TIME                             1
-#define ATL_GUARD_TIME_DURATION                    1
+#define ATL_GUARD_TIME_TIMESLOTS                   1
 #define ATL_FLEXIBLE_DEADLINE                      1
 #define ATL_CALCULATE_DURATION(len)                (32 * (5 + len + 3))
 

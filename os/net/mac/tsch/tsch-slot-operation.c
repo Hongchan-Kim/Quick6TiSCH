@@ -4188,15 +4188,13 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       );
 #endif
     }
-#if ATL_GUARD_TIME
-    atl_in_guard_time = 0;
-#endif
+
     atl_finish_rapid_eb_broadcasting();
-#if ATL_GUARD_TIME
-  } else if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn)) > 0
-            //|| ((tsch_current_asn.ms1b == atl_triggering_asn.ms1b)) // ATL-TODO: needs to consider ASN overflow
-            ) {
-    if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn) <= ATL_GUARD_TIME_DURATION)) {
+    atl_in_guard_time = 0;
+
+  } else if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn)) > 0) {
+    // ATL-TODO: needs to consider ASN overflow
+    if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn) <= ATL_GUARD_TIME_TIMESLOTS)) {
       if((atl_curr_frame_len_index != atl_next_frame_len_index)
           || (atl_curr_ack_len_index != atl_next_ack_len_index)) {
         atl_in_guard_time = 1;
@@ -4208,7 +4206,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
     }
   } else {
     atl_in_guard_time = 0;
-#endif
   }
 #endif
 
@@ -4217,17 +4214,13 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
     if(current_link == NULL || tsch_lock_requested
 #if WITH_ATL
-#if ATL_GUARD_TIME
       || atl_in_guard_time
-#endif
 #endif
       ) { /* Skip slot operation if there is no link
                                                           or if there is a pending request for getting the lock */
       /* Issue a log whenever skipping a slot */
 
-#if WITH_ATL
-#if ATL_GUARD_TIME
-#if ATL_DBG
+#if WITH_ATL && ATL_DBG
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
                           "!skipped slot %u %u %u atl %u",
@@ -4236,8 +4229,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                             current_link == NULL,
                             atl_in_guard_time);
       );
-#endif
-#endif
 #else
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
