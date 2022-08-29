@@ -1420,8 +1420,8 @@ uip_process(uint8_t flag)
 #if WITH_ATL /* Coordinator: record maximum hop distance */
     if(tsch_is_coordinator) {
       uint8_t curr_hops = uip_ds6_if.cur_hop_limit - UIP_IP_BUF->ttl + 1;
-#if ATL_DBG
-      LOG_INFO("atl uip_process curr_hops %u\n", curr_hops);
+#if ATL_DBG_OPERATION
+      LOG_INFO("atl up curr_hops %u\n", curr_hops);
 #endif
       atl_record_max_hop_distance(curr_hops);
     }

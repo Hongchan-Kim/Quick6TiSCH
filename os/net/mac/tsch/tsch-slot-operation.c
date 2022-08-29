@@ -4173,17 +4173,17 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       atl_curr_ref_frame_len = atl_next_ref_frame_len;
       atl_curr_ref_ack_len = atl_next_ref_ack_len;
 
-#if ATL_DBG
+#if ATL_DBG_ESSENTIAL
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
                           "atl apply next ts %u", tsch_timing_us[tsch_ts_timeslot_length]);
       );
 #endif
     } else {
-#if ATL_DBG
+#if ATL_DBG_ESSENTIAL
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "atl not apply next ts (same len) stop rapid eb");
+                          "atl not apply next ts, stop rapid eb");
       );
 #endif
     }
@@ -4219,7 +4219,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                                                           or if there is a pending request for getting the lock */
       /* Issue a log whenever skipping a slot */
 
-#if WITH_ATL && ATL_DBG
+#if WITH_ATL && ATL_DBG_OPERATION
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
                           "!skipped slot %u %u %u atl %u",

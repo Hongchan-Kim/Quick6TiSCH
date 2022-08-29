@@ -38,7 +38,8 @@
  */
 #define WITH_ATL                                   1
 #if WITH_ATL
-#define ATL_DBG                                    1
+#define ATL_DBG_ESSENTIAL                          1
+#define ATL_DBG_OPERATION                          0
 
 #if WITH_PPSD
 #define ATL_GUARD_TIME_TIMESLOTS                   10
