@@ -1423,7 +1423,7 @@ uip_process(uint8_t flag)
 #if ATL_DBG
       LOG_INFO("atl uip_process curr_hops %u\n", curr_hops);
 #endif
-      atl_update_max_hop_distance(curr_hops);
+      atl_record_max_hop_distance(curr_hops);
     }
 #endif
 

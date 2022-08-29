@@ -4166,12 +4166,12 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if WITH_ATL /* Coordinator/non-coordinator: at triggering asn, apply next timeslot length */
   if((tsch_current_asn.ls4b == atl_triggering_asn.ls4b) 
       && (tsch_current_asn.ms1b == atl_triggering_asn.ms1b)) {
-    if((atl_curr_frame_len_index != atl_next_frame_len_index)
-        || (atl_curr_ack_len_index != atl_next_ack_len_index)) {
+    if((atl_curr_ref_frame_len != atl_next_ref_frame_len)
+        || (atl_curr_ref_ack_len != atl_next_ref_ack_len)) {
       atl_apply_next_timeslot_length();
 
-      atl_curr_frame_len_index = atl_next_frame_len_index;
-      atl_curr_ack_len_index = atl_next_ack_len_index;
+      atl_curr_ref_frame_len = atl_next_ref_frame_len;
+      atl_curr_ref_ack_len = atl_next_ref_ack_len;
 
 #if ATL_DBG
       TSCH_LOG_ADD(tsch_log_message,
@@ -4194,8 +4194,8 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
   } else if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn)) > 0) {
     // ATL-TODO: needs to consider ASN overflow
     if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn) <= ATL_GUARD_TIME_TIMESLOTS)) {
-      if((atl_curr_frame_len_index != atl_next_frame_len_index)
-          || (atl_curr_ack_len_index != atl_next_ack_len_index)) {
+      if((atl_curr_ref_frame_len != atl_next_ref_frame_len)
+          || (atl_curr_ref_ack_len != atl_next_ref_ack_len)) {
         atl_in_guard_time = 1;
       } else {
         atl_in_guard_time = 0;
@@ -4212,7 +4212,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
     last_valid_asn_start = current_slot_start;
 
     if(current_link == NULL || tsch_lock_requested
-#if WITH_ATL
+#if WITH_ATL /* Coordinator/non-coordinator: set atl guard time */
       || atl_in_guard_time
 #endif
       ) { /* Skip slot operation if there is no link
@@ -4886,7 +4886,6 @@ ost_donothing:
 #if WITH_PPSD || WITH_ATL
         if(ppsd_curr_timeslots_except_triggering_slot > 0) {
           timeslot_diff += ppsd_curr_timeslots_except_triggering_slot;
-          //ppsd_curr_timeslots_except_triggering_slot = 0;
 
 #if PPSD_DBG_EP_OPERATION
           TSCH_LOG_ADD(tsch_log_message,

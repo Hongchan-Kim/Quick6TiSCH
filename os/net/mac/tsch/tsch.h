@@ -283,14 +283,10 @@ extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000;
 
 #if WITH_ATL /* Variables */
 extern struct tsch_asn_t atl_triggering_asn;
-extern tsch_timeslot_timing_usec tsch_next_timing_us;
-
-extern uint8_t atl_curr_frame_len_index;
-extern uint8_t atl_curr_ack_len_index;
-extern uint8_t atl_next_frame_len_index;
-extern uint8_t atl_next_ack_len_index;
-
-extern uint8_t tsch_timeslot_is_adapted;
+extern uint8_t atl_curr_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
+extern uint8_t atl_curr_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
+extern uint8_t atl_next_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
+extern uint8_t atl_next_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
 #endif
 
 #if WITH_PPSD
@@ -375,7 +371,7 @@ void tsch_disassociate(void);
  */
 #if WITH_ATL /* Functions */
 void atl_record_ack_len(int ack_len);
-void atl_update_max_hop_distance(uint8_t hops);
+void atl_record_max_hop_distance(uint8_t hops);
 void atl_apply_next_timeslot_length();
 void atl_finish_rapid_eb_broadcasting();
 #endif

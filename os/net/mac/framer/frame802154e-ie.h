@@ -79,10 +79,10 @@ struct ieee802154_ies {
   /* Payload Short MLME IEs */
 #if WITH_ATL /* Variables */
   struct tsch_asn_t ie_atl_triggering_asn;
-  uint8_t ie_atl_curr_frame_len_index;
-  uint8_t ie_atl_curr_ack_len_index;
-  uint8_t ie_atl_next_frame_len_index;
-  uint8_t ie_atl_next_ack_len_index;
+  uint8_t ie_atl_curr_ref_frame_len;
+  uint8_t ie_atl_curr_ref_ack_len;
+  uint8_t ie_atl_next_ref_frame_len;
+  uint8_t ie_atl_next_ref_ack_len;
 #endif
   uint8_t ie_tsch_synchronization_offset;
   struct tsch_asn_t ie_asn;
@@ -133,7 +133,7 @@ int frame80215e_create_ie_mlme(uint8_t *buf, int len,
 #if WITH_ATL /* Functions */
 int frame80215e_create_ie_tsch_atl_triggering_asn(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
-int frame80215e_create_ie_tsch_frame_ack_len_index(uint8_t *buf, int len, 
+int frame80215e_create_ie_tsch_atl_frame_ack_len(uint8_t *buf, int len, 
     struct ieee802154_ies *ies);
 #endif
 int frame80215e_create_ie_tsch_synchronization(uint8_t *buf, int len,

@@ -48,6 +48,10 @@
 
 /********** Functions *********/
 
+#if WITH_ATL /* Functions */
+int atl_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset);
+#endif
+
 /**
  * \brief Construct Enhanced ACK packet
  * \param buf The buffer where to build the EACK
@@ -58,7 +62,6 @@
  * \param nack Value of the NACK bit
  * \return The length of the packet that was created. -1 if failure.
  */
-
 #if !WITH_OST
 #if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
@@ -88,7 +91,6 @@ int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             struct input_packet *current_input);
 #endif
 #endif
-
 /**
  * \brief Parse enhanced ACK packet
  * \param buf The buffer where to parse the EACK from
@@ -126,9 +128,6 @@ int tsch_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offse
  * \param frame_without_mic When set, the security MIC will not be parsed
  * \return The length of the parsed EB
   */
-#if WITH_ATL /* Functions */
-int atl_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset);
-#endif
 int tsch_packet_parse_eb(const uint8_t *buf, int buf_size,
     frame802154_t *frame, struct ieee802154_ies *ies,
     uint8_t *hdrlen, int frame_without_mic);
