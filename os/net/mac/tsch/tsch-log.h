@@ -101,6 +101,8 @@ struct tsch_log_t {
       uint16_t app_magic;
       uint32_t app_seqno;
 #endif
+      uint16_t unused_offset_time;
+      uint16_t idle_time;
     } tx;
     struct {
       linkaddr_t  src;
@@ -117,6 +119,8 @@ struct tsch_log_t {
       uint16_t app_magic;
       uint32_t app_seqno;
 #endif
+      uint16_t unused_offset_time;
+      uint16_t idle_time;
     } rx;
   };
 };

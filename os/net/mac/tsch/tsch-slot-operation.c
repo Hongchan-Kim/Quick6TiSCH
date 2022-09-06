@@ -345,6 +345,12 @@ static uint8_t regular_slot_rx_ack_len;
 static rtimer_clock_t regular_slot_timestamp_rx[14];
 #endif
 
+static rtimer_clock_t current_slot_unused_offset_start;
+static rtimer_clock_t current_slot_unused_offset_end;
+static rtimer_clock_t current_slot_unused_offset_time;
+static rtimer_clock_t current_slot_idle_start;
+static rtimer_clock_t current_slot_idle_time;
+
 /*---------------------------------------------------------------------------*/
 struct tsch_asn_t tsch_last_valid_asn;
 static rtimer_clock_t volatile last_valid_asn_start;
@@ -2018,9 +2024,15 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
 #if TSCH_CCA_ENABLED
         cca_status = 1;
+
+        current_slot_unused_offset_start = RTIMER_NOW();
+
         /* delay before CCA */
         TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
         TSCH_DEBUG_TX_EVENT();
+
+        current_slot_unused_offset_end = RTIMER_NOW();
+        current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
 
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegTx3: after cca_offset */
         regular_slot_timestamp_tx[3] = RTIMER_NOW();
@@ -2047,11 +2059,16 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
         if(cca_status == 1) {
           tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+
+          current_slot_unused_offset_start = RTIMER_NOW();
   
           /* delay before 2nd CCA */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
                                 tsch_timing[tsch_ts_cca_offset] + tsch_timing[ppsd_ts_inter_cca_offset], "cca2");
           TSCH_DEBUG_TX_EVENT();
+
+          current_slot_unused_offset_end = RTIMER_NOW();
+          current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
 
 #if PPSD_DBG_TRIPLE_CCA_TIMING
           ppsd_triple_cca_timestamp[2] = RTIMER_NOW();
@@ -2071,10 +2088,15 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         if(cca_status == 1) {
           tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
 
+          current_slot_unused_offset_start = RTIMER_NOW();
+
           /* delay before 3rd CCA */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
                                 tsch_timing[tsch_ts_cca_offset] + tsch_timing[ppsd_ts_inter_cca_offset] * 2, "cca3");
           TSCH_DEBUG_TX_EVENT();
+
+          current_slot_unused_offset_end = RTIMER_NOW();
+          current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
 
 #if PPSD_DBG_TRIPLE_CCA_TIMING
           ppsd_triple_cca_timestamp[4] = RTIMER_NOW();
@@ -2110,9 +2132,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         } else
 #endif /* TSCH_CCA_ENABLED */
         {
+          current_slot_unused_offset_start = RTIMER_NOW();
+
           /* delay before TX */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
           TSCH_DEBUG_TX_EVENT();
+
+          current_slot_unused_offset_end = RTIMER_NOW();
+          current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
 
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegTx6: before RADIO.transmit() */
           regular_slot_timestamp_tx[6] = RTIMER_NOW();
@@ -2164,9 +2191,15 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               NETSTACK_RADIO.get_value(RADIO_PARAM_RX_MODE, &radio_rx_mode);
               NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode & (~RADIO_RX_MODE_ADDRESS_FILTER));
 #endif /* TSCH_HW_FRAME_FILTERING */
+
+              current_slot_unused_offset_start = RTIMER_NOW();
+
               /* Unicast: wait for ack after tx: sleep until ack time */
               TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
                   tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
+
+              current_slot_unused_offset_end = RTIMER_NOW();
+              current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
 
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegTx10: before turn_radio_on() for ACK */
               regular_slot_timestamp_tx[10] = RTIMER_NOW();
@@ -2419,6 +2452,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     regular_slot_timestamp_tx[15] = RTIMER_NOW();
 #endif
 
+    current_slot_idle_start = RTIMER_NOW();
+    current_slot_idle_time = tsch_timing[tsch_ts_timeslot_length] - RTIMER_CLOCK_DIFF(current_slot_idle_start, current_slot_start);
+
 #if WITH_PPSD
     if(ppsd_link_scheduled) {
       ppsd_tx_slot_pending_ts_and_log_update = 1;
@@ -2449,6 +2485,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
           memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
+          log->tx.unused_offset_time = RTIMERTICKS_TO_US(current_slot_unused_offset_time);
+          log->tx.idle_time = RTIMERTICKS_TO_US(current_slot_idle_time);
       );
 #if WITH_PPSD
     }
@@ -3112,9 +3150,14 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
     current_input = &input_array[input_index];
 
+    current_slot_unused_offset_start = RTIMER_NOW();
+
     /* Wait before starting to listen */
     TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
     TSCH_DEBUG_RX_EVENT();
+
+    current_slot_unused_offset_end = RTIMER_NOW();
+    current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
 
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegRx1: rx_offset expired, before tsch_radio_on() */
     regular_slot_timestamp_rx[1] = RTIMER_NOW();
@@ -3555,10 +3598,15 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 regular_slot_timestamp_rx[9] = RTIMER_NOW();
 #endif
 
+                current_slot_unused_offset_start = RTIMER_NOW();
+
                 /* Wait for time to ACK and transmit ACK */
                 TSCH_SCHEDULE_AND_YIELD(pt, t, rx_start_time,
                                         packet_duration + tsch_timing[tsch_ts_tx_ack_delay] - RADIO_DELAY_BEFORE_TX, "RxBeforeAck");
                 TSCH_DEBUG_RX_EVENT();
+
+                current_slot_unused_offset_end = RTIMER_NOW();
+                current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
 
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegRx10: before RADIO.transmit() */
                 regular_slot_timestamp_rx[10] = RTIMER_NOW();
@@ -3623,6 +3671,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             regular_slot_timestamp_rx[13] = RTIMER_NOW();
 #endif
 
+            current_slot_idle_start = RTIMER_NOW();
+            current_slot_idle_time = tsch_timing[tsch_ts_timeslot_length] - RTIMER_CLOCK_DIFF(current_slot_idle_start, current_slot_start);
+
             /* If the neighbor is known, update its stats */
             if(n != NULL) {
               NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_LINK_QUALITY, &radio_last_lqi);
@@ -3645,6 +3696,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               memcpy(&log->rx.app_magic, (uint8_t *)current_input->payload + current_input->len - 2, 2);
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
+              log->rx.unused_offset_time = RTIMERTICKS_TO_US(current_slot_unused_offset_time);
+              log->rx.idle_time = RTIMERTICKS_TO_US(current_slot_idle_time);
             );
 
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
@@ -4271,6 +4324,12 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       /* Reset drift correction */
       drift_correction = 0;
       is_drift_correction_used = 0;
+
+      current_slot_unused_offset_time = 0;
+      current_slot_unused_offset_start = 0;
+      current_slot_unused_offset_end = 0;
+      current_slot_idle_time = 0;
+      current_slot_idle_start = 0;
 
 #if WITH_OST && OST_ON_DEMAND_PROVISION
       if(current_link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET 

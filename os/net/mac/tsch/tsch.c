@@ -2269,7 +2269,10 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
           struct tsch_packet *p;
           /* Enqueue EB packet, for a single transmission only */
           if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
-            LOG_ERR("HCK eb_qloss %u | ! could not enqueue EB packet\n", ++tsch_eb_packet_qloss_count);
+            LOG_ERR("HCK eb_qloss %u | eb_ql len %u uc %u to %u ! could not enqueue EB packet\n", ++tsch_eb_packet_qloss_count,
+                                                            packetbuf_totlen(), 
+                                                            packetbuf_attr(PACKETBUF_ATTR_MAC_ACK),
+                                                            HCK_GET_NODE_ID_FROM_LINKADDR(&tsch_eb_address));
           } else {
               LOG_INFO("HCK eb_enq %u | TSCH: enqueue EB packet %u %u\n", ++tsch_eb_packet_enqueue_count,
                        packetbuf_totlen(), packetbuf_hdrlen());
@@ -2497,13 +2500,22 @@ send_packet(mac_callback_t sent, void *ptr)
           QUEUEBUF_NUM);
       ret = MAC_TX_ERR;
       if(sent == keepalive_packet_sent) {
-        LOG_ERR("HCK ka_qloss %u |\n", ++tsch_ka_packet_qloss_count);
+        LOG_ERR("HCK ka_qloss %u | ka_ql len %u uc %u to %u\n", ++tsch_ka_packet_qloss_count,
+                                                            packetbuf_totlen(), 
+                                                            packetbuf_attr(PACKETBUF_ATTR_MAC_ACK),
+                                                            HCK_GET_NODE_ID_FROM_LINKADDR(addr));
       } else {
         ++tsch_ip_packet_qloss_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-          LOG_ERR("HCK ip_qloss %u ip_icmp6_qloss %u |\n", tsch_ip_packet_qloss_count, ++tsch_ip_icmp6_packet_qloss_count);
+          LOG_ERR("HCK ip_qloss %u ip_icmp6_qloss %u | icmp6_ql len %u uc %u to %u\n", tsch_ip_packet_qloss_count, ++tsch_ip_icmp6_packet_qloss_count,
+                                                            packetbuf_totlen(), 
+                                                            packetbuf_attr(PACKETBUF_ATTR_MAC_ACK),
+                                                            HCK_GET_NODE_ID_FROM_LINKADDR(addr));
         } else {
-          LOG_ERR("HCK ip_qloss %u ip_udp_qloss %u |\n", tsch_ip_packet_qloss_count, ++tsch_ip_udp_packet_qloss_count);
+          LOG_ERR("HCK ip_qloss %u ip_udp_qloss %u | udp_ql len %u uc %u to %u\n", tsch_ip_packet_qloss_count, ++tsch_ip_udp_packet_qloss_count,
+                                                            packetbuf_totlen(), 
+                                                            packetbuf_attr(PACKETBUF_ATTR_MAC_ACK),
+                                                            HCK_GET_NODE_ID_FROM_LINKADDR(addr));
         }
       }
     } else {

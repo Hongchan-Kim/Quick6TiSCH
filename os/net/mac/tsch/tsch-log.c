@@ -108,14 +108,16 @@ tsch_log_process_pending(void)
         log_lladdr_compact(&log->tx.dest);
         printf(", len %3u, seq %3u, st %d %2d",
                 log->tx.datalen, log->tx.seqno, log->tx.mac_tx_status, log->tx.num_tx);
-        if(log->tx.drift_used) {
-          printf(", dr %3d", log->tx.drift);
-        }
+
+        printf(", u_o %u, idle %u", log->tx.unused_offset_time, log->tx.idle_time);
 #if ENABLE_LOG_TSCH_WITH_APP_FOOTER
         if(log->tx.app_magic == APP_DATA_MAGIC) {
           printf(", a_seq %lx", log->tx.app_seqno);
         }
 #endif
+        if(log->tx.drift_used) {
+          printf(", dr %3d", log->tx.drift);
+        }
         printf("\n");
 
 #if WITH_OST
@@ -173,6 +175,7 @@ tsch_log_process_pending(void)
                 log->rx.datalen, log->rx.seqno);
         printf(", edr %3d", (int)log->rx.estimated_drift);
         printf(", rssi %3d", log->rx.rssi);
+        printf(", u_o %u, idle %u", log->tx.unused_offset_time, log->tx.idle_time);
 #if ENABLE_LOG_TSCH_WITH_APP_FOOTER
         if(log->rx.app_magic == APP_DATA_MAGIC) {
           printf(", a_seq %lx", log->rx.app_seqno);
