@@ -2517,6 +2517,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     ppsd_tx_slot_timestamp_begin[0] = RTIMER_NOW();
 #endif
 
+    ep_tx_first_packet_len = queuebuf_datalen(current_packet->qb);
+    ep_tx_all_len_same = 1;
+
     uint8_t i = 0;
     for(i = 0; i < TSCH_DEQUEUED_ARRAY_SIZE; i++) {
       ppsd_array_ringbuf_index[i] = 0;
@@ -2534,8 +2537,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
     ppsd_tx_seq = 1;
     ppsd_curr_packet = ppsd_array_packet[0];
-    ep_tx_first_packet_len = queuebuf_datalen(ppsd_curr_packet->qb);
-    ep_tx_all_len_same = 1;
 
 #if PPSD_DBG_EP_SLOT_TIMING /* EPTxB1: end of preparing burst */
     ppsd_tx_slot_timestamp_begin[1] = RTIMER_NOW();
@@ -2568,6 +2569,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         } else {
           ppsd_packet_payload = queuebuf_dataptr(ppsd_curr_packet->qb);
           ppsd_packet_len = queuebuf_datalen(ppsd_curr_packet->qb);
+
+          if(ep_tx_first_packet_len != ppsd_packet_len) {
+            ep_tx_all_len_same = 0;
+          }
 
           frame802154_t exclusive_frame;
           int exclusive_hdr_len;
@@ -2656,11 +2661,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       if(ppsd_tx_seq < ppsd_pkts_to_send) {
         ++ppsd_tx_seq;
         ppsd_curr_packet = ppsd_array_packet[ppsd_tx_seq - 1];
-
-        if(queuebuf_datalen(ppsd_curr_packet->qb) != ep_tx_first_packet_len) {
-          ep_tx_all_len_same = 0;
-        }
-
       } else {
         ppsd_curr_packet = NULL;
         break; /* Transmitted all the allowed packets */
@@ -3728,6 +3728,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     ppsd_rx_slot_timestamp_begin[0] = RTIMER_NOW();
 #endif
 
+    ep_rx_first_packet_len = current_input_len;
+    ep_rx_all_len_same = 1;
+
     ppsd_reg_rx_slot_ack_start_time = ppsd_reg_rx_slot_rx_start_time 
                                     + ppsd_reg_rx_slot_packet_duration 
                                     + tsch_timing[tsch_ts_tx_ack_delay];
@@ -3871,13 +3874,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
                 ++current_ep_rx_ok_count;
 
-                if(current_ep_rx_ok_count == 1) {
-                  ep_rx_first_packet_len = ppsd_current_input->len;
-                  ep_rx_all_len_same = 1;
-                } else if(current_ep_rx_ok_count > 1) {
-                  if(ep_rx_first_packet_len != ppsd_current_input->len) {
-                    ep_rx_all_len_same = 0;
-                  }
+                if(ep_rx_first_packet_len != ppsd_current_input->len) {
+                  ep_rx_all_len_same = 0;
                 }
 
                 /* update ppsd seq and timing only if ppsd_frame_valid == 1 */
@@ -4633,7 +4631,7 @@ ost_donothing:
 
     if(ppsd_curr_timeslots_except_triggering_slot > 0
 #if WITH_PPSD
-      && !is_ppsd_link
+      && !is_ppsd_slot
 #endif
       ) {
       TSCH_LOG_ADD(tsch_log_message,

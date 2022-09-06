@@ -36,7 +36,7 @@
 /*
  * Adaptive timeslot length
  */
-#define WITH_ATL                                   1
+#define WITH_ATL                                   0
 #if WITH_ATL
 #define ATL_DBG_ESSENTIAL                          1
 #define ATL_DBG_OPERATION                          0
