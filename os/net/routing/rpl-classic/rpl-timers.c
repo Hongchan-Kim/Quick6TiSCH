@@ -60,8 +60,15 @@ static uint16_t next_hop_distance_measure;
 static uint32_t hop_distance_measure_count;
 static uint32_t hop_distance_measure_sum;
 
+#if HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+static uint8_t ignore_redundancy = 1;
+#endif
+
 void reset_log_rpl_timers()
 {
+#if HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+  ignore_redundancy = 0;
+#endif
   rpl_dio_reset_count = 0;
   first_hop_distance_measure = 0;
   next_hop_distance_measure = 0;
@@ -212,7 +219,11 @@ handle_dio_timer(void *ptr)
 
   if(instance->dio_send) {
     /* send DIO if counter is less than desired redundancy */
+#if HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+    if(ignore_redundancy || instance->dio_redundancy == 0 || instance->dio_counter < instance->dio_redundancy) {
+#else
     if(instance->dio_redundancy == 0 || instance->dio_counter < instance->dio_redundancy) {
+#endif
 #if RPL_CONF_STATS
       instance->dio_totsend++;
 #endif /* RPL_CONF_STATS */

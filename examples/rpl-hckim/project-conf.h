@@ -1,6 +1,13 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
+#define HCK_RPL_FIXED_TOPOLOGY                     0
+#if HCK_RPL_FIXED_TOPOLOGY
+#undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
+#endif
+#define HCK_TSCH_TIMESLOT_LENGTH                   10000
 #define HCK_APPLY_LATEST_CONTIKI                   1
 
 /*---------------------------------------------------------------------------*/
@@ -132,9 +139,9 @@
 #define IOTLAB_SACLAY_2                            8 /* 2 nodes */
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
@@ -196,7 +203,7 @@
 #define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 
@@ -326,9 +333,9 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \

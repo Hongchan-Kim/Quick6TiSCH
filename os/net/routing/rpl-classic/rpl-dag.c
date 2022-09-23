@@ -64,6 +64,18 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
+#if HCK_RPL_FIXED_TOPOLOGY
+#include "sys/node-id.h"
+static uint16_t fixed_parent_id[NODE_NUM] = {0, 1, 1, 1, 1, 1, 1, 1, 7, 7, 
+                                            15, 1, 1, 1, 1, 13, 18, 1, 18, 18, 
+                                            18, 15, 18, 20, 18, 13, 22, 30, 30, 13, 
+                                            30, 18, 30, 15, 30, 30, 39, 32, 22, 28, 
+                                            26, 30, 30, 45, 30, 45, 45, 45, 41, 46, 
+                                            45, 51, 41, 51, 39, 53, 58, 53, 53, 51, 
+                                            41, 58, 61, 63, 61, 65, 61, 60, 65, 63, 
+                                            67, 68, 71, 70, 71, 68, 71, 68, 73};
+#endif
+
 static uint16_t rpl_parent_switch_count;
 static uint16_t rpl_local_repair_count;
 
@@ -222,6 +234,15 @@ rpl_get_parent_link_stats(rpl_parent_t *p)
 int
 rpl_parent_is_fresh(rpl_parent_t *p)
 {
+#if HCK_RPL_FIXED_TOPOLOGY
+  uint16_t my_index = node_id - 1;
+  uint16_t target_parent_id = fixed_parent_id[my_index];
+
+  if(HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(p)) == target_parent_id) {
+    return 1;
+  }
+#endif
+
   const struct link_stats *stats = rpl_get_parent_link_stats(p);
   return link_stats_is_fresh(stats);
 }
@@ -895,9 +916,20 @@ best_parent(rpl_dag_t *dag, int fresh_only)
     return NULL;
   }
 
+#if HCK_RPL_FIXED_TOPOLOGY
+  uint16_t my_index = node_id - 1;
+  uint16_t target_parent_id = fixed_parent_id[my_index];
+#endif
+
   of = dag->instance->of;
   /* Search for the best parent according to the OF */
   for(p = nbr_table_head(rpl_parents); p != NULL; p = nbr_table_next(rpl_parents, p)) {
+#if HCK_RPL_FIXED_TOPOLOGY
+    if(HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(p)) == target_parent_id) {
+      best = p;
+      break;
+    }
+#endif
 
     /* Exclude parents from other DAGs or announcing an infinite rank */
     if(p->dag != dag || p->rank == RPL_INFINITE_RANK || p->rank < ROOT_RANK(dag->instance)) {
