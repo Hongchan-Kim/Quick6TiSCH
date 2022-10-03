@@ -1,11 +1,14 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+#define HCK_ASAP_MEASURE_UPA_GAIN                  0
+
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
-#define HCK_RPL_FIXED_TOPOLOGY                     0
+#define HCK_RPL_FIXED_TOPOLOGY                     1
 #if HCK_RPL_FIXED_TOPOLOGY
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
+#define RPL_CONF_DEFAULT_LIFETIME                  RPL_INFINITE_LIFETIME
 #endif
 #define HCK_TSCH_TIMESLOT_LENGTH                   10000
 #define HCK_APPLY_LATEST_CONTIKI                   1
@@ -291,7 +294,7 @@
  * Configure RPL
  */
 #define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST
-#define RPL_CONF_WITH_DAO_ACK                      1
+#define RPL_CONF_WITH_DAO_ACK                      0
 #define RPL_CONF_WITH_PROBING                      1
 #define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
 #define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND) /* originally 5 seconds */
@@ -300,7 +303,7 @@
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
 #define RPL_RELAXED_ETX_NOACK_PENALTY              0
 #define RPL_MRHOF_CONF_SQUARED_ETX                 0
-#define RPL_MODIFIED_DAO_OPERATION_1               1 /* stop dao retransmission when preferred parent changed */
+#define RPL_MODIFIED_DAO_OPERATION_1               RPL_CONF_WITH_DAO_ACK /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 //#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /*  original: 0, set 1 in ALICE to enable local repair, quickly find another parent. */
 /*---------------------------------------------------------------------------*/
@@ -310,8 +313,13 @@
 /*
  * Configure TSCH
  */
+#if HCK_ASAP_MEASURE_UPA_GAIN
+#define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
+#define TSCH_CONF_MAX_INCOMING_PACKETS             16 /* 8 in OST, originally 4 */
+#else
 #define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
 #define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* 8 in OST, originally 4 */
+#endif
 #define IEEE802154_CONF_PANID                      0x58FA //22782 hckim //0x81a5 //ksh
 //#define TSCH_CONF_AUTOSTART                        0 //ksh
 //#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH          3 //ksh 6TiSCH minimal schedule length.

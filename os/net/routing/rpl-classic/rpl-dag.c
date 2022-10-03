@@ -66,14 +66,14 @@
 
 #if HCK_RPL_FIXED_TOPOLOGY
 #include "sys/node-id.h"
-static uint16_t fixed_parent_id[NODE_NUM] = {0, 1, 1, 1, 1, 1, 1, 1, 7, 7, 
-                                            15, 1, 1, 1, 1, 13, 18, 1, 18, 18, 
-                                            18, 15, 18, 20, 18, 13, 22, 30, 30, 13, 
-                                            30, 18, 30, 15, 30, 30, 39, 32, 22, 28, 
-                                            26, 30, 30, 45, 30, 45, 45, 45, 41, 46, 
-                                            45, 51, 41, 51, 39, 53, 58, 53, 53, 51, 
-                                            41, 58, 61, 63, 61, 65, 61, 60, 65, 63, 
-                                            67, 68, 71, 70, 71, 68, 71, 68, 73};
+static uint16_t fixed_parent_id[NODE_NUM] = {0, 1, 1, 1, 1, 1, 1, 7, 1, 9, 
+                                            9, 9, 9, 9, 9, 6, 13, 4, 20, 12, 
+                                            24, 24, 24, 8, 24, 8, 24, 27, 6, 29, 
+                                            29, 35, 29, 29, 24, 35, 29, 37, 22, 45, 
+                                            35, 45, 29, 45, 26, 45, 45, 29, 52, 29, 
+                                            50, 37, 45, 50, 50, 50, 52, 45, 57, 50, 
+                                            60, 52, 60, 45, 66, 52, 66, 60, 72, 72, 
+                                            68, 50, 72, 66, 72, 66, 73, 66, 72};
 #endif
 
 static uint16_t rpl_parent_switch_count;
@@ -374,6 +374,15 @@ should_refresh_routes(rpl_instance_t *instance, rpl_dio_t *dio, rpl_parent_t *p)
 static int
 acceptable_rank(rpl_dag_t *dag, rpl_rank_t rank)
 {
+#if HCK_RPL_FIXED_TOPOLOGY
+  uint16_t my_index = node_id - 1;
+  uint16_t target_parent_id = fixed_parent_id[my_index];
+
+  if(HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(dag->preferred_parent)) == target_parent_id) {
+    return 1; // always return 1 (TRUE)
+  }
+#endif
+
   return rank != RPL_INFINITE_RANK &&
     ((dag->instance->max_rankinc == 0) ||
      DAG_RANK(rank, dag->instance) <= DAG_RANK(dag->min_rank + dag->instance->max_rankinc, dag->instance));

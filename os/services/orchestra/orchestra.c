@@ -88,6 +88,9 @@ orchestra_packet_sent(int mac_status)
      && mac_status == MAC_TX_OK
      && packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6
      && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION
+    if(packetbuf_attr(PACKETBUF_ATTR_RPL_NO_PATH_DAO) == 0) {
+#endif
     if(!linkaddr_cmp(&orchestra_parent_linkaddr, &linkaddr_null)
        && linkaddr_cmp(&orchestra_parent_linkaddr, packetbuf_addr(PACKETBUF_ADDR_RECEIVER))) {
       orchestra_parent_knows_us = 1;
@@ -101,6 +104,9 @@ orchestra_packet_sent(int mac_status)
       }
 #endif
     }
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION
+    }
+#endif
   }
 }
 /*---------------------------------------------------------------------------*/

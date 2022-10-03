@@ -756,19 +756,23 @@ dao_input_storing(void)
        DAG_RANK(parent->rank, instance) < DAG_RANK(dag->rank, instance)) {
       LOG_WARN("Loop detected when receiving a unicast DAO from a node with a lower rank! (%u < %u)\n",
              DAG_RANK(parent->rank, instance), DAG_RANK(dag->rank, instance));
+#if !HCK_RPL_FIXED_TOPOLOGY
       parent->rank = RPL_INFINITE_RANK;
       parent->hop_distance = 0xff; /* hckim to measure hop distance accurately */
       parent->flags |= RPL_PARENT_FLAG_UPDATED;
       return;
+#endif
     }
 
     /* If we get the DAO from our parent, we also have a loop. */
     if(parent != NULL && parent == dag->preferred_parent) {
       LOG_WARN("Loop detected when receiving a unicast DAO from our parent\n");
+#if !HCK_RPL_FIXED_TOPOLOGY
       parent->rank = RPL_INFINITE_RANK;
       parent->hop_distance = 0xff; /* hckim to measure hop distance accurately */
       parent->flags |= RPL_PARENT_FLAG_UPDATED;
       return;
+#endif
     }
   }
 
@@ -1320,6 +1324,14 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   buffer[pos++] = 0; /* path control - ignored */
   buffer[pos++] = 0; /* path seq - ignored */
   buffer[pos++] = lifetime;
+
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION
+  if(lifetime != RPL_ZERO_LIFETIME) {
+    packetbuf_set_attr(PACKETBUF_ATTR_RPL_NO_PATH_DAO, 0);
+  } else {
+    packetbuf_set_attr(PACKETBUF_ATTR_RPL_NO_PATH_DAO, 1);
+  }
+#endif
 
   if(instance->mop != RPL_MOP_NON_STORING) {
     /* Send DAO to parent */

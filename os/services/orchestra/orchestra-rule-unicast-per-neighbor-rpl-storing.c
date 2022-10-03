@@ -166,7 +166,7 @@ remove_uc_link(const linkaddr_t *linkaddr)
    * (lookup all route next hops) */
   nbr_table_item_t *item = nbr_table_head(nbr_routes);
   while(item != NULL) {
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
+#if 0//ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
     linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
     if(!linkaddr_cmp((linkaddr_t *)addr, (linkaddr_t *)linkaddr) 
       && timeslot == get_node_timeslot(addr)) {

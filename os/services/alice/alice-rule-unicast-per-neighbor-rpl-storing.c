@@ -159,7 +159,7 @@ alice_schedule_unicast_slotframe(void)
   nbr_table_item_t *item = nbr_table_head(nbr_routes);
   while(item != NULL) {
     linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
+#if 0//ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
     struct uip_ds6_route_neighbor_routes *routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)addr);
     struct uip_ds6_route_neighbor_route *neighbor_route;
     uint8_t real_child = 0;
