@@ -113,8 +113,10 @@ uip_ds6_neighbors_init(void)
   memb_init(&uip_ds6_nbr_memb);
   nbr_table_register(uip_ds6_nbr_entries,
                      (nbr_table_callback *)callback_nbr_entry_removal);
+  LOG_INFO("nbr_tbl_reg: uip_ds6_nbr_entries %d\n", uip_ds6_nbr_entries->index);
 #else
   nbr_table_register(ds6_neighbors, (nbr_table_callback *)uip_ds6_nbr_rm);
+  LOG_INFO("nbr_tbl_reg: ds6_neighbors %d\n", ds6_neighbors->index);
 #endif /* UIP_DS6_NBR_MULTI_IPV6_ADDRS */
 }
 /*---------------------------------------------------------------------------*/

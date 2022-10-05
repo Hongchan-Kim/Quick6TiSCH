@@ -1064,6 +1064,8 @@ void
 tsch_queue_init(void)
 {
   nbr_table_register(tsch_neighbors, NULL);
+  LOG_INFO("nbr_tbl_reg: tsch_neighbors %d\n", tsch_neighbors->index);
+
   memb_init(&packet_memb);
   /* Add virtual EB and the broadcast neighbors */
   n_eb = tsch_queue_add_nbr(&tsch_eb_address);

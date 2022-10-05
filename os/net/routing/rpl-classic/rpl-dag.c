@@ -66,7 +66,7 @@
 
 #if HCK_RPL_FIXED_TOPOLOGY
 #include "sys/node-id.h"
-static uint16_t fixed_parent_id[NODE_NUM] = {0, 1, 1, 1, 1, 1, 1, 7, 1, 9, 
+static uint8_t fixed_parent_id[NODE_NUM] = {0, 1, 1, 1, 1, 1, 1, 7, 1, 9, 
                                             9, 9, 9, 9, 9, 6, 13, 4, 20, 12, 
                                             24, 24, 24, 8, 24, 8, 24, 27, 6, 29, 
                                             29, 35, 29, 29, 24, 35, 29, 37, 22, 45, 
@@ -74,6 +74,85 @@ static uint16_t fixed_parent_id[NODE_NUM] = {0, 1, 1, 1, 1, 1, 1, 7, 1, 9,
                                             50, 37, 45, 50, 50, 50, 52, 45, 57, 50, 
                                             60, 52, 60, 45, 66, 52, 66, 60, 72, 72, 
                                             68, 50, 72, 66, 72, 66, 73, 66, 72};
+static uint8_t fixed_children_ids[NODE_NUM][8] = {{2, 3, 4, 5, 6, 7, 9, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {18, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {16, 29, 0, 0, 0, 0, 0, 0},
+                                                  {8, 0, 0, 0, 0, 0, 0, 0},
+                                                  {24, 26, 0, 0, 0, 0, 0, 0},
+                                                  {10, 11, 12, 13, 14, 15, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {20, 0, 0, 0, 0, 0, 0, 0},
+                                                  {17, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {19, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {39, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {21, 22, 23, 25, 27, 35, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {45, 0, 0, 0, 0, 0, 0, 0},
+                                                  {28, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {30, 31, 33, 34, 37, 43, 48, 50},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {32, 36, 41, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {38, 52, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {40, 42, 44, 46, 47, 53, 58, 64},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {51, 54, 55, 56, 60, 72, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {49, 57, 62, 66, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {59, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {61, 63, 68, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {65, 67, 74, 76, 78, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {71, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {69, 70, 73, 75, 79, 0, 0, 0},
+                                                  {77, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0}};
 #endif
 
 static uint16_t rpl_parent_switch_count;
@@ -83,6 +162,41 @@ void reset_log_rpl_dag()
 {
   rpl_parent_switch_count = 0;
   rpl_local_repair_count = 0;
+
+#if HCK_RPL_FIXED_TOPOLOGY
+  uint8_t my_index = node_id - 1;
+  uint8_t next_hop_id = 0;
+  uint8_t fixed_child = 0;
+  uint8_t i = 0;
+
+  nbr_table_item_t *item = nbr_table_head(nbr_routes);
+  nbr_table_item_t *next_item = NULL;
+
+  while(item != NULL) {
+    next_item = nbr_table_next(nbr_routes, item);
+
+    linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
+    next_hop_id = HCK_GET_NODE_ID_FROM_LINKADDR(addr);
+
+    fixed_child = 0;
+    for(i = 0; i < 8; i++) {
+      if(fixed_children_ids[my_index][i] == next_hop_id) {
+        fixed_child = 1;
+        break;
+      }
+    }
+
+    if(fixed_child == 0) {
+      // Should remove from nbr_table, route_list, and routelist
+      uip_ds6_route_rm_by_nexthop(uip_ds6_nbr_ipaddr_from_lladdr((uip_lladdr_t *)addr));
+#ifdef NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK
+      NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK(addr);
+#endif
+    }
+
+    item = next_item;
+  }
+#endif
 }
 
 /* A configurable function called after every RPL parent switch */
@@ -164,6 +278,7 @@ void
 rpl_dag_init(void)
 {
   nbr_table_register(rpl_parents, (nbr_table_callback *)nbr_callback);
+  LOG_INFO("nbr_tbl_reg: rpl_parents %d\n", rpl_parents->index);
 }
 /*---------------------------------------------------------------------------*/
 rpl_parent_t *

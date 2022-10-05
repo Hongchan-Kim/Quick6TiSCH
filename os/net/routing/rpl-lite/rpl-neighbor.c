@@ -462,5 +462,6 @@ void
 rpl_neighbor_init(void)
 {
   nbr_table_register(rpl_neighbors, (nbr_table_callback *)remove_neighbor);
+  LOG_INFO("nbr_tbl_reg: rpl_neighbors %d\n", rpl_neighbors->index);
 }
 /** @} */

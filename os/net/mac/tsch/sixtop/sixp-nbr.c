@@ -177,6 +177,7 @@ sixp_nbr_init(void)
   sixp_nbr_t *nbr, *next_nbr;
   if(nbr_table_is_registered(sixp_nbrs) == 0) {
     nbr_table_register(sixp_nbrs, NULL);
+    LOG_INFO("nbr_tbl_reg: sixp_nbrs %d\n", sixp_nbrs->index);
   } else {
     /* remove all the existing nbrs */
     nbr = (sixp_nbr_t *)nbr_table_head(sixp_nbrs);

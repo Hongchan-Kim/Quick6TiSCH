@@ -2401,6 +2401,7 @@ tsch_init(void)
   ringbufindex_init(&dequeued_ringbuf, TSCH_DEQUEUED_ARRAY_SIZE);
 #if TSCH_AUTOSELECT_TIME_SOURCE
   nbr_table_register(sync_stats, NULL);
+  LOG_INFO("nbr_tbl_reg: sync_stats %d\n", sync_stats->index);
 #endif /* TSCH_AUTOSELECT_TIME_SOURCE */
 
   tsch_packet_seqno = random_rand();

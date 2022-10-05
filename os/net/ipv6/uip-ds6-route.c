@@ -176,6 +176,7 @@ uip_ds6_route_init(void)
   list_init(routelist);
   nbr_table_register(nbr_routes,
                      (nbr_table_callback *)rm_routelist_callback);
+  LOG_INFO("nbr_tbl_reg: nbr_routes %d\n", nbr_routes->index);
 #endif /* (UIP_MAX_ROUTES != 0) */
 
   memb_init(&defaultroutermemb);

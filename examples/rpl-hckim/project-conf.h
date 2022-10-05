@@ -3,6 +3,8 @@
 
 #define HCK_ASAP_MEASURE_UPA_GAIN                  0
 
+#define NBR_TABLE_DEBUG                            1
+
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
 #define HCK_RPL_FIXED_TOPOLOGY                     1
 #if HCK_RPL_FIXED_TOPOLOGY
@@ -206,7 +208,7 @@
 #define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 

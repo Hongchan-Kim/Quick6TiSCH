@@ -313,5 +313,6 @@ void
 link_stats_init(void)
 {
   nbr_table_register(link_stats, NULL);
+  LOG_INFO("nbr_tbl_reg: link_stats %d\n", link_stats->index);
   ctimer_set(&periodic_timer, FRESHNESS_HALF_LIFE, periodic, NULL);
 }
