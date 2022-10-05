@@ -57,7 +57,7 @@ print('root id: ', ROOT_ID)
 print('non-root ids: ', non_root_id_list)
 print()
 
-case_list = ['bc', 'bc_t', 'bc_r', 'uc', 'uc_t', 'uc_t_o', 'uc_t_n', 'uc_r']
+case_list = ['A', 'A_t', 'A_t_o', 'A_t_n', 'A_r', 'bc', 'bc_t', 'bc_r', 'uc', 'uc_t', 'uc_t_o', 'uc_t_n', 'uc_r']
 CASE_NUM = len(case_list)
 
 case_parsed = [[0 for i in range(CASE_NUM)] for j in range(NODE_NUM)]
@@ -90,6 +90,29 @@ for node_id in non_root_id_list:
                         message_s = line.split('} ')
                         if len(message_s) > 1:
                             contents = message_s[1].split(' ')
+                            app_data = 0
+                            if 'a_seq' in contents:
+                                app_data = 1
+                            if app_data == 1:
+                                case_parsed[node_index][case_list.index('A')] += 1
+                                parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
+                                case_time[node_index][case_list.index('A')] += parsed_idle
+                                if contents[1] == 'tx':
+                                    case_parsed[node_index][case_list.index('A_t')] += 1
+                                    parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
+                                    case_time[node_index][case_list.index('A_t')] += parsed_idle
+                                    if contents[contents.index('st') + 1] == '0':
+                                        case_parsed[node_index][case_list.index('A_t_o')] += 1
+                                        parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
+                                        case_time[node_index][case_list.index('A_t_o')] += parsed_idle
+                                    else:
+                                        case_parsed[node_index][case_list.index('A_t_n')] += 1
+                                        parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
+                                        case_time[node_index][case_list.index('A_t_n')] += parsed_idle
+                                elif contents[1] == 'rx':
+                                    case_parsed[node_index][case_list.index('A_r')] += 1
+                                    parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
+                                    case_time[node_index][case_list.index('A_r')] += parsed_idle                                
                             if contents[0] == 'bc-1-0':
                                 case_parsed[node_index][case_list.index('bc')] += 1
                                 parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
@@ -149,6 +172,29 @@ while line:
                 if message[0] == '{asn':
                     message_s = line.split('} ')
                     contents = message_s[1].split(' ')
+                    app_data = 0
+                    if 'a_seq' in contents:
+                        app_data = 1
+                    if app_data == 1:
+                        case_parsed[ROOT_INDEX][case_list.index('A')] += 1
+                        parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
+                        case_time[ROOT_INDEX][case_list.index('A')] += parsed_idle
+                        if contents[1] == 'tx':
+                            case_parsed[ROOT_INDEX][case_list.index('A_t')] += 1
+                            parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
+                            case_time[ROOT_INDEX][case_list.index('A_t')] += parsed_idle
+                            if contents[contents.index('st') + 1] == '0':
+                                case_parsed[ROOT_INDEX][case_list.index('A_t_o')] += 1
+                                parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
+                                case_time[ROOT_INDEX][case_list.index('A_t_o')] += parsed_idle
+                            else:
+                                case_parsed[ROOT_INDEX][case_list.index('A_t_n')] += 1
+                                parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
+                                case_time[ROOT_INDEX][case_list.index('A_t_n')] += parsed_idle
+                        elif contents[1] == 'rx':
+                            case_parsed[ROOT_INDEX][case_list.index('A_r')] += 1
+                            parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
+                            case_time[ROOT_INDEX][case_list.index('A_r')] += parsed_idle     
                     if contents[0] == 'bc-1-0':
                         case_parsed[ROOT_INDEX][case_list.index('bc')] += 1
                         parsed_idle = int(contents[contents.index('idle') + 1].split(',')[0])
@@ -193,17 +239,17 @@ for i in range(NODE_NUM):
             case_result[i][j] = round(case_time[i][j] / case_parsed[i][j] / 10000 * 100, 2)
 
 print('----- Cases -----')
-for i in range(CASE_NUM - 1):
-    print(case_list[i], '\t', end='')
-print(case_list[CASE_NUM - 1], '\t', end='')
+#for i in range(CASE_NUM - 1):
+#    print(case_list[i], '\t', end='')
+#print(case_list[CASE_NUM - 1], '\t', end='')
 for i in range(CASE_NUM - 1):
     print(case_list[i], '\t', end='')
 print(case_list[CASE_NUM - 1])
 
 for i in range(NODE_NUM):
-    for j in range(CASE_NUM - 1):
-        print(case_parsed[i][j], '\t', end='')
-    print(case_parsed[i][CASE_NUM - 1], '\t', end='')
+#    for j in range(CASE_NUM - 1):
+#        print(case_parsed[i][j], '\t', end='')
+#    print(case_parsed[i][CASE_NUM - 1], '\t', end='')
     for j in range(CASE_NUM - 1):
         print(case_result[i][j], '\t', end='')
     print(case_result[i][CASE_NUM - 1])
