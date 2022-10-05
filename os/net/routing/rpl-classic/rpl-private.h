@@ -47,6 +47,11 @@
 #include "net/ipv6/uip-ds6-route.h"
 #include "net/ipv6/multicast/uip-mcast6.h"
 
+#if HCK_RPL_FIXED_TOPOLOGY
+#include "sys/node-id.h"
+extern uint8_t fixed_children_ids[NODE_NUM][8];
+#endif
+
 /*---------------------------------------------------------------------------*/
 /** \brief Is IPv6 address addr the link-local, all-RPL-nodes
     multicast address? */
