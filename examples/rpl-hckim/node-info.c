@@ -605,6 +605,12 @@ uint16_t iotlab_nodes[NODE_NUM][3] = {
   {1, 0x2053, 0}, // root node
   {2, 0x2661, 0}
 };
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_2
+uint16_t iotlab_nodes[NODE_NUM][3] = {
+  // {host name, uid, rx count}
+  {357, 0x8672, 0}, // root node
+  {358, 0x9378, 0}
+};
 #endif /* IOTLAB_SITE */
 /*---------------------------------------------------------------------------*/
 uint16_t

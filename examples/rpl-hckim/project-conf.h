@@ -1,19 +1,8 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+/*---------------------------------------------------------------------------*/
 #define HCK_ASAP_MEASURE_UPA_GAIN                  0
-
-#define NBR_TABLE_DEBUG                            1
-
-#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
-#define HCK_RPL_FIXED_TOPOLOGY                     1
-#if HCK_RPL_FIXED_TOPOLOGY
-#undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
-#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
-#define RPL_CONF_DEFAULT_LIFETIME                  RPL_INFINITE_LIFETIME
-#endif
-#define HCK_TSCH_TIMESLOT_LENGTH                   10000
-#define HCK_APPLY_LATEST_CONTIKI                   1
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -98,6 +87,18 @@
 #define HCK_DBG_REGULAR_SLOT_TIMING_RX_NO_PKT_SEEN 1
 #define HCK_GET_NODE_ID_FROM_IPADDR(addr)          ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
+
+#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
+#define HCK_RPL_FIXED_TOPOLOGY                     1
+#if HCK_RPL_FIXED_TOPOLOGY
+#undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
+#define RPL_CONF_DEFAULT_LIFETIME                  RPL_INFINITE_LIFETIME
+#endif
+
+#define HCK_TSCH_TIMESLOT_LENGTH                   10000
+
+#define HCK_APPLY_LATEST_CONTIKI                   1
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
