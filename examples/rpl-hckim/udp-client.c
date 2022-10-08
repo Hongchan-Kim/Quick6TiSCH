@@ -47,6 +47,10 @@ static unsigned count = 1;
 static uint16_t app_rxd_count;
 static uint64_t lt_down_sum = 0;
 
+#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+static uint32_t  eval_01_count = 1;
+#endif
+
 /*---------------------------------------------------------------------------*/
 #if APP_SEQNO_DUPLICATE_CHECK
 struct app_down_seqno {
@@ -320,6 +324,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
         app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
+#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+        current_payload_len = APP_PAYLOAD_LEN_MIN + (eval_01_count - 1) / NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN;
+#endif
+
         memcpy(app_payload + current_payload_len - sizeof(app_tx_up_asn) - sizeof(app_seqno) - sizeof(app_magic), 
               &app_tx_up_asn, sizeof(app_tx_up_asn));
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
@@ -334,6 +342,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
         count++;
+#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+        eval_01_count++;
+#endif
       }
 #endif /* WITH_VARYING_PPM */
     }

@@ -316,9 +316,8 @@ static uint8_t ep_tx_all_len_same;
 static uint8_t ep_rx_first_packet_len;
 static uint8_t ep_rx_all_len_same;
 
-
-#if EVAL_CONTROL_NUM_OF_PKTS_IN_EP
-uint8_t eval_num_of_pkts_in_ep = 1;
+#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+uint8_t eval_01_num_of_pkts_in_ep = 1;
 #endif
 
 #endif /* WITH_PPSD */
@@ -1842,14 +1841,15 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         uint16_t ep_request_info = (ppsd_pkts_to_request << 8) + apt_tx_bitmap;
 
         if(ppsd_pkts_to_request > 0
-#if EVAL_CONTROL_NUM_OF_PKTS_IN_EP
-            && ppsd_pkts_to_request >= eval_num_of_pkts_in_ep
+#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+            && ppsd_pkts_to_request >= eval_01_num_of_pkts_in_ep
 #endif
             ) {
-#if EVAL_CONTROL_NUM_OF_PKTS_IN_EP
-          eval_num_of_pkts_in_ep++;
-          if(eval_num_of_pkts_in_ep > 6) {
-            eval_num_of_pkts_in_ep = 1;
+#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+          ppsd_pkts_to_request = eval_01_num_of_pkts_in_ep;
+          eval_01_num_of_pkts_in_ep++;
+          if(eval_01_num_of_pkts_in_ep > NUM_OF_MAX_AGGREGATED_PKTS) {
+            eval_01_num_of_pkts_in_ep = 1;
           }
 #endif
           ppsd_link_requested = 1;
@@ -3444,6 +3444,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
                 ppsd_pkts_acceptable = MIN(num_of_pkts_requested, minimum_free_ringbuf_or_queue);
 
+#if PPSD_EP_POLICY_0
+#endif
 #if PPSD_EP_POLICY_1
                 uint16_t num_of_pkts_with_max_gain = 0;
                 int max_gain = 100;

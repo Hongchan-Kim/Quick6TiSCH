@@ -1,21 +1,23 @@
 import argparse
 
 parser = argparse.ArgumentParser()
+parser.add_argument('any_scheduler')
 parser.add_argument('any_iter')
 parser.add_argument('any_id')
 args = parser.parse_args()
 
+any_scheduler = args.any_scheduler
 any_iter = args.any_iter
 any_id = args.any_id
 
 minimum_len = 46
 maximum_len = 125
-packet_count = 14
+packet_count = 16
 num_of_slots = [[0 for col in range(packet_count)] for row in range(maximum_len - minimum_len + 1)]
 updated = [[0 for col in range(packet_count)] for row in range(maximum_len - minimum_len + 1)]
 
 
-file_name = 'log-' + any_iter + '-' + any_id + '.txt'
+file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + any_id + '.txt'
 f = open(file_name, 'r', errors='ignore')
 
 line = f.readline()
@@ -28,7 +30,7 @@ while line:
             if message[0] == '{asn':
                 message_s = line.split('} ')
                 contents = message_s[1].split(' ')
-                if contents[0] == 'ep' and contents[1] == 'result' and contents[2] == 'ucsf' and contents[3] == 'tx':
+                if contents[0] == 'ep' and contents[1] == 'result' and (contents[2] == 'ucsf' or contents[2] == 'bcsf') and contents[3] == 'tx' and contents[-1] != '!EoE':
                     current_len = int(contents[4])
                     if current_len >= minimum_len:
                         current_len_index = current_len - minimum_len

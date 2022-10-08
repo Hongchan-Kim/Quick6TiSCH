@@ -2,9 +2,6 @@
 #define PROJECT_CONF_H_
 
 /*---------------------------------------------------------------------------*/
-#define HCK_ASAP_MEASURE_UPA_GAIN                  0
-
-/*---------------------------------------------------------------------------*/
 /*
  * Exclusive period implementation
  */
@@ -13,6 +10,7 @@
 
 #if WITH_PPSD
 #define PPSD_TRIPLE_CCA                            1
+#define PPSD_EP_POLICY_0                           0 /* No policy, accept as many as possible */
 #define PPSD_EP_POLICY_1                           1 /* Maximum gain */
 #define PPSD_EP_POLICY_2                           0 /* Maximum number of packets */
 
@@ -23,7 +21,6 @@
 #define PPSD_DBG_TRIPLE_CCA_TIMING                 0
 #define PPSD_DBG_EP_SLOT_TIMING                    0
 
-#define EVAL_CONTROL_NUM_OF_PKTS_IN_EP             1 /* Needs WITH_PPSD */
 #endif /* WITH_PPSD */
 
 #define WITH_TSCH_TX_CCA                           1
@@ -143,6 +140,7 @@
 #define IOTLAB_LILLE_79_CORNER                     6 /* 79 nodes */
 #define IOTLAB_LILLE_79_CENTER                     7 /* 79 nodes */
 #define IOTLAB_SACLAY_2                            8 /* 2 nodes */
+#define IOTLAB_GRENOBLE_2                          9 /* 2 nodes */
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
 #define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
@@ -152,6 +150,7 @@
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 //#define IOTLAB_SITE                                IOTLAB_SACLAY_2
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_R_CORNER
 #define NODE_NUM                                   83
@@ -168,6 +167,8 @@
 #elif IOTLAB_SITE == IOTLAB_LILLE_79_CENTER
 #define NODE_NUM                                   79
 #elif IOTLAB_SITE == IOTLAB_SACLAY_2
+#define NODE_NUM                                   2
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_2
 #define NODE_NUM                                   2
 #endif
 
@@ -316,13 +317,8 @@
 /*
  * Configure TSCH
  */
-#if HCK_ASAP_MEASURE_UPA_GAIN
-#define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
-#define TSCH_CONF_MAX_INCOMING_PACKETS             16 /* 8 in OST, originally 4 */
-#else
 #define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
 #define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* 8 in OST, originally 4 */
-#endif
 #define IEEE802154_CONF_PANID                      0x58FA //22782 hckim //0x81a5 //ksh
 //#define TSCH_CONF_AUTOSTART                        0 //ksh
 //#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH          3 //ksh 6TiSCH minimal schedule length.
@@ -344,9 +340,9 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
@@ -475,5 +471,89 @@
 //#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m90dBm
 //#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
 /*---------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------*/
+/*
+ * Evaluation orientd configurations
+ */
+#define HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN       1
+#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+
+#undef ORCHESTRA_CONF_UNICAST_PERIOD
+#define ORCHESTRA_CONF_UNICAST_PERIOD              10 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+
+#define APP_PAYLOAD_LEN_MIN                        58 // 14, 36, 58
+#define APP_PAYLOAD_LEN_MAX                        80 // 35, 57, 80
+#define NUM_OF_MAX_AGGREGATED_PKTS                 16
+#define NUM_OF_APP_PAYLOAD_LENS                    (APP_PAYLOAD_LEN_MAX - APP_PAYLOAD_LEN_MIN + 1)
+#define NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN    1000
+#define NUM_OF_PACKETS_PER_SECOND                  20
+#define DATA_PERIOD_LEN_IN_SECONDS                 (NUM_OF_APP_PAYLOAD_LENS * NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN / NUM_OF_PACKETS_PER_SECOND)
+
+#undef WITH_PPSD
+#define WITH_PPSD                                  1
+
+#undef PPSD_TRIPLE_CCA
+#define PPSD_TRIPLE_CCA                            1
+
+#undef PPSD_EP_POLICY_0                            /* No policy, accept as many as possible */
+#undef PPSD_EP_POLICY_1                            /* Maximum gain */
+#undef PPSD_EP_POLICY_2                            /* Maximum number of packets */
+#define PPSD_EP_POLICY_0                           1 /* No policy, accept as many as possible */
+
+#undef PPSD_END_OF_EP_RTIMER_GUARD
+#define PPSD_END_OF_EP_RTIMER_GUARD                2u
+
+#undef PPSD_DBG_EP_ESSENTIAL
+#define PPSD_DBG_EP_ESSENTIAL                      1
+#undef PPSD_DBG_EP_OPERATION
+#define PPSD_DBG_EP_OPERATION                      0
+#undef PPSD_DBG_TRIPLE_CCA_TIMING
+#define PPSD_DBG_TRIPLE_CCA_TIMING                 0
+#undef PPSD_DBG_EP_SLOT_TIMING
+#define PPSD_DBG_EP_SLOT_TIMING                    0
+
+#undef HCK_DBG_REGULAR_SLOT_TIMING
+#define HCK_DBG_REGULAR_SLOT_TIMING                0
+#undef HCK_DBG_REGULAR_SLOT_TIMING_RX_NO_PKT_SEEN
+#define HCK_DBG_REGULAR_SLOT_TIMING_RX_NO_PKT_SEEN 0
+
+#undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     0
+#undef HCK_RPL_FIXED_TOPOLOGY
+#define HCK_RPL_FIXED_TOPOLOGY                     0
+
+#undef IOTLAB_SITE
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
+#undef NODE_NUM
+#define NODE_NUM                                   2
+#undef UIP_CONF_MAX_ROUTES
+#define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
+
+#undef APP_UPWARD_SEND_INTERVAL
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60 / NUM_OF_PACKETS_PER_SECOND)
+
+#undef APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+#define APP_TOPOLOGY_OPT_DURING_BOOTSTRAP          0
+
+#undef APP_RESET_LOG_DELAY
+#define APP_RESET_LOG_DELAY                        (80 * 60 * CLOCK_SECOND)
+#undef APP_DATA_START_DELAY
+#define APP_DATA_START_DELAY                       (5 * 60 * CLOCK_SECOND)
+#undef APP_DATA_PERIOD
+#define APP_DATA_PERIOD                            (DATA_PERIOD_LEN_IN_SECONDS * CLOCK_SECOND)
+
+#undef MAX_NBR_NODE_NUM
+#define MAX_NBR_NODE_NUM                           4
+#undef NBR_TABLE_CONF_MAX_NEIGHBORS
+#define NBR_TABLE_CONF_MAX_NEIGHBORS               (MAX_NBR_NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
+
+#undef QUEUEBUF_CONF_NUM
+#define QUEUEBUF_CONF_NUM                          32 /* 16 in Orchestra, ALICE, and OST, originally 8 */
+#undef TSCH_CONF_MAX_INCOMING_PACKETS
+#define TSCH_CONF_MAX_INCOMING_PACKETS             32 /* 8 in OST, originally 4 */
+
+#endif /* HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN */
 
 #endif /* PROJECT_CONF_H_ */ 
