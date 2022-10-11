@@ -283,6 +283,63 @@ rpl_add_route(rpl_dag_t *dag, uip_ipaddr_t *prefix, int prefix_len,
   LOG_INFO_6ADDR(next_hop);
   LOG_INFO_("\n");
 
+#if HCK_RPL_FIXED_TOPOLOGY
+  uint8_t my_index = node_id - 1;
+  uint8_t next_hop_id = 0;
+  uint8_t i = 0;
+
+  uint8_t is_fixed_chilren_set_correctly = 1;
+
+  for(i = 0; i < 8; i++) {
+    uint8_t fixed_child_id = fixed_children_ids[my_index][i];
+    if(fixed_child_id != 0) {      
+      uint8_t fixed_child_exist = 0;
+
+      nbr_table_item_t *item = nbr_table_head(nbr_routes);
+      while(item != NULL) {
+        linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
+        next_hop_id = HCK_GET_NODE_ID_FROM_LINKADDR(addr);
+
+        if(fixed_child_id == next_hop_id) {
+          fixed_child_exist = 1;
+          break;
+        }
+        item = nbr_table_next(nbr_routes, item);
+      }
+      if(fixed_child_exist == 0) {
+        is_fixed_chilren_set_correctly = 0;
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+
+  if(is_fixed_chilren_set_correctly == 1) {
+    nbr_table_item_t *item = nbr_table_head(nbr_routes);
+    while(item != NULL) {
+      linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
+      next_hop_id = HCK_GET_NODE_ID_FROM_LINKADDR(addr);
+
+      uint8_t is_next_hop_fixed_child = 0;
+      for(i = 0; i < 8; i++) {
+        if(next_hop_id == fixed_children_ids[my_index][i]) {
+          is_next_hop_fixed_child = 1;
+          break;
+        }
+      }
+
+      if(is_next_hop_fixed_child == 0) {
+        is_fixed_chilren_set_correctly = 0;
+        break;
+      }
+
+      item = nbr_table_next(nbr_routes, item);
+    }
+  }
+
+  LOG_INFO("HCK f_fixed_c %d |\n", is_fixed_chilren_set_correctly);
+#endif
   return rep;
 }
 /*---------------------------------------------------------------------------*/

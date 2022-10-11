@@ -65,14 +65,14 @@
 #define LOG_LEVEL LOG_LEVEL_RPL
 
 #if HCK_RPL_FIXED_TOPOLOGY
-static uint8_t fixed_parent_id[NODE_NUM] = {0, 1, 1, 1, 1, 1, 1, 7, 1, 9, 
-                                            9, 9, 9, 9, 9, 6, 13, 4, 20, 12, 
-                                            24, 24, 24, 8, 24, 8, 24, 27, 6, 29, 
-                                            29, 35, 29, 29, 24, 35, 29, 37, 22, 45, 
-                                            35, 45, 29, 45, 26, 45, 45, 29, 52, 29, 
-                                            50, 37, 45, 50, 50, 50, 52, 45, 57, 50, 
-                                            60, 52, 60, 45, 66, 52, 66, 60, 72, 72, 
-                                            68, 50, 72, 66, 72, 66, 73, 66, 72};
+uint8_t fixed_parent_id[NODE_NUM] = {0, 1, 1, 1, 1, 1, 1, 7, 1, 9, 
+                                    9, 9, 9, 9, 9, 6, 13, 4, 20, 12, 
+                                    24, 24, 24, 8, 24, 8, 24, 27, 6, 29, 
+                                    29, 35, 29, 29, 24, 35, 29, 37, 22, 45, 
+                                    35, 45, 29, 45, 26, 45, 45, 29, 52, 29, 
+                                    50, 37, 45, 50, 50, 50, 52, 45, 57, 50, 
+                                    60, 52, 60, 45, 66, 52, 66, 60, 72, 72, 
+                                    68, 50, 72, 66, 72, 66, 73, 66, 72};
 uint8_t fixed_children_ids[NODE_NUM][8] = {{2, 3, 4, 5, 6, 7, 9, 0},
                                           {0, 0, 0, 0, 0, 0, 0, 0},
                                           {0, 0, 0, 0, 0, 0, 0, 0},
@@ -252,8 +252,8 @@ void reset_log_rpl_dag()
     is_fixed_parent_set_correctly = 1;
   }
 
-  LOG_INFO("HCK fixed_p %d |\n", is_fixed_parent_set_correctly);
-  LOG_INFO("HCK fixed_c %d |\n", is_fixed_chilren_set_correctly);
+  LOG_INFO("HCK r_fixed_p %d |\n", is_fixed_parent_set_correctly);
+  LOG_INFO("HCK r_fixed_c %d |\n", is_fixed_chilren_set_correctly);
 #endif
 }
 
@@ -456,6 +456,17 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
       LOG_INFO_("NULL");
     }
     LOG_INFO_("\n");
+
+#if HCK_RPL_FIXED_TOPOLOGY
+  uint8_t my_index = node_id - 1;
+  uint8_t is_fixed_parent_set_correctly  = 0;
+  if(fixed_parent_id[my_index] 
+      == HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(p))) {
+    is_fixed_parent_set_correctly = 1;
+  }
+
+  LOG_INFO("HCK f_fixed_p %d (%u) |\n", is_fixed_parent_set_correctly, HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(p)));
+#endif
 
 #ifdef RPL_CALLBACK_PARENT_SWITCH
     RPL_CALLBACK_PARENT_SWITCH(dag->preferred_parent, p);

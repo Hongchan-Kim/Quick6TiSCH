@@ -345,6 +345,17 @@ dio_input(void)
   LOG_INFO_6ADDR(&from);
   LOG_INFO_("\n");
 
+#if HCK_RPL_FIXED_TOPOLOGY
+  uint8_t my_index = node_id - 1;
+  uint8_t target_parent_id = fixed_parent_id[my_index];
+  uint8_t from_parent_id = HCK_GET_NODE_ID_FROM_IPADDR(&from);
+
+  if(from_parent_id != target_parent_id) {
+    LOG_INFO("Discard DIO from non-fixed parent %u (target parent: %u)\n", from_parent_id, target_parent_id);
+    goto discard;
+  }
+#endif
+
   buffer_length = uip_len - uip_l3_icmp_hdr_len;
 
   /* Process the DIO base option. */

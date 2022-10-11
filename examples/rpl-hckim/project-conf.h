@@ -88,6 +88,7 @@
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
 #define HCK_RPL_FIXED_TOPOLOGY                     1
 #if HCK_RPL_FIXED_TOPOLOGY
+#define HCK_DBG_RPL_FIXED_TOPOLOGY                 0
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
 #define RPL_CONF_DEFAULT_LIFETIME                  RPL_INFINITE_LIFETIME
@@ -216,6 +217,14 @@
 
 #define APP_PRINT_NODE_INFO_DELAY                  (1 * 60 * CLOCK_SECOND / 2)
 
+#if HCK_RPL_FIXED_TOPOLOGY
+
+#define APP_RESET_LOG_DELAY                        (5 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (6 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+
+#else /* HCK_RPL_FIXED_TOPOLOGY */
+
 #define APP_TOPOLOGY_OPT_DURING_BOOTSTRAP          1
 
 #if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
@@ -227,13 +236,15 @@
 #define APP_RESET_LOG_DELAY                        (40 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (45 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
-#else
+#else /* APP_TOPOLOGY_OPT_DURING_BOOTSTRAP */
 #define APP_RESET_LOG_DELAY                        (52 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (57 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 //#define APP_DATA_START_DELAY                       (2 * 60 * CLOCK_SECOND)
 //#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
-#endif
+#endif /* APP_TOPOLOGY_OPT_DURING_BOOTSTRAP */
+
+#endif /* HCK_RPL_FIXED_TOPOLOGY */
 
 #endif
 
@@ -340,9 +351,9 @@
 #define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                         4 // 4: OST
 
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
+//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
 //#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
 
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
@@ -477,7 +488,7 @@
 /*
  * Evaluation orientd configurations
  */
-#define HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN       1
+#define HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN       0
 #if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
 
 #undef ORCHESTRA_CONF_UNICAST_PERIOD

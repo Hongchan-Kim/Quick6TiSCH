@@ -49,6 +49,7 @@
 
 #if HCK_RPL_FIXED_TOPOLOGY
 #include "sys/node-id.h"
+extern uint8_t fixed_parent_id[NODE_NUM];
 extern uint8_t fixed_children_ids[NODE_NUM][8];
 #endif
 
