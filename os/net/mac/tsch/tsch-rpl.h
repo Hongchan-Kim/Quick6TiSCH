@@ -48,8 +48,7 @@
 #endif
 
 /********** Functions *********/
-
-#if WITH_PPSD
+#if WITH_UPA
 int tsch_rpl_callback_is_root(void);
 int tsch_rpl_callback_has_no_children(void);
 #endif

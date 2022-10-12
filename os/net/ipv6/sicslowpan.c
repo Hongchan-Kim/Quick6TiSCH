@@ -1505,7 +1505,7 @@ packet_sent(void *ptr, int status, int transmissions)
     return;
   }
 
-#if WITH_PPSD
+#if WITH_UPA
   int ppsd_sent_in_ep = 0;
   if(transmissions >= 0xff) {
     ppsd_sent_in_ep = 1;
@@ -1547,7 +1547,7 @@ packet_sent(void *ptr, int status, int transmissions)
     }
   }
 
-#if WITH_PPSD
+#if WITH_UPA
   /* call link_stats_packet_sent only for packets sent in regular schedule */
   if(ppsd_sent_in_ep == 0) {
     /* Update neighbor link statistics */

@@ -48,16 +48,16 @@ struct ringbufindex {
   uint8_t put_ptr, get_ptr;
 };
 
+#if WITH_UPA
+int ringbufindex_shift_get_ptr(struct ringbufindex *r, int shift);
+#endif
+
 /**
  * \brief Initialize a ring buffer. The size must be a power of two
  * \param r Pointer to ringbufindex
  * \param size Size of ring buffer
  */
 void ringbufindex_init(struct ringbufindex *r, uint8_t size);
-
-#if WITH_PPSD
-int ringbufindex_shift_get_ptr(struct ringbufindex *r, int shift);
-#endif
 
 /**
  * \brief Put one element to the ring buffer

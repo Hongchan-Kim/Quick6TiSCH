@@ -445,7 +445,7 @@ by default, useful in case of duplicate seqno */
 #define TSCH_DEFAULT_TIMESLOT_TIMING tsch_timeslot_timing_us_10000
 #endif
 
-#if WITH_PPSD
+#if WITH_UPA
 #define PPSD_DEFAULT_TIMESLOT_TIMING ppsd_timeslot_timing_us_10000
 #endif
 

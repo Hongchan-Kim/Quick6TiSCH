@@ -84,24 +84,24 @@
 
 const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 #if TSCH_CONF_CCA_ENABLED
-#if PPSD_TRIPLE_CCA
+#if UPA_TRIPLE_CCA
     910, /* CCAOffset */
     150, /* CCA (radio-rf2xx requires 140 us or 5 ticks) */
    2950, /* TxOffset */
   (2950 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
-#else
+#else /* UPA_TRIPLE_CCA */
    1600, /* CCAOffset (52 ticks) */
     150, /* CCA (radio-rf2xx requires 140 us or 5 ticks) */
    2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
-#endif
-#else
+#endif /* UPA_TRIPLE_CCA */
+#else /* TSCH_CONF_CCA_ENABLED */
    1800, /* CCAOffset */
     128, /* CCA */
    2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
-#endif
-#if WITH_PPSD
+#endif /* TSCH_CONF_CCA_ENABLED */
+#if WITH_UPA
    1100, /* RxAckDelay - 1000 */
    1300, /* TxAckDelay - 1200 */
 #elif WITH_OST
@@ -117,12 +117,12 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
    2400, /* MaxAck */
    4256, /* MaxTx */
   HCK_TSCH_TIMESLOT_LENGTH, //10000, /* TimeslotLength */
-#if PPSD_TRIPLE_CCA
-   720,
+#if UPA_TRIPLE_CCA
+   720, /* Inter CCA offset */
 #endif
 };
 
-#if WITH_PPSD
+#if WITH_UPA
 #define PPSD_RX_WAIT 300
 const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000 = {
    1250, /* ppsd_ts_tx_offset_1 (41 ticks required) */

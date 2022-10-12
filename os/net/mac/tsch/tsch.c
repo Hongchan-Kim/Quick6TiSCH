@@ -168,7 +168,7 @@ uint32_t tsch_scheduled_ost_pp_sf_bst_tx_cell_count;
 uint32_t tsch_scheduled_ost_pp_sf_bst_rx_cell_count;
 #endif
 #endif
-#if WITH_PPSD
+#if WITH_UPA
 uint32_t tsch_scheduled_common_sf_ep_tx_cell_count;
 uint32_t tsch_scheduled_common_sf_ep_rx_cell_count;
 uint32_t tsch_scheduled_unicast_sf_ep_tx_cell_count;
@@ -202,7 +202,7 @@ uint32_t tsch_ost_pp_sf_bst_tx_operation_count;
 uint32_t tsch_ost_pp_sf_bst_rx_operation_count;
 #endif
 #endif
-#if WITH_PPSD
+#if WITH_UPA
 uint32_t tsch_common_sf_ep_tx_reserved_count;
 uint32_t tsch_common_sf_ep_rx_reserved_count;
 uint32_t tsch_unicast_sf_ep_tx_reserved_count;
@@ -289,7 +289,7 @@ void reset_log_tsch()
 #endif
 #endif
 
-#if WITH_PPSD
+#if WITH_UPA
 #if WITH_OST
   LOG_INFO("HCK sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu sch_pp_ep_tx %lu sch_pp_ep_rx %lu |\n", 
           tsch_scheduled_common_sf_ep_tx_cell_count,
@@ -347,7 +347,7 @@ void reset_log_tsch()
 #endif
 #endif
 
-#if WITH_PPSD
+#if WITH_UPA
 #if WITH_OST
   LOG_INFO("HCK bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu pp_ep_tx_rs %lu pp_ep_rx_rs %lu |\n", 
           tsch_common_sf_ep_tx_reserved_count,
@@ -462,7 +462,7 @@ void reset_log_tsch()
   tsch_scheduled_ost_pp_sf_bst_rx_cell_count = 0;
 #endif
 #endif
-#if WITH_PPSD
+#if WITH_UPA
   tsch_scheduled_common_sf_ep_tx_cell_count = 0;
   tsch_scheduled_common_sf_ep_rx_cell_count = 0;
   tsch_scheduled_unicast_sf_ep_tx_cell_count = 0;
@@ -496,7 +496,7 @@ void reset_log_tsch()
   tsch_ost_pp_sf_bst_rx_operation_count = 0;
 #endif
 #endif
-#if WITH_PPSD
+#if WITH_UPA
   tsch_common_sf_ep_tx_reserved_count = 0;
   tsch_common_sf_ep_rx_reserved_count = 0;
   tsch_unicast_sf_ep_tx_reserved_count = 0;
@@ -583,7 +583,7 @@ print_utilization()
 #endif
 #endif
 
-#if WITH_PPSD
+#if WITH_UPA
 #if WITH_OST
   LOG_INFO("HCK sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu sch_pp_ep_tx %lu sch_pp_ep_rx %lu |\n", 
           tsch_scheduled_common_sf_ep_tx_cell_count,
@@ -641,7 +641,7 @@ print_utilization()
 #endif
 #endif
 
-#if WITH_PPSD
+#if WITH_UPA
 #if WITH_OST
   LOG_INFO("HCK bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu pp_ep_tx_rs %lu pp_ep_rx_rs %lu |\n", 
           tsch_common_sf_ep_tx_reserved_count,
@@ -718,7 +718,7 @@ uint16_t tsch_timing_us[tsch_ts_elements_count];
 /* TSCH timeslot timing (in rtimer ticks) */
 rtimer_clock_t tsch_timing[tsch_ts_elements_count];
 
-#if WITH_PPSD
+#if WITH_UPA
 static const uint16_t *ppsd_default_timing_us;
 uint16_t ppsd_timing_us[ppsd_ts_elements_count];
 rtimer_clock_t ppsd_timing[ppsd_ts_elements_count];
@@ -1202,7 +1202,7 @@ tsch_reset(void)
 #endif
 #endif
 
-#if WITH_PPSD
+#if WITH_UPA
   ppsd_default_timing_us = PPSD_DEFAULT_TIMESLOT_TIMING;
   for(i = 0; i < ppsd_ts_elements_count; i++) {
     ppsd_timing_us[i] = ppsd_default_timing_us[i];
@@ -1540,7 +1540,7 @@ tsch_rx_process_pending()
 #endif
 
 #if WITH_OST /* OST-09: Post process received N */
-#if WITH_PPSD
+#if WITH_UPA
     if(current_input->ppsd_received_in_ep == 0) {
       ost_post_process_rx_N(current_input);
     }
@@ -1592,7 +1592,7 @@ tsch_tx_process_pending(void)
 #endif
 
 #if WITH_OST
-#if WITH_PPSD
+#if WITH_UPA
     if(p->ppsd_sent_in_ep == 0) { /* Sent in regular schcedule */
       ost_post_process_rx_t_offset(p);
     }
@@ -1651,7 +1651,7 @@ tsch_tx_process_pending(void)
       }
     }
 
-#if WITH_PPSD
+#if WITH_UPA
     if(p->ppsd_sent_in_ep == 1) { /* sent in exclusive period */
       /* Call packet_sent callback */
       mac_call_sent_callback(p->sent, p->ptr, p->ret, 0xff + p->transmissions);
@@ -2110,7 +2110,7 @@ PROCESS_THREAD(tsch_process, ev, data)
 #endif
 #endif
 
-#if WITH_PPSD
+#if WITH_UPA
 #if WITH_OST
   LOG_INFO("HCK sch_bc_ep_tx %lu sch_bc_ep_rx %lu sch_uc_ep_tx %lu sch_uc_ep_rx %lu sch_pp_ep_tx %lu sch_pp_ep_rx %lu |\n", 
           tsch_scheduled_common_sf_ep_tx_cell_count,
@@ -2168,7 +2168,7 @@ PROCESS_THREAD(tsch_process, ev, data)
 #endif
 #endif
 
-#if WITH_PPSD
+#if WITH_UPA
 #if WITH_OST
   LOG_INFO("HCK bc_ep_tx_rs %lu bc_ep_rx_rs %lu uc_ep_tx_rs %lu uc_ep_rx_rs %lu pp_ep_tx_rs %lu pp_ep_rx_rs %lu |\n", 
           tsch_common_sf_ep_tx_reserved_count,
@@ -2450,7 +2450,7 @@ send_packet(mac_callback_t sent, void *ptr)
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, tsch_packet_seqno);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, 1);
 
-#if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
+#if WITH_UPA /* HEADER_IE_IN_DATA_AND_ACK */
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
 #endif
 

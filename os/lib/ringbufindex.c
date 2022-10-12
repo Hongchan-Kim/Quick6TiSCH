@@ -45,15 +45,7 @@
 #include <string.h>
 #include "lib/ringbufindex.h"
 
-/* Initialize a ring buffer. The size must be a power of two */
-void
-ringbufindex_init(struct ringbufindex *r, uint8_t size)
-{
-  r->mask = size - 1;
-  r->put_ptr = 0;
-  r->get_ptr = 0;
-}
-#if WITH_PPSD
+#if WITH_UPA
 /* Shift get_ptr of ring buffer */
 int
 ringbufindex_shift_get_ptr(struct ringbufindex *r, int shift)
@@ -66,6 +58,14 @@ ringbufindex_shift_get_ptr(struct ringbufindex *r, int shift)
 }
 #endif
 
+/* Initialize a ring buffer. The size must be a power of two */
+void
+ringbufindex_init(struct ringbufindex *r, uint8_t size)
+{
+  r->mask = size - 1;
+  r->put_ptr = 0;
+  r->get_ptr = 0;
+}
 /* Put one element to the ring buffer */
 int
 ringbufindex_put(struct ringbufindex *r)

@@ -618,7 +618,7 @@ tsch_queue_free_packet(struct tsch_packet *p)
   }
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_PPSD
+#if WITH_UPA
 /* Updates neighbor queue state after a transmission */
 int
 tsch_queue_ppsd_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
@@ -803,7 +803,7 @@ tsch_queue_is_empty(const struct tsch_neighbor *n)
   return !tsch_is_locked() && n != NULL && ringbufindex_empty(&n->tx_ringbuf);
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_PPSD
+#if WITH_UPA
 struct tsch_packet *
 tsch_queue_ppsd_get_next_packet_for_nbr(const struct tsch_neighbor *n, uint8_t ppsd_last_tx_seq)
 {

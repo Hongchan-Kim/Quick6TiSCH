@@ -61,7 +61,7 @@
 #define LOG_LEVEL LOG_LEVEL_MAC
 
 /*---------------------------------------------------------------------------*/
-#if WITH_PPSD
+#if WITH_UPA
 int
 tsch_rpl_callback_is_root(void)
 {

@@ -94,7 +94,7 @@ extern uint32_t tsch_scheduled_ost_pp_sf_bst_tx_cell_count;
 extern uint32_t tsch_scheduled_ost_pp_sf_bst_rx_cell_count;
 #endif
 #endif
-#if WITH_PPSD
+#if WITH_UPA
 extern uint32_t tsch_scheduled_common_sf_ep_tx_cell_count;
 extern uint32_t tsch_scheduled_common_sf_ep_rx_cell_count;
 extern uint32_t tsch_scheduled_unicast_sf_ep_tx_cell_count;
@@ -128,7 +128,7 @@ extern uint32_t tsch_ost_pp_sf_bst_tx_operation_count;
 extern uint32_t tsch_ost_pp_sf_bst_rx_operation_count;
 #endif
 #endif
-#if WITH_PPSD
+#if WITH_UPA
 extern uint32_t tsch_common_sf_ep_tx_reserved_count;
 extern uint32_t tsch_common_sf_ep_rx_reserved_count;
 extern uint32_t tsch_unicast_sf_ep_tx_reserved_count;
@@ -289,7 +289,7 @@ extern uint8_t atl_next_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
 extern uint8_t atl_next_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
 #endif
 
-#if WITH_PPSD
+#if WITH_UPA
 extern ppsd_timeslot_timing_usec ppsd_timing_us;
 extern ppsd_timeslot_timing_ticks ppsd_timing;
 extern const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000;

@@ -63,7 +63,7 @@ int atl_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset
  * \return The length of the packet that was created. -1 if failure.
  */
 #if !WITH_OST
-#if WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
+#if WITH_UPA /* HEADER_IE_IN_DATA_AND_ACK */
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,
                             int16_t drift, int nack, 
@@ -79,7 +79,7 @@ int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,
                             int16_t drift, int nack, 
                             struct input_packet *current_input, uint16_t matching_slot);
-#elif WITH_PPSD /* HEADER_IE_IN_DATA_AND_ACK */
+#elif WITH_UPA /* HEADER_IE_IN_DATA_AND_ACK */
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,
                             int16_t drift, int nack, 

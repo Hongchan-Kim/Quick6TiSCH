@@ -3,71 +3,6 @@
 
 /*---------------------------------------------------------------------------*/
 /*
- * Exclusive period implementation
- */
-/* Need to be tested */
-#define WITH_PPSD                                  0
-
-#if WITH_PPSD
-#define PPSD_TRIPLE_CCA                            1
-#define PPSD_EP_POLICY_0                           0 /* No policy, accept as many as possible */
-#define PPSD_EP_POLICY_1                           1 /* Maximum gain */
-#define PPSD_EP_POLICY_2                           0 /* Maximum number of packets */
-
-#define PPSD_END_OF_EP_RTIMER_GUARD                2u
-
-#define PPSD_DBG_EP_ESSENTIAL                      1
-#define PPSD_DBG_EP_OPERATION                      0
-#define PPSD_DBG_TRIPLE_CCA_TIMING                 0
-#define PPSD_DBG_EP_SLOT_TIMING                    0
-
-#endif /* WITH_PPSD */
-
-#define WITH_TSCH_TX_CCA                           1
-#if WITH_TSCH_TX_CCA
-#define TSCH_CONF_CCA_ENABLED                      1
-#endif
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * Adaptive timeslot length
- */
-#define WITH_ATL                                   0
-#if WITH_ATL
-#define ATL_DBG_ESSENTIAL                          1
-#define ATL_DBG_OPERATION                          0
-
-#if WITH_PPSD
-#define ATL_GUARD_TIME_TIMESLOTS                   10
-#else
-#define ATL_GUARD_TIME_TIMESLOTS                   1
-#endif
-#define ATL_CALCULATE_DURATION(len)                (32 * (5 + len)) /* len includes RADIO_PHY_OVERHEAD (3 bytes) */
-
-#define ATL_START_DELAY                            (10 * 60 * CLOCK_SECOND)
-#define ATL_OBSERVATION_PERIOD                     (10 * 60 * CLOCK_SECOND)
-#define ATL_RAPID_EB_PERIOD                        (3 * CLOCK_SECOND)
-
-#define ATL_MAX_FRAME_LEN                          128 /* Including RADIO_PHY_OVERHEAD (3 bytes) */
-#define ATL_MAX_ACK_LEN                            70  /* Including RADIO_PHY_OVERHEAD (3 bytes) */
-#define ATL_SHIFT_BITS                             3
-
-#define ATL_OBSERVATION_WINDOWS                    3
-#define ATL_FRAME_LEN_QUANTIZED_LEVELS             ((((ATL_MAX_FRAME_LEN - 1) >> ATL_SHIFT_BITS) + 1) + 1)
-#define ATL_ACK_LEN_QUANTIZED_LEVELS               ((((ATL_MAX_ACK_LEN - 1) >> ATL_SHIFT_BITS) + 1) + 1)
-
-#define ATL_INITIAL_HOP_DISTANCE                   10
-
-#define ATL_ZERO_HOP_DISTANCE_OFFSET               1
-#define ATL_TRIGGERING_ASN_MULTIPLIER              2
-#endif
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
  * HCK modifications independent of proposed scheme
  */
 #define HCK_ORCHESTRA_PACKET_OFFLOADING            1
@@ -211,7 +146,7 @@
 #define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 
@@ -484,11 +419,81 @@
 /*---------------------------------------------------------------------------*/
 
 
+
+/*---------------------------------------------------------------------------*/
+/*
+ * UPA: Utility-based Packet Aggregation
+ */
+/* Need to be tested */
+#define WITH_UPA                                   1
+#if WITH_UPA
+#define UPA_TRIPLE_CCA                             1
+
+#define PPSD_TEMP                                  0
+
+#define PPSD_EP_POLICY_0                           0 /* No policy, accept as many as possible */
+#define PPSD_EP_POLICY_1                           1 /* Maximum gain */
+#define PPSD_EP_POLICY_2                           0 /* Maximum number of packets */
+
+#define PPSD_END_OF_EP_RTIMER_GUARD                2u
+
+#define PPSD_DBG_EP_ESSENTIAL                      1
+#define PPSD_DBG_EP_OPERATION                      0
+
+
+#define UPA_DBG_TIMING_TRIPLE_CCA                  0 && UPA_TRIPLE_CCA
+#define PPSD_DBG_EP_SLOT_TIMING                    0
+
+#endif /* WITH_UPA */
+
+#define WITH_TSCH_TX_CCA                           1
+#if WITH_TSCH_TX_CCA
+#define TSCH_CONF_CCA_ENABLED                      1
+#endif
+/*---------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------*/
+/*
+ * Adaptive timeslot length
+ */
+#define WITH_ATL                                   0
+#if WITH_ATL
+#define ATL_DBG_ESSENTIAL                          1
+#define ATL_DBG_OPERATION                          0
+
+#if WITH_UPA
+#define ATL_GUARD_TIME_TIMESLOTS                   10
+#else
+#define ATL_GUARD_TIME_TIMESLOTS                   1
+#endif
+#define ATL_CALCULATE_DURATION(len)                (32 * (5 + len)) /* len includes RADIO_PHY_OVERHEAD (3 bytes) */
+
+#define ATL_START_DELAY                            (10 * 60 * CLOCK_SECOND)
+#define ATL_OBSERVATION_PERIOD                     (10 * 60 * CLOCK_SECOND)
+#define ATL_RAPID_EB_PERIOD                        (3 * CLOCK_SECOND)
+
+#define ATL_MAX_FRAME_LEN                          128 /* Including RADIO_PHY_OVERHEAD (3 bytes) */
+#define ATL_MAX_ACK_LEN                            70  /* Including RADIO_PHY_OVERHEAD (3 bytes) */
+#define ATL_SHIFT_BITS                             3
+
+#define ATL_OBSERVATION_WINDOWS                    3
+#define ATL_FRAME_LEN_QUANTIZED_LEVELS             ((((ATL_MAX_FRAME_LEN - 1) >> ATL_SHIFT_BITS) + 1) + 1)
+#define ATL_ACK_LEN_QUANTIZED_LEVELS               ((((ATL_MAX_ACK_LEN - 1) >> ATL_SHIFT_BITS) + 1) + 1)
+
+#define ATL_INITIAL_HOP_DISTANCE                   10
+
+#define ATL_ZERO_HOP_DISTANCE_OFFSET               1
+#define ATL_TRIGGERING_ASN_MULTIPLIER              2
+#endif
+/*---------------------------------------------------------------------------*/
+
+
 /*---------------------------------------------------------------------------*/
 /*
  * Evaluation orientd configurations
  */
-#define HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN       0
+#define HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN       1
 #if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
 
 #undef ORCHESTRA_CONF_UNICAST_PERIOD
@@ -502,11 +507,14 @@
 #define NUM_OF_PACKETS_PER_SECOND                  20
 #define DATA_PERIOD_LEN_IN_SECONDS                 (NUM_OF_APP_PAYLOAD_LENS * NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN / NUM_OF_PACKETS_PER_SECOND)
 
-#undef WITH_PPSD
-#define WITH_PPSD                                  1
+#undef WITH_UPA
+#define WITH_UPA                                  1
 
-#undef PPSD_TRIPLE_CCA
-#define PPSD_TRIPLE_CCA                            1
+#undef PPSD_TEMP
+#define PPSD_TEMP                                  1
+
+#undef UPA_TRIPLE_CCA
+#define UPA_TRIPLE_CCA                            1
 
 #undef PPSD_EP_POLICY_0                            /* No policy, accept as many as possible */
 #undef PPSD_EP_POLICY_1                            /* Maximum gain */
@@ -520,8 +528,8 @@
 #define PPSD_DBG_EP_ESSENTIAL                      1
 #undef PPSD_DBG_EP_OPERATION
 #define PPSD_DBG_EP_OPERATION                      0
-#undef PPSD_DBG_TRIPLE_CCA_TIMING
-#define PPSD_DBG_TRIPLE_CCA_TIMING                 0
+#undef UPA_DBG_TIMING_TRIPLE_CCA
+#define UPA_DBG_TIMING_TRIPLE_CCA                 0
 #undef PPSD_DBG_EP_SLOT_TIMING
 #define PPSD_DBG_EP_SLOT_TIMING                    0
 
