@@ -109,7 +109,7 @@ struct tsch_packet {
   uint8_t tsch_sync_ie_offset; /* Offset within the frame used for quick update of EB ASN and join priority */
 
 #if WITH_UPA
-  uint8_t ppsd_sent_in_ep;
+  uint8_t upa_sent_in_batch;
 #endif
 
 #if WITH_OST
@@ -160,19 +160,19 @@ enum tsch_timeslot_timing_elements {
 };
 
 #if WITH_UPA
-enum ppsd_timeslot_timing_elements {
-  ppsd_ts_tx_offset_1,
-  ppsd_ts_rx_offset_1,
-  ppsd_ts_tx_offset_2,
-  ppsd_ts_rx_offset_2,
-  ppsd_ts_rx_ack_delay,
-  ppsd_ts_tx_ack_delay,
-  ppsd_ts_rx_wait,
-  ppsd_ts_ack_wait,
-  ppsd_ts_max_ack,
-  ppsd_ts_max_tx,
-  ppsd_ts_tx_process_b_ack,
-  ppsd_ts_elements_count, /* Not a timing element */
+enum upa_timeslot_timing_elements {
+  upa_ts_tx_offset_1,
+  upa_ts_rx_offset_1,
+  upa_ts_tx_offset_2,
+  upa_ts_rx_offset_2,
+  upa_ts_rx_ack_delay,
+  upa_ts_tx_ack_delay,
+  upa_ts_rx_wait,
+  upa_ts_ack_wait,
+  upa_ts_max_ack,
+  upa_ts_max_tx,
+  upa_ts_tx_process_b_ack,
+  upa_ts_elements_count, /* Not a timing element */
 };
 #endif
 
@@ -184,8 +184,8 @@ typedef rtimer_clock_t tsch_timeslot_timing_ticks[tsch_ts_elements_count];
 typedef uint16_t tsch_timeslot_timing_usec[tsch_ts_elements_count];
 
 #if WITH_UPA
-typedef rtimer_clock_t ppsd_timeslot_timing_ticks[ppsd_ts_elements_count];
-typedef uint16_t ppsd_timeslot_timing_usec[ppsd_ts_elements_count];
+typedef rtimer_clock_t upa_timeslot_timing_ticks[upa_ts_elements_count];
+typedef uint16_t upa_timeslot_timing_usec[upa_ts_elements_count];
 #endif
 
 /** \brief Stores data about an incoming packet */
@@ -197,7 +197,7 @@ struct input_packet {
   uint8_t channel; /* Channel we received the packet on */
 
 #if WITH_UPA
-  uint8_t ppsd_received_in_ep;
+  uint8_t upa_received_in_batch;
 #endif
 
 #if WITH_OST /* OST-09: Post process received N */

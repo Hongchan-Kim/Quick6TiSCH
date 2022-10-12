@@ -69,7 +69,7 @@ struct tsch_slotframe_and_links {
 struct ieee802154_ies {
   /* Header IEs */
 #if WITH_UPA
-  uint16_t ie_ppsd_info;
+  uint16_t ie_upa_info;
 #endif
   int16_t ie_time_correction;
   uint8_t ie_is_nack;
@@ -104,7 +104,7 @@ struct ieee802154_ies {
 
 /** Insert various Information Elements **/
 #if WITH_UPA
-int frame80215e_create_ie_header_ppsd_info(uint8_t *buf, int len,
+int frame80215e_create_ie_header_upa_info(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #endif
 /* Header IE. ACK/NACK time correction. Used in enhanced ACKs */

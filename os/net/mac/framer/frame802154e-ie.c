@@ -48,7 +48,7 @@
 /* c.f. IEEE 802.15.4e Table 4b */
 enum ieee802154e_header_ie_id {
 #if WITH_UPA /* Header IE in Data and ACK frames */
-  HEADER_IE_PPSD_INFO = 0x01,
+  HEADER_IE_UPA_INFO = 0x01,
 #endif
   HEADER_IE_LE_CSL = 0x1a,
   HEADER_IE_LE_RIT,
@@ -143,14 +143,14 @@ create_mlme_long_ie_descriptor(uint8_t *buf, uint8_t sub_id, int ie_len)
 
 #if WITH_UPA /* Header IE in Data and ACK frames */
 int
-frame80215e_create_ie_header_ppsd_info(uint8_t *buf, int len,
+frame80215e_create_ie_header_upa_info(uint8_t *buf, int len,
     struct ieee802154_ies *ies)
 {
   int ie_len = 2; /* 16 bits */
   if(len >= 2 + ie_len && ies != NULL) {
-    uint16_t ppsd_info = ies->ie_ppsd_info;
-    WRITE16(buf+2, ppsd_info);
-    create_header_ie_descriptor(buf, HEADER_IE_PPSD_INFO, ie_len);
+    uint16_t upa_info = ies->ie_upa_info;
+    WRITE16(buf+2, upa_info);
+    create_header_ie_descriptor(buf, HEADER_IE_UPA_INFO, ie_len);
     return 2 + ie_len;
   } else {
     return -1;
@@ -408,12 +408,12 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
 {
   switch(element_id) {
 #if WITH_UPA /* Header IE in Data and ACK frames */
-    case HEADER_IE_PPSD_INFO:
+    case HEADER_IE_UPA_INFO:
       if(len == 2) {
         if(ies != NULL) {
-          uint16_t ppsd_info = 0;
-          READ16(buf, ppsd_info);
-          ies->ie_ppsd_info = ppsd_info;
+          uint16_t upa_info = 0;
+          READ16(buf, upa_info);
+          ies->ie_upa_info = upa_info;
         }
         return len;
       }

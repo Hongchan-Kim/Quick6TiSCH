@@ -1506,9 +1506,9 @@ packet_sent(void *ptr, int status, int transmissions)
   }
 
 #if WITH_UPA
-  int ppsd_sent_in_ep = 0;
+  int upa_sent_in_batch = 0;
   if(transmissions >= 0xff) {
-    ppsd_sent_in_ep = 1;
+    upa_sent_in_batch = 1;
     transmissions = transmissions - 0xff;
   }
 #endif
@@ -1549,7 +1549,7 @@ packet_sent(void *ptr, int status, int transmissions)
 
 #if WITH_UPA
   /* call link_stats_packet_sent only for packets sent in regular schedule */
-  if(ppsd_sent_in_ep == 0) {
+  if(upa_sent_in_batch == 0) {
     /* Update neighbor link statistics */
     link_stats_packet_sent(dest, status, transmissions);
   }

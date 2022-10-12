@@ -104,7 +104,7 @@ int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
                         int16_t drift, int nack, 
-                        uint16_t ppsd_acceptable_pkts)
+                        uint16_t upa_pkts_to_receive)
 #else /* Default burst transmission or no burst transmission */
 int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
@@ -123,7 +123,7 @@ int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
                         int16_t drift, int nack, 
-                        struct input_packet *current_input, uint16_t ppsd_acceptable_pkts)
+                        struct input_packet *current_input, uint16_t upa_pkts_to_receive)
 #else /* Default burst transmission or no burst transmission */
 int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
@@ -173,7 +173,7 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   framer_802154_setup_params(tsch_packet_eackbuf_attr, 0, &params);
 
 #if WITH_OST /* Piggyback t_offset */
-  if(current_input != NULL) { /* In b-ack of EP, current_input is NULL */
+  if(current_input != NULL) { /* In b-ack of UPA, current_input is NULL */
     uip_ds6_nbr_t *ds6_nbr = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)dest_addr);
     if(ds6_nbr != NULL
       && ost_is_routing_nbr(ds6_nbr) == 1
@@ -209,12 +209,12 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   ies.ie_is_nack = nack;
 
 #if WITH_UPA /* HEADER_IE_IN_DATA_AND_ACK */
-  ies.ie_ppsd_info = ppsd_acceptable_pkts;
+  ies.ie_upa_info = upa_pkts_to_receive;
   ies_len = 0;
   
   current_ie_len = 0;
   current_ie_len =
-    frame80215e_create_ie_header_ppsd_info(buf + hdr_len + ies_len, 
+    frame80215e_create_ie_header_upa_info(buf + hdr_len + ies_len, 
                                                           buf_len - hdr_len - ies_len, &ies);
   if(current_ie_len < 0) {
     return -1;

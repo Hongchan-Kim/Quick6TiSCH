@@ -146,14 +146,14 @@ create_frame(int do_create)
 #if WITH_UPA
     int hdr_len_increment = 0;
     if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA) == 1 && !packetbuf_holds_broadcast()) {
-      struct ieee802154_ies ppsd_ies;
-      memset(&ppsd_ies, 0, sizeof(ppsd_ies));
-      ppsd_ies.ie_ppsd_info = 0;
+      struct ieee802154_ies upa_ies;
+      memset(&upa_ies, 0, sizeof(upa_ies));
+      upa_ies.ie_upa_info = 0;
 
       if(packetbuf_hdralloc(2)) {
         /* HCK: the second parameter must be revised */
         if(frame80215e_create_ie_header_list_termination_2((uint8_t *)packetbuf_hdrptr() + hdr_len,
-                                                          PACKETBUF_SIZE - hdr_len, &ppsd_ies) < 0) {
+                                                          PACKETBUF_SIZE - hdr_len, &upa_ies) < 0) {
           return FRAMER_FAILED;
         }
         hdr_len_increment += 2;
@@ -162,8 +162,8 @@ create_frame(int do_create)
       }
       if(packetbuf_hdralloc(4)) {
         /* HCK: the second parameter must be revised */
-        if(frame80215e_create_ie_header_ppsd_info((uint8_t *)packetbuf_hdrptr() + hdr_len,
-                                                                PACKETBUF_SIZE - hdr_len, &ppsd_ies) < 0) {
+        if(frame80215e_create_ie_header_upa_info((uint8_t *)packetbuf_hdrptr() + hdr_len,
+                                                                PACKETBUF_SIZE - hdr_len, &upa_ies) < 0) {
           return FRAMER_FAILED;
         }
         hdr_len_increment += 4;

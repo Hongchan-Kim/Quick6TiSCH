@@ -428,12 +428,12 @@
 #define WITH_UPA                                   1
 #if WITH_UPA
 #define UPA_TRIPLE_CCA                             1
+#define UPA_RX_SLOT_POLICY                         1 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
 
-#define PPSD_TEMP                                  0
 
-#define PPSD_EP_POLICY_0                           0 /* No policy, accept as many as possible */
-#define PPSD_EP_POLICY_1                           1 /* Maximum gain */
-#define PPSD_EP_POLICY_2                           0 /* Maximum number of packets */
+
+#define PPSD_TEMP                                  1
+
 
 #define PPSD_END_OF_EP_RTIMER_GUARD                2u
 
@@ -508,18 +508,16 @@
 #define DATA_PERIOD_LEN_IN_SECONDS                 (NUM_OF_APP_PAYLOAD_LENS * NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN / NUM_OF_PACKETS_PER_SECOND)
 
 #undef WITH_UPA
-#define WITH_UPA                                  1
+#define WITH_UPA                                   1
 
 #undef PPSD_TEMP
 #define PPSD_TEMP                                  1
 
 #undef UPA_TRIPLE_CCA
-#define UPA_TRIPLE_CCA                            1
+#define UPA_TRIPLE_CCA                             1
 
-#undef PPSD_EP_POLICY_0                            /* No policy, accept as many as possible */
-#undef PPSD_EP_POLICY_1                            /* Maximum gain */
-#undef PPSD_EP_POLICY_2                            /* Maximum number of packets */
-#define PPSD_EP_POLICY_0                           1 /* No policy, accept as many as possible */
+#undef UPA_RX_SLOT_POLICY
+#define UPA_RX_SLOT_POLICY                         0 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
 
 #undef PPSD_END_OF_EP_RTIMER_GUARD
 #define PPSD_END_OF_EP_RTIMER_GUARD                2u
@@ -544,7 +542,8 @@
 #define HCK_RPL_FIXED_TOPOLOGY                     0
 
 #undef IOTLAB_SITE
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
+#define IOTLAB_SITE                                IOTLAB_SACLAY_2
 #undef NODE_NUM
 #define NODE_NUM                                   2
 #undef UIP_CONF_MAX_ROUTES
@@ -559,7 +558,7 @@
 #undef APP_RESET_LOG_DELAY
 #define APP_RESET_LOG_DELAY                        (80 * 60 * CLOCK_SECOND)
 #undef APP_DATA_START_DELAY
-#define APP_DATA_START_DELAY                       (5 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (1 * 60 * CLOCK_SECOND)
 #undef APP_DATA_PERIOD
 #define APP_DATA_PERIOD                            (DATA_PERIOD_LEN_IN_SECONDS * CLOCK_SECOND)
 

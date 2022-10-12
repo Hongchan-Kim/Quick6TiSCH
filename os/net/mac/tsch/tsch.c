@@ -719,9 +719,9 @@ uint16_t tsch_timing_us[tsch_ts_elements_count];
 rtimer_clock_t tsch_timing[tsch_ts_elements_count];
 
 #if WITH_UPA
-static const uint16_t *ppsd_default_timing_us;
-uint16_t ppsd_timing_us[ppsd_ts_elements_count];
-rtimer_clock_t ppsd_timing[ppsd_ts_elements_count];
+static const uint16_t *upa_default_timing_us;
+uint16_t upa_timing_us[upa_ts_elements_count];
+rtimer_clock_t upa_timing[upa_ts_elements_count];
 #endif
 
 #if LINKADDR_SIZE == 8
@@ -1203,10 +1203,10 @@ tsch_reset(void)
 #endif
 
 #if WITH_UPA
-  ppsd_default_timing_us = PPSD_DEFAULT_TIMESLOT_TIMING;
-  for(i = 0; i < ppsd_ts_elements_count; i++) {
-    ppsd_timing_us[i] = ppsd_default_timing_us[i];
-    ppsd_timing[i] = US_TO_RTIMERTICKS(ppsd_timing_us[i]);
+  upa_default_timing_us = PPSD_DEFAULT_TIMESLOT_TIMING;
+  for(i = 0; i < upa_ts_elements_count; i++) {
+    upa_timing_us[i] = upa_default_timing_us[i];
+    upa_timing[i] = US_TO_RTIMERTICKS(upa_timing_us[i]);
   }
 #endif
 
@@ -1541,7 +1541,7 @@ tsch_rx_process_pending()
 
 #if WITH_OST /* OST-09: Post process received N */
 #if WITH_UPA
-    if(current_input->ppsd_received_in_ep == 0) {
+    if(current_input->upa_received_in_batch == 0) {
       ost_post_process_rx_N(current_input);
     }
 #else
@@ -1593,7 +1593,7 @@ tsch_tx_process_pending(void)
 
 #if WITH_OST
 #if WITH_UPA
-    if(p->ppsd_sent_in_ep == 0) { /* Sent in regular schcedule */
+    if(p->upa_sent_in_batch == 0) { /* Sent in regular schcedule */
       ost_post_process_rx_t_offset(p);
     }
 #else
@@ -1652,7 +1652,7 @@ tsch_tx_process_pending(void)
     }
 
 #if WITH_UPA
-    if(p->ppsd_sent_in_ep == 1) { /* sent in exclusive period */
+    if(p->upa_sent_in_batch == 1) { /* sent in exclusive period */
       /* Call packet_sent callback */
       mac_call_sent_callback(p->sent, p->ptr, p->ret, 0xff + p->transmissions);
     } else { /* sent in regular schedule */

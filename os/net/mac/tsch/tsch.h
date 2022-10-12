@@ -290,9 +290,9 @@ extern uint8_t atl_next_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
 #endif
 
 #if WITH_UPA
-extern ppsd_timeslot_timing_usec ppsd_timing_us;
-extern ppsd_timeslot_timing_ticks ppsd_timing;
-extern const ppsd_timeslot_timing_usec ppsd_timeslot_timing_us_10000;
+extern upa_timeslot_timing_usec upa_timing_us;
+extern upa_timeslot_timing_ticks upa_timing;
+extern const upa_timeslot_timing_usec upa_timeslot_timing_us_10000;
 #endif
 
 /* TSCH processes */
