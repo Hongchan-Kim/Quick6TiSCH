@@ -446,7 +446,7 @@ by default, useful in case of duplicate seqno */
 #endif
 
 #if WITH_UPA
-#define PPSD_DEFAULT_TIMESLOT_TIMING upa_timeslot_timing_us_10000
+#define UPA_DEFAULT_TIMESLOT_TIMING upa_timeslot_timing_us_10000
 #endif
 
 /* Configurable Rx guard time is micro-seconds */

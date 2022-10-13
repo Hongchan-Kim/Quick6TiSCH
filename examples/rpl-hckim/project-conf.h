@@ -432,17 +432,15 @@
 
 
 
-#define PPSD_TEMP                                  1
+#define UPA_TEMP                                  1
+#define UPA_END_OF_EP_RTIMER_GUARD                2u
 
-
-#define PPSD_END_OF_EP_RTIMER_GUARD                2u
-
-#define PPSD_DBG_EP_ESSENTIAL                      1
-#define PPSD_DBG_EP_OPERATION                      0
+#define UPA_DBG_EP_ESSENTIAL                      1
+#define UPA_DBG_EP_OPERATION                      0
 
 
 #define UPA_DBG_TIMING_TRIPLE_CCA                  0 && UPA_TRIPLE_CCA
-#define PPSD_DBG_EP_SLOT_TIMING                    0
+#define UPA_DBG_EP_SLOT_TIMING                    0
 
 #endif /* WITH_UPA */
 
@@ -488,6 +486,13 @@
 #endif
 /*---------------------------------------------------------------------------*/
 
+/*---------------------------------------------------------------------------*/
+/*
+ * ASAP
+ */
+#define WITH_ASAP                                  WITH_UPA || WITH_SLA
+
+
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -510,8 +515,8 @@
 #undef WITH_UPA
 #define WITH_UPA                                   1
 
-#undef PPSD_TEMP
-#define PPSD_TEMP                                  1
+#undef UPA_TEMP
+#define UPA_TEMP                                  1
 
 #undef UPA_TRIPLE_CCA
 #define UPA_TRIPLE_CCA                             1
@@ -519,17 +524,17 @@
 #undef UPA_RX_SLOT_POLICY
 #define UPA_RX_SLOT_POLICY                         0 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
 
-#undef PPSD_END_OF_EP_RTIMER_GUARD
-#define PPSD_END_OF_EP_RTIMER_GUARD                2u
+#undef UPA_END_OF_EP_RTIMER_GUARD
+#define UPA_END_OF_EP_RTIMER_GUARD                2u
 
-#undef PPSD_DBG_EP_ESSENTIAL
-#define PPSD_DBG_EP_ESSENTIAL                      1
-#undef PPSD_DBG_EP_OPERATION
-#define PPSD_DBG_EP_OPERATION                      0
+#undef UPA_DBG_EP_ESSENTIAL
+#define UPA_DBG_EP_ESSENTIAL                      1
+#undef UPA_DBG_EP_OPERATION
+#define UPA_DBG_EP_OPERATION                      0
 #undef UPA_DBG_TIMING_TRIPLE_CCA
 #define UPA_DBG_TIMING_TRIPLE_CCA                 0
-#undef PPSD_DBG_EP_SLOT_TIMING
-#define PPSD_DBG_EP_SLOT_TIMING                    0
+#undef UPA_DBG_EP_SLOT_TIMING
+#define UPA_DBG_EP_SLOT_TIMING                    0
 
 #undef HCK_DBG_REGULAR_SLOT_TIMING
 #define HCK_DBG_REGULAR_SLOT_TIMING                0

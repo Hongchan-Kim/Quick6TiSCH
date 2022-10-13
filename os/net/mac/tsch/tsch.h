@@ -95,13 +95,13 @@ extern uint32_t tsch_scheduled_ost_pp_sf_bst_rx_cell_count;
 #endif
 #endif
 #if WITH_UPA
-extern uint32_t tsch_scheduled_common_sf_ep_tx_cell_count;
-extern uint32_t tsch_scheduled_common_sf_ep_rx_cell_count;
-extern uint32_t tsch_scheduled_unicast_sf_ep_tx_cell_count;
-extern uint32_t tsch_scheduled_unicast_sf_ep_rx_cell_count;
+extern uint32_t tsch_scheduled_common_sf_upa_tx_cell_count;
+extern uint32_t tsch_scheduled_common_sf_upa_rx_cell_count;
+extern uint32_t tsch_scheduled_unicast_sf_upa_tx_cell_count;
+extern uint32_t tsch_scheduled_unicast_sf_upa_rx_cell_count;
 #if WITH_OST
-extern uint32_t tsch_scheduled_ost_pp_sf_ep_tx_cell_count;
-extern uint32_t tsch_scheduled_ost_pp_sf_ep_rx_cell_count;
+extern uint32_t tsch_scheduled_ost_pp_sf_upa_tx_cell_count;
+extern uint32_t tsch_scheduled_ost_pp_sf_upa_rx_cell_count;
 #endif
 #endif
 
@@ -129,29 +129,29 @@ extern uint32_t tsch_ost_pp_sf_bst_rx_operation_count;
 #endif
 #endif
 #if WITH_UPA
-extern uint32_t tsch_common_sf_ep_tx_reserved_count;
-extern uint32_t tsch_common_sf_ep_rx_reserved_count;
-extern uint32_t tsch_unicast_sf_ep_tx_reserved_count;
-extern uint32_t tsch_unicast_sf_ep_rx_reserved_count;
+extern uint32_t tsch_common_sf_upa_tx_reserved_count;
+extern uint32_t tsch_common_sf_upa_rx_reserved_count;
+extern uint32_t tsch_unicast_sf_upa_tx_reserved_count;
+extern uint32_t tsch_unicast_sf_upa_rx_reserved_count;
 #if WITH_OST
-extern uint32_t tsch_ost_pp_sf_ep_tx_reserved_count;
-extern uint32_t tsch_ost_pp_sf_ep_rx_reserved_count;
+extern uint32_t tsch_ost_pp_sf_upa_tx_reserved_count;
+extern uint32_t tsch_ost_pp_sf_upa_rx_reserved_count;
 #endif
-extern uint32_t tsch_common_sf_ep_tx_ok_count;
-extern uint32_t tsch_common_sf_ep_rx_ok_count;
-extern uint32_t tsch_unicast_sf_ep_tx_ok_count;
-extern uint32_t tsch_unicast_sf_ep_rx_ok_count;
+extern uint32_t tsch_common_sf_upa_tx_ok_count;
+extern uint32_t tsch_common_sf_upa_rx_ok_count;
+extern uint32_t tsch_unicast_sf_upa_tx_ok_count;
+extern uint32_t tsch_unicast_sf_upa_rx_ok_count;
 #if WITH_OST
-extern uint32_t tsch_ost_pp_sf_ep_tx_ok_count;
-extern uint32_t tsch_ost_pp_sf_ep_rx_ok_count;
+extern uint32_t tsch_ost_pp_sf_upa_tx_ok_count;
+extern uint32_t tsch_ost_pp_sf_upa_rx_ok_count;
 #endif
-extern uint32_t tsch_common_sf_ep_tx_timeslots;
-extern uint32_t tsch_common_sf_ep_rx_timeslots;
-extern uint32_t tsch_unicast_sf_ep_tx_timeslots;
-extern uint32_t tsch_unicast_sf_ep_rx_timeslots;
+extern uint32_t tsch_common_sf_upa_tx_timeslots;
+extern uint32_t tsch_common_sf_upa_rx_timeslots;
+extern uint32_t tsch_unicast_sf_upa_tx_timeslots;
+extern uint32_t tsch_unicast_sf_upa_rx_timeslots;
 #if WITH_OST
-extern uint32_t tsch_ost_pp_sf_ep_tx_timeslots;
-extern uint32_t tsch_ost_pp_sf_ep_rx_timeslots;
+extern uint32_t tsch_ost_pp_sf_upa_tx_timeslots;
+extern uint32_t tsch_ost_pp_sf_upa_rx_timeslots;
 #endif
 #endif
 

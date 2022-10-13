@@ -309,7 +309,7 @@ parse(void)
 #if WITH_UPA
     if(frame.fcf.ie_list_present) {
       /* hckim: must be revised */
-      packetbuf_hdrreduce(6); /* 2 for termination, 4 for ppsd ie */
+      packetbuf_hdrreduce(6); /* 2 for termination, 4 for upa ie */
       packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, frame.fcf.ie_list_present);
     }
 #endif

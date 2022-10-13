@@ -123,15 +123,15 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 };
 
 #if WITH_UPA
-#define PPSD_RX_WAIT 300
+#define UPA_RX_WAIT 300
 const upa_timeslot_timing_usec upa_timeslot_timing_us_10000 = {
    1250, /* upa_ts_tx_offset_1 (41 ticks required) */
-   (1250 - (PPSD_RX_WAIT / 2)), /* upa_ts_rx_offset_1 */
+   (1250 - (UPA_RX_WAIT / 2)), /* upa_ts_rx_offset_1 */
    1000, /* upa_ts_tx_offset_2 (30 ticks required, 1000 == 33 ticks) */
-   (1000 - (PPSD_RX_WAIT / 2)), /* upa_ts_rx_offset_2 */
+   (1000 - (UPA_RX_WAIT / 2)), /* upa_ts_rx_offset_2 */
    1050, /* upa_ts_rx_ack_delay */
    1250, /* upa_ts_tx_ack_delay */
-  PPSD_RX_WAIT, /* upa_ts_rx_wait */
+  UPA_RX_WAIT, /* upa_ts_rx_wait */
     400, /* upa_ts_ack_wait */
 #if WITH_OST
     900, /* upa_ts_max_ack (23 bytes) -> 832 us, 27 ticks -> 2 ticks for guard -> 900 us, 29 ticks */
@@ -140,6 +140,7 @@ const upa_timeslot_timing_usec upa_timeslot_timing_us_10000 = {
 #endif
    4256, /* upa_ts_max_tx */
     330, /* upa_ts_tx_process_b_ack (11 ticks) - time to read and process b-ack */
+    600, /* upa_ts_guard_time (20 ticks) */
 };
 #endif
 
