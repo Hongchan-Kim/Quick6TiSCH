@@ -380,7 +380,7 @@ rf2xx_wr_channel_clear(void)
             }
             break;
             
-#if WITH_TSCH_TX_CCA
+#if TSCH_CONF_CCA_ENABLED
         /* 
          * Perform CCA in a way similar to the case of RF_LISTEN.
          */
@@ -488,7 +488,7 @@ rf2xx_wr_on(void)
             flag = 1;
             rf2xx_state = RF_BUSY;
         }
-#if WITH_TSCH_TX_CCA
+#if TSCH_CONF_CCA_ENABLED
         /*
          * When performing CCA in the tx slot of TSCH, 
          * rf2xx_wr_hard_prepare() is called in advance by tsch_tx_slot().
@@ -517,7 +517,7 @@ rf2xx_wr_on(void)
     if (flag)
     {
         listen();
-#if WITH_TSCH_TX_CCA
+#if TSCH_CONF_CCA_ENABLED
         /*
          * A flag of 2 means that we are in the Tx CCA routine.
          * Maintain rf2xx_state as RF_TX even after listen() is executed.

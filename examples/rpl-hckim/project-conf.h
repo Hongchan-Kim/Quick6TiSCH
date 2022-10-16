@@ -266,6 +266,7 @@
 #define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
 #define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* 8 in OST, originally 4 */
 #define IEEE802154_CONF_PANID                      0x58FA //22782 hckim //0x81a5 //ksh
+#define TSCH_CONF_CCA_ENABLED                      1
 //#define TSCH_CONF_AUTOSTART                        0 //ksh
 //#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH          3 //ksh 6TiSCH minimal schedule length.
 #ifndef WITH_SECURITY
@@ -430,24 +431,11 @@
 #define UPA_TRIPLE_CCA                             1
 #define UPA_RX_SLOT_POLICY                         1 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
 
-
-
-#define UPA_TEMP                                  1
-#define UPA_END_OF_EP_RTIMER_GUARD                2u
-
-#define UPA_DBG_EP_ESSENTIAL                      1
-#define UPA_DBG_EP_OPERATION                      0
-
-
+#define UPA_DBG_EP_ESSENTIAL                       1
+#define UPA_DBG_EP_OPERATION                       0
 #define UPA_DBG_TIMING_TRIPLE_CCA                  0 && UPA_TRIPLE_CCA
-#define UPA_DBG_EP_SLOT_TIMING                    0
-
+#define UPA_DBG_EP_SLOT_TIMING                     0
 #endif /* WITH_UPA */
-
-#define WITH_TSCH_TX_CCA                           1
-#if WITH_TSCH_TX_CCA
-#define TSCH_CONF_CCA_ENABLED                      1
-#endif
 /*---------------------------------------------------------------------------*/
 
 
@@ -490,7 +478,10 @@
 /*
  * ASAP
  */
-#define WITH_ASAP                                  WITH_UPA || WITH_SLA
+#define WITH_ASAP                                  1 && (WITH_UPA || WITH_SLA)
+#if WITH_ASAP
+#define ASAP_DBG_SLOT_TIMING                       0 || UPA_DBG_EP_SLOT_TIMING
+#endif
 
 
 
@@ -504,28 +495,22 @@
 #undef ORCHESTRA_CONF_UNICAST_PERIOD
 #define ORCHESTRA_CONF_UNICAST_PERIOD              10 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
 
-#define APP_PAYLOAD_LEN_MIN                        58 // 14, 36, 58
+#define APP_PAYLOAD_LEN_MIN                        14 // 14, 36, 58
 #define APP_PAYLOAD_LEN_MAX                        80 // 35, 57, 80
-#define NUM_OF_MAX_AGGREGATED_PKTS                 16
+#define NUM_OF_MAX_AGGREGATED_PKTS                 16 // 16
 #define NUM_OF_APP_PAYLOAD_LENS                    (APP_PAYLOAD_LEN_MAX - APP_PAYLOAD_LEN_MIN + 1)
-#define NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN    1000
+#define NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN    600
 #define NUM_OF_PACKETS_PER_SECOND                  20
 #define DATA_PERIOD_LEN_IN_SECONDS                 (NUM_OF_APP_PAYLOAD_LENS * NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN / NUM_OF_PACKETS_PER_SECOND)
 
 #undef WITH_UPA
 #define WITH_UPA                                   1
 
-#undef UPA_TEMP
-#define UPA_TEMP                                  1
-
 #undef UPA_TRIPLE_CCA
 #define UPA_TRIPLE_CCA                             1
 
 #undef UPA_RX_SLOT_POLICY
 #define UPA_RX_SLOT_POLICY                         0 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
-
-#undef UPA_END_OF_EP_RTIMER_GUARD
-#define UPA_END_OF_EP_RTIMER_GUARD                2u
 
 #undef UPA_DBG_EP_ESSENTIAL
 #define UPA_DBG_EP_ESSENTIAL                      1
@@ -547,8 +532,7 @@
 #define HCK_RPL_FIXED_TOPOLOGY                     0
 
 #undef IOTLAB_SITE
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
-#define IOTLAB_SITE                                IOTLAB_SACLAY_2
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
 #undef NODE_NUM
 #define NODE_NUM                                   2
 #undef UIP_CONF_MAX_ROUTES
@@ -563,7 +547,7 @@
 #undef APP_RESET_LOG_DELAY
 #define APP_RESET_LOG_DELAY                        (80 * 60 * CLOCK_SECOND)
 #undef APP_DATA_START_DELAY
-#define APP_DATA_START_DELAY                       (1 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (2 * 60 * CLOCK_SECOND)
 #undef APP_DATA_PERIOD
 #define APP_DATA_PERIOD                            (DATA_PERIOD_LEN_IN_SECONDS * CLOCK_SECOND)
 
