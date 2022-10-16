@@ -220,7 +220,11 @@ static rtimer_clock_t regular_slot_timestamp_rx[14];
 #endif /* HCK_DBG_REGULAR_SLOT_TIMING */
 
 #if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+#if FIXED_NUM_OF_AGGREGATED_PKTS > 0
+uint8_t eval_01_num_of_pkts_aggregated = FIXED_NUM_OF_AGGREGATED_PKTS;
+#else
 uint8_t eval_01_num_of_pkts_aggregated = 1;
+#endif
 #endif
 
 #if WITH_ASAP
@@ -2902,7 +2906,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     upa_tx_slot_timestamp_end[2] = RTIMER_NOW();
 #endif
 
-#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN && (FIXED_NUM_OF_AGGREGATED_PKTS == 0)
     if(upa_tx_slot_all_packet_len_same == 1 
       && upa_tx_slot_batch_tx_ok_count == upa_pkts_to_send) {
       eval_01_num_of_pkts_aggregated++;

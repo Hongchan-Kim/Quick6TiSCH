@@ -497,7 +497,8 @@
 
 #define APP_PAYLOAD_LEN_MIN                        14 // 14, 36, 58
 #define APP_PAYLOAD_LEN_MAX                        80 // 35, 57, 80
-#define NUM_OF_MAX_AGGREGATED_PKTS                 16 // 16
+#define FIXED_NUM_OF_AGGREGATED_PKTS               0 /* If zero, payload len varies from MIN to MAX */
+#define NUM_OF_MAX_AGGREGATED_PKTS                 16
 #define NUM_OF_APP_PAYLOAD_LENS                    (APP_PAYLOAD_LEN_MAX - APP_PAYLOAD_LEN_MIN + 1)
 #define NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN    600
 #define NUM_OF_PACKETS_PER_SECOND                  20
@@ -513,18 +514,21 @@
 #define UPA_RX_SLOT_POLICY                         0 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
 
 #undef UPA_DBG_EP_ESSENTIAL
-#define UPA_DBG_EP_ESSENTIAL                      1
+#define UPA_DBG_EP_ESSENTIAL                       1
 #undef UPA_DBG_EP_OPERATION
-#define UPA_DBG_EP_OPERATION                      0
+#define UPA_DBG_EP_OPERATION                       0
 #undef UPA_DBG_TIMING_TRIPLE_CCA
-#define UPA_DBG_TIMING_TRIPLE_CCA                 0
+#define UPA_DBG_TIMING_TRIPLE_CCA                  0
 #undef UPA_DBG_EP_SLOT_TIMING
-#define UPA_DBG_EP_SLOT_TIMING                    0
+#define UPA_DBG_EP_SLOT_TIMING                     0
 
 #undef HCK_DBG_REGULAR_SLOT_TIMING
 #define HCK_DBG_REGULAR_SLOT_TIMING                0
 #undef HCK_DBG_REGULAR_SLOT_TIMING_RX_NO_PKT_SEEN
 #define HCK_DBG_REGULAR_SLOT_TIMING_RX_NO_PKT_SEEN 0
+
+#undef ASAP_DBG_SLOT_TIMING
+#define ASAP_DBG_SLOT_TIMING                       0
 
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     0
@@ -550,6 +554,9 @@
 #define APP_DATA_START_DELAY                       (2 * 60 * CLOCK_SECOND)
 #undef APP_DATA_PERIOD
 #define APP_DATA_PERIOD                            (DATA_PERIOD_LEN_IN_SECONDS * CLOCK_SECOND)
+
+#undef APP_UPWARD_MAX_TX
+#define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
 
 #undef MAX_NBR_NODE_NUM
 #define MAX_NBR_NODE_NUM                           4
