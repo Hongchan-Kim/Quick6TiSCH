@@ -172,7 +172,6 @@ enum upa_timeslot_timing_elements {
   upa_ts_max_ack,
   upa_ts_max_tx,
   upa_ts_tx_process_b_ack,
-  upa_ts_guard_time,
   upa_ts_elements_count, /* Not a timing element */
 };
 #endif

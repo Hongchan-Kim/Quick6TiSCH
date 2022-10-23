@@ -15,8 +15,8 @@
 #define NETSTACK_CONF_MAC_SEQNO_HISTORY            16
 #endif
 
-#define HCK_DBG_REGULAR_SLOT_TIMING                0
-#define HCK_DBG_REGULAR_SLOT_TIMING_RX_NO_PKT_SEEN 1
+#define HCK_DBG_REGULAR_SLOT_DETAIL                0
+#define HCK_DBG_REGULAR_SLOT_TIMING                0 && HCK_DBG_REGULAR_SLOT_DETAIL
 #define HCK_GET_NODE_ID_FROM_IPADDR(addr)          ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 
@@ -199,11 +199,11 @@
    - With EP: Max in single hop: 79, Max in multi hop: ???
    - With ODP: ???
    */
-#define APP_PAYLOAD_LEN                            14 // Min len with App footer
+//#define APP_PAYLOAD_LEN                            14 // Min len with App footer
 //#define APP_PAYLOAD_LEN                            86 // Max len of Orchestra/ALICE in single hop
 //#define APP_PAYLOAD_LEN                            69 // Max len of Orchestra/ALICE in multi hop
 //#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + EP in single hop
-//#define APP_PAYLOAD_LEN                            63 // Max len of Orchestra/ALICE + EP in multi hop
+#define APP_PAYLOAD_LEN                            63 // Max len of Orchestra/ALICE + EP in multi hop
 //#define APP_PAYLOAD_LEN                            84 // Max len of OST w/o ODP in single hop
 //#define APP_PAYLOAD_LEN                            67 // Max len of OST w/o ODP in multi hop
 //#define APP_PAYLOAD_LEN                            82 // Max len of OST in single hop
@@ -480,7 +480,7 @@
  */
 #define WITH_ASAP                                  1 && (WITH_UPA || WITH_SLA)
 #if WITH_ASAP
-#define ASAP_DBG_SLOT_TIMING                       0 || UPA_DBG_EP_SLOT_TIMING
+#define ASAP_DBG_SLOT_END                          0 || UPA_DBG_EP_SLOT_TIMING
 #endif
 
 
@@ -489,7 +489,7 @@
 /*
  * Evaluation orientd configurations
  */
-#define HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN       1
+#define HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN       0
 #if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
 
 #undef ORCHESTRA_CONF_UNICAST_PERIOD
@@ -522,13 +522,15 @@
 #undef UPA_DBG_EP_SLOT_TIMING
 #define UPA_DBG_EP_SLOT_TIMING                     0
 
+#undef HCK_DBG_REGULAR_SLOT_DETAIL
+#define HCK_DBG_REGULAR_SLOT_DETAIL                0
 #undef HCK_DBG_REGULAR_SLOT_TIMING
 #define HCK_DBG_REGULAR_SLOT_TIMING                0
-#undef HCK_DBG_REGULAR_SLOT_TIMING_RX_NO_PKT_SEEN
-#define HCK_DBG_REGULAR_SLOT_TIMING_RX_NO_PKT_SEEN 0
 
-#undef ASAP_DBG_SLOT_TIMING
-#define ASAP_DBG_SLOT_TIMING                       0
+#undef WITH_ASAP
+#define WITH_ASAP                                  1
+#undef ASAP_DBG_SLOT_END
+#define ASAP_DBG_SLOT_END                          0
 
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     0
@@ -537,6 +539,7 @@
 
 #undef IOTLAB_SITE
 #define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
+//#define IOTLAB_SITE                                IOTLAB_SACLAY_2
 #undef NODE_NUM
 #define NODE_NUM                                   2
 #undef UIP_CONF_MAX_ROUTES
@@ -551,7 +554,7 @@
 #undef APP_RESET_LOG_DELAY
 #define APP_RESET_LOG_DELAY                        (80 * 60 * CLOCK_SECOND)
 #undef APP_DATA_START_DELAY
-#define APP_DATA_START_DELAY                       (2 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (5 * 60 * CLOCK_SECOND)
 #undef APP_DATA_PERIOD
 #define APP_DATA_PERIOD                            (DATA_PERIOD_LEN_IN_SECONDS * CLOCK_SECOND)
 

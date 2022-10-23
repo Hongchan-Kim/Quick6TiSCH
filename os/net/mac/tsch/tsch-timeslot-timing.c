@@ -140,7 +140,6 @@ const upa_timeslot_timing_usec upa_timeslot_timing_us_10000 = {
 #endif
    4256, /* upa_ts_max_tx */
     360, /* upa_ts_tx_process_b_ack (12 ticks) - time to read and process b-ack */
-    450, /* upa_ts_guard_time (15 ticks) */
 };
 #endif
 

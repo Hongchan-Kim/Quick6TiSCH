@@ -83,7 +83,13 @@ mac_sequence_is_duplicate(void)
    * Check for duplicate packet by comparing the sequence number of the incoming
    * packet with the last few ones we saw.
    */
-  uint16_t sender_index = HCK_GET_NODE_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)) - 1;
+  int sender_id = HCK_GET_NODE_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER));
+  uint16_t sender_index = 0;
+  if(0 < sender_id && sender_id <= NODE_NUM) {
+    sender_index = sender_id - 1; //valid node id
+  } else {
+    return 1; //invalid node id
+  }
 
   for(i = 0; i < MAX_SEQNOS; ++i) {
     if(packetbuf_attr(PACKETBUF_ATTR_MAC_SEQNO) == received_seqnos[sender_index].seqno_array[i].seqno) {
@@ -106,7 +112,13 @@ mac_sequence_register_seqno(void)
 {
   int i, j;
 
-  uint16_t sender_index = HCK_GET_NODE_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER)) - 1;
+  int sender_id = HCK_GET_NODE_ID_FROM_LINKADDR(packetbuf_addr(PACKETBUF_ADDR_SENDER));
+  uint16_t sender_index = 0;
+  if(0 < sender_id && sender_id <= NODE_NUM) {
+    sender_index = sender_id - 1; //valid node id
+  } else {
+    return; //invalid node id
+  }
 
   /* Locate possible previous sequence number for this address. */
   for(i = 0; i < MAX_SEQNOS; ++i) {
