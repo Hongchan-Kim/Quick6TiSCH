@@ -199,11 +199,11 @@
    - With EP: Max in single hop: 79, Max in multi hop: ???
    - With ODP: ???
    */
-//#define APP_PAYLOAD_LEN                            14 // Min len with App footer
+#define APP_PAYLOAD_LEN                            14 // Min len with App footer
 //#define APP_PAYLOAD_LEN                            86 // Max len of Orchestra/ALICE in single hop
 //#define APP_PAYLOAD_LEN                            69 // Max len of Orchestra/ALICE in multi hop
 //#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + EP in single hop
-#define APP_PAYLOAD_LEN                            63 // Max len of Orchestra/ALICE + EP in multi hop
+//#define APP_PAYLOAD_LEN                            63 // Max len of Orchestra/ALICE + EP in multi hop
 //#define APP_PAYLOAD_LEN                            84 // Max len of OST w/o ODP in single hop
 //#define APP_PAYLOAD_LEN                            67 // Max len of OST w/o ODP in multi hop
 //#define APP_PAYLOAD_LEN                            82 // Max len of OST in single hop
@@ -426,7 +426,7 @@
  * UPA: Utility-based Packet Aggregation
  */
 /* Need to be tested */
-#define WITH_UPA                                   1
+#define WITH_UPA                                   0
 #if WITH_UPA
 #define UPA_TRIPLE_CCA                             1
 #define UPA_RX_SLOT_POLICY                         1 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
@@ -478,7 +478,7 @@
 /*
  * ASAP
  */
-#define WITH_ASAP                                  1 && (WITH_UPA || WITH_SLA)
+#define WITH_ASAP                                  1 || (WITH_UPA || WITH_SLA)
 #if WITH_ASAP
 #define ASAP_DBG_SLOT_END                          0 || UPA_DBG_EP_SLOT_TIMING
 #endif
@@ -500,7 +500,11 @@
 #define FIXED_NUM_OF_AGGREGATED_PKTS               0 /* If zero, payload len varies from MIN to MAX */
 #define NUM_OF_MAX_AGGREGATED_PKTS                 16
 #define NUM_OF_APP_PAYLOAD_LENS                    (APP_PAYLOAD_LEN_MAX - APP_PAYLOAD_LEN_MIN + 1)
+#if FIXED_NUM_OF_AGGREGATED_PKTS == 0
 #define NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN    600
+#else
+#define NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN    (20 * FIXED_NUM_OF_AGGREGATED_PKTS)
+#endif
 #define NUM_OF_PACKETS_PER_SECOND                  20
 #define DATA_PERIOD_LEN_IN_SECONDS                 (NUM_OF_APP_PAYLOAD_LENS * NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN / NUM_OF_PACKETS_PER_SECOND)
 

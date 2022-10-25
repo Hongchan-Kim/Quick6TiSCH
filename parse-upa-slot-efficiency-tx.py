@@ -18,7 +18,6 @@ updated = [[0 for col in range(packet_count)] for row in range(maximum_len - min
 boundaries = [[0 for col in range(packet_count)] for row in range(maximum_len - minimum_len + 1)]
 num_of_expected_slots = [[0 for col in range(packet_count)] for row in range(maximum_len - minimum_len + 1)]
 
-
 file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + any_id + '.txt'
 f = open(file_name, 'r', errors='ignore')
 
@@ -32,7 +31,7 @@ while line:
             if message[0] == '{asn':
                 message_s = line.split('} ')
                 contents = message_s[1].split(' ')
-                if contents[0] == 'upa' and contents[1] == 'result' and (contents[2] == 'ucsf' or contents[2] == 'bcsf') and contents[3] == 'tx' and contents[-1] != '!EoE':
+                if contents[0] == 'upa' and contents[1] == 'result' and (contents[2] == 'ucsf' or contents[2] == 'bcsf') and contents[3] == 'tx':
                     current_len = int(contents[4])
                     if current_len >= minimum_len:
                         current_len_index = current_len - minimum_len
@@ -44,14 +43,12 @@ while line:
                             if updated[current_len_index][tx_count - 1] == 0:
                                 updated[current_len_index][tx_count - 1] = 1
                                 num_of_slots[current_len_index][tx_count - 1] = int(contents[8])
-                                num_of_expected_slots[current_len_index][tx_count - 1] = int(contents[-1])
+                                num_of_expected_slots[current_len_index][tx_count - 1] = int(contents[10])
                             else:
                                 if num_of_slots[current_len_index][tx_count - 1] < int(contents[8]):
                                     boundaries[current_len_index][tx_count - 1] = 1
                                     num_of_slots[current_len_index][tx_count - 1] = int(contents[8])
-                                    num_of_expected_slots[current_len_index][tx_count - 1] = int(contents[-1])
-                                    
-                
+                                    num_of_expected_slots[current_len_index][tx_count - 1] = int(contents[10])
     line = f.readline()
 f.close()
 
@@ -92,7 +89,13 @@ for i in range(maximum_len - minimum_len + 1):
     print(str(i + minimum_len), '\t', end='')
     print(str(round(1,2)),'\t',end='')
     for j in range(packet_count - 1):
-        print(str(round((j + 2)/(num_of_slots[i][j] + 1),2)), '\t', end='')
-    print(str(round((packet_count + 1)/(num_of_slots[i][packet_count - 1] + 1),2)))
+        if updated[i][j] == 1:
+            print(str(round((j + 2)/(num_of_slots[i][j] + 1),2)), '\t', end='')
+        else:
+            print("N/A", '\t', end='')
+    if updated[i][packet_count - 1] == 1:
+        print(str(round((packet_count + 1)/(num_of_slots[i][packet_count - 1] + 1),2)))
+    else:
+        print("N/A")
 print()
 
