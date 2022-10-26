@@ -85,6 +85,9 @@ static uint16_t atl_curr_ref_hop_distance = ATL_INITIAL_HOP_DISTANCE;
 static uint16_t atl_next_ts_timeslot_length;
 struct tsch_asn_t atl_triggering_asn;
 
+static uint16_t atl_curr_timeslot_len;
+static uint16_t atl_next_timeslot_len;
+
 uint8_t atl_curr_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
 uint8_t atl_curr_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
 uint8_t atl_next_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
@@ -1475,14 +1478,13 @@ eb_input(struct input_packet *current_input)
       }
 
 #if WITH_ATL /* Non-coordinator: update ATL variables and timeslot length */
-      if((atl_curr_ref_frame_len != eb_ies.ie_atl_curr_ref_frame_len)
-          || (atl_curr_ref_ack_len != eb_ies.ie_atl_curr_ref_ack_len)) {
+      if((atl_curr_ref_frame_len != eb_ies.ie_atl_curr_timeslot_len)) {
 #if ATL_DBG_ESSENTIAL
         LOG_INFO("atl ei invalid c_f %u %u c_a %u %u\n",
                 atl_curr_ref_frame_len,
-                eb_ies.ie_atl_curr_ref_frame_len,
+                eb_ies.ie_atl_curr_timeslot_len,
                 atl_curr_ref_ack_len,
-                eb_ies.ie_atl_curr_ref_ack_len);
+                eb_ies.ie_atl_next_timeslot_len);
 #endif
         tsch_disassociate();
       } else {
@@ -1492,8 +1494,8 @@ eb_input(struct input_packet *current_input)
          * which are assigned by coordinator.
          */
         atl_triggering_asn = eb_ies.ie_atl_triggering_asn;
-        atl_next_ref_frame_len = eb_ies.ie_atl_next_ref_frame_len;
-        atl_next_ref_ack_len = eb_ies.ie_atl_next_ref_ack_len;
+        atl_next_ref_frame_len = eb_ies.ie_atl_next_timeslot_len;
+        atl_next_ref_ack_len = eb_ies.ie_atl_next_timeslot_len;
 
 #if ATL_DBG_ESSENTIAL
         LOG_INFO("atl ei t_asn %llx c_f %u c_a %u n_f %u n_a %u\n", 
@@ -1772,10 +1774,11 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
 
 #if WITH_ATL /* Non-coordinator: during association, get triggering asn, curr/next_frame/ack_len from EB */
   atl_triggering_asn = ies.ie_atl_triggering_asn;
-  atl_curr_ref_frame_len = ies.ie_atl_curr_ref_frame_len;
-  atl_curr_ref_ack_len = ies.ie_atl_curr_ref_ack_len;
-  atl_next_ref_frame_len = ies.ie_atl_next_ref_frame_len;
-  atl_next_ref_ack_len = ies.ie_atl_next_ref_ack_len;
+  atl_curr_timeslot_len = ies.ie_atl_curr_timeslot_len;
+  atl_next_timeslot_len = ies.ie_atl_next_timeslot_len;
+
+  LOG_INFO("khc %u %u\n", atl_curr_timeslot_len, atl_next_timeslot_len);
+
 
 #if ATL_DBG_ESSENTIAL
   LOG_INFO("atl as t_asn %llx\n", 

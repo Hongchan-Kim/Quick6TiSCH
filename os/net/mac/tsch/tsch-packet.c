@@ -334,10 +334,8 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
 
 #if WITH_ATL /* Coordinator/non-coordinator: piggyback information to ies */
   ies.ie_atl_triggering_asn = atl_triggering_asn;
-  ies.ie_atl_curr_ref_frame_len = atl_curr_ref_frame_len;
-  ies.ie_atl_curr_ref_ack_len = atl_curr_ref_ack_len;
-  ies.ie_atl_next_ref_frame_len = atl_next_ref_frame_len;
-  ies.ie_atl_next_ref_ack_len = atl_next_ref_ack_len;
+  ies.ie_atl_next_timeslot_len = 153;
+  ies.ie_atl_next_timeslot_len = 287;
 #endif
 
   /* Add TSCH timeslot timing IE. */
@@ -402,7 +400,7 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
   p += ie_len;
   packetbuf_set_datalen(packetbuf_datalen() + ie_len);
 
-  ie_len = frame80215e_create_ie_tsch_atl_frame_ack_len(p,
+  ie_len = frame80215e_create_ie_tsch_atl_timeslot_len(p,
                                                packetbuf_remaininglen(),
                                                &ies);
   if(ie_len < 0) {
@@ -520,12 +518,10 @@ atl_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
 {
   struct ieee802154_ies ies;
   ies.ie_atl_triggering_asn = atl_triggering_asn;
-  ies.ie_atl_curr_ref_frame_len = atl_curr_ref_frame_len;
-  ies.ie_atl_curr_ref_ack_len = atl_curr_ref_ack_len;
-  ies.ie_atl_next_ref_frame_len = atl_next_ref_frame_len;
-  ies.ie_atl_next_ref_ack_len = atl_next_ref_ack_len;
+  ies.ie_atl_curr_timeslot_len = 153;
+  ies.ie_atl_next_timeslot_len = 287;
   uint8_t result_triggering_asn = frame80215e_create_ie_tsch_atl_triggering_asn(buf+tsch_sync_ie_offset+8, buf_size-tsch_sync_ie_offset-8, &ies) != -1;
-  uint8_t result_frame_ack_len = frame80215e_create_ie_tsch_atl_frame_ack_len(buf+tsch_sync_ie_offset+8+7, buf_size-tsch_sync_ie_offset-8-7, &ies) != -1;
+  uint8_t result_frame_ack_len = frame80215e_create_ie_tsch_atl_timeslot_len(buf+tsch_sync_ie_offset+8+7, buf_size-tsch_sync_ie_offset-8-7, &ies) != -1;
   return result_triggering_asn && result_frame_ack_len;
 }
 #endif

@@ -16,12 +16,12 @@
 #endif
 
 #define HCK_DBG_REGULAR_SLOT_DETAIL                0
-#define HCK_DBG_REGULAR_SLOT_TIMING                0 && HCK_DBG_REGULAR_SLOT_DETAIL
+#define HCK_DBG_REGULAR_SLOT_TIMING                (0 && HCK_DBG_REGULAR_SLOT_DETAIL)
 #define HCK_GET_NODE_ID_FROM_IPADDR(addr)          ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
-#define HCK_RPL_FIXED_TOPOLOGY                     1
+#define HCK_RPL_FIXED_TOPOLOGY                     0
 #if HCK_RPL_FIXED_TOPOLOGY
 #define HCK_DBG_RPL_FIXED_TOPOLOGY                 0
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
@@ -79,14 +79,14 @@
 #define IOTLAB_GRENOBLE_2                          9 /* 2 nodes */
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 //#define IOTLAB_SITE                                IOTLAB_SACLAY_2
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_R_CORNER
 #define NODE_NUM                                   83
@@ -433,7 +433,7 @@
 
 #define UPA_DBG_EP_ESSENTIAL                       1
 #define UPA_DBG_EP_OPERATION                       0
-#define UPA_DBG_TIMING_TRIPLE_CCA                  0 && UPA_TRIPLE_CCA
+#define UPA_DBG_TIMING_TRIPLE_CCA                  (0 && UPA_TRIPLE_CCA)
 #define UPA_DBG_EP_SLOT_TIMING                     0
 #endif /* WITH_UPA */
 /*---------------------------------------------------------------------------*/
@@ -443,7 +443,7 @@
 /*
  * Adaptive timeslot length
  */
-#define WITH_ATL                                   0
+#define WITH_ATL                                   1
 #if WITH_ATL
 #define ATL_DBG_ESSENTIAL                          1
 #define ATL_DBG_OPERATION                          0
@@ -478,9 +478,9 @@
 /*
  * ASAP
  */
-#define WITH_ASAP                                  1 || (WITH_UPA || WITH_SLA)
+#define WITH_ASAP                                  (1 || (WITH_UPA || WITH_SLA))
 #if WITH_ASAP
-#define ASAP_DBG_SLOT_END                          0 || UPA_DBG_EP_SLOT_TIMING
+#define ASAP_DBG_SLOT_END                          (0 || UPA_DBG_EP_SLOT_TIMING)
 #endif
 
 
