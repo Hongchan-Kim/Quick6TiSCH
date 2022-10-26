@@ -48,8 +48,8 @@
 
 /********** Functions *********/
 
-#if WITH_ATL /* Functions */
-int atl_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset);
+#if WITH_SLA /* Functions */
+int sla_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset);
 #endif
 
 /**

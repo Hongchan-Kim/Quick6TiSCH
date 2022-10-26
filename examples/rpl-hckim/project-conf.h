@@ -443,34 +443,34 @@
 /*
  * Adaptive timeslot length
  */
-#define WITH_ATL                                   1
-#if WITH_ATL
-#define ATL_DBG_ESSENTIAL                          1
-#define ATL_DBG_OPERATION                          0
+#define WITH_SLA                                   1
+#if WITH_SLA
+#define SLA_DBG_ESSENTIAL                          1
+#define SLA_DBG_OPERATION                          0
 
 #if WITH_UPA
-#define ATL_GUARD_TIME_TIMESLOTS                   10
+#define SLA_GUARD_TIME_TIMESLOTS                   10
 #else
-#define ATL_GUARD_TIME_TIMESLOTS                   1
+#define SLA_GUARD_TIME_TIMESLOTS                   1
 #endif
-#define ATL_CALCULATE_DURATION(len)                (32 * (5 + len)) /* len includes RADIO_PHY_OVERHEAD (3 bytes) */
+#define SLA_CALCULATE_DURATION(len)                (32 * (5 + len)) /* len includes RADIO_PHY_OVERHEAD (3 bytes) */
 
-#define ATL_START_DELAY                            (10 * 60 * CLOCK_SECOND)
-#define ATL_OBSERVATION_PERIOD                     (10 * 60 * CLOCK_SECOND)
-#define ATL_RAPID_EB_PERIOD                        (3 * CLOCK_SECOND)
+#define SLA_START_DELAY                            (10 * 60 * CLOCK_SECOND)
+#define SLA_OBSERVATION_PERIOD                     (10 * 60 * CLOCK_SECOND)
+#define SLA_RAPID_EB_PERIOD                        (3 * CLOCK_SECOND)
 
-#define ATL_MAX_FRAME_LEN                          128 /* Including RADIO_PHY_OVERHEAD (3 bytes) */
-#define ATL_MAX_ACK_LEN                            70  /* Including RADIO_PHY_OVERHEAD (3 bytes) */
-#define ATL_SHIFT_BITS                             3
+#define SLA_MAX_FRAME_LEN                          128 /* Including RADIO_PHY_OVERHEAD (3 bytes) */
+#define SLA_MAX_ACK_LEN                            70  /* Including RADIO_PHY_OVERHEAD (3 bytes) */
+#define SLA_SHIFT_BITS                             3
 
-#define ATL_OBSERVATION_WINDOWS                    3
-#define ATL_FRAME_LEN_QUANTIZED_LEVELS             ((((ATL_MAX_FRAME_LEN - 1) >> ATL_SHIFT_BITS) + 1) + 1)
-#define ATL_ACK_LEN_QUANTIZED_LEVELS               ((((ATL_MAX_ACK_LEN - 1) >> ATL_SHIFT_BITS) + 1) + 1)
+#define SLA_OBSERVATION_WINDOWS                    3
+#define SLA_FRAME_LEN_QUANTIZED_LEVELS             ((((SLA_MAX_FRAME_LEN - 1) >> SLA_SHIFT_BITS) + 1) + 1)
+#define SLA_ACK_LEN_QUANTIZED_LEVELS               ((((SLA_MAX_ACK_LEN - 1) >> SLA_SHIFT_BITS) + 1) + 1)
 
-#define ATL_INITIAL_HOP_DISTANCE                   10
+#define SLA_INITIAL_HOP_DISTANCE                   10
 
-#define ATL_ZERO_HOP_DISTANCE_OFFSET               1
-#define ATL_TRIGGERING_ASN_MULTIPLIER              2
+#define SLA_ZERO_HOP_DISTANCE_OFFSET               1
+#define SLA_TRIGGERING_ASN_MULTIPLIER              2
 #endif
 /*---------------------------------------------------------------------------*/
 

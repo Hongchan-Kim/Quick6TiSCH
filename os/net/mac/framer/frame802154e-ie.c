@@ -71,9 +71,9 @@ enum ieee802154e_payload_ie_id {
 
 /* c.f. IEEE 802.15.4e Table 4d */
 enum ieee802154e_mlme_short_subie_id {
-#if WITH_ATL /* MLME IE ids */
-  MLME_SHORT_IE_TSCH_ATL_TRIGGERING_ASN = 0x10,
-  MLME_SHORT_IE_TSCH_ATL_TIMESLOT_LEN,
+#if WITH_SLA /* MLME IE ids */
+  MLME_SHORT_IE_TSCH_SLA_TRIGGERING_ASN = 0x10,
+  MLME_SHORT_IE_TSCH_SLA_TIMESLOT_LEN,
 #endif
   MLME_SHORT_IE_TSCH_SYNCHRONIZATION = 0x1a,
   MLME_SHORT_IE_TSCH_SLOFTRAME_AND_LINK,
@@ -274,19 +274,19 @@ frame80215e_create_ie_tsch_synchronization(uint8_t *buf, int len,
   }
 }
 
-#if WITH_ATL /* Functions to piggyback ATL information to EB */
+#if WITH_SLA /* Functions to piggyback SLA information to EB */
 int
-frame80215e_create_ie_tsch_atl_triggering_asn(uint8_t *buf, int len, 
+frame80215e_create_ie_tsch_sla_triggering_asn(uint8_t *buf, int len, 
     struct ieee802154_ies *ies)
 {
   int ie_len = 5;
   if(len >= 2 + ie_len && ies != NULL) {
-    buf[2] = ies->ie_atl_triggering_asn.ls4b;
-    buf[3] = ies->ie_atl_triggering_asn.ls4b >> 8;
-    buf[4] = ies->ie_atl_triggering_asn.ls4b >> 16;
-    buf[5] = ies->ie_atl_triggering_asn.ls4b >> 24;
-    buf[6] = ies->ie_atl_triggering_asn.ms1b;
-    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_ATL_TRIGGERING_ASN, ie_len);
+    buf[2] = ies->ie_sla_triggering_asn.ls4b;
+    buf[3] = ies->ie_sla_triggering_asn.ls4b >> 8;
+    buf[4] = ies->ie_sla_triggering_asn.ls4b >> 16;
+    buf[5] = ies->ie_sla_triggering_asn.ls4b >> 24;
+    buf[6] = ies->ie_sla_triggering_asn.ms1b;
+    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_SLA_TRIGGERING_ASN, ie_len);
     return 2 + ie_len;
   } else {
     return -1;
@@ -294,16 +294,16 @@ frame80215e_create_ie_tsch_atl_triggering_asn(uint8_t *buf, int len,
 }
 
 int
-frame80215e_create_ie_tsch_atl_timeslot_len(uint8_t *buf, int len, 
+frame80215e_create_ie_tsch_sla_timeslot_len(uint8_t *buf, int len, 
     struct ieee802154_ies *ies)
 {
   int ie_len = 4; /* 2 * 16 bits */
   if(len >= 2 + ie_len && ies != NULL) {
-    uint16_t atl_curr_timeslot_len = ies->ie_atl_curr_timeslot_len;
-    WRITE16(buf+2, atl_curr_timeslot_len);
-    uint16_t atl_next_timeslot_len = ies->ie_atl_next_timeslot_len;
-    WRITE16(buf+4, atl_next_timeslot_len);
-    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_ATL_TIMESLOT_LEN, ie_len);
+    uint16_t sla_curr_timeslot_len = ies->ie_sla_curr_timeslot_len;
+    WRITE16(buf+2, sla_curr_timeslot_len);
+    uint16_t sla_next_timeslot_len = ies->ie_sla_next_timeslot_len;
+    WRITE16(buf+4, sla_next_timeslot_len);
+    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_SLA_TIMESLOT_LEN, ie_len);
     return 2 + ie_len;
   } else {
     return -1;
@@ -507,28 +507,28 @@ frame802154e_parse_mlme_short_ie(const uint8_t *buf, int len,
         return len;
       }
       break;
-#if WITH_ATL /* Functions to parse ATL information in EB */
-    case MLME_SHORT_IE_TSCH_ATL_TRIGGERING_ASN: 
+#if WITH_SLA /* Functions to parse SLA information in EB */
+    case MLME_SHORT_IE_TSCH_SLA_TRIGGERING_ASN: 
       if(len == 5) {
         if(ies != NULL) {
-          ies->ie_atl_triggering_asn.ls4b = (uint32_t)buf[0];
-          ies->ie_atl_triggering_asn.ls4b |= (uint32_t)buf[1] << 8;
-          ies->ie_atl_triggering_asn.ls4b |= (uint32_t)buf[2] << 16;
-          ies->ie_atl_triggering_asn.ls4b |= (uint32_t)buf[3] << 24;
-          ies->ie_atl_triggering_asn.ms1b = (uint8_t)buf[4];
+          ies->ie_sla_triggering_asn.ls4b = (uint32_t)buf[0];
+          ies->ie_sla_triggering_asn.ls4b |= (uint32_t)buf[1] << 8;
+          ies->ie_sla_triggering_asn.ls4b |= (uint32_t)buf[2] << 16;
+          ies->ie_sla_triggering_asn.ls4b |= (uint32_t)buf[3] << 24;
+          ies->ie_sla_triggering_asn.ms1b = (uint8_t)buf[4];
         }
         return len;
       }
       break;
-    case MLME_SHORT_IE_TSCH_ATL_TIMESLOT_LEN: 
+    case MLME_SHORT_IE_TSCH_SLA_TIMESLOT_LEN: 
       if(len == 4) {
         if(ies != NULL) {
-          uint16_t atl_curr_timeslot_len = 0;
-          READ16(buf, atl_curr_timeslot_len);
-          ies->ie_atl_curr_timeslot_len = atl_curr_timeslot_len;
-          uint16_t atl_next_timeslot_len = 0;
-          READ16(buf+2, atl_next_timeslot_len);
-          ies->ie_atl_next_timeslot_len = atl_next_timeslot_len;
+          uint16_t sla_curr_timeslot_len = 0;
+          READ16(buf, sla_curr_timeslot_len);
+          ies->ie_sla_curr_timeslot_len = sla_curr_timeslot_len;
+          uint16_t sla_next_timeslot_len = 0;
+          READ16(buf+2, sla_next_timeslot_len);
+          ies->ie_sla_next_timeslot_len = sla_next_timeslot_len;
         }
         return len;
       }

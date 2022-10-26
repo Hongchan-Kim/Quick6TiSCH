@@ -85,7 +85,7 @@
 #include "net/ipv6/uip-ds6-nbr.h"
 #endif /* UIP_ND6_SEND_NS */
 
-#if WITH_ATL /* Coordinator: record maximum hop distance */
+#if WITH_SLA /* Coordinator: record maximum hop distance */
 #include "net/mac/tsch/tsch.h"
 #endif
 
@@ -1417,13 +1417,13 @@ uip_process(uint8_t flag)
   /* Process upper-layer input */
   if(next_header != NULL) {
 
-#if WITH_ATL /* Coordinator: record maximum hop distance */
+#if WITH_SLA /* Coordinator: record maximum hop distance */
     if(tsch_is_coordinator) {
       uint8_t curr_hops = uip_ds6_if.cur_hop_limit - UIP_IP_BUF->ttl + 1;
-#if ATL_DBG_OPERATION
-      LOG_INFO("atl up curr_hops %u\n", curr_hops);
+#if SLA_DBG_OPERATION
+      LOG_INFO("sla up curr_hops %u\n", curr_hops);
 #endif
-      atl_record_max_hop_distance(curr_hops);
+      sla_record_max_hop_distance(curr_hops);
     }
 #endif
 

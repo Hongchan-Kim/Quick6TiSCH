@@ -332,10 +332,10 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
   p.ost_pigg1 = 0xffff;
 #endif
 
-#if WITH_ATL /* Coordinator/non-coordinator: piggyback information to ies */
-  ies.ie_atl_triggering_asn = atl_triggering_asn;
-  ies.ie_atl_curr_timeslot_len = tsch_timing_us[tsch_ts_timeslot_length];
-  ies.ie_atl_next_timeslot_len = atl_next_ts_timeslot_length;
+#if WITH_SLA /* Coordinator/non-coordinator: piggyback information to ies */
+  ies.ie_sla_triggering_asn = sla_triggering_asn;
+  ies.ie_sla_curr_timeslot_len = tsch_timing_us[tsch_ts_timeslot_length];
+  ies.ie_sla_next_timeslot_len = sla_next_ts_timeslot_length;
 #endif
 
   /* Add TSCH timeslot timing IE. */
@@ -390,8 +390,8 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
   p += ie_len;
   packetbuf_set_datalen(packetbuf_datalen() + ie_len);
 
-#if WITH_ATL /* Coordinator/non-coordinator: piggyback information to ies */
-  ie_len = frame80215e_create_ie_tsch_atl_triggering_asn(p,
+#if WITH_SLA /* Coordinator/non-coordinator: piggyback information to ies */
+  ie_len = frame80215e_create_ie_tsch_sla_triggering_asn(p,
                                                       packetbuf_remaininglen(),
                                                       &ies);
   if(ie_len < 0) {
@@ -400,7 +400,7 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
   p += ie_len;
   packetbuf_set_datalen(packetbuf_datalen() + ie_len);
 
-  ie_len = frame80215e_create_ie_tsch_atl_timeslot_len(p,
+  ie_len = frame80215e_create_ie_tsch_sla_timeslot_len(p,
                                                packetbuf_remaininglen(),
                                                &ies);
   if(ie_len < 0) {
@@ -511,17 +511,17 @@ tsch_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
   return frame80215e_create_ie_tsch_synchronization(buf+tsch_sync_ie_offset, buf_size-tsch_sync_ie_offset, &ies) != -1;
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_ATL /* Coordinator/non-coordinator: update information in EB before transmission */
-/* Update ATL info in EB packet */
+#if WITH_SLA /* Coordinator/non-coordinator: update information in EB before transmission */
+/* Update SLA info in EB packet */
 int
-atl_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
+sla_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
 {
   struct ieee802154_ies ies;
-  ies.ie_atl_triggering_asn = atl_triggering_asn;
-  ies.ie_atl_curr_timeslot_len = tsch_timing_us[tsch_ts_timeslot_length];
-  ies.ie_atl_next_timeslot_len = atl_next_ts_timeslot_length;
-  uint8_t result_triggering_asn = frame80215e_create_ie_tsch_atl_triggering_asn(buf+tsch_sync_ie_offset+8, buf_size-tsch_sync_ie_offset-8, &ies) != -1;
-  uint8_t result_frame_ack_len = frame80215e_create_ie_tsch_atl_timeslot_len(buf+tsch_sync_ie_offset+8+7, buf_size-tsch_sync_ie_offset-8-7, &ies) != -1;
+  ies.ie_sla_triggering_asn = sla_triggering_asn;
+  ies.ie_sla_curr_timeslot_len = tsch_timing_us[tsch_ts_timeslot_length];
+  ies.ie_sla_next_timeslot_len = sla_next_ts_timeslot_length;
+  uint8_t result_triggering_asn = frame80215e_create_ie_tsch_sla_triggering_asn(buf+tsch_sync_ie_offset+8, buf_size-tsch_sync_ie_offset-8, &ies) != -1;
+  uint8_t result_frame_ack_len = frame80215e_create_ie_tsch_sla_timeslot_len(buf+tsch_sync_ie_offset+8+7, buf_size-tsch_sync_ie_offset-8-7, &ies) != -1;
   return result_triggering_asn && result_frame_ack_len;
 }
 #endif

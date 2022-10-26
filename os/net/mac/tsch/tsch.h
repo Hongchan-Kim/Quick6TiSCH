@@ -281,13 +281,13 @@ extern int32_t max_drift_seen;
 /* The TSCH standard 10ms timeslot timing */
 extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000;
 
-#if WITH_ATL /* Variables */
-extern struct tsch_asn_t atl_triggering_asn;
-extern uint16_t atl_next_ts_timeslot_length;
-extern uint8_t atl_curr_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
-extern uint8_t atl_curr_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
-extern uint8_t atl_next_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
-extern uint8_t atl_next_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
+#if WITH_SLA /* Variables */
+extern struct tsch_asn_t sla_triggering_asn;
+extern uint16_t sla_next_ts_timeslot_length;
+extern uint8_t sla_curr_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
+extern uint8_t sla_curr_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
+extern uint8_t sla_next_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
+extern uint8_t sla_next_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
 #endif
 
 #if WITH_UPA
@@ -370,11 +370,11 @@ void tsch_disassociate(void);
 /**
  *  Change timeslot length 
  */
-#if WITH_ATL /* Functions */
-void atl_record_ack_len(int ack_len);
-void atl_record_max_hop_distance(uint8_t hops);
-void atl_apply_next_timeslot_length();
-void atl_finish_rapid_eb_broadcasting();
+#if WITH_SLA /* Functions */
+void sla_record_ack_len(int ack_len);
+void sla_record_max_hop_distance(uint8_t hops);
+void sla_apply_next_timeslot_length();
+void sla_finish_rapid_eb_broadcasting();
 #endif
 
 #if WITH_OST

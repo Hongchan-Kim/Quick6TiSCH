@@ -345,8 +345,8 @@ static rtimer_clock_t upa_rx_slot_timestamp_end[2];
 
 #endif /* WITH_UPA */
 
-#if WITH_ATL /* Variables */
-static volatile int atl_in_guard_time;
+#if WITH_SLA /* Variables */
+static volatile int sla_in_guard_time;
 #endif
 
 static rtimer_clock_t current_slot_unused_offset_start;
@@ -1997,8 +1997,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* if this is an EB, then update its Sync-IE */
       if(current_neighbor == n_eb) {
         packet_ready = tsch_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset);
-#if WITH_ATL /* Coordinator/non-coordinator: update information in EB before transmission */
-        if(packet_ready && atl_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset)) {
+#if WITH_SLA /* Coordinator/non-coordinator: update information in EB before transmission */
+        if(packet_ready && sla_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset)) {
           packet_ready = 1;
         } else {
           packet_ready = 0;
@@ -2326,9 +2326,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* LLSEC802154_ENABLED */
               }
 
-#if WITH_ATL /* Coordinator: record received ACK length */
+#if WITH_SLA /* Coordinator: record received ACK length */
               if(tsch_is_coordinator && ack_len != 0) {
-                atl_record_ack_len(ack_len);
+                sla_record_ack_len(ack_len);
               }
 #endif
 
@@ -3465,9 +3465,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 regular_slot_timestamp_rx[12] = RTIMER_NOW();
 #endif
 
-#if WITH_ATL /* Coordinator: record transmitted ACK length */
+#if WITH_SLA /* Coordinator: record transmitted ACK length */
                 if(tsch_is_coordinator && ack_len != 0) {
-                  atl_record_ack_len(ack_len);
+                  sla_record_ack_len(ack_len);
                 }
 #endif
 #if WITH_UPA
@@ -3958,48 +3958,48 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
   /* Loop over all active slots */
   while(tsch_is_associated) {
 
-#if WITH_ATL /* Coordinator/non-coordinator: at triggering asn, apply next timeslot length */
-  if((tsch_current_asn.ls4b == atl_triggering_asn.ls4b) 
-      && (tsch_current_asn.ms1b == atl_triggering_asn.ms1b)) {
-    if(tsch_timing_us[tsch_ts_timeslot_length] != atl_next_ts_timeslot_length) {
-      atl_apply_next_timeslot_length();
+#if WITH_SLA /* Coordinator/non-coordinator: at triggering asn, apply next timeslot length */
+  if((tsch_current_asn.ls4b == sla_triggering_asn.ls4b) 
+      && (tsch_current_asn.ms1b == sla_triggering_asn.ms1b)) {
+    if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_ts_timeslot_length) {
+      sla_apply_next_timeslot_length();
 
       if(tsch_is_coordinator) {
-        atl_curr_ref_frame_len = atl_next_ref_frame_len;
-        atl_curr_ref_ack_len = atl_next_ref_ack_len;
+        sla_curr_ref_frame_len = sla_next_ref_frame_len;
+        sla_curr_ref_ack_len = sla_next_ref_ack_len;
       }
 
-#if ATL_DBG_ESSENTIAL
+#if SLA_DBG_ESSENTIAL
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "atl apply next ts %u", tsch_timing_us[tsch_ts_timeslot_length]);
+                          "sla apply next ts %u", tsch_timing_us[tsch_ts_timeslot_length]);
       );
 #endif
     } else {
-#if ATL_DBG_ESSENTIAL
+#if SLA_DBG_ESSENTIAL
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "atl not apply next ts, stop rapid eb");
+                          "sla not apply next ts, stop rapid eb");
       );
 #endif
     }
 
-    atl_finish_rapid_eb_broadcasting();
-    atl_in_guard_time = 0;
+    sla_finish_rapid_eb_broadcasting();
+    sla_in_guard_time = 0;
 
-  } else if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn)) > 0) {
-    // ATL-TODO: needs to consider ASN overflow
-    if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn) <= ATL_GUARD_TIME_TIMESLOTS)) {
-      if(tsch_timing_us[tsch_ts_timeslot_length] != atl_next_ts_timeslot_length) {
-        atl_in_guard_time = 1;
+  } else if((int32_t)(TSCH_ASN_DIFF(sla_triggering_asn, tsch_current_asn)) > 0) {
+    // SLA-TODO: needs to consider ASN overflow
+    if((int32_t)(TSCH_ASN_DIFF(sla_triggering_asn, tsch_current_asn) <= SLA_GUARD_TIME_TIMESLOTS)) {
+      if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_ts_timeslot_length) {
+        sla_in_guard_time = 1;
       } else {
-        atl_in_guard_time = 0;
+        sla_in_guard_time = 0;
       }
     } else {
-      atl_in_guard_time = 0;
+      sla_in_guard_time = 0;
     }
   } else {
-    atl_in_guard_time = 0;
+    sla_in_guard_time = 0;
   }
 #endif
 
@@ -4121,21 +4121,21 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
     last_valid_asn_start = current_slot_start;
 
     if(current_link == NULL || tsch_lock_requested
-#if WITH_ATL /* Coordinator/non-coordinator: set atl guard time */
-      || atl_in_guard_time
+#if WITH_SLA /* Coordinator/non-coordinator: set sla guard time */
+      || sla_in_guard_time
 #endif
       ) { /* Skip slot operation if there is no link
                                                           or if there is a pending request for getting the lock */
       /* Issue a log whenever skipping a slot */
 
-#if WITH_ATL && ATL_DBG_OPERATION
+#if WITH_SLA && SLA_DBG_OPERATION
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "!skipped slot %u %u %u atl %u",
+                          "!skipped slot %u %u %u sla %u",
                             tsch_locked,
                             tsch_lock_requested,
                             current_link == NULL,
-                            atl_in_guard_time);
+                            sla_in_guard_time);
       );
 #else
       TSCH_LOG_ADD(tsch_log_message,
