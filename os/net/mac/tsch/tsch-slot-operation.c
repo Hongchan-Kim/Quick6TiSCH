@@ -3961,12 +3961,13 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if WITH_ATL /* Coordinator/non-coordinator: at triggering asn, apply next timeslot length */
   if((tsch_current_asn.ls4b == atl_triggering_asn.ls4b) 
       && (tsch_current_asn.ms1b == atl_triggering_asn.ms1b)) {
-    if((atl_curr_ref_frame_len != atl_next_ref_frame_len)
-        || (atl_curr_ref_ack_len != atl_next_ref_ack_len)) {
+    if(tsch_timing_us[tsch_ts_timeslot_length] != atl_next_ts_timeslot_length) {
       atl_apply_next_timeslot_length();
 
-      atl_curr_ref_frame_len = atl_next_ref_frame_len;
-      atl_curr_ref_ack_len = atl_next_ref_ack_len;
+      if(tsch_is_coordinator) {
+        atl_curr_ref_frame_len = atl_next_ref_frame_len;
+        atl_curr_ref_ack_len = atl_next_ref_ack_len;
+      }
 
 #if ATL_DBG_ESSENTIAL
       TSCH_LOG_ADD(tsch_log_message,
@@ -3989,8 +3990,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
   } else if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn)) > 0) {
     // ATL-TODO: needs to consider ASN overflow
     if((int32_t)(TSCH_ASN_DIFF(atl_triggering_asn, tsch_current_asn) <= ATL_GUARD_TIME_TIMESLOTS)) {
-      if((atl_curr_ref_frame_len != atl_next_ref_frame_len)
-          || (atl_curr_ref_ack_len != atl_next_ref_ack_len)) {
+      if(tsch_timing_us[tsch_ts_timeslot_length] != atl_next_ts_timeslot_length) {
         atl_in_guard_time = 1;
       } else {
         atl_in_guard_time = 0;

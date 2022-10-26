@@ -82,16 +82,14 @@ static uint16_t atl_max_hop_distance[ATL_OBSERVATION_WINDOWS];
 
 static uint16_t atl_curr_ref_hop_distance = ATL_INITIAL_HOP_DISTANCE;
 
-static uint16_t atl_next_ts_timeslot_length;
 struct tsch_asn_t atl_triggering_asn;
+uint16_t atl_next_ts_timeslot_length;
 
-static uint16_t atl_curr_timeslot_len;
-static uint16_t atl_next_timeslot_len;
-
-uint8_t atl_curr_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
-uint8_t atl_curr_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
-uint8_t atl_next_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
-uint8_t atl_next_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
+/* Used by SLA coordinator */
+uint8_t atl_curr_ref_frame_len = ATL_MAX_FRAME_LEN; /* Includes RADIO_PHY_OVERHEAD */
+uint8_t atl_curr_ref_ack_len = ATL_MAX_ACK_LEN; /* Includes RADIO_PHY_OVERHEAD */
+uint8_t atl_next_ref_frame_len = ATL_MAX_FRAME_LEN; /* Includes RADIO_PHY_OVERHEAD */
+uint8_t atl_next_ref_ack_len = ATL_MAX_ACK_LEN; /* Includes RADIO_PHY_OVERHEAD */
 #endif
 
 /* hckim periodically measure utilization */
@@ -963,7 +961,7 @@ atl_policy_calculate_triggering_asn()
 /*---------------------------------------------------------------------------*/
 #if WITH_ATL /* Coordinator: determine next frame length and ACK length */
 static uint16_t
-atl_calculate_timeslot_length(uint8_t ref_frame_len, uint8_t ref_ack_len)
+atl_calculate_timeslot_length()
 {
   uint16_t ref_tx_duration = MIN(ATL_CALCULATE_DURATION(atl_next_ref_frame_len), tsch_default_timing_us[tsch_ts_max_tx]);
   uint16_t ref_ack_duration = MIN(ATL_CALCULATE_DURATION(atl_next_ref_ack_len), tsch_default_timing_us[tsch_ts_max_ack]);
@@ -986,11 +984,13 @@ atl_determine_next_timeslot_length()
    */
   int i = 0;
 
-#if ATL_DBG_OPERATION
+#if ATL_DBG_ESSENTIAL
   /* Print recorded frame and ACK length distribution */
   uint64_t atl_determine_asn = tsch_calculate_current_asn();
-  LOG_INFO("atl det curr_window_ind %u at %llx\n", atl_current_window_index, atl_determine_asn);
+  LOG_INFO("atl det at %llx curr_window_ind %u\n", atl_determine_asn, atl_current_window_index);
+#endif
 
+#if ATL_DBG_OPERATION
   int j = 0;
 
   for(i = 0; i < ATL_OBSERVATION_WINDOWS; i++) {
@@ -1012,21 +1012,14 @@ atl_determine_next_timeslot_length()
   }
 #endif
 
-  /* Determine next frame_len and ack_len */
+  /* Calculate next frame_len and ack_len */
   atl_next_ref_frame_len = atl_policy_calculate_next_frame_len();
   atl_next_ref_ack_len = atl_policy_calculate_next_ack_len();
 
-  /* 
-   * Update tsch_next_timing_us 
-   * - At the beginning, tsch_reset() initializes 'tsch_next_timing_us' array.
-   * - Therefore, we do not need to update the rest elements of 'tsch_next_timing_us' array.
-   */
-  atl_next_ts_timeslot_length = atl_calculate_timeslot_length(atl_next_ref_frame_len, atl_next_ref_ack_len);
+  /* Calculate atl_next_ts_timeslot_length */
+  atl_next_ts_timeslot_length = atl_calculate_timeslot_length();
 
-  /* 
-   * Regardless of whether next frame_len and ack_len are updated or not,
-   * coordinator calculates triggering asn.
-   */
+  /* Calculate triggering asn */
   atl_policy_calculate_triggering_asn();
 
 #if ATL_DBG_ESSENTIAL
@@ -1045,12 +1038,8 @@ atl_determine_next_timeslot_length()
           (uint64_t)(atl_triggering_asn.ls4b) + ((uint64_t)(atl_triggering_asn.ms1b) << 32));
 #endif
 
-  /*
-   * Only when representative frame length and ack length arae changed,
-   * coordinator starts rapid eb broadcasting.
-   */
-  if((atl_curr_ref_frame_len != atl_next_ref_frame_len)
-      || (atl_curr_ref_ack_len != atl_next_ref_ack_len)) {
+  /* Only when timeslot length is changed, coordinator starts rapid eb broadcasting. */
+  if(tsch_timing_us[tsch_ts_timeslot_length] != atl_next_ts_timeslot_length) {
     if(atl_in_rapid_eb_broadcasting == 0) {
       atl_start_rapid_eb_broadcasting();
     }
@@ -1167,6 +1156,8 @@ tsch_reset(void)
 
 #if WITH_ATL /* Coordinator/non-coordinator: initialize ATL variables and timeslot length */
   TSCH_ASN_INIT(atl_triggering_asn, 0, 0);
+  atl_next_ts_timeslot_length = tsch_default_timing_us[tsch_ts_timeslot_length];
+
   atl_curr_ref_frame_len = ATL_MAX_FRAME_LEN;
   atl_curr_ref_ack_len = ATL_MAX_ACK_LEN;
   atl_next_ref_frame_len = ATL_MAX_FRAME_LEN;
@@ -1174,34 +1165,16 @@ tsch_reset(void)
 
 #if ATL_DBG_ESSENTIAL
   LOG_INFO("atl rs f_lvs %d a_lvs %d\n", ATL_FRAME_LEN_QUANTIZED_LEVELS, ATL_ACK_LEN_QUANTIZED_LEVELS);
-
   LOG_INFO("atl rs t_asn %llx\n", 
           (uint64_t)(atl_triggering_asn.ls4b) + ((uint64_t)(atl_triggering_asn.ms1b) << 32));
+  LOG_INFO("atl rs curr_ts %u next_ts %u\n",
+            tsch_default_timing_us[tsch_ts_timeslot_length], atl_next_ts_timeslot_length);
 
-  LOG_INFO("atl rs curr1 ts %u\n",
-            tsch_default_timing_us[tsch_ts_timeslot_length]);
-#endif
-
-  /* Update tsch_timing_us and tsch_timing */
-  tsch_timing_us[tsch_ts_timeslot_length] = atl_calculate_timeslot_length(atl_curr_ref_frame_len, atl_curr_ref_ack_len);
-  tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
-
-#if ATL_DBG_ESSENTIAL
-  LOG_INFO("atl rs curr2 f_l %u %u a_l %u %u ts %u\n",
+  LOG_INFO("atl rs curr_f %u (%u) curr_a %u (%u) next_f %u (%u) next_a %u (%u)\n",
             atl_curr_ref_frame_len, ATL_CALCULATE_DURATION(atl_curr_ref_frame_len),
             atl_curr_ref_ack_len, ATL_CALCULATE_DURATION(atl_curr_ref_ack_len),
-            tsch_default_timing_us[tsch_ts_timeslot_length]);
-#endif
-
-  /* Update tsch_next_timing_us */
-  atl_next_ts_timeslot_length = atl_calculate_timeslot_length(atl_next_ref_frame_len, atl_next_ref_ack_len);
-
-#if ATL_DBG_ESSENTIAL
-  LOG_INFO("atl rs next f_l %u %u a_l %u %u ts %u\n", 
             atl_next_ref_frame_len, ATL_CALCULATE_DURATION(atl_next_ref_frame_len),
-            atl_next_ref_ack_len, ATL_CALCULATE_DURATION(atl_next_ref_ack_len),
-            atl_next_ts_timeslot_length);
-
+            atl_next_ref_ack_len, ATL_CALCULATE_DURATION(atl_next_ref_ack_len));
 #endif
 #endif
 
@@ -1478,40 +1451,30 @@ eb_input(struct input_packet *current_input)
       }
 
 #if WITH_ATL /* Non-coordinator: update ATL variables and timeslot length */
-      if((atl_curr_ref_frame_len != eb_ies.ie_atl_curr_timeslot_len)) {
+      if(tsch_timing_us[tsch_ts_timeslot_length] != eb_ies.ie_atl_curr_timeslot_len) {
 #if ATL_DBG_ESSENTIAL
-        LOG_INFO("atl ei invalid c_f %u %u c_a %u %u\n",
-                atl_curr_ref_frame_len,
-                eb_ies.ie_atl_curr_timeslot_len,
-                atl_curr_ref_ack_len,
-                eb_ies.ie_atl_next_timeslot_len);
+        LOG_INFO("atl ei invalid %u %u\n",
+                tsch_timing_us[tsch_ts_timeslot_length],
+                eb_ies.ie_atl_curr_timeslot_len);
 #endif
         tsch_disassociate();
       } else {
         /*
-         * curr_frame_length and curr_ack_len are equal to info piggybacked in EB
-         * now update triggering_asn, next_frame_len, and next_ack_len,
-         * which are assigned by coordinator.
+         * curr slot length is matched
+         * now update triggering_asn, next slot length, which are assigned by coordinator.
          */
         atl_triggering_asn = eb_ies.ie_atl_triggering_asn;
-        atl_next_ref_frame_len = eb_ies.ie_atl_next_timeslot_len;
-        atl_next_ref_ack_len = eb_ies.ie_atl_next_timeslot_len;
+        atl_next_ts_timeslot_length = eb_ies.ie_atl_next_timeslot_len;
 
 #if ATL_DBG_ESSENTIAL
-        LOG_INFO("atl ei t_asn %llx c_f %u c_a %u n_f %u n_a %u\n", 
+        LOG_INFO("atl ei t_asn %llx c_ts %u n_ts %u\n", 
                 (uint64_t)(atl_triggering_asn.ls4b) + ((uint64_t)(atl_triggering_asn.ms1b) << 32),
-                atl_curr_ref_frame_len,
-                atl_curr_ref_ack_len,
-                atl_next_ref_frame_len,
-                atl_next_ref_ack_len);
+                tsch_timing_us[tsch_ts_timeslot_length],
+                atl_next_ts_timeslot_length);
 #endif
-
-        /* Update tsch_next_timing_us */
-        atl_next_ts_timeslot_length = atl_calculate_timeslot_length(atl_next_ref_frame_len, atl_next_ref_ack_len);
       }
 
-      if((atl_curr_ref_frame_len != atl_next_ref_frame_len)
-          || (atl_curr_ref_ack_len != atl_next_ref_ack_len)) {
+      if(tsch_timing_us[tsch_ts_timeslot_length] != atl_next_ts_timeslot_length) {
 #if ATL_DBG_ESSENTIAL
         LOG_INFO("atl ei curr ts %u next ts %u\n",
                   tsch_default_timing_us[tsch_ts_timeslot_length], 
@@ -1773,41 +1736,24 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
   }
 
 #if WITH_ATL /* Non-coordinator: during association, get triggering asn, curr/next_frame/ack_len from EB */
+  /* Update tsch_timing_us and tsch_timing */
+  tsch_timing_us[tsch_ts_timeslot_length] = ies.ie_atl_curr_timeslot_len;
+  tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
+
   atl_triggering_asn = ies.ie_atl_triggering_asn;
-  atl_curr_timeslot_len = ies.ie_atl_curr_timeslot_len;
-  atl_next_timeslot_len = ies.ie_atl_next_timeslot_len;
 
-  LOG_INFO("khc %u %u\n", atl_curr_timeslot_len, atl_next_timeslot_len);
-
+  /* Update tsch_next_timing_us */
+  atl_next_ts_timeslot_length = ies.ie_atl_next_timeslot_len;
 
 #if ATL_DBG_ESSENTIAL
   LOG_INFO("atl as t_asn %llx\n", 
           (uint64_t)(atl_triggering_asn.ls4b) + ((uint64_t)(atl_triggering_asn.ms1b) << 32));
 
-  LOG_INFO("atl as curr1 ts %u\n",
-            tsch_default_timing_us[tsch_ts_timeslot_length]);
-#endif
+  LOG_INFO("atl as curr_ts %u\n",
+            tsch_timing_us[tsch_ts_timeslot_length]);
 
-  /* Update tsch_timing_us and tsch_timing */
-  tsch_timing_us[tsch_ts_timeslot_length] = atl_calculate_timeslot_length(atl_curr_ref_frame_len, atl_curr_ref_ack_len);
-  tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
-
-#if ATL_DBG_ESSENTIAL
-  LOG_INFO("atl as curr2 f_l %u %u a_l %u %u ts %u\n",
-            atl_curr_ref_frame_len, ATL_CALCULATE_DURATION(atl_curr_ref_frame_len),
-            atl_curr_ref_ack_len, ATL_CALCULATE_DURATION(atl_curr_ref_ack_len),
-            tsch_default_timing_us[tsch_ts_timeslot_length]);
-#endif
-
-  /* Update tsch_next_timing_us */
-  atl_next_ts_timeslot_length = atl_calculate_timeslot_length(atl_next_ref_frame_len, atl_next_ref_ack_len);
-
-#if ATL_DBG_ESSENTIAL
-  LOG_INFO("atl as next f_l %u %u a_l %u %u ts %u\n", 
-            atl_next_ref_frame_len, ATL_CALCULATE_DURATION(atl_next_ref_frame_len),
-            atl_next_ref_ack_len, ATL_CALCULATE_DURATION(atl_next_ref_ack_len),
+  LOG_INFO("atl as next_ts %u\n", 
             atl_next_ts_timeslot_length);
-
 #endif
 #endif
 
