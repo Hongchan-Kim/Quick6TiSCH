@@ -353,7 +353,7 @@ static rtimer_clock_t current_slot_unused_offset_start;
 static rtimer_clock_t current_slot_unused_offset_end;
 static rtimer_clock_t current_slot_unused_offset_time;
 static rtimer_clock_t current_slot_idle_start;
-static rtimer_clock_t current_slot_idle_time;
+static int current_slot_idle_time;
 
 /*---------------------------------------------------------------------------*/
 struct tsch_asn_t tsch_last_valid_asn;
@@ -2469,7 +2469,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
     current_slot_idle_start = RTIMER_NOW();
-    current_slot_idle_time = tsch_timing[tsch_ts_timeslot_length] - RTIMER_CLOCK_DIFF(current_slot_idle_start, current_slot_start);
+    current_slot_idle_time = (int)tsch_timing[tsch_ts_timeslot_length] - (int)RTIMER_CLOCK_DIFF(current_slot_idle_start, current_slot_start);
 
 #if WITH_UPA
     if(upa_link_scheduled) {
@@ -2502,7 +2502,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
           log->tx.unused_offset_time = RTIMERTICKS_TO_US(current_slot_unused_offset_time);
-          log->tx.idle_time = RTIMERTICKS_TO_US(current_slot_idle_time);
+          if(current_slot_idle_time >= 0) {
+            log->tx.idle_time = RTIMERTICKS_TO_US(current_slot_idle_time);
+          } else {
+            int positive_current_slot_idle_time = (-1) * current_slot_idle_time;
+            int positive_current_slot_idle_time_us = RTIMERTICKS_TO_US(positive_current_slot_idle_time);
+
+            log->tx.idle_time = (-1) * positive_current_slot_idle_time_us;
+          }
       );
 #if WITH_UPA
     }
@@ -3527,7 +3534,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
             current_slot_idle_start = RTIMER_NOW();
-            current_slot_idle_time = tsch_timing[tsch_ts_timeslot_length] - RTIMER_CLOCK_DIFF(current_slot_idle_start, current_slot_start);
+            current_slot_idle_time = (int)tsch_timing[tsch_ts_timeslot_length] - (int)RTIMER_CLOCK_DIFF(current_slot_idle_start, current_slot_start);
 
             /* If the neighbor is known, update its stats */
             if(n != NULL) {
@@ -3552,7 +3559,14 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
               log->rx.unused_offset_time = RTIMERTICKS_TO_US(current_slot_unused_offset_time);
-              log->rx.idle_time = RTIMERTICKS_TO_US(current_slot_idle_time);
+              if(current_slot_idle_time >= 0) {
+                log->rx.idle_time = RTIMERTICKS_TO_US(current_slot_idle_time);
+              } else {
+                int positive_current_slot_idle_time = (-1) * current_slot_idle_time;
+                int positive_current_slot_idle_time_us = RTIMERTICKS_TO_US(positive_current_slot_idle_time);
+
+                log->rx.idle_time = (-1) * positive_current_slot_idle_time_us;
+              }
             );
 
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION

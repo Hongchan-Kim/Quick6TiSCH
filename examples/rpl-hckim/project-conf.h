@@ -146,7 +146,7 @@
 #define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 
@@ -443,7 +443,7 @@
 /*
  * Adaptive timeslot length
  */
-#define WITH_SLA                                   1
+#define WITH_SLA                                   0
 #if WITH_SLA
 #define SLA_DBG_ESSENTIAL                          1
 #define SLA_DBG_OPERATION                          1
@@ -460,7 +460,16 @@
 #define SLA_RAPID_EB_PERIOD                        (3 * CLOCK_SECOND)
 
 #define SLA_MAX_FRAME_LEN                          128 /* Including RADIO_PHY_OVERHEAD (3 bytes) */
-#define SLA_MAX_ACK_LEN                            70  /* Including RADIO_PHY_OVERHEAD (3 bytes) */
+#if WITH_UPA
+#if UPA_TRIPLE_CCA
+#define SLA_MAX_ACK_LEN                            34  /* 2950, 1300, Including RADIO_PHY_OVERHEAD (3 bytes) */
+#else
+#define SLA_MAX_ACK_LEN                            60  /* 2120, 1300, Including RADIO_PHY_OVERHEAD (3 bytes) */
+#endif
+#else
+#define SLA_MAX_ACK_LEN                            70  /* 2120, 1000, Including RADIO_PHY_OVERHEAD (3 bytes) */
+#endif
+#define HCK_TSCH_MAX_ACK                           SLA_CALCULATE_DURATION(SLA_MAX_ACK_LEN)
 #define SLA_SHIFT_BITS                             3
 
 #define SLA_OBSERVATION_WINDOWS                    1

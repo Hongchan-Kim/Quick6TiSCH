@@ -82,6 +82,10 @@
 #define HCK_TSCH_TIMESLOT_LENGTH 10000
 #endif
 
+#ifndef HCK_TSCH_MAX_ACK
+#define HCK_TSCH_MAX_ACK 2400
+#endif
+
 const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 #if TSCH_CONF_CCA_ENABLED
 #if UPA_TRIPLE_CCA
@@ -114,7 +118,7 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
   TSCH_CONF_RX_WAIT, /* RxWait */
     400, /* AckWait */
     192, /* RxTx */
-   2400, /* MaxAck */
+  HCK_TSCH_MAX_ACK, //2400, /* MaxAck */
    4256, /* MaxTx */
   HCK_TSCH_TIMESLOT_LENGTH, //10000, /* TimeslotLength */
 #if UPA_TRIPLE_CCA
