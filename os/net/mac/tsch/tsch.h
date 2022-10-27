@@ -283,11 +283,7 @@ extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000;
 
 #if WITH_SLA /* Variables */
 extern struct tsch_asn_t sla_triggering_asn;
-extern uint16_t sla_next_ts_timeslot_length;
-extern uint8_t sla_curr_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
-extern uint8_t sla_curr_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
-extern uint8_t sla_next_ref_frame_len; /* Includes RADIO_PHY_OVERHEAD */
-extern uint8_t sla_next_ref_ack_len; /* Includes RADIO_PHY_OVERHEAD */
+extern uint16_t sla_next_timeslot_length;
 #endif
 
 #if WITH_UPA

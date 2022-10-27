@@ -1829,6 +1829,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* if is this a broadcast packet, don't wait for ack */
       do_wait_for_ack = !current_neighbor->is_broadcast;
 
+#if WITH_SLA
+      if(do_wait_for_ack) {
+        current_packet->sla_is_broadcast = 0;
+      } else {
+        current_packet->sla_is_broadcast = 1;
+      }
+#endif
+
 #if HCK_DBG_REGULAR_SLOT_DETAIL /* Store packet len and do_wait_for_ack */
       regular_slot_tx_packet_len = packet_len;
       regular_slot_tx_do_wait_for_ack = do_wait_for_ack;
@@ -3203,6 +3211,14 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             }
 #endif
 
+#if WITH_SLA
+            if(frame.fcf.ack_required) {
+              current_input->sla_is_broadcast = 0;
+            } else {
+              current_input->sla_is_broadcast = 1;
+            }
+#endif
+
             if(frame.fcf.ack_required) {
               static uint8_t ack_buf[TSCH_PACKET_MAX_LEN];
               static int ack_len;
@@ -3961,13 +3977,8 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if WITH_SLA /* Coordinator/non-coordinator: at triggering asn, apply next timeslot length */
   if((tsch_current_asn.ls4b == sla_triggering_asn.ls4b) 
       && (tsch_current_asn.ms1b == sla_triggering_asn.ms1b)) {
-    if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_ts_timeslot_length) {
+    if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_timeslot_length) {
       sla_apply_next_timeslot_length();
-
-      if(tsch_is_coordinator) {
-        sla_curr_ref_frame_len = sla_next_ref_frame_len;
-        sla_curr_ref_ack_len = sla_next_ref_ack_len;
-      }
 
 #if SLA_DBG_ESSENTIAL
       TSCH_LOG_ADD(tsch_log_message,
@@ -3979,7 +3990,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if SLA_DBG_ESSENTIAL
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "sla not apply next ts, stop rapid eb");
+                          "sla not apply next ts, stop rapid_eb");
       );
 #endif
     }
@@ -3990,7 +4001,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
   } else if((int32_t)(TSCH_ASN_DIFF(sla_triggering_asn, tsch_current_asn)) > 0) {
     // SLA-TODO: needs to consider ASN overflow
     if((int32_t)(TSCH_ASN_DIFF(sla_triggering_asn, tsch_current_asn) <= SLA_GUARD_TIME_TIMESLOTS)) {
-      if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_ts_timeslot_length) {
+      if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_timeslot_length) {
         sla_in_guard_time = 1;
       } else {
         sla_in_guard_time = 0;
@@ -4128,7 +4139,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                                                           or if there is a pending request for getting the lock */
       /* Issue a log whenever skipping a slot */
 
-#if WITH_SLA && SLA_DBG_OPERATION
+#if WITH_SLA && SLA_DBG_ESSENTIAL
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
                           "!skipped slot %u %u %u sla %u",

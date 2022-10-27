@@ -108,6 +108,9 @@ struct tsch_packet {
   uint8_t header_len; /* length of header and header IEs (needed for link-layer security) */
   uint8_t tsch_sync_ie_offset; /* Offset within the frame used for quick update of EB ASN and join priority */
 
+#if WITH_SLA
+  uint8_t sla_is_broadcast;
+#endif
 #if WITH_UPA
   uint8_t upa_sent_in_batch;
 #endif
@@ -196,6 +199,9 @@ struct input_packet {
   int16_t rssi; /* RSSI for this packet */
   uint8_t channel; /* Channel we received the packet on */
 
+#if WITH_SLA
+  uint8_t sla_is_broadcast;
+#endif
 #if WITH_UPA
   uint8_t upa_received_in_batch;
 #endif

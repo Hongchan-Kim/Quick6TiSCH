@@ -21,7 +21,7 @@
 #define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
-#define HCK_RPL_FIXED_TOPOLOGY                     0
+#define HCK_RPL_FIXED_TOPOLOGY                     1
 #if HCK_RPL_FIXED_TOPOLOGY
 #define HCK_DBG_RPL_FIXED_TOPOLOGY                 0
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
@@ -79,14 +79,14 @@
 #define IOTLAB_GRENOBLE_2                          9 /* 2 nodes */
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_83_R_CORNER
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_D
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CENTER
 //#define IOTLAB_SITE                                IOTLAB_SACLAY_2
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_83_R_CORNER
 #define NODE_NUM                                   83
@@ -446,12 +446,12 @@
 #define WITH_SLA                                   1
 #if WITH_SLA
 #define SLA_DBG_ESSENTIAL                          1
-#define SLA_DBG_OPERATION                          0
+#define SLA_DBG_OPERATION                          1
 
 #if WITH_UPA
-#define SLA_GUARD_TIME_TIMESLOTS                   10
+#define SLA_GUARD_TIME_TIMESLOTS                   6
 #else
-#define SLA_GUARD_TIME_TIMESLOTS                   1
+#define SLA_GUARD_TIME_TIMESLOTS                   2
 #endif
 #define SLA_CALCULATE_DURATION(len)                (32 * (5 + len)) /* len includes RADIO_PHY_OVERHEAD (3 bytes) */
 
@@ -463,7 +463,7 @@
 #define SLA_MAX_ACK_LEN                            70  /* Including RADIO_PHY_OVERHEAD (3 bytes) */
 #define SLA_SHIFT_BITS                             3
 
-#define SLA_OBSERVATION_WINDOWS                    3
+#define SLA_OBSERVATION_WINDOWS                    1
 #define SLA_FRAME_LEN_QUANTIZED_LEVELS             ((((SLA_MAX_FRAME_LEN - 1) >> SLA_SHIFT_BITS) + 1) + 1)
 #define SLA_ACK_LEN_QUANTIZED_LEVELS               ((((SLA_MAX_ACK_LEN - 1) >> SLA_SHIFT_BITS) + 1) + 1)
 
