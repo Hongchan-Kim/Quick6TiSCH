@@ -3781,8 +3781,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             }
 
             if(upa_rx_slot_frame_valid) {
-              if(upa_rx_slot_frame.fcf.frame_type != FRAME802154_DATAFRAME
-                && upa_rx_slot_frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
+              if(upa_rx_slot_frame.fcf.frame_type != FRAME802154_DATAFRAME) {
                   TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
                       "!upa discarding frame with type %u, len %u", upa_rx_slot_frame.fcf.frame_type, upa_rx_slot_curr_input->len));
@@ -3791,8 +3790,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             }
 
             if(upa_rx_slot_frame_valid) {
-              if((linkaddr_cmp(&upa_rx_slot_dest_addr, &linkaddr_node_addr)
-                  || linkaddr_cmp(&upa_rx_slot_dest_addr, &linkaddr_null))
+              if(linkaddr_cmp(&upa_rx_slot_dest_addr, &linkaddr_node_addr)
+                && linkaddr_cmp(&upa_rx_slot_src_addr, &source_address)
                 && !linkaddr_cmp(&upa_rx_slot_src_addr, &linkaddr_node_addr)) {
                 rx_count++;
 
