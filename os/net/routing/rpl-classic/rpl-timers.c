@@ -60,10 +60,6 @@ static uint16_t next_hop_distance_measure;
 static uint32_t hop_distance_measure_count;
 static uint32_t hop_distance_measure_sum;
 
-#if HCK_DBG_RPL_FIXED_TOPOLOGY
-static uint16_t hck_dbg_fixed_topology_count = 0;
-#endif
-
 #if HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 static uint8_t ignore_redundancy = 1;
 #endif
@@ -142,74 +138,6 @@ handle_periodic_timer(void *ptr)
       LOG_INFO("HCK hopD_sum %lu hopD_cnt %lu |\n", hop_distance_measure_sum, hop_distance_measure_count);
     }
   }
-
-#if HCK_DBG_RPL_FIXED_TOPOLOGY
-  hck_dbg_fixed_topology_count++;
-
-  if(hck_dbg_fixed_topology_count % 60 == 0) {
-    uint8_t my_index = node_id - 1;
-    uint8_t is_fixed_parent_set_correctly  = 0;
-    if(fixed_parent_id[my_index] 
-        == HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(dag->preferred_parent))) {
-      is_fixed_parent_set_correctly = 1;
-    }
-
-    uint8_t next_hop_id = 0;
-    uint8_t i = 0;
-
-    uint8_t is_fixed_chilren_set_correctly = 1;
-
-    for(i = 0; i < 8; i++) {
-      uint8_t fixed_child_id = fixed_children_ids[my_index][i];
-      if(fixed_child_id != 0) {      
-        uint8_t fixed_child_exist = 0;
-
-        nbr_table_item_t *item = nbr_table_head(nbr_routes);
-        while(item != NULL) {
-          linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
-          next_hop_id = HCK_GET_NODE_ID_FROM_LINKADDR(addr);
-
-          if(fixed_child_id == next_hop_id) {
-            fixed_child_exist = 1;
-            break;
-          }
-          item = nbr_table_next(nbr_routes, item);
-        }
-        if(fixed_child_exist == 0) {
-          is_fixed_chilren_set_correctly = 0;
-          break;
-        }
-      } else {
-        break;
-      }
-    }
-
-    if(is_fixed_chilren_set_correctly == 1) {
-      nbr_table_item_t *item = nbr_table_head(nbr_routes);
-      while(item != NULL) {
-        linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
-        next_hop_id = HCK_GET_NODE_ID_FROM_LINKADDR(addr);
-
-        uint8_t is_next_hop_fixed_child = 0;
-        for(i = 0; i < 8; i++) {
-          if(next_hop_id == fixed_children_ids[my_index][i]) {
-            is_next_hop_fixed_child = 1;
-            break;
-          }
-        }
-
-        if(is_next_hop_fixed_child == 0) {
-          is_fixed_chilren_set_correctly = 0;
-          break;
-        }
-
-        item = nbr_table_next(nbr_routes, item);
-      }
-    }
-
-    LOG_INFO("HCK ft_count %u fixed_p %d fixed_c %u |\n", hck_dbg_fixed_topology_count, is_fixed_parent_set_correctly, is_fixed_chilren_set_correctly);
-  }
-#endif
 
   /* handle DIS */
 #if RPL_DIS_SEND

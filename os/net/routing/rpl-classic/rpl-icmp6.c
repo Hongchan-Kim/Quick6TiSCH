@@ -835,60 +835,6 @@ dao_input_storing(void)
   }
 #endif
 
-#if HCK_RPL_FIXED_TOPOLOGY
-  uint8_t dao_dest_id = HCK_GET_NODE_ID_FROM_IPADDR(&prefix);
-  uint8_t dao_sender_id = HCK_GET_NODE_ID_FROM_IPADDR(&dao_sender_addr);
-
-  uint8_t my_index = node_id - 1;
-  uint8_t is_my_fixed_child = 0;
-
-  uint8_t i_for_fixed_child = 0;
-  for(i_for_fixed_child = 0; i_for_fixed_child < 8; i_for_fixed_child++) {
-    if(fixed_children_ids[my_index][i_for_fixed_child] == dao_dest_id) {
-      is_my_fixed_child = 1;
-      break;
-    }
-  }
-
-  uint8_t ever_received_directly_delivered_dao_from_fixed_child = 0;
-
-  if(is_my_fixed_child == 1) {
-    uint8_t next_hop_id = 0;
-    nbr_table_item_t *item = nbr_table_head(nbr_routes);
-    while(item != NULL) {
-      linkaddr_t *addr_from_nbr_routes = nbr_table_get_lladdr(nbr_routes, item);
-      next_hop_id = HCK_GET_NODE_ID_FROM_LINKADDR(addr_from_nbr_routes);
-
-      if(dao_dest_id == next_hop_id) {
-        struct uip_ds6_route_neighbor_routes *routes 
-                = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)addr_from_nbr_routes);
-        struct uip_ds6_route_neighbor_route *neighbor_route;
-        for(neighbor_route = list_head(routes->route_list);
-            neighbor_route != NULL;
-            neighbor_route = list_item_next(neighbor_route)) {
-          if(dao_dest_id == HCK_GET_NODE_ID_FROM_IPADDR(&(neighbor_route->route->ipaddr))) {
-            ever_received_directly_delivered_dao_from_fixed_child = 1;
-            break;
-          }
-        }
-        break;
-      }
-      item = nbr_table_next(nbr_routes, item);
-    }
-  }
-
-  uint8_t directly_delivered_dao = 0;
-  if(dao_dest_id == dao_sender_id) {
-    directly_delivered_dao = 1;
-  }
-
-  if(is_my_fixed_child == 1
-      && ever_received_directly_delivered_dao_from_fixed_child == 1
-      && directly_delivered_dao == 0) {
-    return;
-  }
-#endif
-
   rep = uip_ds6_route_lookup(&prefix);
 
   if(lifetime == RPL_ZERO_LIFETIME) {
