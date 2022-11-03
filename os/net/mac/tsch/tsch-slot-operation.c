@@ -2046,6 +2046,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
         current_slot_unused_offset_start = RTIMER_NOW();
 
+#if WITH_UPA && UPA_TRIPLE_CCA
+        watchdog_periodic();
+#endif
+
         /* delay before CCA */
         TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
         TSCH_DEBUG_TX_EVENT();
@@ -2133,6 +2137,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           upa_timestamp_triple_cca[5] = RTIMER_NOW();
 #endif
         }
+        watchdog_periodic();
 #else /* WITH_UPA && UPA_TRIPLE_CCA */
 
         /* CCA */
@@ -2573,6 +2578,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
 #if WITH_UPA
   if(upa_link_scheduled) {
+    watchdog_periodic();
 
 #if UPA_DBG_EP_SLOT_TIMING /* upaTxB0: start of tsch_upa_tx_slot, prepare burst */
     upa_print_tx_slot_timing = 1;
@@ -2724,6 +2730,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         break; /* No space in dequeued_array */
       }
 
+      watchdog_periodic();
+
       if(upa_tx_slot_in_batch_seq < upa_pkts_to_send) {
         ++upa_tx_slot_in_batch_seq;
         upa_tx_slot_curr_packet = upa_tx_slot_packet_array[upa_tx_slot_in_batch_seq - 1];
@@ -2821,6 +2829,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if UPA_DBG_EP_SLOT_TIMING /* upaTxE1: after tsch_radio_off() */
     upa_tx_slot_timestamp_end[1] = RTIMER_NOW();
 #endif
+
+    watchdog_periodic();
 
     if(upa_tx_slot_pending_stats_and_log_update) {
       upa_tx_slot_pending_stats_and_log_update = 0;
@@ -2946,6 +2956,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       tsch_ost_pp_sf_upa_tx_ok_count += upa_tx_slot_batch_tx_ok_count;
     }
 #endif
+
+    watchdog_periodic();
 
     process_poll(&tsch_pending_events_process);
   }
@@ -3645,6 +3657,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
 #if WITH_UPA
   if(upa_link_scheduled) {
+    watchdog_periodic();
 
 #if UPA_DBG_EP_SLOT_TIMING /* EPRxB0: start of tsch_upa_rx_slot, before set offset */
     upa_print_rx_slot_timing = 1;
@@ -3722,6 +3735,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         upa_rx_slot_timestamp_rx[upa_rx_slot_batch_rx_ok_count][1] = RTIMER_NOW();
 #endif
 
+        watchdog_periodic();
+
         uint8_t upa_packet_seen;
         upa_packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
         if(!upa_packet_seen) {
@@ -3731,6 +3746,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
         if(!upa_packet_seen) {
           upa_rx_slot_all_reception_end = upa_rx_slot_curr_start + upa_rx_slot_curr_timeout;
+
+          watchdog_periodic();
 
 #if UPA_DBG_EP_ESSENTIAL
           TSCH_LOG_ADD(tsch_log_message,
@@ -3871,7 +3888,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
       upa_rx_slot_curr_deadline = upa_rx_slot_curr_start + upa_rx_slot_curr_timeout;
-      
+
+      watchdog_periodic();
+
       if(upa_rx_slot_last_in_batch_seq >= upa_pkts_to_receive
         || !RTIMER_CLOCK_LT(RTIMER_NOW(), upa_rx_slot_curr_deadline + RADIO_DELAY_BEFORE_DETECT)) {
         if(upa_rx_slot_last_in_batch_seq >= upa_pkts_to_receive) {
@@ -3960,6 +3979,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       tsch_ost_pp_sf_upa_rx_ok_count += upa_rx_slot_batch_rx_ok_count;
     }
 #endif
+
+    watchdog_periodic();
 
     process_poll(&tsch_pending_events_process);
   }
