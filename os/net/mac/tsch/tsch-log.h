@@ -85,7 +85,7 @@ struct tsch_log_t {
   uint8_t channel_offset;
   uint16_t timeslot; // hckim
   union {
-    char message[48];
+    char message[40];
     struct {
       int mac_tx_status;
       linkaddr_t dest;
@@ -101,8 +101,11 @@ struct tsch_log_t {
       uint16_t app_magic;
       uint32_t app_seqno;
 #endif
-      uint16_t unused_offset_time;
-      int idle_time;
+      uint16_t asap_unused_offset_time;
+      uint16_t asap_idle_time;
+      uint16_t asap_curr_slot_len;
+      uint8_t asap_num_of_slots;
+      uint8_t asap_ack_len;
     } tx;
     struct {
       linkaddr_t  src;
@@ -119,8 +122,11 @@ struct tsch_log_t {
       uint16_t app_magic;
       uint32_t app_seqno;
 #endif
-      uint16_t unused_offset_time;
-      int idle_time;
+      uint16_t asap_unused_offset_time;
+      uint16_t asap_idle_time;
+      uint16_t asap_curr_slot_len;
+      uint8_t asap_num_of_slots;
+      uint8_t asap_ack_len;
     } rx;
   };
 };

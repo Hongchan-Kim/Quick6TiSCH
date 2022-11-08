@@ -87,13 +87,13 @@ metric_list = ['id', 'addr',
             'input_full', 'input_avail', 'dequeued_full', 'dequeued_avail', 'e_drop',
             'sch_eb', 'sch_bc', 'sch_uc', 'sch_pp_tx', 'sch_pp_rx', 'sch_odp_tx', 'sch_odp_rx',
             'sch_bc_bst_tx', 'sch_bc_bst_rx', 'sch_uc_bst_tx', 'sch_uc_bst_rx', 'sch_pp_bst_tx', 'sch_pp_bst_rx', 
-            'sch_bc_ep_tx', 'sch_bc_ep_rx', 'sch_uc_ep_tx', 'sch_uc_ep_rx', 'sch_pp_ep_tx', 'sch_pp_ep_rx',  
+            'sch_bc_upa_tx', 'sch_bc_upa_rx', 'sch_uc_upa_tx', 'sch_uc_upa_rx', 'sch_pp_upa_tx', 'sch_pp_upa_rx',  
             'eb_tx_op', 'eb_rx_op', 'bc_tx_op', 'bc_rx_op', 'uc_tx_op', 'uc_rx_op',
             'pp_tx_op', 'pp_rx_op', 'odp_tx_op', 'odp_rx_op',
             'bc_bst_tx_op', 'bc_bst_rx_op', 'uc_bst_tx_op', 'uc_bst_rx_op', 'pp_bst_tx_op', 'pp_bst_rx_op',
-            'bc_ep_tx_rs', 'bc_ep_rx_rs', 'uc_ep_tx_rs', 'uc_ep_rx_rs', 'pp_ep_tx_rs', 'pp_ep_rx_rs',
-            'bc_ep_tx_ok', 'bc_ep_rx_ok', 'uc_ep_tx_ok', 'uc_ep_rx_ok', 'pp_ep_tx_ok', 'pp_ep_rx_ok',
-            'bc_ep_tx_ts', 'bc_ep_rx_ts', 'uc_ep_tx_ts', 'uc_ep_rx_ts', 'pp_ep_tx_ts', 'pp_ep_rx_ts',
+            'bc_upa_tx_rs', 'bc_upa_rx_rs', 'uc_upa_tx_rs', 'uc_upa_rx_rs', 'pp_upa_tx_rs', 'pp_upa_rx_rs',
+            'bc_upa_tx_ok', 'bc_upa_rx_ok', 'uc_upa_tx_ok', 'uc_upa_rx_ok', 'pp_upa_tx_ok', 'pp_upa_rx_ok',
+            'bc_upa_tx_ts', 'bc_upa_rx_ts', 'uc_upa_tx_ts', 'uc_upa_rx_ts', 'pp_upa_tx_ts', 'pp_upa_rx_ts',
             'ps', 'lastP', 'local_repair',
             'dis_send', 'dioU_send', 'dioM_send',
             'daoP_send', 'daoN_send', 'daoP_fwd', 'daoN_fwd', 'daoA_send',
@@ -115,6 +115,7 @@ result_list = ['id', 'addr',
             'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
             'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
             'leave', 'dc', #'e_drop',
+            'UTS', 'UTR', 'UTO', 'UTU', 'URS', 'URR', 'URO', 'URU', 'UU',
             'SCR', 'CTOR', 'CROR', 'UTOR', 'UROR', 'PTOR', 'PROR',
             'BTOR', 'BROR', 'OTOR', 'OROR', 'ETOR', 'EROR', 
             'CETR', 'CERR', 'UETR', 'UERR', 'PETR', 'PERR',
@@ -458,6 +459,65 @@ for i in range(NODE_NUM):
                 bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('dc_total_sum')]) / float(bootstrap_period_parsed[i][metric_list.index('dc_count')]) / 100, 2)
         elif result_list[j] == 'e_drop':
             bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('e_drop')]
+
+        elif result_list[j] == 'UTS':
+            bootstrap_period_result[i][j] = int(bootstrap_period_parsed[i][metric_list.index('sch_bc_upa_tx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_uc_upa_tx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_pp_upa_tx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('bc_upa_tx_ts')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_ts')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_ts')])
+        elif result_list[j] == 'UTR':
+            bootstrap_period_result[i][j] = int(bootstrap_period_parsed[i][metric_list.index('sch_bc_upa_tx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_uc_upa_tx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_pp_upa_tx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('bc_upa_tx_rs')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_rs')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_rs')])
+        elif result_list[j] == 'UTO':
+            bootstrap_period_result[i][j] = int(bootstrap_period_parsed[i][metric_list.index('sch_bc_upa_tx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_uc_upa_tx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_pp_upa_tx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('bc_upa_tx_ok')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_ok')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_ok')])
+        elif result_list[j] == 'UTU':
+            if float(bootstrap_period_result[i][result_list.index('UTS')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_result[i][result_list.index('UTO')]) / float(bootstrap_period_result[i][result_list.index('UTS')]), 2)
+        elif result_list[j] == 'URS':
+            bootstrap_period_result[i][j] = int(bootstrap_period_parsed[i][metric_list.index('sch_bc_upa_rx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_uc_upa_rx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_pp_upa_rx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('bc_upa_rx_ts')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_ts')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_ts')])
+        elif result_list[j] == 'URR':
+            bootstrap_period_result[i][j] = int(bootstrap_period_parsed[i][metric_list.index('sch_bc_upa_rx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_uc_upa_rx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_pp_upa_rx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('bc_upa_rx_rs')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_rs')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_rs')])
+        elif result_list[j] == 'URO':
+            bootstrap_period_result[i][j] = int(bootstrap_period_parsed[i][metric_list.index('sch_bc_upa_rx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_uc_upa_rx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('sch_pp_upa_rx')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('bc_upa_rx_ok')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_ok')]) + \
+                                            int(bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_ok')])
+        elif result_list[j] == 'URU':
+            if float(bootstrap_period_result[i][result_list.index('URS')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_result[i][result_list.index('URO')]) / float(bootstrap_period_result[i][result_list.index('URS')]), 2)
+        elif result_list[j] == 'UU':
+            if float(bootstrap_period_result[i][result_list.index('UTS')]) + float(bootstrap_period_result[i][result_list.index('URS')]) == 0:
+                bootstrap_period_result[i][j] = 'NaN'
+            else:
+                bootstrap_period_result[i][j] = round((float(bootstrap_period_result[i][result_list.index('UTO')]) + float(bootstrap_period_result[i][result_list.index('URO')])) / (float(bootstrap_period_result[i][result_list.index('UTS')]) + float(bootstrap_period_result[i][result_list.index('URS')])), 2)
+
         elif result_list[j] == 'SCR':
             if float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
@@ -475,12 +535,12 @@ for i in range(NODE_NUM):
                               + float(bootstrap_period_parsed[i][metric_list.index('sch_uc_bst_rx')]) + \
                               + float(bootstrap_period_parsed[i][metric_list.index('sch_pp_bst_tx')]) + \
                               + float(bootstrap_period_parsed[i][metric_list.index('sch_pp_bst_rx')]) + \
-                              + float(bootstrap_period_parsed[i][metric_list.index('bc_ep_tx_ts')]) + \
-                              + float(bootstrap_period_parsed[i][metric_list.index('bc_ep_rx_ts')]) + \
-                              + float(bootstrap_period_parsed[i][metric_list.index('uc_ep_tx_ts')]) + \
-                              + float(bootstrap_period_parsed[i][metric_list.index('uc_ep_rx_ts')]) + \
-                              + float(bootstrap_period_parsed[i][metric_list.index('pp_ep_tx_ts')]) + \
-                              + float(bootstrap_period_parsed[i][metric_list.index('pp_ep_rx_ts')])
+                              + float(bootstrap_period_parsed[i][metric_list.index('bc_upa_tx_ts')]) + \
+                              + float(bootstrap_period_parsed[i][metric_list.index('bc_upa_rx_ts')]) + \
+                              + float(bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_ts')]) + \
+                              + float(bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_ts')]) + \
+                              + float(bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_ts')]) + \
+                              + float(bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_ts')])
                 bootstrap_period_result[i][j] = round(all_scheduled / float(bootstrap_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
         elif result_list[j] == 'CTOR':
             if float(bootstrap_period_parsed[i][metric_list.index('sch_bc')]) == 0:
@@ -555,79 +615,79 @@ for i in range(NODE_NUM):
         elif result_list[j] == 'ETOR':
             all_data_tx_operations = float(bootstrap_period_parsed[i][metric_list.index('uc_tx_op')]) + \
                                      float(bootstrap_period_parsed[i][metric_list.index('pp_tx_op')]) + \
-                                     float(bootstrap_period_parsed[i][metric_list.index('uc_ep_tx_rs')]) + \
-                                     float(bootstrap_period_parsed[i][metric_list.index('pp_ep_tx_rs')])
+                                     float(bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_rs')]) + \
+                                     float(bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_rs')])
             if all_data_tx_operations == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                ep_data_tx_operations = float(bootstrap_period_parsed[i][metric_list.index('uc_ep_tx_rs')]) + \
-                                        float(bootstrap_period_parsed[i][metric_list.index('pp_ep_tx_rs')])
+                ep_data_tx_operations = float(bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_rs')]) + \
+                                        float(bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_rs')])
                 bootstrap_period_result[i][j] = round(ep_data_tx_operations / all_data_tx_operations * 100, 2)
         elif result_list[j] == 'EROR':
             all_data_rx_operations = float(bootstrap_period_parsed[i][metric_list.index('uc_rx_op')]) + \
                                      float(bootstrap_period_parsed[i][metric_list.index('pp_rx_op')]) + \
-                                     float(bootstrap_period_parsed[i][metric_list.index('uc_ep_rx_rs')]) + \
-                                     float(bootstrap_period_parsed[i][metric_list.index('pp_ep_rx_rs')])
+                                     float(bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_rs')]) + \
+                                     float(bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_rs')])
             if all_data_rx_operations == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                ep_data_rx_operations = float(bootstrap_period_parsed[i][metric_list.index('uc_ep_rx_rs')]) + \
-                                        float(bootstrap_period_parsed[i][metric_list.index('pp_ep_rx_rs')])
+                ep_data_rx_operations = float(bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_rs')]) + \
+                                        float(bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_rs')])
                 bootstrap_period_result[i][j] = round(ep_data_rx_operations / all_data_rx_operations * 100, 2)
         elif result_list[j] == 'CETR':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('bc_ep_tx_rs')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('bc_upa_tx_rs')]
         elif result_list[j] == 'CERR':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('bc_ep_rx_rs')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('bc_upa_rx_rs')]
         elif result_list[j] == 'UETR':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('uc_ep_tx_rs')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_rs')]
         elif result_list[j] == 'UERR':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('uc_ep_rx_rs')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_rs')]
         elif result_list[j] == 'PETR':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('pp_ep_tx_rs')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_rs')]
         elif result_list[j] == 'PERR':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('pp_ep_rx_rs')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_rs')]
         elif result_list[j] == 'CETO':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('bc_ep_tx_ok')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('bc_upa_tx_ok')]
         elif result_list[j] == 'CERO':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('bc_ep_rx_ok')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('bc_upa_rx_ok')]
         elif result_list[j] == 'UETO':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('uc_ep_tx_ok')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_ok')]
         elif result_list[j] == 'UERO':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('uc_ep_rx_ok')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_ok')]
         elif result_list[j] == 'PETO':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('pp_ep_tx_ok')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_ok')]
         elif result_list[j] == 'PERO':
-            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('pp_ep_rx_ok')]
+            bootstrap_period_result[i][j] = bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_ok')]
         elif result_list[j] == 'CETE':
-            if float(bootstrap_period_parsed[i][metric_list.index('bc_ep_tx_ts')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('bc_upa_tx_ts')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('bc_ep_tx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('bc_ep_tx_ts')]), 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('bc_upa_tx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('bc_upa_tx_ts')]), 2)
         elif result_list[j] == 'CERE':
-            if float(bootstrap_period_parsed[i][metric_list.index('bc_ep_rx_ts')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('bc_upa_rx_ts')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('bc_ep_rx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('bc_ep_rx_ts')]), 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('bc_upa_rx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('bc_upa_rx_ts')]), 2)
         elif result_list[j] == 'UETE':
-            if float(bootstrap_period_parsed[i][metric_list.index('uc_ep_tx_ts')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_ts')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('uc_ep_tx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('uc_ep_tx_ts')]), 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('uc_upa_tx_ts')]), 2)
         elif result_list[j] == 'UERE':
-            if float(bootstrap_period_parsed[i][metric_list.index('uc_ep_rx_ts')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_ts')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('uc_ep_rx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('uc_ep_rx_ts')]), 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('uc_upa_rx_ts')]), 2)
         elif result_list[j] == 'PETE':
-            if float(bootstrap_period_parsed[i][metric_list.index('pp_ep_tx_ts')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_ts')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('pp_ep_tx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('pp_ep_tx_ts')]), 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('pp_upa_tx_ts')]), 2)
         elif result_list[j] == 'PERE':
-            if float(bootstrap_period_parsed[i][metric_list.index('pp_ep_rx_ts')]) == 0:
+            if float(bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_ts')]) == 0:
                 bootstrap_period_result[i][j] = 'NaN'
             else:
-                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('pp_ep_rx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('pp_ep_rx_ts')]), 2)
+                bootstrap_period_result[i][j] = round(float(bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_ok')]) / float(bootstrap_period_parsed[i][metric_list.index('pp_upa_rx_ts')]), 2)
 
 
 # STEP-3-5: [bootstrap period] print bootstrap_period_result
@@ -889,6 +949,65 @@ for i in range(NODE_NUM):
                 data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('dc_total_sum')]) / float(data_period_parsed[i][metric_list.index('dc_count')]) / 100, 2)
         elif result_list[j] == 'e_drop':
             data_period_result[i][j] = data_period_parsed[i][metric_list.index('e_drop')]
+
+        elif result_list[j] == 'UTS':
+            data_period_result[i][j] = int(data_period_parsed[i][metric_list.index('sch_bc_upa_tx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_uc_upa_tx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_pp_upa_tx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('bc_upa_tx_ts')]) + \
+                                            int(data_period_parsed[i][metric_list.index('uc_upa_tx_ts')]) + \
+                                            int(data_period_parsed[i][metric_list.index('pp_upa_tx_ts')])
+        elif result_list[j] == 'UTR':
+            data_period_result[i][j] = int(data_period_parsed[i][metric_list.index('sch_bc_upa_tx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_uc_upa_tx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_pp_upa_tx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('bc_upa_tx_rs')]) + \
+                                            int(data_period_parsed[i][metric_list.index('uc_upa_tx_rs')]) + \
+                                            int(data_period_parsed[i][metric_list.index('pp_upa_tx_rs')])
+        elif result_list[j] == 'UTO':
+            data_period_result[i][j] = int(data_period_parsed[i][metric_list.index('sch_bc_upa_tx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_uc_upa_tx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_pp_upa_tx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('bc_upa_tx_ok')]) + \
+                                            int(data_period_parsed[i][metric_list.index('uc_upa_tx_ok')]) + \
+                                            int(data_period_parsed[i][metric_list.index('pp_upa_tx_ok')])
+        elif result_list[j] == 'UTU':
+            if float(data_period_result[i][result_list.index('UTS')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_result[i][result_list.index('UTO')]) / float(data_period_result[i][result_list.index('UTS')]), 2)
+        elif result_list[j] == 'URS':
+            data_period_result[i][j] = int(data_period_parsed[i][metric_list.index('sch_bc_upa_rx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_uc_upa_rx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_pp_upa_rx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('bc_upa_rx_ts')]) + \
+                                            int(data_period_parsed[i][metric_list.index('uc_upa_rx_ts')]) + \
+                                            int(data_period_parsed[i][metric_list.index('pp_upa_rx_ts')])
+        elif result_list[j] == 'URR':
+            data_period_result[i][j] = int(data_period_parsed[i][metric_list.index('sch_bc_upa_rx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_uc_upa_rx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_pp_upa_rx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('bc_upa_rx_rs')]) + \
+                                            int(data_period_parsed[i][metric_list.index('uc_upa_rx_rs')]) + \
+                                            int(data_period_parsed[i][metric_list.index('pp_upa_rx_rs')])
+        elif result_list[j] == 'URO':
+            data_period_result[i][j] = int(data_period_parsed[i][metric_list.index('sch_bc_upa_rx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_uc_upa_rx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('sch_pp_upa_rx')]) + \
+                                            int(data_period_parsed[i][metric_list.index('bc_upa_rx_ok')]) + \
+                                            int(data_period_parsed[i][metric_list.index('uc_upa_rx_ok')]) + \
+                                            int(data_period_parsed[i][metric_list.index('pp_upa_rx_ok')])
+        elif result_list[j] == 'URU':
+            if float(data_period_result[i][result_list.index('URS')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round(float(data_period_result[i][result_list.index('URO')]) / float(data_period_result[i][result_list.index('URS')]), 2)
+        elif result_list[j] == 'UU':
+            if float(data_period_result[i][result_list.index('UTS')]) + float(data_period_result[i][result_list.index('URS')]) == 0:
+                data_period_result[i][j] = 'NaN'
+            else:
+                data_period_result[i][j] = round((float(data_period_result[i][result_list.index('UTO')]) + float(data_period_result[i][result_list.index('URO')])) / (float(data_period_result[i][result_list.index('UTS')]) + float(data_period_result[i][result_list.index('URS')])), 2)
+
         elif result_list[j] == 'SCR':
             if float(data_period_parsed[i][metric_list.index('asso_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
@@ -906,12 +1025,12 @@ for i in range(NODE_NUM):
                               + float(data_period_parsed[i][metric_list.index('sch_uc_bst_rx')]) + \
                               + float(data_period_parsed[i][metric_list.index('sch_pp_bst_tx')]) + \
                               + float(data_period_parsed[i][metric_list.index('sch_pp_bst_rx')]) + \
-                              + float(data_period_parsed[i][metric_list.index('bc_ep_tx_ts')]) + \
-                              + float(data_period_parsed[i][metric_list.index('bc_ep_rx_ts')]) + \
-                              + float(data_period_parsed[i][metric_list.index('uc_ep_tx_ts')]) + \
-                              + float(data_period_parsed[i][metric_list.index('uc_ep_rx_ts')]) + \
-                              + float(data_period_parsed[i][metric_list.index('pp_ep_tx_ts')]) + \
-                              + float(data_period_parsed[i][metric_list.index('pp_ep_rx_ts')])
+                              + float(data_period_parsed[i][metric_list.index('bc_upa_tx_ts')]) + \
+                              + float(data_period_parsed[i][metric_list.index('bc_upa_rx_ts')]) + \
+                              + float(data_period_parsed[i][metric_list.index('uc_upa_tx_ts')]) + \
+                              + float(data_period_parsed[i][metric_list.index('uc_upa_rx_ts')]) + \
+                              + float(data_period_parsed[i][metric_list.index('pp_upa_tx_ts')]) + \
+                              + float(data_period_parsed[i][metric_list.index('pp_upa_rx_ts')])
                 data_period_result[i][j] = round(all_scheduled / float(data_period_parsed[i][metric_list.index('asso_ts')]) * 100, 2)
         elif result_list[j] == 'CTOR':
             if float(data_period_parsed[i][metric_list.index('sch_bc')]) == 0:
@@ -986,79 +1105,79 @@ for i in range(NODE_NUM):
         elif result_list[j] == 'ETOR':
             all_data_tx_operations = float(data_period_parsed[i][metric_list.index('uc_tx_op')]) + \
                                      float(data_period_parsed[i][metric_list.index('pp_tx_op')]) + \
-                                     float(data_period_parsed[i][metric_list.index('uc_ep_tx_rs')]) + \
-                                     float(data_period_parsed[i][metric_list.index('pp_ep_tx_rs')])
+                                     float(data_period_parsed[i][metric_list.index('uc_upa_tx_rs')]) + \
+                                     float(data_period_parsed[i][metric_list.index('pp_upa_tx_rs')])
             if all_data_tx_operations == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                ep_data_tx_operations = float(data_period_parsed[i][metric_list.index('uc_ep_tx_rs')]) + \
-                                        float(data_period_parsed[i][metric_list.index('pp_ep_tx_rs')])
+                ep_data_tx_operations = float(data_period_parsed[i][metric_list.index('uc_upa_tx_rs')]) + \
+                                        float(data_period_parsed[i][metric_list.index('pp_upa_tx_rs')])
                 data_period_result[i][j] = round(ep_data_tx_operations / all_data_tx_operations * 100, 2)
         elif result_list[j] == 'EROR':
             all_data_rx_operations = float(data_period_parsed[i][metric_list.index('uc_rx_op')]) + \
                                      float(data_period_parsed[i][metric_list.index('pp_rx_op')]) + \
-                                     float(data_period_parsed[i][metric_list.index('uc_ep_rx_rs')]) + \
-                                     float(data_period_parsed[i][metric_list.index('pp_ep_rx_rs')])
+                                     float(data_period_parsed[i][metric_list.index('uc_upa_rx_rs')]) + \
+                                     float(data_period_parsed[i][metric_list.index('pp_upa_rx_rs')])
             if all_data_rx_operations == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                ep_data_rx_operations = float(data_period_parsed[i][metric_list.index('uc_ep_rx_rs')]) + \
-                                        float(data_period_parsed[i][metric_list.index('pp_ep_rx_rs')])
+                ep_data_rx_operations = float(data_period_parsed[i][metric_list.index('uc_upa_rx_rs')]) + \
+                                        float(data_period_parsed[i][metric_list.index('pp_upa_rx_rs')])
                 data_period_result[i][j] = round(ep_data_rx_operations / all_data_rx_operations * 100, 2)
         elif result_list[j] == 'CETR':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('bc_ep_tx_rs')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('bc_upa_tx_rs')]
         elif result_list[j] == 'CERR':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('bc_ep_rx_rs')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('bc_upa_rx_rs')]
         elif result_list[j] == 'UETR':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('uc_ep_tx_rs')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('uc_upa_tx_rs')]
         elif result_list[j] == 'UERR':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('uc_ep_rx_rs')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('uc_upa_rx_rs')]
         elif result_list[j] == 'PETR':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_ep_tx_rs')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_upa_tx_rs')]
         elif result_list[j] == 'PERR':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_ep_rx_rs')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_upa_rx_rs')]
         elif result_list[j] == 'CETO':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('bc_ep_tx_ok')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('bc_upa_tx_ok')]
         elif result_list[j] == 'CERO':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('bc_ep_rx_ok')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('bc_upa_rx_ok')]
         elif result_list[j] == 'UETO':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('uc_ep_tx_ok')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('uc_upa_tx_ok')]
         elif result_list[j] == 'UERO':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('uc_ep_rx_ok')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('uc_upa_rx_ok')]
         elif result_list[j] == 'PETO':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_ep_tx_ok')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_upa_tx_ok')]
         elif result_list[j] == 'PERO':
-            data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_ep_rx_ok')]
+            data_period_result[i][j] = data_period_parsed[i][metric_list.index('pp_upa_rx_ok')]
         elif result_list[j] == 'CETE':
-            if float(data_period_parsed[i][metric_list.index('bc_ep_tx_ts')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('bc_upa_tx_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('bc_ep_tx_ok')]) / float(data_period_parsed[i][metric_list.index('bc_ep_tx_ts')]), 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('bc_upa_tx_ok')]) / float(data_period_parsed[i][metric_list.index('bc_upa_tx_ts')]), 2)
         elif result_list[j] == 'CERE':
-            if float(data_period_parsed[i][metric_list.index('bc_ep_rx_ts')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('bc_upa_rx_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('bc_ep_rx_ok')]) / float(data_period_parsed[i][metric_list.index('bc_ep_rx_ts')]), 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('bc_upa_rx_ok')]) / float(data_period_parsed[i][metric_list.index('bc_upa_rx_ts')]), 2)
         elif result_list[j] == 'UETE':
-            if float(data_period_parsed[i][metric_list.index('uc_ep_tx_ts')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('uc_upa_tx_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('uc_ep_tx_ok')]) / float(data_period_parsed[i][metric_list.index('uc_ep_tx_ts')]), 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('uc_upa_tx_ok')]) / float(data_period_parsed[i][metric_list.index('uc_upa_tx_ts')]), 2)
         elif result_list[j] == 'UERE':
-            if float(data_period_parsed[i][metric_list.index('uc_ep_rx_ts')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('uc_upa_rx_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('uc_ep_rx_ok')]) / float(data_period_parsed[i][metric_list.index('uc_ep_rx_ts')]), 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('uc_upa_rx_ok')]) / float(data_period_parsed[i][metric_list.index('uc_upa_rx_ts')]), 2)
         elif result_list[j] == 'PETE':
-            if float(data_period_parsed[i][metric_list.index('pp_ep_tx_ts')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('pp_upa_tx_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('pp_ep_tx_ok')]) / float(data_period_parsed[i][metric_list.index('pp_ep_tx_ts')]), 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('pp_upa_tx_ok')]) / float(data_period_parsed[i][metric_list.index('pp_upa_tx_ts')]), 2)
         elif result_list[j] == 'PERE':
-            if float(data_period_parsed[i][metric_list.index('pp_ep_rx_ts')]) == 0:
+            if float(data_period_parsed[i][metric_list.index('pp_upa_rx_ts')]) == 0:
                 data_period_result[i][j] = 'NaN'
             else:
-                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('pp_ep_rx_ok')]) / float(data_period_parsed[i][metric_list.index('pp_ep_rx_ts')]), 2)
+                data_period_result[i][j] = round(float(data_period_parsed[i][metric_list.index('pp_upa_rx_ok')]) / float(data_period_parsed[i][metric_list.index('pp_upa_rx_ts')]), 2)
 
 
 # STEP-4-6: [data period] print data_period_result

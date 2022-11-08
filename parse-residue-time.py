@@ -236,7 +236,7 @@ for i in range(NODE_NUM):
         if case_parsed[i][j] == 0:
             case_result[i][j] = 'NaN'
         else:
-            case_result[i][j] = round(case_time[i][j] / case_parsed[i][j] / 10000 * 100, 2)
+            case_result[i][j] = round(case_time[i][j] / case_parsed[i][j], 1)
 
 print('----- Cases -----')
 #for i in range(CASE_NUM - 1):

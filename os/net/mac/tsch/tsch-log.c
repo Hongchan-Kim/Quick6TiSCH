@@ -108,7 +108,9 @@ tsch_log_process_pending(void)
         log_lladdr_compact(&log->tx.dest);
         printf(", len %3u, seq %3u, st %d %2d",
                 log->tx.datalen, log->tx.seqno, log->tx.mac_tx_status, log->tx.num_tx);
-        printf(", u_o %u, idle %d", log->tx.unused_offset_time, log->tx.idle_time);
+        printf(", asap %u %u %u %u %u", log->tx.asap_unused_offset_time, log->tx.asap_idle_time,
+                                        log->tx.asap_curr_slot_len, log->tx.asap_num_of_slots,
+                                        log->tx.asap_ack_len);
 #if ENABLE_LOG_TSCH_WITH_APP_FOOTER
         if(log->tx.app_magic == APP_DATA_MAGIC) {
           printf(", a_seq %lx", log->tx.app_seqno);
@@ -174,7 +176,9 @@ tsch_log_process_pending(void)
                 log->rx.datalen, log->rx.seqno);
         printf(", edr %3d", (int)log->rx.estimated_drift);
         printf(", rssi %3d", log->rx.rssi);
-        printf(", u_o %u, idle %d", log->tx.unused_offset_time, log->tx.idle_time);
+        printf(", asap %u %u %u %u %u", log->rx.asap_unused_offset_time, log->rx.asap_idle_time,
+                                        log->rx.asap_curr_slot_len, log->rx.asap_num_of_slots,
+                                        log->rx.asap_ack_len);
 #if ENABLE_LOG_TSCH_WITH_APP_FOOTER
         if(log->rx.app_magic == APP_DATA_MAGIC) {
           printf(", a_seq %lx", log->rx.app_seqno);
