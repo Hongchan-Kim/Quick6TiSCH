@@ -1533,9 +1533,14 @@ eb_input(struct input_packet *current_input)
       }
 
 #if WITH_SLA /* Non-coordinator: update SLA variables and timeslot length */
+      uint64_t curr_eb_rx_asn = (uint64_t)(current_input->rx_asn.ls4b) + ((uint64_t)(current_input->rx_asn.ms1b) << 32);
+      uint64_t curr_eb_ie_asn = (uint64_t)(eb_ies.ie_asn.ls4b) + ((uint64_t)(eb_ies.ie_asn.ms1b) << 32);
+
       if(tsch_timing_us[tsch_ts_timeslot_length] != eb_ies.ie_sla_curr_timeslot_len) {
 #if SLA_DBG_ESSENTIAL
-        LOG_INFO("sla ei invalid %u %u\n",
+        LOG_INFO("sla ei %llx %llx invalid %u %u\n",
+                curr_eb_rx_asn,
+                curr_eb_ie_asn,
                 tsch_timing_us[tsch_ts_timeslot_length],
                 eb_ies.ie_sla_curr_timeslot_len);
 #endif
@@ -1549,7 +1554,9 @@ eb_input(struct input_packet *current_input)
         sla_next_timeslot_length = eb_ies.ie_sla_next_timeslot_len;
 
 #if SLA_DBG_ESSENTIAL
-        LOG_INFO("sla ei t_asn %llx c_ts %u n_ts %u\n", 
+        LOG_INFO("sla ei %llx %llx t_asn %llx c_ts %u n_ts %u\n", 
+                curr_eb_rx_asn,
+                curr_eb_ie_asn,
                 (uint64_t)(sla_triggering_asn.ls4b) + ((uint64_t)(sla_triggering_asn.ms1b) << 32),
                 tsch_timing_us[tsch_ts_timeslot_length],
                 sla_next_timeslot_length);
@@ -1559,7 +1566,9 @@ eb_input(struct input_packet *current_input)
       if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_timeslot_length) {
         if(sla_in_rapid_eb_broadcasting == 0) {
 #if SLA_DBG_ESSENTIAL
-          LOG_INFO("sla ei start rapid_eb c_ts %u n_ts %u\n",
+          LOG_INFO("sla ei %llx %llx start rapid_eb c_ts %u n_ts %u\n",
+                    curr_eb_rx_asn,
+                    curr_eb_ie_asn,
                     tsch_timing_us[tsch_ts_timeslot_length], 
                     sla_next_timeslot_length);
 #endif

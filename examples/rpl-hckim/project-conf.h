@@ -145,7 +145,7 @@
 #define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
 
 #elif WITH_IOTLAB
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 20)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
 
@@ -425,7 +425,7 @@
  * UPA: Utility-based Packet Aggregation
  */
 /* Need to be tested */
-#define WITH_UPA                                   0
+#define WITH_UPA                                   1
 #if WITH_UPA
 #define UPA_TRIPLE_CCA                             1
 #define UPA_RX_SLOT_POLICY                         1 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
@@ -442,10 +442,10 @@
 /*
  * Adaptive timeslot length
  */
-#define WITH_SLA                                   0
+#define WITH_SLA                                   1
 #if WITH_SLA
 #define SLA_DBG_ESSENTIAL                          1
-#define SLA_DBG_OPERATION                          1
+#define SLA_DBG_OPERATION                          0
 
 #if WITH_UPA
 #define SLA_GUARD_TIME_TIMESLOTS                   6
