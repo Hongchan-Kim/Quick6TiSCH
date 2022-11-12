@@ -1518,32 +1518,54 @@ packet_sent(void *ptr, int status, int transmissions)
     ip_ucast_transmission_count += transmissions;
     if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
       ip_ucast_icmp6_transmission_count += transmissions;
-      LOG_INFO("HCK ip_uc_tx %lu ip_uc_icmp6_tx %lu |\n", ip_ucast_transmission_count, ip_ucast_icmp6_transmission_count);
+      LOG_HK("ip_uc_tx %lu ip_uc_icmp6_tx %lu |\n", 
+            ip_ucast_transmission_count, 
+            ip_ucast_icmp6_transmission_count);
     } else {
       ip_ucast_udp_transmission_count += transmissions;
-      LOG_INFO("HCK ip_uc_tx %lu ip_uc_udp_tx %lu |\n", ip_ucast_transmission_count, ip_ucast_udp_transmission_count);
+      LOG_HK("ip_uc_tx %lu ip_uc_udp_tx %lu |\n", 
+            ip_ucast_transmission_count, 
+            ip_ucast_udp_transmission_count);
     }
   }
   if(status == MAC_TX_OK) {
     ++ip_ucast_ok_count;
     if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-      LOG_INFO("HCK ip_uc_ok %u ip_uc_icmp6_ok %u |\n", ip_ucast_ok_count, ++ip_ucast_icmp6_ok_count);
+      ++ip_ucast_icmp6_ok_count;
+      LOG_HK("ip_uc_ok %u ip_uc_icmp6_ok %u |\n", 
+            ip_ucast_ok_count, 
+            ip_ucast_icmp6_ok_count);
     } else {
-      LOG_INFO("HCK ip_uc_ok %u ip_uc_udp_ok %u |\n", ip_ucast_ok_count, ++ip_ucast_udp_ok_count);
+      ++ip_ucast_udp_ok_count;
+      LOG_HK("ip_uc_ok %u ip_uc_udp_ok %u |\n", 
+            ip_ucast_ok_count, 
+            ip_ucast_udp_ok_count);
     }
   } else if(status == MAC_TX_NOACK) {
     ++ip_ucast_noack_count;
     if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-      LOG_INFO("HCK ip_uc_noack %u ip_uc_icmp6_noack %u |\n", ip_ucast_noack_count, ++ip_ucast_icmp6_noack_count);
+      ++ip_ucast_icmp6_noack_count;
+      LOG_HK("ip_uc_noack %u ip_uc_icmp6_noack %u |\n", 
+            ip_ucast_noack_count, 
+            ip_ucast_icmp6_noack_count);
     } else {
-      LOG_INFO("HCK ip_uc_noack %u ip_uc_udp_noack %u |\n", ip_ucast_noack_count, ++ip_ucast_udp_noack_count);
+      ++ip_ucast_udp_noack_count;
+      LOG_HK("ip_uc_noack %u ip_uc_udp_noack %u |\n", 
+            ip_ucast_noack_count, 
+            ip_ucast_udp_noack_count);
     }
   } else if(status == MAC_TX_ERR || status == MAC_TX_ERR_FATAL) {
     ++ip_ucast_error_count;
     if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-      LOG_INFO("HCK ip_uc_err %u ip_uc_icmp6_err %u |\n", ip_ucast_error_count, ++ip_ucast_icmp6_error_count);
+      ++ip_ucast_icmp6_error_count;
+      LOG_HK("ip_uc_err %u ip_uc_icmp6_err %u |\n", 
+            ip_ucast_error_count, 
+            ip_ucast_icmp6_error_count);
     } else {
-      LOG_INFO("HCK ip_uc_err %u ip_uc_udp_err %u |\n", ip_ucast_error_count, ++ip_ucast_udp_error_count);
+      ++ip_ucast_udp_error_count;
+      LOG_HK("ip_uc_err %u ip_uc_udp_err %u |\n", 
+            ip_ucast_error_count, 
+            ip_ucast_udp_error_count);
     }
   }
 

@@ -466,7 +466,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
     uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
 
-    LOG_INFO("HCK QU af1 uc %u at %llx q %d %d %d %d |\n", 
+    LOG_HK_QUEUE("af1 uc %u at %llx q %d %d %d %d |\n", 
               is_unicast, 
               tsch_queue_add_packet_asn,
               global_queued_pkts,
@@ -513,7 +513,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
             uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
 
-            LOG_INFO("HCK QU as uc %u at %llx q %d %d %d %d |\n", 
+            LOG_HK_QUEUE("as uc %u at %llx q %d %d %d %d |\n", 
                       is_unicast, 
                       tsch_queue_add_packet_asn,
                       global_queued_pkts,
@@ -537,7 +537,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
   uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
 
-  LOG_INFO("HCK QU af2 uc %u at %llx q %d %d %d %d |\n", 
+  LOG_HK_QUEUE("af2 uc %u at %llx q %d %d %d %d |\n", 
             is_unicast, 
             tsch_queue_add_packet_asn,
             global_queued_pkts,
@@ -607,7 +607,7 @@ tsch_queue_free_packet(struct tsch_packet *p)
     int eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
     int uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
 
-  LOG_INFO("HCK QU f uc %u at %llx q %d %d %d %d |\n", 
+  LOG_HK_QUEUE("f uc %u at %llx q %d %d %d %d |\n", 
             is_unicast, 
             tsch_queue_free_packet_asn,
             global_queued_pkts,
