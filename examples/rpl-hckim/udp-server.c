@@ -148,7 +148,9 @@ reset_log()
   reset_log_simple_energest();    /* simple-energest.c */
 
   uint64_t app_server_reset_log_asn = tsch_calculate_current_asn();
-  LOG_INFO("HCK reset_log %d at %llx |\n", tsch_queue_global_packet_count(), app_server_reset_log_asn);
+  LOG_HK_TIMING("reset_log %d at %llx |\n", 
+                tsch_queue_global_packet_count(), 
+                app_server_reset_log_asn);
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -169,7 +171,7 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t sender_index = sender_id - 1;
 
   if(sender_index == NODE_NUM) {
-    LOG_INFO("Fail to receive: out of index\n");
+    LOG_HK_EXTRA("Fail to receive: out of index\n");
     return;
   }
 
@@ -179,29 +181,27 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_up_sequence_is_duplicate(sender_id, app_received_seqno_count)) {
-    LOG_INFO("HCK dup_up a_seq %lx asn %llx from ", 
+    LOG_HK_EXTRA("dup_up from %u a_seq %lx at %llx\n", 
+              sender_id,
               app_received_seqno,
               app_rx_up_asn);
-    LOG_INFO_6ADDR(sender_addr);
-    LOG_INFO_("\n");
   } else {
     app_up_sequence_register_seqno(sender_id, app_received_seqno_count);
-    LOG_INFO("HCK rx_up %u from %u %x (%u %x) a_seq %lx asn %llx len %u lt %llu %llx | Received message from ", 
-              ++iotlab_nodes[sender_index][2],
-              sender_index + 1, sender_index + 1, 
-              iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1],
-              app_received_seqno,
-              app_rx_up_asn,
-              datalen, 
-              app_rx_up_asn - app_tx_up_asn,
-              app_tx_up_asn);
+    LOG_INFO("Received message from ");
     LOG_INFO_6ADDR(sender_addr);
     LOG_INFO_("\n");
 
+    ++iotlab_nodes[sender_index][2];
     lt_up_sum[sender_index] += (app_rx_up_asn - app_tx_up_asn);
-    LOG_INFO("HCK lt_up_sum %llu from %u %x (%u %x) |\n", lt_up_sum[sender_index],
-              sender_index + 1, sender_index + 1, 
-              iotlab_nodes[sender_index][0], iotlab_nodes[sender_index][1]);
+    LOG_HK("rx_up %u from %u lt_up_sum %llu | a_seq %lx len %u at %llx (%llu %llx)\n", 
+              iotlab_nodes[sender_index][2],
+              sender_id,
+              lt_up_sum[sender_index], //
+              app_received_seqno,
+              datalen,
+              app_rx_up_asn,
+              app_tx_up_asn,
+              app_rx_up_asn - app_tx_up_asn);
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -299,14 +299,16 @@ PROCESS_THREAD(udp_server_process, ev, data)
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 
         /* Send to clients */
-        uint16_t dest_index = dest_id - 1;
-        LOG_INFO("HCK tx_down %u to %u %x (%u %x) a_seq %lx asn %llx len %u | Sending message to ", 
-                  count, 
-                  dest_id, dest_id,
-                  iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
-                  app_seqno, app_tx_down_asn, current_payload_len);
+        LOG_INFO("Sending message to ");
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
+
+        LOG_HK("tx_down %u to %u | a_seq %lx len %u at %llx\n", 
+                  count,
+                  dest_id,
+                  app_seqno,
+                  current_payload_len, 
+                  app_tx_down_asn);
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
@@ -338,14 +340,16 @@ PROCESS_THREAD(udp_server_process, ev, data)
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 
         /* Send to clients */
-        uint16_t dest_index = dest_id - 1;
-        LOG_INFO("HCK tx_down %u to %u %x (%u %x) a_seq %lx asn %x len %u | Sending message to ", 
-                  count, 
-                  dest_id, dest_id,
-                  iotlab_nodes[dest_index][0], iotlab_nodes[dest_index][1],
-                  app_seqno, app_tx_down_asn, current_payload_len);
+        LOG_INFO("Sending message to ");
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
+
+        LOG_HK("tx_down %u to %u | a_seq %lx len %u at %llx\n", 
+                  count,
+                  dest_id,
+                  app_seqno,
+                  current_payload_len, 
+                  app_tx_down_asn);
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 

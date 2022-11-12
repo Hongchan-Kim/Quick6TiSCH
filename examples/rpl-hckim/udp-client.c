@@ -132,7 +132,9 @@ reset_log()
   reset_log_simple_energest();    /* simple-energest.c */
 
   uint64_t app_client_reset_log_asn = tsch_calculate_current_asn();
-  LOG_INFO("HCK reset_log %d at %llx |\n", tsch_queue_global_packet_count(), app_client_reset_log_asn);
+  LOG_HK_TIMING("reset_log %d at %llx |\n", 
+                tsch_queue_global_packet_count(), 
+                app_client_reset_log_asn);
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -155,25 +157,26 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_down_sequence_is_duplicate(app_received_seqno_count)) {
-    LOG_INFO("HCK dup_down a_seq %lx asn %llx from ", 
+    LOG_HK_EXTRA("dup_down from %u a_seq %lx at %llx\n",
+              HCK_GET_NODE_ID_FROM_IPADDR(sender_addr),
               app_received_seqno,
               app_rx_down_asn);
-    LOG_INFO_6ADDR(sender_addr);
-    LOG_INFO_("\n");
   } else {
     app_down_sequence_register_seqno(app_received_seqno_count);
-    LOG_INFO("HCK rx_down %u a_seq %lx asn %llx len %u lt %llu %llx | Received message from ",
-              ++app_rxd_count,
-              app_received_seqno,
-              app_rx_down_asn,
-              datalen, 
-              app_rx_down_asn - app_tx_down_asn,
-              app_tx_down_asn);
+    LOG_INFO("Received message from ");
     LOG_INFO_6ADDR(sender_addr);
     LOG_INFO_("\n");
 
     lt_down_sum += (app_rx_down_asn - app_tx_down_asn);
-    LOG_INFO("HCK lt_down_sum %llu |\n", lt_down_sum);
+    LOG_HK("rx_down %u lt_down_sum %llu | from %u a_seq %lx len %u at %llx (%llu %llx)\n",
+              ++app_rxd_count,
+              lt_down_sum, //
+              HCK_GET_NODE_ID_FROM_IPADDR(sender_addr),
+              app_received_seqno,
+              datalen, 
+              app_rx_down_asn,
+              app_tx_down_asn,
+              app_rx_down_asn - app_tx_down_asn);
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -246,7 +249,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
     else if(data == &opt_start_timer || data == &opt_periodic_timer) {
       if(data == &opt_start_timer) {
         uint64_t app_opt_start_asn = tsch_calculate_current_asn();
-        LOG_INFO("HCK opt_start at %llx |\n", app_opt_start_asn);
+        LOG_HK_EXTRA("opt_start at %llx |\n", app_opt_start_asn);
       }
       if(count <= APP_TOPOLOGY_OPT_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
@@ -262,10 +265,16 @@ PROCESS_THREAD(udp_client_process, ev, data)
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 
         /* Send to DAG root */
-        LOG_INFO("HCK tx_up %u a_seq %lx asn %llx len %u opt | Sending message to ", 
-                  count, app_seqno, app_tx_up_asn, current_payload_len);
+        LOG_INFO("Sending message to ");
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
+
+        LOG_HK("tx_up %u | opt to %u a_seq %lx len %u at %llx\n", 
+                  count,
+                  HCK_GET_NODE_ID_FROM_IPADDR(&dest_ipaddr),
+                  app_seqno,
+                  current_payload_len,
+                  app_tx_up_asn);
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
@@ -302,10 +311,16 @@ PROCESS_THREAD(udp_client_process, ev, data)
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 
         /* Send to DAG root */
-        LOG_INFO("HCK tx_up %u a_seq %lx asn %llx len %u | Sending message to ", 
-                  count, app_seqno, app_tx_up_asn, current_payload_len);
+        LOG_INFO("Sending message to ");
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
+
+        LOG_HK("tx_up %u | to %u a_seq %lx len %u at %llx\n", 
+                  count,
+                  HCK_GET_NODE_ID_FROM_IPADDR(&dest_ipaddr),
+                  app_seqno,
+                  current_payload_len,
+                  app_tx_up_asn);
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
@@ -334,10 +349,16 @@ PROCESS_THREAD(udp_client_process, ev, data)
         memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
 
         /* Send to DAG root */
-        LOG_INFO("HCK tx_up %u a_seq %lx asn %llx len %u | Sending message to ", 
-                  count, app_seqno, app_tx_up_asn, current_payload_len);
+        LOG_INFO("Sending message to ");
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
+
+        LOG_HK("tx_up %u | to %u a_seq %lx len %u at %llx\n", 
+                  count,
+                  HCK_GET_NODE_ID_FROM_IPADDR(&dest_ipaddr),
+                  app_seqno,
+                  current_payload_len,
+                  app_tx_up_asn);
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
