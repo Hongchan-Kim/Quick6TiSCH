@@ -52,8 +52,6 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
-static uint16_t rpl_dio_reset_count;
-
 /* A configurable function called after update of the RPL DIO interval */
 #ifdef RPL_CALLBACK_NEW_DIO_INTERVAL
 void RPL_CALLBACK_NEW_DIO_INTERVAL(clock_time_t dio_interval);
@@ -158,8 +156,7 @@ rpl_timers_dio_reset(const char *str)
      * don't reset the DIO timer if the current interval is Imin; see
      * Section 4.2, RFC 6206.
      */
-    LOG_INFO("HCK rdt %u | reset DIO timer (%s)\n", ++rpl_dio_reset_count, str);
-    
+    LOG_INFO("reset DIO timer (%s)\n", str);    
     if(!rpl_get_leaf_only()) {
         curr_instance.dag.dio_counter = 0;
         curr_instance.dag.dio_intcurrent = curr_instance.dio_intmin;

@@ -251,9 +251,12 @@ dis_input(void)
   rpl_instance_t *end;
 
   /* DAG Information Solicitation */
-  LOG_INFO("HCK dis_recv %u | Received a DIS from ", ++rpl_dis_recv_count);
+  LOG_INFO("Received a DIS from ");
   LOG_INFO_6ADDR(&UIP_IP_BUF->srcipaddr);
   LOG_INFO_("\n");
+
+  ++rpl_dis_recv_count;
+  LOG_HK("dis_recv %u |\n", rpl_dis_recv_count);
 
   for(instance = &instance_table[0], end = instance + RPL_MAX_INSTANCES;
       instance < end; ++instance) {
@@ -308,9 +311,12 @@ dis_output(uip_ipaddr_t *addr)
     addr = &tmpaddr;
   }
 
-  LOG_INFO("HCK dis_send %u | Sending a DIS to ", ++rpl_dis_send_count);
+  LOG_INFO("Sending a DIS to ");
   LOG_INFO_6ADDR(addr);
   LOG_INFO_("\n");
+
+  ++rpl_dis_send_count;
+  LOG_HK("dis_send %u |\n", rpl_dis_send_count);
 
   uip_icmp6_send(addr, ICMP6_RPL, RPL_CODE_DIS, 2);
 }
@@ -341,9 +347,12 @@ dio_input(void)
   uip_ipaddr_copy(&from, &UIP_IP_BUF->srcipaddr);
 
   /* DAG Information Object */
-  LOG_INFO("HCK dio_recv %u | Received a DIO from ", ++rpl_dio_recv_count);
+  LOG_INFO("Received a DIO from ");
   LOG_INFO_6ADDR(&from);
   LOG_INFO_("\n");
+
+  ++rpl_dio_recv_count;
+  LOG_HK("dio_recv %u |\n", rpl_dio_recv_count);
 
 #if HCK_RPL_FIXED_TOPOLOGY
   uint8_t my_index = node_id - 1;
@@ -351,7 +360,7 @@ dio_input(void)
   uint8_t from_parent_id = HCK_GET_NODE_ID_FROM_IPADDR(&from);
 
   if(from_parent_id != target_parent_id) {
-    LOG_INFO("Discard DIO from non-fixed parent %u (target parent: %u)\n", from_parent_id, target_parent_id);
+    LOG_HK_EXTRA("| Discard DIO from non-fixed parent %u (fixed parent: %u)\n", from_parent_id, target_parent_id);
     goto discard;
   }
 #endif
@@ -662,26 +671,35 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
     }
   }
 
-  LOG_INFO("HCK dioU_send %u | Sending unicast-DIO with rank %u to ",
-         ++rpl_dio_ucast_send_count,
+  LOG_INFO("Sending unicast-DIO with rank %u to ",
          (unsigned)dag->rank);
   LOG_INFO_6ADDR(uc_addr);
   LOG_INFO_("\n");
+
+  ++rpl_dio_ucast_send_count;
+  LOG_HK("dioU_send %u |\n", rpl_dio_ucast_send_count);
+
   uip_icmp6_send(uc_addr, ICMP6_RPL, RPL_CODE_DIO, pos);
 #else /* RPL_LEAF_ONLY */
   /* Unicast requests get unicast replies! */
   if(uc_addr == NULL) {
-    LOG_INFO("HCK dioM_send %u | Sending a multicast-DIO with rank %u\n",
-           ++rpl_dio_mcast_send_count,
+    LOG_INFO("Sending a multicast-DIO with rank %u\n",
            (unsigned)instance->current_dag->rank);
+
+    ++rpl_dio_mcast_send_count;
+    LOG_HK("dioM_send %u |\n", rpl_dio_mcast_send_count);
+
     uip_create_linklocal_rplnodes_mcast(&addr);
     uip_icmp6_send(&addr, ICMP6_RPL, RPL_CODE_DIO, pos);
   } else {
-    LOG_INFO("HCK dioU_send %u | Sending unicast-DIO with rank %u to ",
-           ++rpl_dio_ucast_send_count,
+    LOG_INFO("Sending unicast-DIO with rank %u to ",
            (unsigned)instance->current_dag->rank);
     LOG_INFO_6ADDR(uc_addr);
     LOG_INFO_("\n");
+
+    ++rpl_dio_ucast_send_count;
+    LOG_HK("dioU_send %u |\n", rpl_dio_ucast_send_count);
+
     uip_icmp6_send(uc_addr, ICMP6_RPL, RPL_CODE_DIO, pos);
   }
 #endif /* RPL_LEAF_ONLY */
@@ -879,12 +897,13 @@ dao_input_storing(void)
         uint8_t out_seq;
         out_seq = prepare_for_dao_fwd(sequence, rep);
 
-        LOG_INFO("HCK daoN_fwd %u |\n", ++rpl_dao_nopath_fwd_count);
-
         LOG_DBG("Forwarding No-path DAO to parent - out_seq:%d ",
                out_seq);
         LOG_DBG_6ADDR(rpl_parent_get_ipaddr(dag->preferred_parent));
         LOG_DBG_("\n");
+
+        ++rpl_dao_nopath_fwd_count;
+        LOG_HK("daoN_fwd %u |\n", rpl_dao_nopath_fwd_count);
 
         buffer = UIP_ICMP_PAYLOAD;
         buffer[3] = out_seq; /* add an outgoing seq no before fwd */
@@ -985,10 +1004,12 @@ fwd_dao:
         }
       }
 
-      LOG_INFO("HCK daoP_fwd %u |\n", ++rpl_dao_path_fwd_count);
       LOG_DBG("Forwarding DAO to parent ");
       LOG_DBG_6ADDR(rpl_parent_get_ipaddr(dag->preferred_parent));
       LOG_DBG_(" in seq: %d out seq: %d\n", sequence, out_seq);
+
+      ++rpl_dao_path_fwd_count;
+      LOG_HK("daoP_fwd %u |\n", rpl_dao_path_fwd_count);
 
       buffer = UIP_ICMP_PAYLOAD;
       buffer[3] = out_seq; /* add an outgoing seq no before fwd */
@@ -1126,9 +1147,12 @@ dao_input(void)
   uint8_t instance_id;
 
   /* Destination Advertisement Object */
-  LOG_INFO("HCK dao_recv %u | Received a DAO from ", ++rpl_dao_recv_count);
+  LOG_INFO("Received a DAO from ");
   LOG_INFO_6ADDR(&UIP_IP_BUF->srcipaddr);
   LOG_INFO_("\n");
+
+  ++rpl_dao_recv_count;
+  LOG_HK("dao_recv %u |\n", rpl_dao_recv_count);
 
   instance_id = UIP_ICMP_PAYLOAD[0];
   instance = rpl_get_instance(instance_id);
@@ -1357,12 +1381,6 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
     dest_ipaddr = &parent->dag->dag_id;
   }
 
-  if(lifetime == RPL_ZERO_LIFETIME) {
-    LOG_INFO("HCK daoN_send %u |\n", ++rpl_dao_nopath_send_count);
-  } else {
-    LOG_INFO("HCK daoP_send %u |\n", ++rpl_dao_path_send_count);
-  }
-
   LOG_INFO("Sending a %sDAO with sequence number %u, lifetime %u, prefix ",
          lifetime == RPL_ZERO_LIFETIME ? "No-Path " : "", seq_no, lifetime);
 
@@ -1372,6 +1390,14 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   LOG_INFO_(" , parent ");
   LOG_INFO_6ADDR(parent_ipaddr);
   LOG_INFO_("\n");
+
+  if(lifetime == RPL_ZERO_LIFETIME) {
+    ++rpl_dao_nopath_send_count;
+    LOG_HK("daoN_send %u |\n", rpl_dao_nopath_send_count);
+  } else {
+    ++rpl_dao_path_send_count;
+    LOG_HK("daoP_send %u |\n", rpl_dao_path_send_count);
+  }
 
   if(dest_ipaddr != NULL) {
     uip_icmp6_send(dest_ipaddr, ICMP6_RPL, RPL_CODE_DAO, pos);
@@ -1419,12 +1445,14 @@ dao_ack_input(void)
     return;
   }
 
-  LOG_INFO("HCK daoA_recv %u | Received a DAO %s with sequence number %d (%d) and status %d from ",
-         ++rpl_dao_ack_recv_count,
+  LOG_INFO("Received a DAO %s with sequence number %d (%d) and status %d from ",
          status < 128 ? "ACK" : "NACK",
          sequence, instance->my_dao_seqno, status);
   LOG_INFO_6ADDR(&UIP_IP_BUF->srcipaddr);
   LOG_INFO_("\n");
+
+  ++rpl_dao_ack_recv_count;
+  LOG_HK("daoA_recv %u |\n", rpl_dao_ack_recv_count);
 
   if(sequence == instance->my_dao_seqno) {
     instance->has_downward_route = status < 128;
@@ -1486,11 +1514,12 @@ dao_ack_output(rpl_instance_t *instance, uip_ipaddr_t *dest, uint8_t sequence,
 #if RPL_WITH_DAO_ACK
   unsigned char *buffer;
 
-  LOG_INFO("HCK daoA_send %u | Sending a DAO %s with sequence number %d to ", 
-          ++rpl_dao_ack_send_count,
-          status < 128 ? "ACK" : "NACK", sequence);
+  LOG_INFO("Sending a DAO %s with sequence number %d to ", status < 128 ? "ACK" : "NACK", sequence);
   LOG_INFO_6ADDR(dest);
   LOG_INFO_(" with status %d\n", status);
+
+  ++rpl_dao_ack_send_count;
+  LOG_HK("daoA_send %u |\n", rpl_dao_ack_send_count);
 
   buffer = UIP_ICMP_PAYLOAD;
 

@@ -199,14 +199,15 @@ rpl_purge_routes(void)
 
       if((tsch_is_associated == 1) && rpl_has_joined()) {
         int my_subtree_node_size = uip_ds6_route_num_routes();
-        LOG_INFO("HCK subtree_now %d |\n", my_subtree_node_size);
+        LOG_HK("subtree_now %d |\n", my_subtree_node_size);
 
         subtree_measure_sum += (uint32_t)my_subtree_node_size;
         subtree_measure_count++;
       }
 
       next_subtree_measure = 0;
-      LOG_INFO("HCK subtree_sum %lu subtree_cnt %lu |\n", subtree_measure_sum, subtree_measure_count);
+      LOG_HK("subtree_sum %lu subtree_cnt %lu |\n", 
+            subtree_measure_sum, subtree_measure_count);
     }
   } 
 }

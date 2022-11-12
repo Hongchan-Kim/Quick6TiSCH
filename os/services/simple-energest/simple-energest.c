@@ -124,7 +124,7 @@ simple_energest_step(void)
   dc_rx_sum += to_per_ten_thousand(delta_rx, delta_time);
   dc_total_sum += to_per_ten_thousand(delta_tx+delta_rx, delta_time);
 
-  LOG_INFO("HCK dc_count %lu dc_tx_sum %lu dc_rx_sum %lu dc_total_sum %lu |\n", 
+  LOG_HK("dc_count %lu dc_tx_sum %lu dc_rx_sum %lu dc_total_sum %lu |\n", 
           dc_count, dc_tx_sum, dc_rx_sum, dc_total_sum);
 }
 /*---------------------------------------------------------------------------*/

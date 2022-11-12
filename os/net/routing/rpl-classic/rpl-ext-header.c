@@ -461,7 +461,11 @@ update_hbh_header(void)
       if((rpl_opt->flags & RPL_HDR_OPT_DOWN)) {
         if(uip_ds6_route_lookup(&UIP_IP_BUF->destipaddr) == NULL) {
           rpl_opt->flags |= RPL_HDR_OPT_FWD_ERR;
-          LOG_WARN("HCK fwd_err %u | RPL forwarding error\n", ++rpl_fwd_err_count);
+          LOG_WARN("RPL forwarding error\n");
+
+          ++rpl_fwd_err_count;
+          LOG_HK("fwd_err %u |\n", rpl_fwd_err_count);
+
           /* We should send back the packet to the originating parent,
                 but it is not feasible yet, so we send a No-Path DAO instead */
           LOG_WARN("RPL generate No-Path DAO\n");

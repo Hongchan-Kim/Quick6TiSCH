@@ -128,14 +128,15 @@ handle_periodic_timer(void *ptr)
         && (dag->preferred_parent->rank != RPL_INFINITE_RANK) 
         && (dag->preferred_parent->hop_distance != 0xff)) {
         uint8_t my_hop_distance = dag->preferred_parent->hop_distance + 1;
-        LOG_INFO("HCK hopD_now %u |\n", my_hop_distance);
+        LOG_HK("hopD_now %u |\n", my_hop_distance);
 
         hop_distance_measure_sum += (uint32_t)my_hop_distance;
         hop_distance_measure_count++;
       }
 
       next_hop_distance_measure = 0;
-      LOG_INFO("HCK hopD_sum %lu hopD_cnt %lu |\n", hop_distance_measure_sum, hop_distance_measure_count);
+      LOG_HK("hopD_sum %lu hopD_cnt %lu |\n", 
+            hop_distance_measure_sum, hop_distance_measure_count);
     }
   }
 
@@ -266,7 +267,9 @@ rpl_reset_dio_timer(rpl_instance_t *instance)
 #if !RPL_LEAF_ONLY
   /* Do not reset if we are already on the minimum interval,
      unless forced to do so. */
-  LOG_INFO("HCK rdt %u | reset DIO timer\n", ++rpl_dio_reset_count);
+  ++rpl_dio_reset_count;
+  LOG_HK("rdt %u | reset DIO timer\n", rpl_dio_reset_count);
+
   if(instance->dio_intcurrent > instance->dio_intmin) {
     instance->dio_counter = 0;
     instance->dio_intcurrent = instance->dio_intmin;
