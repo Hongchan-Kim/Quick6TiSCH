@@ -10,6 +10,7 @@
 #include "net/mac/tsch/tsch.h"
 #include "net/routing/rpl-classic/rpl.h"
 #include "services/simple-energest/simple-energest.h"
+#include "orchestra.h"
 
 #include "sys/log.h"
 #define LOG_MODULE "App"
@@ -148,9 +149,11 @@ reset_log()
   reset_log_simple_energest();    /* simple-energest.c */
 
   uint64_t app_server_reset_log_asn = tsch_calculate_current_asn();
-  LOG_HK_TIMING("reset_log %d at %llx |\n", 
-                tsch_queue_global_packet_count(), 
-                app_server_reset_log_asn);
+  LOG_HK("reset_log 1 rs_q_except_eb %d rs_opkn %u | eb_q %d at %llx\n", 
+        tsch_queue_global_packet_count() - tsch_queue_nbr_packet_count(n_eb), 
+        orchestra_parent_knows_us,
+        tsch_queue_nbr_packet_count(n_eb),
+        app_server_reset_log_asn);
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -171,7 +174,7 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t sender_index = sender_id - 1;
 
   if(sender_index == NODE_NUM) {
-    LOG_HK_EXTRA("Fail to receive: out of index\n");
+    LOG_HK("| Fail to receive: out of index\n");
     return;
   }
 
@@ -181,7 +184,7 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_up_sequence_is_duplicate(sender_id, app_received_seqno_count)) {
-    LOG_HK_EXTRA("dup_up from %u a_seq %lx at %llx\n", 
+    LOG_HK("| dup_up from %u a_seq %lx at %llx\n", 
               sender_id,
               app_received_seqno,
               app_rx_up_asn);

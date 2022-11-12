@@ -2618,7 +2618,8 @@ send_packet(mac_callback_t sent, void *ptr)
              TSCH_QUEUE_NUM_PER_NEIGHBOR, tsch_queue_global_packet_count(),
              QUEUEBUF_NUM, p->header_len, queuebuf_datalen(p->qb));
       if(sent == keepalive_packet_sent) {
-        LOG_HK("ka_enq %u |\n", ++tsch_ka_packet_enqueue_count);
+        ++tsch_ka_packet_enqueue_count;
+        LOG_HK("ka_enq %u |\n", tsch_ka_packet_enqueue_count);
       } else {
         ++tsch_ip_packet_enqueue_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {

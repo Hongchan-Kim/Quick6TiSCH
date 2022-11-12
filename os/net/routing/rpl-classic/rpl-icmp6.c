@@ -360,7 +360,8 @@ dio_input(void)
   uint8_t from_parent_id = HCK_GET_NODE_ID_FROM_IPADDR(&from);
 
   if(from_parent_id != target_parent_id) {
-    LOG_HK_EXTRA("| Discard DIO from non-fixed parent %u (fixed parent: %u)\n", from_parent_id, target_parent_id);
+    LOG_HK("| Discard DIO from non-fixed parent %u (fixed parent: %u)\n", 
+            from_parent_id, target_parent_id);
     goto discard;
   }
 #endif

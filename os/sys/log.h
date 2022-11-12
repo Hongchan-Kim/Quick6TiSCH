@@ -239,20 +239,10 @@ extern struct log_module all_modules[];
 #define LOG_HK_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)
 #define LOG_HK_6ADDR(...)      LOG_6ADDR(0, __VA_ARGS__)
 
-#define LOG_HK_EXTRA(...)           LOG(1, 0, "HK:E", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_EXTRA_(...)          LOG(0, 0, "HK:E", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_EXTRA_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
-#define LOG_HK_EXTRA_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
-
 #define LOG_HK_NODE(...)           LOG(1, 0, "HK:N", LOG_COLOR_PRI, __VA_ARGS__)
 #define LOG_HK_NODE_(...)          LOG(0, 0, "HK:N", LOG_COLOR_PRI, __VA_ARGS__)
 #define LOG_HK_NODE_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
 #define LOG_HK_NODE_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
-
-#define LOG_HK_TIMING(...)           LOG(1, 0, "HK:T", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_TIMING_(...)          LOG(0, 0, "HK:T", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_TIMING_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
-#define LOG_HK_TIMING_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
 
 #define LOG_HK_QUEUE(...)           LOG(1, 0, "HK:Q", LOG_COLOR_PRI, __VA_ARGS__)
 #define LOG_HK_QUEUE_(...)          LOG(0, 0, "HK:Q", LOG_COLOR_PRI, __VA_ARGS__)

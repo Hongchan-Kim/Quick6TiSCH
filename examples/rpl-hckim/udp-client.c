@@ -10,6 +10,7 @@
 #include "net/mac/tsch/tsch.h"
 #include "net/routing/rpl-classic/rpl.h"
 #include "services/simple-energest/simple-energest.h"
+#include "orchestra.h"
 
 #include "sys/log.h"
 #define LOG_MODULE "App"
@@ -132,9 +133,11 @@ reset_log()
   reset_log_simple_energest();    /* simple-energest.c */
 
   uint64_t app_client_reset_log_asn = tsch_calculate_current_asn();
-  LOG_HK_TIMING("reset_log %d at %llx |\n", 
-                tsch_queue_global_packet_count(), 
-                app_client_reset_log_asn);
+  LOG_HK("reset_log 1 rs_q_except_eb %d rs_opkn %u | eb_q %d at %llx\n", 
+        tsch_queue_global_packet_count() - tsch_queue_nbr_packet_count(n_eb), 
+        orchestra_parent_knows_us,
+        tsch_queue_nbr_packet_count(n_eb),
+        app_client_reset_log_asn);
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -157,7 +160,7 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_down_sequence_is_duplicate(app_received_seqno_count)) {
-    LOG_HK_EXTRA("dup_down from %u a_seq %lx at %llx\n",
+    LOG_HK("| dup_down from %u a_seq %lx at %llx\n",
               HCK_GET_NODE_ID_FROM_IPADDR(sender_addr),
               app_received_seqno,
               app_rx_down_asn);
@@ -168,8 +171,9 @@ udp_rx_callback(struct simple_udp_connection *c,
     LOG_INFO_("\n");
 
     lt_down_sum += (app_rx_down_asn - app_tx_down_asn);
+    ++app_rxd_count;
     LOG_HK("rx_down %u lt_down_sum %llu | from %u a_seq %lx len %u at %llx (%llu %llx)\n",
-              ++app_rxd_count,
+              app_rxd_count,
               lt_down_sum, //
               HCK_GET_NODE_ID_FROM_IPADDR(sender_addr),
               app_received_seqno,
@@ -249,7 +253,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
     else if(data == &opt_start_timer || data == &opt_periodic_timer) {
       if(data == &opt_start_timer) {
         uint64_t app_opt_start_asn = tsch_calculate_current_asn();
-        LOG_HK_EXTRA("opt_start at %llx |\n", app_opt_start_asn);
+        LOG_HK("| opt_start at %llx \n", app_opt_start_asn);
       }
       if(count <= APP_TOPOLOGY_OPT_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
