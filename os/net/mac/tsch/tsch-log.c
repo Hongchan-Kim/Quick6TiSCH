@@ -108,17 +108,22 @@ tsch_log_process_pending(void)
         log_lladdr_compact(&log->tx.dest);
         printf(", len %3u, seq %3u, st %d %2d",
                 log->tx.datalen, log->tx.seqno, log->tx.mac_tx_status, log->tx.num_tx);
-        printf(", asap %u %u %u %u %u", log->tx.asap_unused_offset_time, log->tx.asap_idle_time,
-                                        log->tx.asap_curr_slot_len, log->tx.asap_num_of_slots,
-                                        log->tx.asap_ack_len);
+        if(log->tx.drift_used) {
+          printf(", dr %3d", log->tx.drift);
+        }
 #if ENABLE_LOG_TSCH_WITH_APP_FOOTER
         if(log->tx.app_magic == APP_DATA_MAGIC) {
           printf(", a_seq %lx", log->tx.app_seqno);
         }
 #endif
-        if(log->tx.drift_used) {
-          printf(", dr %3d", log->tx.drift);
-        }
+#if LOG_HK_ENABLED
+        printf(", T-TR %u %u %u %u %u HK", 
+              log->tx.asap_unused_offset_time, 
+              log->tx.asap_idle_time,
+              log->tx.asap_curr_slot_len, 
+              log->tx.asap_num_of_slots_until_idle_time,
+              log->tx.asap_ack_len);
+#endif
         printf("\n");
 
 #if WITH_OST
@@ -175,24 +180,64 @@ tsch_log_process_pending(void)
         printf(", len %3u, seq %3u",
                 log->rx.datalen, log->rx.seqno);
         printf(", edr %3d", (int)log->rx.estimated_drift);
+        if(log->rx.drift_used) {
+          printf(", dr %3d", log->rx.drift);
+        }
         printf(", rssi %3d", log->rx.rssi);
-        printf(", asap %u %u %u %u %u", log->rx.asap_unused_offset_time, log->rx.asap_idle_time,
-                                        log->rx.asap_curr_slot_len, log->rx.asap_num_of_slots,
-                                        log->rx.asap_ack_len);
 #if ENABLE_LOG_TSCH_WITH_APP_FOOTER
         if(log->rx.app_magic == APP_DATA_MAGIC) {
           printf(", a_seq %lx", log->rx.app_seqno);
         }
 #endif
-        if(log->rx.drift_used) {
-          printf(", dr %3d\n", log->rx.drift);
-        } else {
-          printf("\n");
-        }
+#if LOG_HK_ENABLED
+        printf(", T-RR %u %u %u %u %u HK", 
+              log->rx.asap_unused_offset_time, 
+              log->rx.asap_idle_time,
+              log->rx.asap_curr_slot_len, 
+              log->rx.asap_num_of_slots_until_idle_time,
+              log->rx.asap_ack_len);
+#endif
+        printf("\n");
         break;
       case tsch_log_message:
         printf("%s\n", log->message);
         break;
+#if WITH_UPA
+      case upa_log_result:
+        if(log->upa_result.upa_link_type == 1) {
+          printf("U-R bcsf tx");
+        } else if(log->upa_result.upa_link_type == 2) {
+          printf("U-R bcsf rx");
+        } else if(log->upa_result.upa_link_type == 3) {
+          printf("U-R ucsf tx");
+        } else if(log->upa_result.upa_link_type == 4) {
+          printf("U-R ucsf rx");
+        } else if(log->upa_result.upa_link_type == 5) {
+          printf("U-R ppsf tx");
+        } else if(log->upa_result.upa_link_type == 6) {
+          printf("U-R ppsf rx");
+        }
+        printf(" %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
+              log->upa_result.upa_link_type,
+              log->upa_result.upa_num_of_reserved_pkts,
+              log->upa_result.upa_num_of_successful_pkts,
+              log->upa_result.upa_trig_pkt_len,
+              log->upa_result.upa_all_pkt_len_same,
+              log->upa_result.upa_tot_ack_len,
+              log->upa_result.upa_tot_pkt_len,
+              log->upa_result.upa_successful_pkt_len,
+              log->upa_result.upa_unused_offset_time,
+              log->upa_result.upa_idle_time,
+              log->upa_result.upa_curr_slot_length,
+              log->upa_result.upa_num_of_slots_until_ilde_time,
+              log->upa_result.upa_num_of_slots_until_scheduling,
+              log->upa_result.upa_num_of_expected_slots);
+        if(log->upa_result.upa_is_overflowed == 1) {
+          printf(" !O");
+        }
+        printf(" HK\n");
+        break;
+#endif
     }
     /* Remove input from ringbuf */
     ringbufindex_get(&log_ringbuf);

@@ -1,12 +1,12 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
-#define LOG_HK_ENABLED                            1
-
 /*---------------------------------------------------------------------------*/
 /*
  * HCK modifications independent of proposed scheme
  */
+#define LOG_HK_ENABLED                             1
+
 #define HCK_ORCHESTRA_PACKET_OFFLOADING            1
 
 #define HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK     1
@@ -17,10 +17,12 @@
 
 #define HCK_DBG_REGULAR_SLOT_DETAIL                0
 #define HCK_DBG_REGULAR_SLOT_TIMING                (0 && HCK_DBG_REGULAR_SLOT_DETAIL)
+
 #define HCK_GET_NODE_ID_FROM_IPADDR(addr)          ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
+
 #define HCK_RPL_FIXED_TOPOLOGY                     1
 #if HCK_RPL_FIXED_TOPOLOGY
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
@@ -192,23 +194,23 @@
 
 /* Orchestra or ALICE
    - Wihtout any: Max in single hop: 87, Max in multi hop: 70
-   - With EP: Max in single hop: 81, Max in multi hop: 64 
+   - With UPA: Max in single hop: 81, Max in multi hop: 64 
    OST
    - Without any: Max in single hop: 85, Max in multi hop: 58
-   - With EP: Max in single hop: 79, Max in multi hop: ???
+   - With UPA: Max in single hop: 79, Max in multi hop: ???
    - With ODP: ???
    */
 #define APP_PAYLOAD_LEN                            14 // Min len with App footer
 //#define APP_PAYLOAD_LEN                            86 // Max len of Orchestra/ALICE in single hop
 //#define APP_PAYLOAD_LEN                            69 // Max len of Orchestra/ALICE in multi hop
-//#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + EP in single hop
-//#define APP_PAYLOAD_LEN                            63 // Max len of Orchestra/ALICE + EP in multi hop
+//#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + UPA in single hop
+//#define APP_PAYLOAD_LEN                            63 // Max len of Orchestra/ALICE + UPA in multi hop
 //#define APP_PAYLOAD_LEN                            84 // Max len of OST w/o ODP in single hop
 //#define APP_PAYLOAD_LEN                            67 // Max len of OST w/o ODP in multi hop
 //#define APP_PAYLOAD_LEN                            82 // Max len of OST in single hop
 //#define APP_PAYLOAD_LEN                            65 // Max len of OST in multi hop
-//#define APP_PAYLOAD_LEN                            78 // Max len of OST + EP in single hop
-//#define APP_PAYLOAD_LEN                            61 // Max len of OST + EP in multi hop
+//#define APP_PAYLOAD_LEN                            78 // Max len of OST + UPA in single hop
+//#define APP_PAYLOAD_LEN                            61 // Max len of OST + UPA in multi hop
 
 #define APP_DATA_MAGIC                             0x58FA
 
@@ -430,10 +432,10 @@
 #define UPA_TRIPLE_CCA                             1
 #define UPA_RX_SLOT_POLICY                         1 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
 
-#define UPA_DBG_EP_ESSENTIAL                       1
-#define UPA_DBG_EP_OPERATION                       0
+#define UPA_DBG_ESSENTIAL                          1
+#define UPA_DBG_OPERATION                          0
 #define UPA_DBG_TIMING_TRIPLE_CCA                  (0 && UPA_TRIPLE_CCA)
-#define UPA_DBG_EP_SLOT_TIMING                     0
+#define UPA_DBG_SLOT_TIMING                        0
 #endif /* WITH_UPA */
 /*---------------------------------------------------------------------------*/
 
@@ -488,7 +490,7 @@
  */
 #define WITH_ASAP                                  (1 || (WITH_UPA || WITH_SLA))
 #if WITH_ASAP
-#define ASAP_DBG_SLOT_END                          (0 || UPA_DBG_EP_SLOT_TIMING)
+#define ASAP_DBG_SLOT_END                          (0 || UPA_DBG_SLOT_TIMING)
 #endif
 
 
@@ -525,14 +527,14 @@
 #undef UPA_RX_SLOT_POLICY
 #define UPA_RX_SLOT_POLICY                         0 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
 
-#undef UPA_DBG_EP_ESSENTIAL
-#define UPA_DBG_EP_ESSENTIAL                       1
-#undef UPA_DBG_EP_OPERATION
-#define UPA_DBG_EP_OPERATION                       0
+#undef UPA_DBG_ESSENTIAL
+#define UPA_DBG_ESSENTIAL                          1
+#undef UPA_DBG_OPERATION
+#define UPA_DBG_OPERATION                          0
 #undef UPA_DBG_TIMING_TRIPLE_CCA
 #define UPA_DBG_TIMING_TRIPLE_CCA                  0
-#undef UPA_DBG_EP_SLOT_TIMING
-#define UPA_DBG_EP_SLOT_TIMING                     0
+#undef UPA_DBG_SLOT_TIMING
+#define UPA_DBG_SLOT_TIMING                        0
 
 #undef HCK_DBG_REGULAR_SLOT_DETAIL
 #define HCK_DBG_REGULAR_SLOT_DETAIL                0

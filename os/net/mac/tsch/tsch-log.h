@@ -76,7 +76,10 @@
 struct tsch_log_t {
   enum { tsch_log_tx,
          tsch_log_rx,
-         tsch_log_message
+         tsch_log_message,
+#if WITH_UPA
+         upa_log_result,
+#endif
   } type;
   struct tsch_asn_t asn;
   struct tsch_link *link;
@@ -104,7 +107,7 @@ struct tsch_log_t {
       uint16_t asap_unused_offset_time;
       uint16_t asap_idle_time;
       uint16_t asap_curr_slot_len;
-      uint8_t asap_num_of_slots;
+      uint8_t asap_num_of_slots_until_idle_time;
       uint8_t asap_ack_len;
     } tx;
     struct {
@@ -125,9 +128,28 @@ struct tsch_log_t {
       uint16_t asap_unused_offset_time;
       uint16_t asap_idle_time;
       uint16_t asap_curr_slot_len;
-      uint8_t asap_num_of_slots;
+      uint8_t asap_num_of_slots_until_idle_time;
       uint8_t asap_ack_len;
     } rx;
+#if WITH_UPA
+    struct {
+      uint8_t upa_link_type;              // bcsf/ucsf/ppsf tx/rx
+      uint8_t upa_num_of_reserved_pkts;   // number of reserved packets
+      uint8_t upa_num_of_successful_pkts; // number of successful packets
+      uint8_t upa_trig_pkt_len;
+      uint8_t upa_all_pkt_len_same;
+      uint8_t upa_tot_ack_len;
+      uint16_t upa_tot_pkt_len;
+      uint16_t upa_successful_pkt_len;
+      uint16_t upa_unused_offset_time;
+      uint16_t upa_idle_time;
+      uint16_t upa_curr_slot_length;
+      uint8_t upa_num_of_slots_until_ilde_time;
+      uint8_t upa_num_of_slots_until_scheduling;
+      uint8_t upa_num_of_expected_slots;
+      uint8_t upa_is_overflowed;
+    } upa_result;
+#endif
   };
 };
 
