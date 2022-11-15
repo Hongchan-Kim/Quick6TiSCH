@@ -172,7 +172,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 
     lt_down_sum += (app_rx_down_asn - app_tx_down_asn);
     ++app_rxd_count;
-    LOG_HK("rx_down %u lt_down_sum %llu | from %u a_seq %lx len %u at %llx (%llu %llx)\n",
+    LOG_HK("rx_down %u lt_down_sum %llu | from %u a_seq %lx len %u at %llx %llu %llx\n",
               app_rxd_count,
               lt_down_sum, //
               HCK_GET_NODE_ID_FROM_IPADDR(sender_addr),

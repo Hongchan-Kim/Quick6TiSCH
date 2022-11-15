@@ -117,7 +117,7 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-        printf(", RES T %u %u %u %u %u HK:T",
+        printf(", RES T %u %u %u %u %u HK-T",
               log->tx.asap_ack_len, 
               log->tx.asap_unused_offset_time, 
               log->tx.asap_idle_time,
@@ -190,7 +190,7 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-        printf(", RES R %u %u %u %u %u HK:T",
+        printf(", RES R %u %u %u %u %u HK-T",
               log->rx.asap_ack_len, 
               log->rx.asap_unused_offset_time, 
               log->rx.asap_idle_time,
@@ -205,17 +205,17 @@ tsch_log_process_pending(void)
 #if WITH_UPA
       case upa_log_result:
         if(log->upa_result.upa_link_type == 1) {
-          printf("RES B T");
+          printf("RES T B");
         } else if(log->upa_result.upa_link_type == 2) {
-          printf("RES B R");
+          printf("RES R B");
         } else if(log->upa_result.upa_link_type == 3) {
-          printf("RES U T");
+          printf("RES T U");
         } else if(log->upa_result.upa_link_type == 4) {
-          printf("RES U R");
+          printf("RES R U");
         } else if(log->upa_result.upa_link_type == 5) {
-          printf("RES P T");
+          printf("RES T P");
         } else if(log->upa_result.upa_link_type == 6) {
-          printf("RES P R");
+          printf("RES R P");
         }
         printf(" %u %u %u %u %u %u %u %u %u %u %u %u %u",
               log->upa_result.upa_num_of_reserved_pkts,
@@ -234,7 +234,7 @@ tsch_log_process_pending(void)
         if(log->upa_result.upa_is_overflowed == 1) {
           printf(" !O");
         }
-        printf(" HK:U\n");
+        printf(" HK-U\n");
         break;
 #endif
     }

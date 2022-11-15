@@ -196,10 +196,10 @@ udp_rx_callback(struct simple_udp_connection *c,
 
     ++iotlab_nodes[sender_index][2];
     lt_up_sum[sender_index] += (app_rx_up_asn - app_tx_up_asn);
-    LOG_HK("rx_up %u from %u lt_up_sum %llu | a_seq %lx len %u at %llx (%llu %llx)\n", 
+    LOG_HK("rx_up %u lt_up_sum %llu | from %u a_seq %lx len %u at %llx %llu %llx\n", 
               iotlab_nodes[sender_index][2],
-              sender_id,
               lt_up_sum[sender_index], //
+              sender_id,
               app_received_seqno,
               datalen,
               app_rx_up_asn,
@@ -306,7 +306,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
 
-        LOG_HK("tx_down %u to %u | a_seq %lx len %u at %llx\n", 
+        LOG_HK("tx_down %u | to %u a_seq %lx len %u at %llx\n", 
                   count,
                   dest_id,
                   app_seqno,

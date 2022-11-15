@@ -2473,8 +2473,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     regular_slot_timestamp_tx[15] = RTIMER_NOW();
 #endif
 
-    current_slot_idle_start = RTIMER_NOW();
-
 #if WITH_UPA
     if(upa_link_scheduled) {
       upa_tx_slot_pending_stats_and_log_update = 1;
@@ -2486,6 +2484,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         tsch_stats_tx_packet(current_neighbor, mac_tx_status, tsch_current_channel);
       }
 
+      current_slot_idle_start = RTIMER_NOW();
       current_slot_busy_time = RTIMER_CLOCK_DIFF(current_slot_idle_start, current_slot_start);
       current_slot_passed_slots = (current_slot_busy_time + tsch_timing[tsch_ts_timeslot_length] - 1) 
                                   / tsch_timing[tsch_ts_timeslot_length];
@@ -2948,7 +2947,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
     current_slot_idle_start = RTIMER_NOW();
-        current_slot_busy_time = RTIMER_CLOCK_DIFF(current_slot_idle_start, current_slot_start);
+    current_slot_busy_time = RTIMER_CLOCK_DIFF(current_slot_idle_start, current_slot_start);
     current_slot_passed_slots = (current_slot_busy_time + tsch_timing[tsch_ts_timeslot_length] - 1) 
                                 / tsch_timing[tsch_ts_timeslot_length];
     current_slot_idle_time = current_slot_passed_slots * tsch_timing[tsch_ts_timeslot_length] - current_slot_busy_time;
@@ -3989,6 +3988,12 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if UPA_DBG_SLOT_TIMING /* UPARxE1: after tsch_radio_off() */
     upa_rx_slot_timestamp_end[1] = RTIMER_NOW();
 #endif
+
+    current_slot_idle_start = RTIMER_NOW();
+    current_slot_busy_time = RTIMER_CLOCK_DIFF(current_slot_idle_start, current_slot_start);
+    current_slot_passed_slots = (current_slot_busy_time + tsch_timing[tsch_ts_timeslot_length] - 1) 
+                                / tsch_timing[tsch_ts_timeslot_length];
+    current_slot_idle_time = current_slot_passed_slots * tsch_timing[tsch_ts_timeslot_length] - current_slot_busy_time;
 
     if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
       tsch_common_sf_upa_rx_ok_count += upa_rx_slot_batch_rx_ok_count;
