@@ -117,12 +117,12 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-        printf(", T-TR %u %u %u %u %u HK", 
+        printf(", RES T %u %u %u %u %u HK:T",
+              log->tx.asap_ack_len, 
               log->tx.asap_unused_offset_time, 
               log->tx.asap_idle_time,
               log->tx.asap_curr_slot_len, 
-              log->tx.asap_num_of_slots_until_idle_time,
-              log->tx.asap_ack_len);
+              log->tx.asap_num_of_slots_until_idle_time);
 #endif
         printf("\n");
 
@@ -190,12 +190,12 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-        printf(", T-RR %u %u %u %u %u HK", 
+        printf(", RES R %u %u %u %u %u HK:T",
+              log->rx.asap_ack_len, 
               log->rx.asap_unused_offset_time, 
               log->rx.asap_idle_time,
               log->rx.asap_curr_slot_len, 
-              log->rx.asap_num_of_slots_until_idle_time,
-              log->rx.asap_ack_len);
+              log->rx.asap_num_of_slots_until_idle_time);
 #endif
         printf("\n");
         break;
@@ -205,27 +205,26 @@ tsch_log_process_pending(void)
 #if WITH_UPA
       case upa_log_result:
         if(log->upa_result.upa_link_type == 1) {
-          printf("U-R bcsf tx");
+          printf("RES B T");
         } else if(log->upa_result.upa_link_type == 2) {
-          printf("U-R bcsf rx");
+          printf("RES B R");
         } else if(log->upa_result.upa_link_type == 3) {
-          printf("U-R ucsf tx");
+          printf("RES U T");
         } else if(log->upa_result.upa_link_type == 4) {
-          printf("U-R ucsf rx");
+          printf("RES U R");
         } else if(log->upa_result.upa_link_type == 5) {
-          printf("U-R ppsf tx");
+          printf("RES P T");
         } else if(log->upa_result.upa_link_type == 6) {
-          printf("U-R ppsf rx");
+          printf("RES P R");
         }
-        printf(" %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
-              log->upa_result.upa_link_type,
+        printf(" %u %u %u %u %u %u %u %u %u %u %u %u %u",
               log->upa_result.upa_num_of_reserved_pkts,
               log->upa_result.upa_num_of_successful_pkts,
               log->upa_result.upa_trig_pkt_len,
               log->upa_result.upa_all_pkt_len_same,
-              log->upa_result.upa_tot_ack_len,
               log->upa_result.upa_tot_pkt_len,
               log->upa_result.upa_successful_pkt_len,
+              log->upa_result.upa_tot_ack_len,
               log->upa_result.upa_unused_offset_time,
               log->upa_result.upa_idle_time,
               log->upa_result.upa_curr_slot_length,
@@ -235,7 +234,7 @@ tsch_log_process_pending(void)
         if(log->upa_result.upa_is_overflowed == 1) {
           printf(" !O");
         }
-        printf(" HK\n");
+        printf(" HK:U\n");
         break;
 #endif
     }
