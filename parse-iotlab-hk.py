@@ -184,13 +184,7 @@ RESULT_NUM = len(result_list)
 bootstrap_period_result = [[0 for i in range(RESULT_NUM)] for j in range(NODE_NUM)]
 data_period_result = [[0 for i in range(RESULT_NUM)] for j in range(NODE_NUM)]
 
-target_parsed_list = bootstrap_period_parsed
-target_result_list = bootstrap_period_result
-
-for k in range(2):
-    if k == 1:
-        target_parsed_list = data_period_parsed
-        target_result_list = data_period_result
+for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, bootstrap_period_result), (data_period_parsed, data_period_result)]:
     for i in range(NODE_NUM):
         for j in range(RESULT_NUM):
             if result_list[j] == 'id':
@@ -541,13 +535,8 @@ for k in range(2):
 
 
 # Print derived result
-target_result_list = bootstrap_period_result
-
-for i in range(2):
-    if i == 1:
-        target_result_list = data_period_result
-
-    if i == 0:
+for target_result_list in [bootstrap_period_result, data_period_result]:
+    if target_result_list == bootstrap_period_result:
         print('----- bootstrap period -----')
     else:
         print('----- data period -----')
