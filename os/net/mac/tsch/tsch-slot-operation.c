@@ -3731,7 +3731,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
           current_slot_unused_offset_start = RTIMER_NOW();
 
-          TSCH_SCHEDULE_AND_YIELD(pt, t, upa_rx_slot_curr_start, upa_rx_slot_curr_offset, "epRx1");
+          TSCH_SCHEDULE_AND_YIELD(pt, t, upa_rx_slot_curr_start, upa_rx_slot_curr_offset, "upaRx1");
 
           current_slot_unused_offset_end = RTIMER_NOW();
           current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
@@ -3743,7 +3743,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
           current_slot_unused_offset_start = RTIMER_NOW();
 
-          TSCH_SCHEDULE_AND_YIELD(pt, t, upa_rx_slot_curr_start, upa_rx_slot_curr_offset, "epRx2");
+          TSCH_SCHEDULE_AND_YIELD(pt, t, upa_rx_slot_curr_start, upa_rx_slot_curr_offset, "upaRx2");
 
           current_slot_unused_offset_end = RTIMER_NOW();
           current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
@@ -3962,7 +3962,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       current_slot_unused_offset_start = RTIMER_NOW();
 
       TSCH_SCHEDULE_AND_YIELD(pt, t, upa_rx_slot_all_reception_end,
-                              upa_rx_slot_curr_offset - RADIO_DELAY_BEFORE_TX, "epRx3");
+                              upa_rx_slot_curr_offset - RADIO_DELAY_BEFORE_TX, "upaRx3");
 
       current_slot_unused_offset_end = RTIMER_NOW();
       current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
@@ -4034,196 +4034,201 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
   while(tsch_is_associated) {
 
 #if WITH_SLA /* Coordinator/non-coordinator: at triggering asn, apply next timeslot length */
-  if((tsch_current_asn.ls4b == sla_triggering_asn.ls4b) 
-      && (tsch_current_asn.ms1b == sla_triggering_asn.ms1b)) {
-    if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_timeslot_length) {
-      sla_apply_next_timeslot_length();
-
-#if SLA_DBG_ESSENTIAL
-      TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "sla apply next ts %u", tsch_timing_us[tsch_ts_timeslot_length]);
-      );
-#endif
-    } else {
-#if SLA_DBG_ESSENTIAL
-      TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "sla not apply next ts %u", tsch_timing_us[tsch_ts_timeslot_length]);
-      );
-#endif
-    }
-
-    sla_finish_rapid_eb_broadcasting();
-    sla_in_guard_time = 0;
-
-  } else if((int32_t)(TSCH_ASN_DIFF(sla_triggering_asn, tsch_current_asn)) > 0) {
-    // SLA-TODO: needs to consider ASN overflow
-    if((int32_t)(TSCH_ASN_DIFF(sla_triggering_asn, tsch_current_asn) <= SLA_GUARD_TIME_TIMESLOTS)) {
+    if((tsch_current_asn.ls4b == sla_triggering_asn.ls4b) 
+        && (tsch_current_asn.ms1b == sla_triggering_asn.ms1b)) {
+      uint16_t sla_prev_timeslot_length = tsch_timing_us[tsch_ts_timeslot_length];
       if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_timeslot_length) {
-        sla_in_guard_time = 1;
+        sla_apply_next_timeslot_length();
+
+#if SLA_DBG_ESSENTIAL
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "APL apply_ts c_ts %u p_ts %u HK-S",
+                            tsch_timing_us[tsch_ts_timeslot_length], 
+                            sla_prev_timeslot_length);
+        );
+#endif
+      } else {
+#if SLA_DBG_ESSENTIAL
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "APL not_apply_ts c_ts %u p_ts %u HK-S",
+                            tsch_timing_us[tsch_ts_timeslot_length], 
+                            sla_prev_timeslot_length);
+        );
+#endif
+      }
+
+      sla_finish_rapid_eb_broadcasting();
+      sla_in_guard_time = 0;
+
+    } else if((int32_t)(TSCH_ASN_DIFF(sla_triggering_asn, tsch_current_asn)) > 0) {
+      // SLA-TODO: needs to consider ASN overflow
+      if((int32_t)(TSCH_ASN_DIFF(sla_triggering_asn, tsch_current_asn) <= SLA_GUARD_TIME_TIMESLOTS)) {
+        if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_timeslot_length) {
+          sla_in_guard_time = 1;
+        } else {
+          sla_in_guard_time = 0;
+        }
       } else {
         sla_in_guard_time = 0;
       }
     } else {
       sla_in_guard_time = 0;
     }
-  } else {
-    sla_in_guard_time = 0;
-  }
 #endif
 
 #if WITH_UPA
-      if(upa_schedule_after_upa_link) { /* Successful scheduling after UPA */
-          upa_schedule_after_upa_link = 0;
-          if(upa_pkts_to_send > 0) {
-            if(upa_link_result_case == 1) {
-              tsch_common_sf_upa_tx_timeslots += asap_curr_passed_timeslots_except_first_slot;
+    if(upa_schedule_after_upa_link) { /* Successful scheduling after UPA */
+      upa_schedule_after_upa_link = 0;
+      if(upa_pkts_to_send > 0) {
+        if(upa_link_result_case == 1) {
+          tsch_common_sf_upa_tx_timeslots += asap_curr_passed_timeslots_except_first_slot;
 #if UPA_DBG_ESSENTIAL
-              TSCH_LOG_ADD(upa_log_result,
-                  log->upa_result.upa_is_overflowed = 0;
-                  log->upa_result.upa_link_type = upa_link_result_case;
-                  log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_send;
-                  log->upa_result.upa_num_of_successful_pkts = upa_tx_slot_batch_tx_ok_count;
-                  log->upa_result.upa_trig_pkt_len = upa_tx_slot_trig_packet_len;
-                  log->upa_result.upa_all_pkt_len_same = upa_tx_slot_all_packet_len_same;
-                  log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
-                  log->upa_result.upa_tot_pkt_len = asap_tot_packet_len;
-                  log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
-                  log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
-                  log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
-                  log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
-                  log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
-                  log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
-                  log->upa_result.upa_num_of_expected_slots = upa_expected_passed_timeslots_except_first_slot + 1;
-              );
+          TSCH_LOG_ADD(upa_log_result,
+              log->upa_result.upa_is_overflowed = 0;
+              log->upa_result.upa_link_type = upa_link_result_case;
+              log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_send;
+              log->upa_result.upa_num_of_successful_pkts = upa_tx_slot_batch_tx_ok_count;
+              log->upa_result.upa_trig_pkt_len = upa_tx_slot_trig_packet_len;
+              log->upa_result.upa_all_pkt_len_same = upa_tx_slot_all_packet_len_same;
+              log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
+              log->upa_result.upa_tot_pkt_len = asap_tot_packet_len;
+              log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
+              log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
+              log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
+              log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
+              log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
+              log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
+              log->upa_result.upa_num_of_expected_slots = upa_expected_passed_timeslots_except_first_slot + 1;
+          );
 #endif
-            } else if(upa_link_result_case == 3) {
-              tsch_unicast_sf_upa_tx_timeslots += asap_curr_passed_timeslots_except_first_slot;
+        } else if(upa_link_result_case == 3) {
+          tsch_unicast_sf_upa_tx_timeslots += asap_curr_passed_timeslots_except_first_slot;
 #if UPA_DBG_ESSENTIAL
-              TSCH_LOG_ADD(upa_log_result,
-                  log->upa_result.upa_is_overflowed = 0;
-                  log->upa_result.upa_link_type = upa_link_result_case;
-                  log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_send;
-                  log->upa_result.upa_num_of_successful_pkts = upa_tx_slot_batch_tx_ok_count;
-                  log->upa_result.upa_trig_pkt_len = upa_tx_slot_trig_packet_len;
-                  log->upa_result.upa_all_pkt_len_same = upa_tx_slot_all_packet_len_same;
-                  log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
-                  log->upa_result.upa_tot_pkt_len = asap_tot_packet_len;
-                  log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
-                  log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
-                  log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
-                  log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
-                  log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
-                  log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
-                  log->upa_result.upa_num_of_expected_slots = upa_expected_passed_timeslots_except_first_slot + 1;
-              );
+          TSCH_LOG_ADD(upa_log_result,
+              log->upa_result.upa_is_overflowed = 0;
+              log->upa_result.upa_link_type = upa_link_result_case;
+              log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_send;
+              log->upa_result.upa_num_of_successful_pkts = upa_tx_slot_batch_tx_ok_count;
+              log->upa_result.upa_trig_pkt_len = upa_tx_slot_trig_packet_len;
+              log->upa_result.upa_all_pkt_len_same = upa_tx_slot_all_packet_len_same;
+              log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
+              log->upa_result.upa_tot_pkt_len = asap_tot_packet_len;
+              log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
+              log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
+              log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
+              log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
+              log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
+              log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
+              log->upa_result.upa_num_of_expected_slots = upa_expected_passed_timeslots_except_first_slot + 1;
+          );
 #endif
-            }
+        }
 #if WITH_OST
-            else if(upa_link_result_case == 5) {
-              tsch_ost_pp_sf_upa_tx_timeslots += asap_curr_passed_timeslots_except_first_slot;
+        else if(upa_link_result_case == 5) {
+          tsch_ost_pp_sf_upa_tx_timeslots += asap_curr_passed_timeslots_except_first_slot;
 #if UPA_DBG_ESSENTIAL
-              TSCH_LOG_ADD(upa_log_result,
-                  log->upa_result.upa_is_overflowed = 0;
-                  log->upa_result.upa_link_type = upa_link_result_case;
-                  log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_send;
-                  log->upa_result.upa_num_of_successful_pkts = upa_tx_slot_batch_tx_ok_count;
-                  log->upa_result.upa_trig_pkt_len = upa_tx_slot_trig_packet_len;
-                  log->upa_result.upa_all_pkt_len_same = upa_tx_slot_all_packet_len_same;
-                  log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
-                  log->upa_result.upa_tot_pkt_len = asap_tot_packet_len;
-                  log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
-                  log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
-                  log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
-                  log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
-                  log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
-                  log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
-                  log->upa_result.upa_num_of_expected_slots = upa_expected_passed_timeslots_except_first_slot + 1;
-              );
+          TSCH_LOG_ADD(upa_log_result,
+              log->upa_result.upa_is_overflowed = 0;
+              log->upa_result.upa_link_type = upa_link_result_case;
+              log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_send;
+              log->upa_result.upa_num_of_successful_pkts = upa_tx_slot_batch_tx_ok_count;
+              log->upa_result.upa_trig_pkt_len = upa_tx_slot_trig_packet_len;
+              log->upa_result.upa_all_pkt_len_same = upa_tx_slot_all_packet_len_same;
+              log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
+              log->upa_result.upa_tot_pkt_len = asap_tot_packet_len;
+              log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
+              log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
+              log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
+              log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
+              log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
+              log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
+              log->upa_result.upa_num_of_expected_slots = upa_expected_passed_timeslots_except_first_slot + 1;
+          );
 #endif
-            }
-            upa_tx_slot_trig_packet_len = 0;
-            upa_tx_slot_all_packet_len_same = 0;
+        }
+        upa_tx_slot_trig_packet_len = 0;
+        upa_tx_slot_all_packet_len_same = 0;
 #endif
-          } else {
-            if(upa_link_result_case == 2) {
-              tsch_common_sf_upa_rx_timeslots += asap_curr_passed_timeslots_except_first_slot;
+      } else {
+        if(upa_link_result_case == 2) {
+          tsch_common_sf_upa_rx_timeslots += asap_curr_passed_timeslots_except_first_slot;
 #if UPA_DBG_ESSENTIAL
-              TSCH_LOG_ADD(upa_log_result,
-                  log->upa_result.upa_is_overflowed = 0;
-                  log->upa_result.upa_link_type = upa_link_result_case;
-                  log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_receive;
-                  log->upa_result.upa_num_of_successful_pkts = upa_rx_slot_batch_rx_ok_count;
-                  log->upa_result.upa_trig_pkt_len = upa_rx_slot_trig_packet_len;
-                  log->upa_result.upa_all_pkt_len_same = upa_rx_slot_all_packet_len_same;
-                  log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
-                  log->upa_result.upa_tot_pkt_len = 0;
-                  log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
-                  log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
-                  log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
-                  log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
-                  log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
-                  log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
-                  log->upa_result.upa_num_of_expected_slots = 0;
-              );
+          TSCH_LOG_ADD(upa_log_result,
+              log->upa_result.upa_is_overflowed = 0;
+              log->upa_result.upa_link_type = upa_link_result_case;
+              log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_receive;
+              log->upa_result.upa_num_of_successful_pkts = upa_rx_slot_batch_rx_ok_count;
+              log->upa_result.upa_trig_pkt_len = upa_rx_slot_trig_packet_len;
+              log->upa_result.upa_all_pkt_len_same = upa_rx_slot_all_packet_len_same;
+              log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
+              log->upa_result.upa_tot_pkt_len = 0;
+              log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
+              log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
+              log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
+              log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
+              log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
+              log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
+              log->upa_result.upa_num_of_expected_slots = 0;
+          );
 #endif
-            }
-            else if(upa_link_result_case == 4) {
-              tsch_unicast_sf_upa_rx_timeslots += asap_curr_passed_timeslots_except_first_slot;
+        }
+        else if(upa_link_result_case == 4) {
+          tsch_unicast_sf_upa_rx_timeslots += asap_curr_passed_timeslots_except_first_slot;
 #if UPA_DBG_ESSENTIAL
-              TSCH_LOG_ADD(upa_log_result,
-                  log->upa_result.upa_is_overflowed = 0;
-                  log->upa_result.upa_link_type = upa_link_result_case;
-                  log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_receive;
-                  log->upa_result.upa_num_of_successful_pkts = upa_rx_slot_batch_rx_ok_count;
-                  log->upa_result.upa_trig_pkt_len = upa_rx_slot_trig_packet_len;
-                  log->upa_result.upa_all_pkt_len_same = upa_rx_slot_all_packet_len_same;
-                  log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
-                  log->upa_result.upa_tot_pkt_len = 0;
-                  log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
-                  log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
-                  log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
-                  log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
-                  log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
-                  log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
-                  log->upa_result.upa_num_of_expected_slots = 0;
-              );
+          TSCH_LOG_ADD(upa_log_result,
+              log->upa_result.upa_is_overflowed = 0;
+              log->upa_result.upa_link_type = upa_link_result_case;
+              log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_receive;
+              log->upa_result.upa_num_of_successful_pkts = upa_rx_slot_batch_rx_ok_count;
+              log->upa_result.upa_trig_pkt_len = upa_rx_slot_trig_packet_len;
+              log->upa_result.upa_all_pkt_len_same = upa_rx_slot_all_packet_len_same;
+              log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
+              log->upa_result.upa_tot_pkt_len = 0;
+              log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
+              log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
+              log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
+              log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
+              log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
+              log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
+              log->upa_result.upa_num_of_expected_slots = 0;
+          );
 #endif
-            }
+        }
 #if WITH_OST
-            else if(upa_link_result_case == 6) {
-              tsch_ost_pp_sf_upa_rx_timeslots += asap_curr_passed_timeslots_except_first_slot;
+        else if(upa_link_result_case == 6) {
+          tsch_ost_pp_sf_upa_rx_timeslots += asap_curr_passed_timeslots_except_first_slot;
 #if UPA_DBG_ESSENTIAL
-              TSCH_LOG_ADD(upa_log_result,
-                  log->upa_result.upa_is_overflowed = 0;
-                  log->upa_result.upa_link_type = upa_link_result_case;
-                  log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_receive;
-                  log->upa_result.upa_num_of_successful_pkts = upa_rx_slot_batch_rx_ok_count;
-                  log->upa_result.upa_trig_pkt_len = upa_rx_slot_trig_packet_len;
-                  log->upa_result.upa_all_pkt_len_same = upa_rx_slot_all_packet_len_same;
-                  log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
-                  log->upa_result.upa_tot_pkt_len = 0;
-                  log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
-                  log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
-                  log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
-                  log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
-                  log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
-                  log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
-                  log->upa_result.upa_num_of_expected_slots = 0;
-              );
+          TSCH_LOG_ADD(upa_log_result,
+              log->upa_result.upa_is_overflowed = 0;
+              log->upa_result.upa_link_type = upa_link_result_case;
+              log->upa_result.upa_num_of_reserved_pkts = upa_pkts_to_receive;
+              log->upa_result.upa_num_of_successful_pkts = upa_rx_slot_batch_rx_ok_count;
+              log->upa_result.upa_trig_pkt_len = upa_rx_slot_trig_packet_len;
+              log->upa_result.upa_all_pkt_len_same = upa_rx_slot_all_packet_len_same;
+              log->upa_result.upa_tot_ack_len = asap_tot_ack_len;
+              log->upa_result.upa_tot_pkt_len = 0;
+              log->upa_result.upa_successful_pkt_len = asap_ok_packet_len;
+              log->upa_result.upa_unused_offset_time = (unsigned)RTIMERTICKS_TO_US(current_slot_unused_offset_time);
+              log->upa_result.upa_idle_time = (unsigned)RTIMERTICKS_TO_US(current_slot_idle_time);
+              log->upa_result.upa_curr_slot_length = tsch_timing_us[tsch_ts_timeslot_length];
+              log->upa_result.upa_num_of_slots_until_ilde_time = current_slot_passed_slots;
+              log->upa_result.upa_num_of_slots_until_scheduling = asap_curr_passed_timeslots;
+              log->upa_result.upa_num_of_expected_slots = 0;
+          );
 #endif
-            }
-            upa_rx_slot_trig_packet_len = 0;
-            upa_rx_slot_all_packet_len_same = 0;
+        }
+        upa_rx_slot_trig_packet_len = 0;
+        upa_rx_slot_all_packet_len_same = 0;
 #endif
-          }
-
-          upa_pkts_to_send = 0;
-          upa_pkts_to_receive = 0;
-          asap_curr_passed_timeslots = 0;
-          asap_curr_passed_timeslots_except_first_slot = 0;
       }
+
+      upa_pkts_to_send = 0;
+      upa_pkts_to_receive = 0;
+      asap_curr_passed_timeslots = 0;
+      asap_curr_passed_timeslots_except_first_slot = 0;
+    }
 #endif
 
     TSCH_ASN_COPY(tsch_last_valid_asn, tsch_current_asn);
@@ -4237,10 +4242,10 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                                                           or if there is a pending request for getting the lock */
       /* Issue a log whenever skipping a slot */
 
-#if WITH_SLA && SLA_DBG_OPERATION
+#if WITH_SLA && SLA_DBG_ESSENTIAL
       TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "!skipped slot %u %u %u sla %u",
+                          "!skipped slot %u %u %u SKIP %u HK-S",
                             tsch_locked,
                             tsch_lock_requested,
                             current_link == NULL,

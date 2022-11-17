@@ -253,6 +253,11 @@ extern struct log_module all_modules[];
 #define LOG_HK_ORCHESTRA_(...)          LOG(0, 0, "HK-O", LOG_COLOR_PRI, __VA_ARGS__)
 #define LOG_HK_ORCHESTRA_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
 #define LOG_HK_ORCHESTRA_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
+
+#define LOG_HK_SLA(...)           LOG(1, 0, "HK-S", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HK_SLA_(...)          LOG(0, 0, "HK-S", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HK_SLA_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
+#define LOG_HK_SLA_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
 #endif /* LOG_HK_ENABLED */
 
 #if NETSTACK_CONF_WITH_IPV6
