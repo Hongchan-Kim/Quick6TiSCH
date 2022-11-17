@@ -27,6 +27,7 @@ print()
 node_num = 0
 file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + any_id + '.txt'
 f = open(file_name, 'r', errors='ignore')
+print(file_name)
 
 line = f.readline()
 while line:
@@ -91,6 +92,7 @@ root_node_bootstrap_finished = 0
 
 file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
 f = open(file_name, 'r', errors='ignore')
+print(file_name)
 
 target_parsed_list = bootstrap_period_parsed
 
@@ -136,6 +138,7 @@ for node_index in range(1, NODE_NUM):
     node_id = node_index + 1
     file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
     f = open(file_name, 'r', errors='ignore')
+    print(file_name)
 
     target_parsed_list = bootstrap_period_parsed
 
@@ -189,6 +192,13 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
         for j in range(RESULT_NUM):
             if result_list[j] == 'id':
                 target_result_list[i][j] = str(i + 1)
+            if result_list[j] == 'boot':
+                if target_parsed_list[i][key_list.index('reset_log')] == 1 and \
+                    target_parsed_list[i][key_list.index('rs_q_except_eb')] == 0 and \
+                    target_parsed_list[i][key_list.index('rs_opkn')] == 1:
+                    target_result_list[i][j] = '1'
+                else:
+                    target_result_list[i][j] = '0'
             elif result_list[j] == 'tx_up':
                 target_result_list[i][j] = target_parsed_list[i][key_list.index('tx_up')]
             elif result_list[j] == 'rx_up':
@@ -535,6 +545,7 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
 
 
 # Print derived result
+print()
 for target_result_list in [bootstrap_period_result, data_period_result]:
     if target_result_list == bootstrap_period_result:
         print('----- bootstrap period -----')

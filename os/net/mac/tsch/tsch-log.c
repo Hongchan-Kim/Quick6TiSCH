@@ -117,7 +117,8 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-        printf(", RES T %u %u %u %u %u HK-T",
+        printf(", RES T %u %u %u %u %u %u HK-T",
+              log->tx.datalen,
               log->tx.asap_ack_len, 
               log->tx.asap_unused_offset_time, 
               log->tx.asap_idle_time,
@@ -190,7 +191,8 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-        printf(", RES R %u %u %u %u %u HK-T",
+        printf(", RES R %u %u %u %u %u %u HK-T",
+              log->rx.datalen,
               log->rx.asap_ack_len, 
               log->rx.asap_unused_offset_time, 
               log->rx.asap_idle_time,
