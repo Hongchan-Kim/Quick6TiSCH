@@ -79,6 +79,9 @@ static uint8_t sla_current_window_index = 0;
 static uint16_t sla_observed_bc_frame_length[SLA_OBSERVATION_WINDOWS][SLA_FRAME_LEN_QUANTIZED_LEVELS];
 static uint16_t sla_observed_uc_frame_length[SLA_OBSERVATION_WINDOWS][SLA_FRAME_LEN_QUANTIZED_LEVELS];
 static uint16_t sla_observed_ack_length[SLA_OBSERVATION_WINDOWS][SLA_ACK_LEN_QUANTIZED_LEVELS];
+static uint16_t sla_observed_bc_frame_count[SLA_OBSERVATION_WINDOWS];
+static uint16_t sla_observed_uc_frame_count[SLA_OBSERVATION_WINDOWS];
+static uint16_t sla_observed_ack_count[SLA_OBSERVATION_WINDOWS];
 static uint16_t sla_max_hop_distance[SLA_OBSERVATION_WINDOWS];
 
 static uint16_t sla_curr_ref_hop_distance = SLA_INITIAL_HOP_DISTANCE;
@@ -895,6 +898,7 @@ sla_record_bc_frame_len(int frame_len)
   int frame_len_with_radio_phy_overhead = frame_len + RADIO_PHY_OVERHEAD;
   uint8_t quantized_index = sla_quantize_frame_len_with_radio_phy_overhead(frame_len_with_radio_phy_overhead);
   sla_observed_bc_frame_length[sla_current_window_index][quantized_index] += 1;
+  sla_observed_bc_frame_count[sla_current_window_index] += 1;
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -903,6 +907,7 @@ sla_record_uc_frame_len(int frame_len)
   int frame_len_with_radio_phy_overhead = frame_len + RADIO_PHY_OVERHEAD;
   uint8_t quantized_index = sla_quantize_frame_len_with_radio_phy_overhead(frame_len_with_radio_phy_overhead);
   sla_observed_uc_frame_length[sla_current_window_index][quantized_index] += 1;
+  sla_observed_uc_frame_count[sla_current_window_index] += 1;
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -911,6 +916,7 @@ sla_record_ack_len(int ack_len)
   int ack_len_with_radio_phy_overhead = ack_len + RADIO_PHY_OVERHEAD;
   uint8_t quantized_index = sla_quantize_frame_len_with_radio_phy_overhead(ack_len_with_radio_phy_overhead);
   sla_observed_ack_length[sla_current_window_index][quantized_index] += 1;
+  sla_observed_ack_count[sla_current_window_index] += 1;
 }
 #endif
 /*---------------------------------------------------------------------------*/
@@ -924,18 +930,21 @@ sla_get_frame_len_with_radio_phy_overhead(uint8_t quantized_val)
 static int
 sla_calculate_next_ref_bc_frame_len()
 {
-  uint8_t observed = 0;
   int target_index = 0;
+
+  uint16_t ref_count 
+          = sla_observed_bc_frame_count[sla_current_window_index] * (100 - SLA_K_TH_PERCENTILE) / 100;
+  uint16_t accum_count = 0;
 
   int i = 0;
   for(i = SLA_FRAME_LEN_QUANTIZED_LEVELS - 1; i >= 0; i--) {
-    if(sla_observed_bc_frame_length[sla_current_window_index][i] != 0) {
+    accum_count += sla_observed_bc_frame_length[sla_current_window_index][i];
+    if(accum_count != 0 && accum_count > ref_count) {
       target_index = i;
-      observed = 1;
       break;
     }
   }
-  if(observed) {
+  if(accum_count > 0) {
     return sla_get_frame_len_with_radio_phy_overhead(target_index);
   } else {
     return sla_curr_ref_bc_frame_len;
@@ -945,18 +954,21 @@ sla_calculate_next_ref_bc_frame_len()
 static int
 sla_calculate_next_ref_uc_frame_len()
 {
-  uint8_t observed = 0;
   int target_index = 0;
+
+  uint16_t ref_count 
+          = sla_observed_uc_frame_count[sla_current_window_index] * (100 - SLA_K_TH_PERCENTILE) / 100;
+  uint16_t accum_count = 0;
 
   int i = 0;
   for(i = SLA_FRAME_LEN_QUANTIZED_LEVELS - 1; i >= 0; i--) {
-    if(sla_observed_uc_frame_length[sla_current_window_index][i] != 0) {
+    accum_count += sla_observed_uc_frame_length[sla_current_window_index][i];
+    if(accum_count != 0 && accum_count > ref_count) {
       target_index = i;
-      observed = 1;
       break;
     }
   }
-  if(observed) {
+  if(accum_count > 0) {
     return sla_get_frame_len_with_radio_phy_overhead(target_index);
   } else {
     return sla_curr_ref_uc_frame_len;
@@ -966,19 +978,21 @@ sla_calculate_next_ref_uc_frame_len()
 static int
 sla_calculate_next_ref_ack_len()
 {
-  uint8_t observed = 0;
   int target_index = 0;
+
+  uint16_t ref_count 
+          = sla_observed_ack_count[sla_current_window_index] * (100 - SLA_K_TH_PERCENTILE) / 100;
+  uint16_t accum_count = 0;
 
   int i = 0;
   for(i = SLA_ACK_LEN_QUANTIZED_LEVELS - 1; i >= 0; i--) {
-    if(sla_observed_ack_length[sla_current_window_index][i] != 0) {
+    accum_count += sla_observed_ack_length[sla_current_window_index][i];
+    if(accum_count != 0 && accum_count > ref_count) {
       target_index = i;
-      observed = 1;
       break;
     }
   }
-  
-  if(observed) {
+  if(accum_count > 0) {
     return sla_get_frame_len_with_radio_phy_overhead(target_index);
   } else {
     return sla_curr_ref_ack_len;
@@ -1037,7 +1051,6 @@ sla_calculate_timeslot_length()
   uint16_t tx_duration_diff = max_tx_duration - longer_ref_tx_duration;
   
   uint16_t calculated_timeslot_length = tsch_default_timing_us[tsch_ts_timeslot_length] - tx_duration_diff;
-
 
   return calculated_timeslot_length;
 }
@@ -1140,6 +1153,9 @@ sla_determine_next_timeslot_length_and_trig_asn()
   for(i = 0; i < SLA_ACK_LEN_QUANTIZED_LEVELS; i++) {
     sla_observed_ack_length[sla_current_window_index][i] = 0;
   }
+  sla_observed_bc_frame_count[sla_current_window_index] = 0;
+  sla_observed_uc_frame_count[sla_current_window_index] = 0;
+  sla_observed_ack_count[sla_current_window_index] = 0;
   sla_max_hop_distance[sla_current_window_index] = 0;
 
   /* Reset and restart sla_timer */
@@ -1259,14 +1275,17 @@ tsch_reset(void)
   sla_next_ref_ack_len = SLA_MAX_ACK_LEN;
 
 #if SLA_DBG_ESSENTIAL
-  LOG_HK_SLA("reset f_lvs %d a_lvs %d\n", SLA_FRAME_LEN_QUANTIZED_LEVELS, SLA_ACK_LEN_QUANTIZED_LEVELS);
-  LOG_HK_SLA("reset ref_bc curr %u (%u) next %u (%u)\n",
+  LOG_HK_SLA("reset f_lvs %d a_lvs %d sla_k %u\n", 
+            SLA_FRAME_LEN_QUANTIZED_LEVELS, 
+            SLA_ACK_LEN_QUANTIZED_LEVELS,
+            SLA_K_TH_PERCENTILE);
+  LOG_HK_SLA("reset ref_bc curr %u %u next %u %u\n",
             sla_curr_ref_bc_frame_len, SLA_CALCULATE_DURATION(sla_curr_ref_bc_frame_len),
             sla_next_ref_bc_frame_len, SLA_CALCULATE_DURATION(sla_next_ref_bc_frame_len));
-  LOG_HK_SLA("reset ref_uc curr %u (%u) next %u (%u)\n",
+  LOG_HK_SLA("reset ref_uc curr %u %u next %u %u\n",
             sla_curr_ref_uc_frame_len, SLA_CALCULATE_DURATION(sla_curr_ref_uc_frame_len),
             sla_next_ref_uc_frame_len, SLA_CALCULATE_DURATION(sla_next_ref_uc_frame_len));
-  LOG_HK_SLA("reset ref_ack curr %u (%u) next %u (%u)\n",
+  LOG_HK_SLA("reset ref_ack curr %u %u next %u %u\n",
             sla_curr_ref_ack_len, SLA_CALCULATE_DURATION(sla_curr_ref_ack_len),
             sla_next_ref_ack_len, SLA_CALCULATE_DURATION(sla_next_ref_ack_len));
   LOG_HK_SLA("reset c_ts %u n_ts %u\n", 
