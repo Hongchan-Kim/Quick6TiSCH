@@ -709,7 +709,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
   return in_queue;
 }
 /*---------------------------------------------------------------------------*/
-#if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+#if HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
 /* Flush all neighbor queues */
 void
 tsch_queue_reset_except_n_eb(void)

@@ -117,7 +117,9 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-        printf(", RES T %u %u %u %u %u %u HK-T",
+        printf(", RES T %u %u %u %u %u %u %u %u HK-T",
+              linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
+              log->tx.is_data,
               log->tx.datalen,
               log->tx.asap_ack_len, 
               log->tx.asap_unused_offset_time, 
@@ -191,7 +193,9 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-        printf(", RES R %u %u %u %u %u %u HK-T",
+        printf(", RES R %u %u %u %u %u %u %u %u HK-T",
+              log->rx.is_unicast == 0 ? 0 : 1, 
+              log->rx.is_data,
               log->rx.datalen,
               log->rx.asap_ack_len, 
               log->rx.asap_unused_offset_time, 

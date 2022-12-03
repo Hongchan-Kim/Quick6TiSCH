@@ -149,7 +149,7 @@ reset_log()
   reset_log_simple_energest();    /* simple-energest.c */
 
   uint64_t app_server_reset_log_asn = tsch_calculate_current_asn();
-  LOG_HK("reset_log 1 rs_q_except_eb %d rs_opkn %u | eb_q %d at %llx\n", 
+  LOG_HK("reset_log 1 rs_q_except_eb %d rs_opku %u | eb_q %d at %llx\n", 
         tsch_queue_global_packet_count() - tsch_queue_nbr_packet_count(n_eb), 
         orchestra_parent_knows_us,
         tsch_queue_nbr_packet_count(n_eb),
@@ -196,7 +196,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 
     ++iotlab_nodes[sender_index][2];
     lt_up_sum[sender_index] += (app_rx_up_asn - app_tx_up_asn);
-    LOG_HK("rx_up %u lt_up_sum %llu | from %u a_seq %lx len %u at %llx %llu %llx\n", 
+    LOG_HK("rx_up %u lt_up_sum %llu | from %u a_seq %lx len %u at %llx %llu %d\n", 
               iotlab_nodes[sender_index][2],
               lt_up_sum[sender_index], //
               sender_id,

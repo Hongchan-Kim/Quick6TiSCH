@@ -49,7 +49,7 @@ print()
 
 
 # Metric keys to parse
-key_list = ['reset_log', 'rs_q_except_eb', 'rs_opkn',
+key_list = ['reset_log', 'rs_q_except_eb', 'rs_opku',
             'tx_up', 'rx_up', 'lt_up_sum', 'tx_down', 'rx_down', 'lt_down_sum',
             'fwd_ok', 'fwd_no_nexthop', 'fwd_err',
             'ip_uc_tx', 'ip_uc_ok', 'ip_uc_noack', 'ip_uc_err',
@@ -195,7 +195,7 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
             if result_list[j] == 'boot':
                 if target_parsed_list[i][key_list.index('reset_log')] == 1 and \
                     target_parsed_list[i][key_list.index('rs_q_except_eb')] == 0 and \
-                    target_parsed_list[i][key_list.index('rs_opkn')] == 1:
+                    target_parsed_list[i][key_list.index('rs_opku')] == 1:
                     target_result_list[i][j] = '1'
                 else:
                     target_result_list[i][j] = '0'

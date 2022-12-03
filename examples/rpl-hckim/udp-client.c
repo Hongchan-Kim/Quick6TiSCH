@@ -133,7 +133,7 @@ reset_log()
   reset_log_simple_energest();    /* simple-energest.c */
 
   uint64_t app_client_reset_log_asn = tsch_calculate_current_asn();
-  LOG_HK("reset_log 1 rs_q_except_eb %d rs_opkn %u | eb_q %d at %llx\n", 
+  LOG_HK("reset_log 1 rs_q_except_eb %d rs_opku %u | eb_q %d at %llx\n", 
         tsch_queue_global_packet_count() - tsch_queue_nbr_packet_count(n_eb), 
         orchestra_parent_knows_us,
         tsch_queue_nbr_packet_count(n_eb),
@@ -172,7 +172,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 
     lt_down_sum += (app_rx_down_asn - app_tx_down_asn);
     ++app_rxd_count;
-    LOG_HK("rx_down %u lt_down_sum %llu | from %u a_seq %lx len %u at %llx %llu %llx\n",
+    LOG_HK("rx_down %u lt_down_sum %llu | from %u a_seq %lx len %u at %llx %llu %d\n",
               app_rxd_count,
               lt_down_sum, //
               HCK_GET_NODE_ID_FROM_IPADDR(sender_addr),

@@ -63,7 +63,7 @@ struct tsch_packet *tsch_queue_upa_get_next_packet_for_nbr(const struct tsch_nei
 struct tsch_packet * tsch_queue_burst_get_next_packet_for_nbr(const struct tsch_neighbor *n);
 #endif
 
-#if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+#if HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
 void tsch_queue_reset_except_n_eb(void);
 #endif
 #if HCK_ORCHESTRA_PACKET_OFFLOADING
