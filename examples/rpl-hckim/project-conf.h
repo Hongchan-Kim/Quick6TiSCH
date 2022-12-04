@@ -117,12 +117,23 @@
 /*
  * Configure log
  */
+#define HCK_LOG_LEVEL_LITE                         1
+
+#if HCK_LOG_LEVEL_LITE
+#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_NONE
+#else
 #define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
+#endif
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
@@ -427,7 +438,7 @@
  * UPA: Utility-based Packet Aggregation
  */
 /* Need to be tested */
-#define WITH_UPA                                   0
+#define WITH_UPA                                   1
 #if WITH_UPA
 #define UPA_TRIPLE_CCA                             1
 #define UPA_RX_SLOT_POLICY                         1 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
@@ -444,8 +455,11 @@
 /*
  * Adaptive timeslot length
  */
-#define WITH_SLA                                   0
+#define WITH_SLA                                   1
 #if WITH_SLA
+
+#define SLA_K_TH_PERCENTILE                        95 //100
+
 #define SLA_DBG_ESSENTIAL                          1
 #define SLA_DBG_OPERATION                          0
 

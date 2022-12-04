@@ -347,7 +347,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
 
-        LOG_HK("tx_down %u to %u | a_seq %lx len %u at %llx\n", 
+        LOG_HK("tx_down %u | to %u a_seq %lx len %u at %llx\n", 
                   count,
                   dest_id,
                   app_seqno,
