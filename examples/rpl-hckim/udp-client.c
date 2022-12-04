@@ -56,7 +56,7 @@ static uint32_t  eval_01_count = 1;
 #if APP_SEQNO_DUPLICATE_CHECK
 struct app_down_seqno {
   clock_time_t app_down_timestamp;
-  uint8_t app_down_seqno;
+  uint16_t app_down_seqno;
 };
 static struct app_down_seqno received_seqnos[APP_SEQNO_HISTORY];
 /*---------------------------------------------------------------------------*/
@@ -172,7 +172,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 
     lt_down_sum += (app_rx_down_asn - app_tx_down_asn);
     ++app_rxd_count;
-    LOG_HK("rx_down %u lt_down_sum %llu | from %u a_seq %lx len %u at %llx %llu %d\n",
+    LOG_HK("rx_down %u lt_down_sum %llu | from %u a_seq %lx len %u at %llx %llx %llu\n",
               app_rxd_count,
               lt_down_sum, //
               HCK_GET_NODE_ID_FROM_IPADDR(sender_addr),

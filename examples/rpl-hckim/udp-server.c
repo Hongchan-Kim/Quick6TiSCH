@@ -53,7 +53,7 @@ static uint64_t lt_up_sum[NODE_NUM];
 #if APP_SEQNO_DUPLICATE_CHECK
 struct app_up_seqno {
   clock_time_t app_up_timestamp;
-  uint8_t app_up_seqno;
+  uint16_t app_up_seqno;
 };
 struct app_up_seqnos_from_sender {
   struct app_up_seqno app_up_seqno_array[APP_SEQNO_HISTORY];
@@ -196,7 +196,7 @@ udp_rx_callback(struct simple_udp_connection *c,
 
     ++iotlab_nodes[sender_index][2];
     lt_up_sum[sender_index] += (app_rx_up_asn - app_tx_up_asn);
-    LOG_HK("rx_up %u lt_up_sum %llu | from %u a_seq %lx len %u at %llx %llu %d\n", 
+    LOG_HK("rx_up %u lt_up_sum %llu | from %u a_seq %lx len %u at %llx %llx %llu\n", 
               iotlab_nodes[sender_index][2],
               lt_up_sum[sender_index], //
               sender_id,
