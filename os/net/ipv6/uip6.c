@@ -1421,7 +1421,7 @@ uip_process(uint8_t flag)
     if(tsch_is_coordinator) {
       uint8_t curr_hops = uip_ds6_if.cur_hop_limit - UIP_IP_BUF->ttl + 1;
 #if SLA_DBG_OPERATION
-      LOG_HK_SLA("uip_process curr_hops %u\n", curr_hops);
+      LOG_HK_SLA("uip_proc c_hops %u\n", curr_hops);
 #endif
       sla_record_max_hop_distance(curr_hops);
     }
