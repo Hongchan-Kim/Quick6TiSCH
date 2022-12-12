@@ -5,6 +5,8 @@
 #include "net/ipv6/simple-udp.h"
 
 /* to reset log */
+#include "net/ipv6/uip.h"
+#include "net/ipv6/uip-ds6.h"
 #include "net/ipv6/tcpip.h"
 #include "net/ipv6/sicslowpan.h"
 #include "net/mac/tsch/tsch.h"
@@ -46,7 +48,6 @@ static struct simple_udp_connection udp_conn;
 
 static unsigned count = 1;
 static uint16_t app_rxd_count;
-static uint64_t lt_down_sum = 0;
 
 #if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
 static uint32_t  eval_01_count = 1;
@@ -117,7 +118,7 @@ reset_log_app_client()
 static void
 reset_log()
 {
-#if HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+#if 0//HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
   tsch_queue_reset_except_n_eb();
   tsch_queue_free_unused_neighbors();
 #endif
@@ -133,9 +134,9 @@ reset_log()
   reset_log_simple_energest();    /* simple-energest.c */
 
   uint64_t app_client_reset_log_asn = tsch_calculate_current_asn();
-  LOG_HK("reset_log 1 rs_q_except_eb %d rs_opku %u | eb_q %d at %llx\n", 
-        tsch_queue_global_packet_count() - tsch_queue_nbr_packet_count(n_eb), 
+  LOG_HK("reset_log 1 rs_opku %u rs_q %d | rs_q_eb %d at %llx\n", 
         orchestra_parent_knows_us,
+        tsch_queue_global_packet_count(),
         tsch_queue_nbr_packet_count(n_eb),
         app_client_reset_log_asn);
 }
@@ -170,17 +171,17 @@ udp_rx_callback(struct simple_udp_connection *c,
     LOG_INFO_6ADDR(sender_addr);
     LOG_INFO_("\n");
 
-    lt_down_sum += (app_rx_down_asn - app_tx_down_asn);
     ++app_rxd_count;
-    LOG_HK("rx_down %u lt_down_sum %llu | from %u a_seq %lx len %u at %llx %llx %llu\n",
-              app_rxd_count,
-              lt_down_sum, //
+    uint8_t hops = uip_ds6_if.cur_hop_limit - UIP_IP_BUF->ttl + 1;
+
+    LOG_HK("rx_down %u | from %u a_seq %lx len %u lt_down_r %llx lt_down_t %llx hops %u\n",
+              app_rxd_count, //
               HCK_GET_NODE_ID_FROM_IPADDR(sender_addr),
               app_received_seqno,
               datalen, 
               app_rx_down_asn,
               app_tx_down_asn,
-              app_rx_down_asn - app_tx_down_asn);
+              hops);
   }
 }
 /*---------------------------------------------------------------------------*/

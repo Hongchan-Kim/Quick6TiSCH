@@ -49,7 +49,7 @@ print()
 
 
 # Metric keys to parse
-key_list = ['reset_log', 'rs_q_except_eb', 'rs_opku',
+key_list = ['reset_log', 'rs_opku', 'rs_q',
             'tx_up', 'rx_up', 'lt_up_sum', 'tx_down', 'rx_down', 'lt_down_sum',
             'fwd_ok', 'fwd_no_nexthop', 'fwd_err',
             'ip_uc_tx', 'ip_uc_ok', 'ip_uc_noack', 'ip_uc_err',
@@ -170,7 +170,7 @@ for node_index in range(1, NODE_NUM):
 
 
 # Derive result from parsed data
-result_list = ['id', 'boot',
+result_list = ['id', 'bootP', 'bootQ',
             'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 'uLT', 'dLT', 'LT',
             'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
             'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
@@ -192,13 +192,14 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
         for j in range(RESULT_NUM):
             if result_list[j] == 'id':
                 target_result_list[i][j] = str(i + 1)
-            if result_list[j] == 'boot':
+            if result_list[j] == 'bootP':
                 if target_parsed_list[i][key_list.index('reset_log')] == 1 and \
-                    target_parsed_list[i][key_list.index('rs_q_except_eb')] == 0 and \
                     target_parsed_list[i][key_list.index('rs_opku')] == 1:
                     target_result_list[i][j] = '1'
                 else:
                     target_result_list[i][j] = '0'
+            if result_list[j] == 'bootQ':
+                target_result_list[i][j] = target_parsed_list[i][key_list.index('rs_q')]
             elif result_list[j] == 'tx_up':
                 target_result_list[i][j] = target_parsed_list[i][key_list.index('tx_up')]
             elif result_list[j] == 'rx_up':

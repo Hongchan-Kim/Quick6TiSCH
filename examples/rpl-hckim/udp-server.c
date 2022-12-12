@@ -5,6 +5,8 @@
 #include "net/ipv6/simple-udp.h"
 
 /* to reset log */
+#include "net/ipv6/uip.h"
+#include "net/ipv6/uip-ds6.h"
 #include "net/ipv6/tcpip.h"
 #include "net/ipv6/sicslowpan.h"
 #include "net/mac/tsch/tsch.h"
@@ -46,8 +48,6 @@
 #endif
 
 static struct simple_udp_connection udp_conn;
-
-static uint64_t lt_up_sum[NODE_NUM];
 
 /*---------------------------------------------------------------------------*/
 #if APP_SEQNO_DUPLICATE_CHECK
@@ -118,7 +118,6 @@ reset_log_app_server()
   uint8_t i = 0;
   for(i = 0; i < NODE_NUM; i++) {
     iotlab_nodes[i][2] = 0;
-    lt_up_sum[i] = 0;
 
 #if APP_SEQNO_DUPLICATE_CHECK
     uint8_t j = 0;
@@ -133,7 +132,7 @@ reset_log_app_server()
 static void
 reset_log()
 {
-#if HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+#if 0//HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
   tsch_queue_reset_except_n_eb();
   tsch_queue_free_unused_neighbors();
 #endif
@@ -149,9 +148,9 @@ reset_log()
   reset_log_simple_energest();    /* simple-energest.c */
 
   uint64_t app_server_reset_log_asn = tsch_calculate_current_asn();
-  LOG_HK("reset_log 1 rs_q_except_eb %d rs_opku %u | eb_q %d at %llx\n", 
-        tsch_queue_global_packet_count() - tsch_queue_nbr_packet_count(n_eb), 
+  LOG_HK("reset_log 1 rs_opku %u rs_q %d | rs_q_eb %d at %llx\n", 
         orchestra_parent_knows_us,
+        tsch_queue_global_packet_count(),
         tsch_queue_nbr_packet_count(n_eb),
         app_server_reset_log_asn);
 }
@@ -195,16 +194,16 @@ udp_rx_callback(struct simple_udp_connection *c,
     LOG_INFO_("\n");
 
     ++iotlab_nodes[sender_index][2];
-    lt_up_sum[sender_index] += (app_rx_up_asn - app_tx_up_asn);
-    LOG_HK("rx_up %u lt_up_sum %llu | from %u a_seq %lx len %u at %llx %llx %llu\n", 
-              iotlab_nodes[sender_index][2],
-              lt_up_sum[sender_index], //
+    uint8_t hops = uip_ds6_if.cur_hop_limit - UIP_IP_BUF->ttl + 1;
+
+    LOG_HK("rx_up %u | from %u a_seq %lx len %u lt_up_r %llx lt_up_t %llx hops %u\n", 
+              iotlab_nodes[sender_index][2], //
               sender_id,
               app_received_seqno,
               datalen,
               app_rx_up_asn,
               app_tx_up_asn,
-              app_rx_up_asn - app_tx_up_asn);
+              hops);
   }
 }
 /*---------------------------------------------------------------------------*/
