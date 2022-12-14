@@ -118,7 +118,7 @@ reset_log_app_client()
 static void
 reset_log()
 {
-#if 0//HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
+#if HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
   tsch_queue_reset_except_n_eb();
   tsch_queue_free_unused_neighbors();
 #endif

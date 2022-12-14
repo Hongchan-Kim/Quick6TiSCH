@@ -117,10 +117,11 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-        printf(", RES T %u %u %u %u %u %u %u %u HK-T",
+        printf(", RES T %u %u %u %u %u %u %u %u %u HK-T",
               linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
               log->tx.is_data,
               log->tx.datalen,
+              log->tx.mac_tx_status,
               log->tx.asap_ack_len, 
               log->tx.asap_unused_offset_time, 
               log->tx.asap_idle_time,
