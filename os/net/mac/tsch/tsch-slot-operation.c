@@ -3596,6 +3596,12 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.asap_curr_slot_len = upa_link_scheduled == 0 ? tsch_timing_us[tsch_ts_timeslot_length] : 0;
               log->rx.asap_num_of_slots_until_idle_time = upa_link_scheduled == 0 ? current_slot_passed_slots : 0;
               log->rx.asap_ack_len = upa_link_scheduled == 0 ? asap_tot_ack_len : 0;
+#else
+              log->rx.asap_unused_offset_time = RTIMERTICKS_TO_US(current_slot_unused_offset_time);
+              log->rx.asap_idle_time = RTIMERTICKS_TO_US(current_slot_idle_time);
+              log->rx.asap_curr_slot_len = tsch_timing_us[tsch_ts_timeslot_length];
+              log->rx.asap_num_of_slots_until_idle_time = current_slot_passed_slots;
+              log->rx.asap_ack_len = asap_tot_ack_len;
 #endif
             );
 
