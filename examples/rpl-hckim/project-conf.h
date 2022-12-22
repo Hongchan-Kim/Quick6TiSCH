@@ -69,13 +69,17 @@
 
 #elif WITH_IOTLAB
 
-#define IOTLAB_GRENOBLE_79_R_CORNER_U              1 /* 79 nodes */
-#define IOTLAB_LILLE_79_CORNER                     2 /* 79 nodes */
+#define IOTLAB_GRENOBLE_79_L_CORNER_U              1 /* 79 nodes */
+#define IOTLAB_GRENOBLE_79_R_CORNER_U              2 /* 79 nodes */
+#define IOTLAB_LILLE_79_CORNER                     3 /* 79 nodes */
 
+#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
-#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
+//#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
 
-#if IOTLAB_SITE == IOTLAB_GRENOBLE_79_R_CORNER_U
+#if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
+#define NODE_NUM                                   79
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_79_R_CORNER_U
 #define NODE_NUM                                   79
 #elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
 #define NODE_NUM                                   79
@@ -398,9 +402,9 @@
 
 /* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
    m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
-#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m101dBm
+//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m101dBm
 //#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m90dBm
-//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
+#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
 /*---------------------------------------------------------------------------*/
 
 
@@ -430,7 +434,7 @@
 #define WITH_SLA                                   1
 #if WITH_SLA
 
-#define SLA_K_TH_PERCENTILE                        95
+#define SLA_K_TH_PERCENTILE                        100
 
 #define SLA_DBG_ESSENTIAL                          1
 #define SLA_DBG_OPERATION                          0
