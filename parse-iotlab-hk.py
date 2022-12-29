@@ -50,7 +50,7 @@ print()
 
 # Metric keys to parse
 key_list = ['reset_log', 'rs_opku', 'rs_q',
-            'tx_up', 'rx_up', 'lt_up_sum', 'tx_down', 'rx_down', 'lt_down_sum',
+            'tx_up', 'rx_up', 'tx_down', 'rx_down',
             'fwd_ok', 'fwd_no_nexthop', 'fwd_err',
             'ip_uc_tx', 'ip_uc_ok', 'ip_uc_noack', 'ip_uc_err',
             'ip_uc_icmp6_tx', 'ip_uc_icmp6_ok', 'ip_uc_icmp6_noack', 'ip_uc_icmp6_err',
@@ -90,6 +90,9 @@ ROOT_ID = 1
 ROOT_INDEX = 0
 root_node_bootstrap_finished = 0
 
+IS_SLA_ON = 0
+IS_UPA_ON = 0
+
 file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
 f = open(file_name, 'r', errors='ignore')
 print(file_name)
@@ -101,6 +104,7 @@ while line:
     if len(line) > 1:
         line = line.replace('\n', '')
         line_prefix = line.split(':')[0]
+        line_postfix = line.split(' ')[-1]
         if line_prefix == '[HK-P':
             line_body = line.split('] ')[1].split(' ')
             key_loc = 0
@@ -115,7 +119,7 @@ while line:
                     root_node_bootstrap_finished = 1
                 if curr_key in key_list:
                     curr_key_index = key_list.index(curr_key)
-                    if curr_key == 'rx_up' or curr_key == 'lt_up_sum':
+                    if curr_key == 'rx_up':
                         tx_node_id = int(line_body[line_body.index('from') + 1])
                         tx_node_index = tx_node_id - 1
                         target_parsed_list[tx_node_index][curr_key_index] = int(curr_val)
@@ -129,9 +133,16 @@ while line:
                 val_loc += 2
                 if key_loc >= len(line_body) or val_loc >= len(line_body):
                     break
+        if IS_SLA_ON == 0 and line_prefix == '[HK-S':
+            IS_SLA_ON = 1
+        if IS_UPA_ON == 0 and line_postfix == 'HK-U':
+            IS_UPA_ON = 1
     line = f.readline()
 f.close()
 
+print('IS_SLA_ON: ' + str(IS_SLA_ON))
+print('IS_SLA_ON: ' + str(IS_UPA_ON))
+print()
 
 # Parse non-root nodes next
 for node_index in range(1, NODE_NUM):
@@ -175,13 +186,25 @@ result_list = ['id', 'bootP', 'bootQ',
             'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
             'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
             'leave', 'dc',
-            'UTS', 'UTR', 'UTO', 'UTU', 'URS', 'URR', 'URO', 'URU', 'UU',
-            'SCR', 'CTOR', 'CROR', 'UTOR', 'UROR', 'PTOR', 'PROR',
+            'as_ts', 'sch_eb', 'sch_bc', 'sch_uc']
+
+#sla_result_list = ['']
+#if IS_SLA_ON:
+#    result_list.extend(sla_result_list)
+
+upa_result_list = ['UTS', 'UTR', 'UTO', 'UTU', 'URS', 'URR', 'URO', 'URU', 'UU']
+if IS_UPA_ON:
+    result_list.extend(upa_result_list)
+
+show_all_result_list = ['SCR',
+            'CTOR', 'CROR', 'UTOR', 'UROR', 'PTOR', 'PROR',
             'BTOR', 'BROR', 'OTOR', 'OROR', 'ETOR', 'EROR', 
             'CETR', 'CERR', 'UETR', 'UERR', 'PETR', 'PERR',
             'CETO', 'CERO', 'UETO', 'UERO', 'PETO', 'PERO',
-            'CETE', 'CERE', 'UETE', 'UERE', 'PETE', 'PERE'
-            ]
+            'CETE', 'CERE', 'UETE', 'UERE', 'PETE', 'PERE']
+if show_all == '1':
+    result_list.extend(show_all_result_list)
+
 RESULT_NUM = len(result_list)
 
 bootstrap_period_result = [[0 for i in range(RESULT_NUM)] for j in range(NODE_NUM)]
@@ -223,21 +246,6 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
                     target_result_list[i][j] = 'NaN'
                 else:
                     target_result_list[i][j] = round((float(target_parsed_list[i][key_list.index('rx_up')]) + float(target_parsed_list[i][key_list.index('rx_down')])) / (float(target_parsed_list[i][key_list.index('tx_up')]) + float(target_parsed_list[i][key_list.index('tx_down')])) * 100, 2)
-            elif result_list[j] == 'uLT':
-                if int(target_parsed_list[i][key_list.index('rx_up')]) == 0:
-                    target_result_list[i][j] = 'NaN'
-                else:
-                    target_result_list[i][j] = round(float(target_parsed_list[i][key_list.index('lt_up_sum')]) / float(target_parsed_list[i][key_list.index('rx_up')]))
-            elif result_list[j] == 'dLT':
-                if int(target_parsed_list[i][key_list.index('rx_down')]) == 0:
-                    target_result_list[i][j] = 'NaN'
-                else:
-                    target_result_list[i][j] = round(float(target_parsed_list[i][key_list.index('lt_down_sum')]) / float(target_parsed_list[i][key_list.index('rx_down')]))
-            elif result_list[j] == 'LT':
-                if int(target_parsed_list[i][key_list.index('rx_up')]) + int(target_parsed_list[i][key_list.index('rx_down')]) == 0:
-                    target_result_list[i][j] = 'NaN'
-                else:
-                    target_result_list[i][j] = round((float(target_parsed_list[i][key_list.index('lt_up_sum')]) + float(target_parsed_list[i][key_list.index('lt_down_sum')])) / (float(target_parsed_list[i][key_list.index('rx_up')]) + float(target_parsed_list[i][key_list.index('rx_down')])))
             elif result_list[j] == 'lastP':
                 target_result_list[i][j] = target_parsed_list[i][key_list.index('lastP')]
             elif result_list[j] == 'ps':
@@ -257,41 +265,41 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
                 else:
                     target_result_list[i][j] = round(float(target_parsed_list[i][key_list.index('subtree_sum')]) / float(target_parsed_list[i][key_list.index('subtree_cnt')]), 2)
             elif result_list[j] == 'IPQL':
-                tot_qloss = int(target_parsed_list[i][key_list.index('ip_qloss')])# + int(target_parsed_list[i][key_list.index('ka_qloss')]) + int(target_parsed_list[i][key_list.index('eb_qloss')])
+                tot_qloss = int(target_parsed_list[i][key_list.index('ip_qloss')])
                 target_result_list[i][j] = tot_qloss
             elif result_list[j] == 'IPQR':
-                tot_qloss = float(target_parsed_list[i][key_list.index('ip_qloss')])# + float(target_parsed_list[i][key_list.index('ka_qloss')]) + float(target_parsed_list[i][key_list.index('eb_qloss')])
-                tot_enqueue = float(target_parsed_list[i][key_list.index('ip_enq')])# + float(target_parsed_list[i][key_list.index('ka_enq')]) + float(target_parsed_list[i][key_list.index('eb_enq')])
+                tot_qloss = float(target_parsed_list[i][key_list.index('ip_qloss')])
+                tot_enqueue = float(target_parsed_list[i][key_list.index('ip_enq')])
                 if tot_qloss + tot_enqueue == 0:
                     target_result_list[i][j] = 'NaN'
                 else:
                     target_result_list[i][j] = round(float(tot_qloss) / (float(tot_qloss) + float(tot_enqueue)) * 100, 2)
             elif result_list[j] == 'IPLL':
-                tot_uc_noack = int(target_parsed_list[i][key_list.index('ip_uc_noack')])# + int(target_parsed_list[i][key_list.index('ka_noack')])
+                tot_uc_noack = int(target_parsed_list[i][key_list.index('ip_uc_noack')])
                 target_result_list[i][j] = tot_uc_noack
             elif result_list[j] == 'IPLR':
-                tot_uc_noack = float(target_parsed_list[i][key_list.index('ip_uc_noack')])# + float(target_parsed_list[i][key_list.index('ka_noack')])
-                tot_uc_ok = float(target_parsed_list[i][key_list.index('ip_uc_ok')])# + float(target_parsed_list[i][key_list.index('ka_ok')])
+                tot_uc_noack = float(target_parsed_list[i][key_list.index('ip_uc_noack')])
+                tot_uc_ok = float(target_parsed_list[i][key_list.index('ip_uc_ok')])
                 if tot_uc_noack + tot_uc_ok == 0:
                     target_result_list[i][j] = 'NaN'
                 else:
                     target_result_list[i][j] = round(float(tot_uc_noack) / (float(tot_uc_noack) + float(tot_uc_ok)) * 100, 2)
             elif result_list[j] == 'IUQL':
-                tot_qloss = int(target_parsed_list[i][key_list.index('ip_udp_qloss')])# + int(target_parsed_list[i][key_list.index('ka_qloss')]) + int(target_parsed_list[i][key_list.index('eb_qloss')])
+                tot_qloss = int(target_parsed_list[i][key_list.index('ip_udp_qloss')])
                 target_result_list[i][j] = tot_qloss
             elif result_list[j] == 'IUQR':
-                tot_qloss = float(target_parsed_list[i][key_list.index('ip_udp_qloss')])# + float(target_parsed_list[i][key_list.index('ka_qloss')]) + float(target_parsed_list[i][key_list.index('eb_qloss')])
-                tot_enqueue = float(target_parsed_list[i][key_list.index('ip_udp_enq')])# + float(target_parsed_list[i][key_list.index('ka_enq')]) + float(target_parsed_list[i][key_list.index('eb_enq')])
+                tot_qloss = float(target_parsed_list[i][key_list.index('ip_udp_qloss')])
+                tot_enqueue = float(target_parsed_list[i][key_list.index('ip_udp_enq')])
                 if tot_qloss + tot_enqueue == 0:
                     target_result_list[i][j] = 'NaN'
                 else:
                     target_result_list[i][j] = round(float(tot_qloss) / (float(tot_qloss) + float(tot_enqueue)) * 100, 2)
             elif result_list[j] == 'IULL':
-                tot_uc_noack = int(target_parsed_list[i][key_list.index('ip_uc_udp_noack')])# + int(target_parsed_list[i][key_list.index('ka_noack')])
+                tot_uc_noack = int(target_parsed_list[i][key_list.index('ip_uc_udp_noack')])
                 target_result_list[i][j] = tot_uc_noack
             elif result_list[j] == 'IULR':
-                tot_uc_noack = float(target_parsed_list[i][key_list.index('ip_uc_udp_noack')])# + float(target_parsed_list[i][key_list.index('ka_noack')])
-                tot_uc_ok = float(target_parsed_list[i][key_list.index('ip_uc_udp_ok')])# + float(target_parsed_list[i][key_list.index('ka_ok')])
+                tot_uc_noack = float(target_parsed_list[i][key_list.index('ip_uc_udp_noack')])
+                tot_uc_ok = float(target_parsed_list[i][key_list.index('ip_uc_udp_ok')])
                 if tot_uc_noack + tot_uc_ok == 0:
                     target_result_list[i][j] = 'NaN'
                 else:
@@ -312,8 +320,15 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
                     target_result_list[i][j] = 'NaN'
                 else:
                     target_result_list[i][j] = round(float(target_parsed_list[i][key_list.index('dc_total_sum')]) / float(target_parsed_list[i][key_list.index('dc_count')]) / 100, 2)
-            elif result_list[j] == 'e_drop':
-                target_result_list[i][j] = target_parsed_list[i][key_list.index('e_drop')]
+
+            elif result_list[j] == 'as_ts':
+                target_result_list[i][j] = target_parsed_list[i][key_list.index('asso_ts')]
+            elif result_list[j] == 'sch_eb':
+                target_result_list[i][j] = target_parsed_list[i][key_list.index('sch_eb')]
+            elif result_list[j] == 'sch_bc':
+                target_result_list[i][j] = target_parsed_list[i][key_list.index('sch_bc')]
+            elif result_list[j] == 'sch_uc':
+                target_result_list[i][j] = target_parsed_list[i][key_list.index('sch_uc')]
 
             elif result_list[j] == 'UTS':
                 target_result_list[i][j] = int(target_parsed_list[i][key_list.index('sch_bc_upa_tx')]) + \
@@ -545,6 +560,257 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
                     target_result_list[i][j] = round(float(target_parsed_list[i][key_list.index('pp_upa_rx_ok')]) / float(target_parsed_list[i][key_list.index('pp_upa_rx_ts')]), 2)
 
 
+# List to store latency result
+latency_list = ['upward_per_hop_latency_count', 'upward_per_hop_latency_sum', 'downward_per_hop_latency_count', 'downward_per_hop_latency_sum']
+LATENCY_NUM = len(latency_list)
+
+bootstrap_latency_list = [[0 for i in range(LATENCY_NUM)] for j in range(NODE_NUM)]
+data_latency_list = [[0 for i in range(LATENCY_NUM)] for j in range(NODE_NUM)]
+
+if IS_SLA_ON:
+    # If SLA is applied, first parse application asn
+    sla_trig_asn_list = [[1, 10]]
+
+    file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
+    f = open(file_name, 'r', errors='ignore')
+    print()
+    print(file_name)
+
+    line = f.readline()
+    while line:
+        if len(line) > 1:
+            line = line.replace('\n', '')
+            line_prefix = line.split(':')[0]
+            if line_prefix == '[HK-S':
+                line_body = line.split('] ')[1].split(' ')
+                if line_body[0] == 'det':
+                    if line_body[1] == 'c_ref_bc':
+                        if line_body[line_body.index('c_ts') + 1] != line_body[line_body.index('n_ts') + 1]:
+                            sla_trig_asn_list.append([int(line_body[line_body.index('t_asn') + 1], 16), float(line_body[line_body.index('n_ts') + 1]) / 1000])
+        line = f.readline()
+    f.close()
+
+    # First record upward per hop latency
+    file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
+    f = open(file_name, 'r', errors='ignore')
+    print(file_name)
+
+    target_latency_list = bootstrap_latency_list
+
+    line = f.readline()
+    while line:
+        if len(line) > 1:
+            line = line.replace('\n', '')
+            line_prefix = line.split(':')[0]
+            if line_prefix == '[HK-P':
+                line_body = line.split('] ')[1].split(' ')
+                if line_body[0] == 'reset_log':
+                    target_latency_list = data_latency_list
+                if line_body[0] == 'rx_up':
+                    lt_up_from_id = int(line_body[line_body.index('from') + 1])
+                    lt_up_from_index = lt_up_from_id - 1
+
+                    lt_up_t_asn = int(line_body[line_body.index('lt_up_t') + 1], 16)
+                    lt_up_r_asn = int(line_body[line_body.index('lt_up_r') + 1], 16)
+                    lt_up_hops = int(line_body[line_body.index('hops') + 1])
+
+                    lt_up_t_asn_index = 0
+                    for i in range(0, len(sla_trig_asn_list)):
+                        if i < len(sla_trig_asn_list) - 1:
+                            if sla_trig_asn_list[i][0] <= lt_up_t_asn and lt_up_t_asn < sla_trig_asn_list[i + 1][0]:
+                                lt_up_t_asn_index = i
+                                break
+                        else:
+                            lt_up_t_asn_index = i
+                            break
+
+                    lt_up_r_asn_index = 0
+                    for i in range(0, len(sla_trig_asn_list)):
+                        if i < len(sla_trig_asn_list) - 1:
+                            if sla_trig_asn_list[i][0] <= lt_up_r_asn and lt_up_r_asn < sla_trig_asn_list[i + 1][0]:
+                                lt_up_r_asn_index = i
+                                break
+                        else:
+                            lt_up_r_asn_index = i
+                            break
+
+                    lt_up_ms = 0
+                    lt_up_asn_index_diff = lt_up_r_asn_index - lt_up_t_asn_index
+
+                    if lt_up_asn_index_diff == 0:
+                        lt_up_ms += (lt_up_r_asn - lt_up_t_asn) * sla_trig_asn_list[lt_up_t_asn_index][1]
+                    else:
+                        lt_up_ms += (sla_trig_asn_list[lt_up_t_asn_index + 1][0] - lt_up_t_asn) * sla_trig_asn_list[lt_up_t_asn_index][1]
+                        j = 1
+                        while (lt_up_t_asn_index + j) < lt_up_r_asn_index:
+                            lt_up_ms += (sla_trig_asn_list[lt_up_t_asn_index + j + 1][0]- sla_trig_asn_list[lt_up_t_asn_index + j][0]) * sla_trig_asn_list[lt_up_t_asn_index + j][1]
+                            j += 1
+                        lt_up_ms += (lt_up_r_asn - sla_trig_asn_list[lt_up_t_asn_index + j][0]) * sla_trig_asn_list[lt_up_t_asn_index + j][1]
+
+                    lt_up_ms_per_hop = lt_up_ms / lt_up_hops
+
+                    target_latency_list[lt_up_from_index][latency_list.index('upward_per_hop_latency_count')] += 1
+                    target_latency_list[lt_up_from_index][latency_list.index('upward_per_hop_latency_sum')] += lt_up_ms_per_hop
+
+        line = f.readline()
+    f.close()
+
+    # Next record downward per hop latency
+    for node_index in range(1, NODE_NUM):
+        node_id = node_index + 1
+        file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
+        f = open(file_name, 'r', errors='ignore')
+        print(file_name)
+
+        target_latency_list = bootstrap_latency_list
+
+        line = f.readline()
+        while line:
+            if len(line) > 1:
+                line = line.replace('\n', '')
+                line_prefix = line.split(':')[0]
+                if line_prefix == '[HK-P':
+                    line_body = line.split('] ')[1].split(' ')
+                    if line_body[0] == 'reset_log':
+                        target_latency_list = data_latency_list
+                    if line_body[0] == 'rx_down':
+                        lt_down_to_index = node_index
+                        lt_down_to_id = node_index + 1
+
+                        lt_down_t_asn = int(line_body[line_body.index('lt_down_t') + 1], 16)
+                        lt_down_r_asn = int(line_body[line_body.index('lt_down_r') + 1], 16)
+                        lt_down_hops = int(line_body[line_body.index('hops') + 1])
+
+                        lt_down_t_asn_index = 0
+                        for i in range(0, len(sla_trig_asn_list)):
+                            if i < len(sla_trig_asn_list) - 1:
+                                if sla_trig_asn_list[i][0] <= lt_down_t_asn and lt_down_t_asn < sla_trig_asn_list[i + 1][0]:
+                                    lt_down_t_asn_index = i
+                                    break
+                            else:
+                                lt_down_t_asn_index = i
+                                break
+
+                        lt_down_r_asn_index = 0
+                        for i in range(0, len(sla_trig_asn_list)):
+                            if i < len(sla_trig_asn_list) - 1:
+                                if sla_trig_asn_list[i][0] <= lt_down_r_asn and lt_down_r_asn < sla_trig_asn_list[i + 1][0]:
+                                    lt_down_r_asn_index = i
+                                    break
+                            else:
+                                lt_down_r_asn_index = i
+                                break
+
+                        lt_down_ms = 0
+                        lt_down_asn_index_diff = lt_down_r_asn_index - lt_down_t_asn_index
+
+                        if lt_down_asn_index_diff == 0:
+                            lt_down_ms += (lt_down_r_asn - lt_down_t_asn) * sla_trig_asn_list[lt_down_t_asn_index][1]
+                        else:
+                            lt_down_ms += (sla_trig_asn_list[lt_down_t_asn_index + 1][0] - lt_down_t_asn) * sla_trig_asn_list[lt_down_t_asn_index][1]
+                            j = 1
+                            while (lt_down_t_asn_index + j) < lt_down_r_asn_index:
+                                lt_down_ms += (sla_trig_asn_list[lt_down_t_asn_index + j + 1][0]- sla_trig_asn_list[lt_down_t_asn_index + j][0]) * sla_trig_asn_list[lt_down_t_asn_index + j][1]
+                                j += 1
+                            lt_down_ms += (lt_down_r_asn - sla_trig_asn_list[lt_down_t_asn_index + j][0]) * sla_trig_asn_list[lt_down_t_asn_index + j][1]
+
+                        lt_down_ms_per_hop = lt_down_ms / lt_down_hops
+
+                        target_latency_list[lt_down_to_index][latency_list.index('downward_per_hop_latency_count')] += 1
+                        target_latency_list[lt_down_to_index][latency_list.index('downward_per_hop_latency_sum')] += lt_down_ms_per_hop
+
+            line = f.readline()
+        f.close()
+
+else: # IS_SLA_ON == 0
+    # First record upward per hop latency
+    file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
+    f = open(file_name, 'r', errors='ignore')
+    print()
+    print(file_name)
+
+    target_latency_list = bootstrap_latency_list
+
+    line = f.readline()
+    while line:
+        if len(line) > 1:
+            line = line.replace('\n', '')
+            line_prefix = line.split(':')[0]
+            if line_prefix == '[HK-P':
+                line_body = line.split('] ')[1].split(' ')
+                if line_body[0] == 'reset_log':
+                    target_latency_list = data_latency_list
+                if line_body[0] == 'rx_up':
+                    lt_up_from_id = int(line_body[line_body.index('from') + 1])
+                    lt_up_from_index = lt_up_from_id - 1
+
+                    lt_up_t_asn = int(line_body[line_body.index('lt_up_t') + 1], 16)
+                    lt_up_r_asn = int(line_body[line_body.index('lt_up_r') + 1], 16)
+                    lt_up_hops = int(line_body[line_body.index('hops') + 1])
+
+                    lt_up_ms = (lt_up_r_asn - lt_up_t_asn) * sla_trig_asn_list[lt_up_t_asn_index][1]
+
+                    lt_up_ms_per_hop = lt_up_ms / lt_up_hops
+
+                    target_latency_list[lt_up_from_index][latency_list.index('upward_per_hop_latency_count')] += 1
+                    target_latency_list[lt_up_from_index][latency_list.index('upward_per_hop_latency_sum')] += lt_up_ms_per_hop
+
+        line = f.readline()
+    f.close()
+
+    # Next record downward per hop latency
+    for node_index in range(1, NODE_NUM):
+        node_id = node_index + 1
+        file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
+        f = open(file_name, 'r', errors='ignore')
+        print(file_name)
+
+        target_latency_list = bootstrap_latency_list
+
+        line = f.readline()
+        while line:
+            if len(line) > 1:
+                line = line.replace('\n', '')
+                line_prefix = line.split(':')[0]
+                if line_prefix == '[HK-P':
+                    line_body = line.split('] ')[1].split(' ')
+                    if line_body[0] == 'reset_log':
+                        target_latency_list = data_latency_list
+                    if line_body[0] == 'rx_down':
+                        lt_down_to_index = node_index
+                        lt_down_to_id = node_index + 1
+
+                        lt_down_t_asn = int(line_body[line_body.index('lt_down_t') + 1], 16)
+                        lt_down_r_asn = int(line_body[line_body.index('lt_down_r') + 1], 16)
+                        lt_down_hops = int(line_body[line_body.index('hops') + 1])
+
+                        lt_down_ms = (lt_down_r_asn - lt_down_t_asn) * sla_trig_asn_list[lt_down_t_asn_index][1]
+
+                        lt_down_ms_per_hop = lt_down_ms / lt_down_hops
+
+                        target_latency_list[lt_down_to_index][latency_list.index('downward_per_hop_latency_count')] += 1
+                        target_latency_list[lt_down_to_index][latency_list.index('downward_per_hop_latency_sum')] += lt_down_ms_per_hop
+
+            line = f.readline()
+        f.close()
+
+
+for (target_latency_list, target_result_list) in [(bootstrap_latency_list, bootstrap_period_result), (data_latency_list, data_period_result)]:
+    for i in range(NODE_NUM):
+        if float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]) == 0:
+            target_result_list[i][result_list.index('uLT')] = 'NaN'
+        else:
+            target_result_list[i][result_list.index('uLT')] = round(float(target_latency_list[i][latency_list.index('upward_per_hop_latency_sum')]) / float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]), 2)
+        if float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')]) == 0:
+            target_result_list[i][result_list.index('dLT')] = 'NaN'
+        else:
+            target_result_list[i][result_list.index('dLT')] = round(float(target_latency_list[i][latency_list.index('downward_per_hop_latency_sum')]) / float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')]), 2)
+        if (float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')])) == 0:
+            target_result_list[i][result_list.index('LT')] = 'NaN'
+        else:
+            target_result_list[i][result_list.index('LT')] = round((float(target_latency_list[i][latency_list.index('upward_per_hop_latency_sum')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_sum')])) / (float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')])), 2)
+
+
 # Print derived result
 print()
 for target_result_list in [bootstrap_period_result, data_period_result]:
@@ -553,16 +819,24 @@ for target_result_list in [bootstrap_period_result, data_period_result]:
     else:
         print('----- data period -----')
 
-    for i in range(result_list.index('SCR') - 1):#RESULT_NUM - 1):
-        print(result_list[i], '\t', end='')
-    print(result_list[result_list.index('SCR') - 1])#-1])
-    for i in range(NODE_NUM):
-        for j in range(result_list.index('SCR') - 1):#RESULT_NUM - 1):
-            print(target_result_list[i][j], '\t', end='')
-        print(target_result_list[i][result_list.index('SCR') - 1])#-1])
-    print()
-
-    if show_all == '1':
+    if show_all == '0':
+        for i in range(RESULT_NUM - 1):
+            print(result_list[i], '\t', end='')
+        print(result_list[-1])
+        for i in range(NODE_NUM):
+            for j in range(RESULT_NUM - 1):
+                print(target_result_list[i][j], '\t', end='')
+            print(target_result_list[i][-1])
+        print()
+    elif show_all == '1':
+        for i in range(result_list.index('SCR') - 1):#RESULT_NUM - 1):
+            print(result_list[i], '\t', end='')
+        print(result_list[result_list.index('SCR') - 1])#-1])
+        for i in range(NODE_NUM):
+            for j in range(result_list.index('SCR') - 1):#RESULT_NUM - 1):
+                print(target_result_list[i][j], '\t', end='')
+            print(target_result_list[i][result_list.index('SCR') - 1])#-1])
+        print()
         for i in range(result_list.index('SCR'), RESULT_NUM - 1): 
             print(result_list[i], '\t', end='')
         print(result_list[-1], '\t', end='')
