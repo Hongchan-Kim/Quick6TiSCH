@@ -71,6 +71,10 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+#if HCK_ASAP_EVAL_01_SLA_REAL_TIME
+static uint8_t hck_asap_eval_01_sla_real_time_skip_det = 1;
+#endif
+
 #if WITH_SLA /* Variables */
 static struct ctimer sla_timer;
 static struct ctimer sla_eb_send_timer;
@@ -1065,6 +1069,34 @@ sla_determine_next_timeslot_length_and_trig_asn()
    */
   int i = 0;
 
+#if HCK_ASAP_EVAL_01_SLA_REAL_TIME
+  if(hck_asap_eval_01_sla_real_time_skip_det == 1) {
+    hck_asap_eval_01_sla_real_time_skip_det = 0;
+
+    LOG_HK_SLA("det skip_first\n");
+
+    /* Reset next observation array */
+    sla_current_window_index = (sla_current_window_index + 1) % SLA_OBSERVATION_WINDOWS;
+    for(i = 0; i < SLA_FRAME_LEN_QUANTIZED_LEVELS; i++) {
+      sla_observed_bc_frame_length[sla_current_window_index][i] = 0;
+    }
+    for(i = 0; i < SLA_FRAME_LEN_QUANTIZED_LEVELS; i++) {
+      sla_observed_uc_frame_length[sla_current_window_index][i] = 0;
+    }
+    for(i = 0; i < SLA_ACK_LEN_QUANTIZED_LEVELS; i++) {
+      sla_observed_ack_length[sla_current_window_index][i] = 0;
+    }
+    sla_observed_bc_frame_count[sla_current_window_index] = 0;
+    sla_observed_uc_frame_count[sla_current_window_index] = 0;
+    sla_observed_ack_count[sla_current_window_index] = 0;
+    sla_max_hop_distance[sla_current_window_index] = 0;
+
+    /* Reset and restart sla_timer */
+    ctimer_set(&sla_timer, SLA_DETERMINATION_PERIOD, sla_determine_next_timeslot_length_and_trig_asn, NULL);
+    return;
+  }
+#endif
+
 #if SLA_DBG_ESSENTIAL
   /* Print recorded frame and ACK length distribution */
   uint64_t sla_determine_asn = tsch_calculate_current_asn();
@@ -1097,6 +1129,11 @@ sla_determine_next_timeslot_length_and_trig_asn()
     LOG_HK_SLA("det max_hops | win %u | %u\n", i, sla_max_hop_distance[i]);
   }
 #endif
+
+  /* Update current frame_len and ack_len */
+  sla_curr_ref_bc_frame_len = sla_next_ref_bc_frame_len;
+  sla_curr_ref_uc_frame_len = sla_next_ref_uc_frame_len;
+  sla_curr_ref_ack_len = sla_next_ref_ack_len;
 
   /* Calculate next frame_len and ack_len */
   sla_next_ref_bc_frame_len = sla_calculate_next_ref_bc_frame_len();
@@ -1162,12 +1199,6 @@ sla_apply_next_timeslot_length()
 {
   tsch_timing_us[tsch_ts_timeslot_length] = sla_next_timeslot_length;
   tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
-
-  if(tsch_is_coordinator) {
-    sla_curr_ref_bc_frame_len = sla_next_ref_bc_frame_len;
-    sla_curr_ref_uc_frame_len = sla_next_ref_uc_frame_len;
-    sla_curr_ref_ack_len = sla_next_ref_ack_len;
-  }
 }
 #endif
 /*---------------------------------------------------------------------------*/

@@ -414,7 +414,7 @@
  * UPA: Utility-based Packet Aggregation
  */
 /* Need to be tested */
-#define WITH_UPA                                   1
+#define WITH_UPA                                   0
 #if WITH_UPA
 #define UPA_TRIPLE_CCA                             1
 #define UPA_RX_SLOT_POLICY                         1 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
@@ -431,10 +431,10 @@
 /*
  * Adaptive timeslot length
  */
-#define WITH_SLA                                   1
+#define WITH_SLA                                   0
 #if WITH_SLA
 
-#define SLA_K_TH_PERCENTILE                        100
+#define SLA_K_TH_PERCENTILE                        90
 
 #define SLA_DBG_ESSENTIAL                          1
 #define SLA_DBG_OPERATION                          0
@@ -490,8 +490,23 @@
 /*
  * Evaluation orientd configurations
  */
-#define HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN       0
-#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+#define HCK_ASAP_EVAL_01_SLA_REAL_TIME             0
+#if HCK_ASAP_EVAL_01_SLA_REAL_TIME
+#define APP_PAYLOAD_MAX_LEN                        69
+#define APP_PAYLOAD_MIX_LEN                        14
+#define APP_PAYLOAD_LEN_FIRST                      APP_PAYLOAD_MAX_LEN
+#define APP_PAYLOAD_LEN_SECOND                     APP_PAYLOAD_MIX_LEN
+#define APP_PAYLOAD_LEN_THIRD                      ((APP_PAYLOAD_MAX_LEN + APP_PAYLOAD_MIX_LEN) / 2)
+
+#undef SLA_K_TH_PERCENTILE
+#define SLA_K_TH_PERCENTILE                        90
+
+#undef SLA_START_DELAY
+#define SLA_START_DELAY                            (6 * 60 * CLOCK_SECOND)
+#endif /* HCK_ASAP_EVAL_01_SLA_REAL_TIME */
+
+#define HCK_ASAP_EVAL_02_UPA_SINGLE_HOP            0
+#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
 
 #undef ORCHESTRA_CONF_UNICAST_PERIOD
 #define ORCHESTRA_CONF_UNICAST_PERIOD              10 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
@@ -576,6 +591,6 @@
 #undef TSCH_CONF_MAX_INCOMING_PACKETS
 #define TSCH_CONF_MAX_INCOMING_PACKETS             32 /* 8 in OST, originally 4 */
 
-#endif /* HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN */
+#endif /* HCK_ASAP_EVAL_02_UPA_SINGLE_HOP */
 
 #endif /* PROJECT_CONF_H_ */ 

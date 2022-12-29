@@ -49,7 +49,7 @@ static struct simple_udp_connection udp_conn;
 static unsigned count = 1;
 static uint16_t app_rxd_count;
 
-#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
 static uint32_t  eval_01_count = 1;
 #endif
 
@@ -209,6 +209,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static uint32_t app_seqno = 0;
   static uint16_t app_magic = (uint16_t)APP_DATA_MAGIC;
 
+#if HCK_ASAP_EVAL_01_SLA_REAL_TIME
+  current_payload_len = APP_PAYLOAD_LEN_FIRST;
+#endif
 
 #if WITH_VARYING_PPM
   static int APP_UPWARD_SEND_VARYING_PPM[VARY_LENGTH] = {1, 2, 4, 8, 6, 4, 1, 8};
@@ -344,7 +347,15 @@ PROCESS_THREAD(udp_client_process, ev, data)
         app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
-#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+#if HCK_ASAP_EVAL_01_SLA_REAL_TIME
+        if((count > (APP_UPWARD_MAX_TX / 3)) && (count <= (APP_UPWARD_MAX_TX / 3 * 2))) {
+          current_payload_len = APP_PAYLOAD_LEN_SECOND;
+        } else if(count > (APP_UPWARD_MAX_TX / 3 * 2)) {
+          current_payload_len = APP_PAYLOAD_LEN_THIRD;
+        }
+#endif
+
+#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
         current_payload_len = APP_PAYLOAD_LEN_MIN + (eval_01_count - 1) / NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN;
 #endif
 
@@ -368,7 +379,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
         count++;
-#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+
+#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
         eval_01_count++;
 #endif
       }

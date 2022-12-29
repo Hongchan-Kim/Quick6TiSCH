@@ -226,7 +226,7 @@ static rtimer_clock_t regular_slot_timestamp_rx[14];
 #endif /* HCK_DBG_REGULAR_SLOT_TIMING */
 #endif /* HCK_DBG_REGULAR_SLOT_DETAIL */
 
-#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
 #if FIXED_NUM_OF_AGGREGATED_PKTS > 0
 uint8_t eval_01_num_of_pkts_aggregated = FIXED_NUM_OF_AGGREGATED_PKTS;
 #else
@@ -1863,19 +1863,19 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         upa_pkts_to_request = MIN(upa_pkts_to_request, (((int)TSCH_MAX_INCOMING_PACKETS - 1) - 1));
 
         if(upa_pkts_to_request > 0
-#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
             && upa_pkts_to_request >= eval_01_num_of_pkts_aggregated
 #endif
           ) {
-#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN
+#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
           upa_pkts_to_request = eval_01_num_of_pkts_aggregated;
           upa_calculate_slot_utility(current_neighbor, current_packet, upa_pkts_to_request);
           uint16_t upa_info_to_request = (upa_pkts_to_request << 8) + 0;
-#else /* HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN */
+#else /* HCK_ASAP_EVAL_02_UPA_SINGLE_HOP */
           uint8_t upa_bitmap_of_slot_utility 
                   = upa_calculate_slot_utility(current_neighbor, current_packet, upa_pkts_to_request);
           uint16_t upa_info_to_request = (upa_pkts_to_request << 8) + upa_bitmap_of_slot_utility;
-#endif /* HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN */
+#endif /* HCK_ASAP_EVAL_02_UPA_SINGLE_HOP */
           upa_link_requested = 1;
           tsch_packet_set_frame_pending(packet, packet_len);
 
@@ -2952,7 +2952,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                                 / tsch_timing[tsch_ts_timeslot_length];
     current_slot_idle_time = current_slot_passed_slots * tsch_timing[tsch_ts_timeslot_length] - current_slot_busy_time;
 
-#if HCK_ASAP_EVAL_01_SINGLE_HOP_UPA_GAIN && (FIXED_NUM_OF_AGGREGATED_PKTS == 0)
+#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP && (FIXED_NUM_OF_AGGREGATED_PKTS == 0)
     if(upa_tx_slot_all_packet_len_same == 1 
       && upa_tx_slot_batch_tx_ok_count == upa_pkts_to_send) {
       eval_01_num_of_pkts_aggregated++;
