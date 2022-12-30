@@ -188,9 +188,9 @@ result_list = ['id', 'bootP', 'bootQ',
             'leave', 'dc',
             'as_ts', 'sch_eb', 'sch_bc', 'sch_uc']
 
-#sla_result_list = ['']
-#if IS_SLA_ON:
-#    result_list.extend(sla_result_list)
+sla_result_list = ['ts_l']
+if IS_SLA_ON:
+    result_list.extend(sla_result_list)
 
 upa_result_list = ['UTS', 'UTR', 'UTO', 'UTU', 'URS', 'URR', 'URO', 'URU', 'UU']
 if IS_UPA_ON:
@@ -560,6 +560,7 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
                     target_result_list[i][j] = round(float(target_parsed_list[i][key_list.index('pp_upa_rx_ok')]) / float(target_parsed_list[i][key_list.index('pp_upa_rx_ts')]), 2)
 
 
+# Parse latency
 # List to store latency result
 latency_list = ['upward_per_hop_latency_count', 'upward_per_hop_latency_sum', 'downward_per_hop_latency_count', 'downward_per_hop_latency_sum']
 LATENCY_NUM = len(latency_list)
@@ -723,6 +724,8 @@ if IS_SLA_ON:
         f.close()
 
 else: # IS_SLA_ON == 0
+    DEFAULT_SLOT_LEN = 10
+
     # First record upward per hop latency
     file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
     f = open(file_name, 'r', errors='ignore')
@@ -748,7 +751,7 @@ else: # IS_SLA_ON == 0
                     lt_up_r_asn = int(line_body[line_body.index('lt_up_r') + 1], 16)
                     lt_up_hops = int(line_body[line_body.index('hops') + 1])
 
-                    lt_up_ms = (lt_up_r_asn - lt_up_t_asn) * sla_trig_asn_list[lt_up_t_asn_index][1]
+                    lt_up_ms = (lt_up_r_asn - lt_up_t_asn) * DEFAULT_SLOT_LEN
 
                     lt_up_ms_per_hop = lt_up_ms / lt_up_hops
 
@@ -784,7 +787,7 @@ else: # IS_SLA_ON == 0
                         lt_down_r_asn = int(line_body[line_body.index('lt_down_r') + 1], 16)
                         lt_down_hops = int(line_body[line_body.index('hops') + 1])
 
-                        lt_down_ms = (lt_down_r_asn - lt_down_t_asn) * sla_trig_asn_list[lt_down_t_asn_index][1]
+                        lt_down_ms = (lt_down_r_asn - lt_down_t_asn) * DEFAULT_SLOT_LEN
 
                         lt_down_ms_per_hop = lt_down_ms / lt_down_hops
 
@@ -809,6 +812,51 @@ for (target_latency_list, target_result_list) in [(bootstrap_latency_list, boots
             target_result_list[i][result_list.index('LT')] = 'NaN'
         else:
             target_result_list[i][result_list.index('LT')] = round((float(target_latency_list[i][latency_list.index('upward_per_hop_latency_sum')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_sum')])) / (float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')])), 2)
+
+
+# Parse slot length
+# List to store slot length result
+if IS_SLA_ON:
+    print()
+    slot_len_list = ['slot_len_count', 'slot_len_ms_sum']
+    SLOT_LEN_NUM = len(slot_len_list)
+
+    bootstrap_slot_len_list = [[0 for i in range(SLOT_LEN_NUM)] for j in range(NODE_NUM)]
+    data_slot_len_list = [[0 for i in range(SLOT_LEN_NUM)] for j in range(NODE_NUM)]
+
+    for node_index in range(0, NODE_NUM):
+        node_id = node_index + 1
+        file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
+        f = open(file_name, 'r', errors='ignore')
+        print(file_name)
+
+        target_slot_len_list = bootstrap_slot_len_list
+
+        line = f.readline()
+        while line:
+            if len(line) > 1:
+                line = line.replace('\n', '')
+                line_prefix = line.split(':')[0]
+                line_postfix = line.split(' ')[-1]
+                if line_prefix == '[HK-P':
+                    line_body = line.split('] ')[1].split(' ')
+                    if line_body[0] == 'reset_log':
+                        target_slot_len_list = data_slot_len_list
+                if line_postfix == 'HK-T':
+                    line_body = line.split('] ')[1].split(' ')
+                    current_slot_len = float(line_body[-3]) / 1000
+                    target_slot_len_list[node_index][slot_len_list.index('slot_len_count')] += 1
+                    target_slot_len_list[node_index][slot_len_list.index('slot_len_ms_sum')] += current_slot_len
+
+            line = f.readline()
+        f.close()
+
+    for (target_slot_len_list, target_result_list) in [(bootstrap_slot_len_list, bootstrap_period_result), (data_slot_len_list, data_period_result)]:
+        for i in range(NODE_NUM):
+            if float(target_slot_len_list[i][slot_len_list.index('slot_len_count')]) == 0:
+                target_result_list[i][result_list.index('ts_l')] = 'NaN'
+            else:
+                target_result_list[i][result_list.index('ts_l')] = round(float(target_slot_len_list[i][slot_len_list.index('slot_len_ms_sum')]) / float(target_slot_len_list[i][slot_len_list.index('slot_len_count')]), 2)
 
 
 # Print derived result
