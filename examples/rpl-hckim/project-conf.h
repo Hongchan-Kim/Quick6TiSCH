@@ -322,6 +322,9 @@
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define WITH_ALICE                                 1
+
+#define jhShin_bug_fix                             1
+
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
@@ -493,10 +496,10 @@
 #define HCK_ASAP_EVAL_01_SLA_REAL_TIME             0
 #if HCK_ASAP_EVAL_01_SLA_REAL_TIME
 #define APP_PAYLOAD_MAX_LEN                        69
-#define APP_PAYLOAD_MIX_LEN                        14
+#define APP_PAYLOAD_MIN_LEN                        14
 #define APP_PAYLOAD_LEN_FIRST                      APP_PAYLOAD_MAX_LEN
-#define APP_PAYLOAD_LEN_SECOND                     APP_PAYLOAD_MIX_LEN
-#define APP_PAYLOAD_LEN_THIRD                      ((APP_PAYLOAD_MAX_LEN + APP_PAYLOAD_MIX_LEN) / 2)
+#define APP_PAYLOAD_LEN_SECOND                     APP_PAYLOAD_MIN_LEN
+#define APP_PAYLOAD_LEN_THIRD                      ((APP_PAYLOAD_MAX_LEN + APP_PAYLOAD_MIN_LEN) / 2)
 
 #undef SLA_K_TH_PERCENTILE
 #define SLA_K_TH_PERCENTILE                        90

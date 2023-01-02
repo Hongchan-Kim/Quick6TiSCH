@@ -787,6 +787,11 @@ struct tsch_link *
 tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset,
     struct tsch_link **backup_link)
 {
+#if jhShin_bug_fix
+  uint16_t smallest_time_to_next_asn_unicast = 999;   
+  uint8_t next_asfn_link_exists_before_this_timeslot = 0;
+#endif
+
   uint16_t time_to_curr_best = 0;
   struct tsch_link *curr_best = NULL;
   struct tsch_link *curr_backup = NULL; /* Keep a back link in case the current link
@@ -824,7 +829,19 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 
 #if WITH_ALICE /* alice-implementation */
 #ifdef ALICE_TIME_VARYING_SCHEDULING
+#if jhShin_bug_fix
+        if(sf->handle == ALICE_UNICAST_SF_HANDLE) {
+          next_asfn_link_exists_before_this_timeslot += 1;
+        }
+#endif
         if(sf->handle == ALICE_UNICAST_SF_HANDLE && alice_curr_asfn != alice_next_asfn && l->timeslot > timeslot) {
+#if jhShin_bug_fix
+          next_asfn_link_exists_before_this_timeslot -= 1;
+          time_to_timeslot = sf->size.val + l->timeslot - timeslot; 
+          if(smallest_time_to_next_asn_unicast > time_to_timeslot) {
+            smallest_time_to_next_asn_unicast = time_to_timeslot;
+          }
+#endif
           time_to_timeslot = 999; //maximum value;
         }
 #endif
@@ -909,6 +926,11 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
     }
     if(time_offset != NULL) {
       *time_offset = time_to_curr_best;
+#if jhShin_bug_fix
+      if(next_asfn_link_exists_before_this_timeslot == 0 && (time_to_curr_best > smallest_time_to_next_asn_unicast)) {
+        *time_offset = smallest_time_to_next_asn_unicast;
+      }
+#endif
     }
 
 #if WITH_OST && OST_ON_DEMAND_PROVISION
