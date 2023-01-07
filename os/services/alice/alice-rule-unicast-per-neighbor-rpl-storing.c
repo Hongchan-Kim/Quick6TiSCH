@@ -244,7 +244,7 @@ neighbor_has_uc_link(const linkaddr_t *linkaddr)
 /* packet_selection_callback. */
 #ifdef ALICE_PACKET_CELL_MATCHING_ON_THE_FLY
 int
-alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offset, const linkaddr_t rx_linkaddr)
+alice_packet_cell_matching_on_the_fly(uint16_t *timeslot, uint16_t *channel_offset, const linkaddr_t *rx_linkaddr)
 {
   /*
    * ALICE: First checks if rx_linkaddr is still the node's RPL neighbor,
@@ -254,27 +254,27 @@ alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offs
   int is_rpl_neighbor = 0;
 
   /* Check parent first */
-  if(linkaddr_cmp(&orchestra_parent_linkaddr, &rx_linkaddr)) {
+  if(linkaddr_cmp(&orchestra_parent_linkaddr, rx_linkaddr)) {
     is_rpl_neighbor = 1;
 
-    *timeslot = get_node_timeslot(&linkaddr_node_addr, &rx_linkaddr);
-    *channel_offset = get_node_channel_offset(&linkaddr_node_addr, &rx_linkaddr); 
+    *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr);
+    *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr); 
 
     return is_rpl_neighbor;
   }
 
   /* Check child next */
-  nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, &rx_linkaddr);
+  nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, rx_linkaddr);
 #if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
   if(item != NULL) {
     struct uip_ds6_route_neighbor_routes *routes;
-    routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)&rx_linkaddr);
+    routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)rx_linkaddr);
     struct uip_ds6_route_neighbor_route *neighbor_route;
     uint8_t true_child = 0;
     for(neighbor_route = list_head(routes->route_list);
         neighbor_route != NULL;
         neighbor_route = list_item_next(neighbor_route)) {
-      if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(&rx_linkaddr, &(neighbor_route->route->ipaddr))) {
+      if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(rx_linkaddr, &(neighbor_route->route->ipaddr))) {
         true_child = 1;
         break;
       }
@@ -282,8 +282,8 @@ alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offs
     if(true_child == 1) {
       is_rpl_neighbor = 1;
 
-      *timeslot = get_node_timeslot(&linkaddr_node_addr, &rx_linkaddr);
-      *channel_offset = get_node_channel_offset(&linkaddr_node_addr, &rx_linkaddr); 
+      *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr);
+      *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr); 
 
       return is_rpl_neighbor;
     }
@@ -292,8 +292,8 @@ alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offs
   if(item != NULL) {
     is_rpl_neighbor = 1;
 
-    *timeslot = get_node_timeslot(&linkaddr_node_addr, &rx_linkaddr);
-    *channel_offset = get_node_channel_offset(&linkaddr_node_addr, &rx_linkaddr); 
+    *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr);
+    *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr); 
 
     return is_rpl_neighbor;
   }
