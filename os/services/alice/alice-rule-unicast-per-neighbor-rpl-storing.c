@@ -72,17 +72,18 @@
 static uint16_t slotframe_handle = 0;
 static struct tsch_slotframe *sf_unicast;
 
-uint16_t alice_asfn_for_schedule = 0; //absolute slotframe number for ALICE time varying scheduling
-uint8_t link_option_rx = LINK_OPTION_RX;
-uint8_t link_option_tx = LINK_OPTION_TX | UNICAST_SLOT_SHARED_FLAG; //If it is a shared link, backoff will be applied.
+static uint16_t alice_asfn_for_scheduling = 0; // absolute slotframe number for ALICE time varying scheduling
+static uint8_t alice_rx_link_option = LINK_OPTION_RX;
+static uint8_t alice_tx_link_option = LINK_OPTION_TX | UNICAST_SLOT_SHARED_FLAG; // If it is a shared link, backoff will be applied.
 
 /*---------------------------------------------------------------------------*/
 static uint16_t
 get_node_timeslot(const linkaddr_t *addr1, const linkaddr_t *addr2)
 {
   if(addr1 != NULL && addr2 != NULL && ORCHESTRA_UNICAST_PERIOD > 0) {
-    return alice_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2) + (uint32_t)alice_asfn_for_schedule), 
-                              (ORCHESTRA_UNICAST_PERIOD)); //link-based timeslot determination
+    return alice_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2) 
+                             + (uint32_t)alice_asfn_for_scheduling), 
+                            (ORCHESTRA_UNICAST_PERIOD)); // link-based timeslot determination
   } else {
     return 0xffff;
   }
@@ -91,24 +92,24 @@ get_node_timeslot(const linkaddr_t *addr1, const linkaddr_t *addr2)
 static uint16_t
 get_node_channel_offset(const linkaddr_t *addr1, const linkaddr_t *addr2)
 {
-  int num_ch = (sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE) / sizeof(uint8_t)) - 1; //except for EB channel offset (1)
-  if(addr1 != NULL && addr2 != NULL  && num_ch > 0) {
+  int num_ch = (sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE) / sizeof(uint8_t)) - 1; // except for EB channel offset, 1
+  if(addr1 != NULL && addr2 != NULL && num_ch > 0) {
     return 1 + alice_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2)
-            + (uint32_t)alice_asfn_for_schedule), num_ch); //link-based, except for EB channel offset (1)
+            + (uint32_t)alice_asfn_for_scheduling), num_ch); // link-based, except for EB channel offset, 1
   } else {
-    // alice final check: should this be 0xffff????
+    // alice final check: should this be 0xffff ????
     return 1 + 0; //same with common shared channel offset
   }
 }
 /*---------------------------------------------------------------------------*/
-uint16_t
-is_root()
+static uint16_t
+alice_is_root() // alice final check: can be replaced with rpl_dag_root_is_root() function
 {
   rpl_instance_t *instance = rpl_get_default_instance();
   if(instance != NULL && instance->current_dag != NULL) {
     uint16_t min_hoprankinc = instance->min_hoprankinc;
     uint16_t rank = (uint16_t)instance->current_dag->rank;
-    if(min_hoprankinc == rank){
+    if(min_hoprankinc == rank) {
       return 1;
     }
   }
@@ -119,16 +120,16 @@ is_root()
 static void
 alice_schedule_unicast_slotframe(void)
 {
-  /* schedule for parent node */
-  uint16_t timeslot_for_parent_up, timeslot_for_parent_down;
-  uint16_t channel_offset_for_parent_up, channel_offset_for_parent_down;
+    /* schedule for parent node */
+  uint16_t upward_timeslot_for_parent, downward_timeslot_for_parent;
+  uint16_t upward_channel_offset_for_parent, downward_channel_offset_for_parent;
 
   /* schedule for child node */
-  uint16_t timeslot_for_child_up, timeslot_for_child_down;
-  uint16_t channel_offset_for_child_up, channel_offset_for_child_down;
+  uint16_t upward_timeslot_for_child, downward_timeslot_for_child;
+  uint16_t upward_channel_offset_for_child, downward_channel_offset_for_child;
 
   /* link options */
-  uint8_t link_option_up, link_option_down;
+  uint8_t upward_link_option, downward_link_option;
 
   /* Remove the whole links scheduled in the unicast slotframe */
   struct tsch_link *l;
@@ -138,67 +139,67 @@ alice_schedule_unicast_slotframe(void)
     l = list_head(sf_unicast->links_list);
   }
 
-  /* NO ROOT ONLY: Schedule the links between parent node and current node */
-  if(is_root() != 1) {
-    timeslot_for_parent_up = get_node_timeslot(&linkaddr_node_addr, &orchestra_parent_linkaddr);
-    channel_offset_for_parent_up = get_node_channel_offset(&linkaddr_node_addr, &orchestra_parent_linkaddr);
-    link_option_up = link_option_tx;
-    alice_tsch_schedule_add_link(sf_unicast, link_option_up, LINK_TYPE_NORMAL, 
-                                &tsch_broadcast_address, timeslot_for_parent_up, channel_offset_for_parent_up,
+  /* NO ROOT ONLY: Schedule the links for parent node */
+  if(alice_is_root() != 1) {
+    upward_timeslot_for_parent = get_node_timeslot(&linkaddr_node_addr, &orchestra_parent_linkaddr);
+    upward_channel_offset_for_parent = get_node_channel_offset(&linkaddr_node_addr, &orchestra_parent_linkaddr);
+    upward_link_option = alice_tx_link_option;
+    alice_tsch_schedule_add_link(sf_unicast, upward_link_option, LINK_TYPE_NORMAL, 
+                                &tsch_broadcast_address, upward_timeslot_for_parent, upward_channel_offset_for_parent,
                                 HCK_GET_NODE_ID_FROM_LINKADDR(&orchestra_parent_linkaddr));
 
-    timeslot_for_parent_down = get_node_timeslot(&orchestra_parent_linkaddr, &linkaddr_node_addr);
-    channel_offset_for_parent_down = get_node_channel_offset(&orchestra_parent_linkaddr, &linkaddr_node_addr);
-    link_option_down = link_option_rx;
-    alice_tsch_schedule_add_link(sf_unicast, link_option_down, LINK_TYPE_NORMAL, 
-                                &tsch_broadcast_address, timeslot_for_parent_down, channel_offset_for_parent_down,
+    downward_timeslot_for_parent = get_node_timeslot(&orchestra_parent_linkaddr, &linkaddr_node_addr);
+    downward_channel_offset_for_parent = get_node_channel_offset(&orchestra_parent_linkaddr, &linkaddr_node_addr);
+    downward_link_option = alice_rx_link_option;
+    alice_tsch_schedule_add_link(sf_unicast, downward_link_option, LINK_TYPE_NORMAL, 
+                                &tsch_broadcast_address, downward_timeslot_for_parent, downward_channel_offset_for_parent,
                                 HCK_GET_NODE_ID_FROM_LINKADDR(&orchestra_parent_linkaddr));
   }
 
-  /* Schedule the links between child node and current node - lookup all route next hops */
+  /* Schedule the links for child nodes */
   nbr_table_item_t *item = nbr_table_head(nbr_routes);
   while(item != NULL) {
     linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
-#if 0//ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
     struct uip_ds6_route_neighbor_routes *routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)addr);
     struct uip_ds6_route_neighbor_route *neighbor_route;
-    uint8_t real_child = 0;
+    uint8_t true_child = 0;
     for(neighbor_route = list_head(routes->route_list);
         neighbor_route != NULL;
         neighbor_route = list_item_next(neighbor_route)) {
       if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(addr, &(neighbor_route->route->ipaddr))) {
-        real_child = 1;
+        true_child = 1;
         break;
       }
     }
-    if(real_child == 1) {
-      timeslot_for_child_up = get_node_timeslot(addr, &linkaddr_node_addr); 
-      channel_offset_for_child_up = get_node_channel_offset(addr, &linkaddr_node_addr);
-      link_option_up = link_option_rx;
-      alice_tsch_schedule_add_link(sf_unicast, link_option_up, LINK_TYPE_NORMAL, 
-                                  &tsch_broadcast_address, timeslot_for_child_up, channel_offset_for_child_up,
+    if(true_child == 1) {
+      upward_timeslot_for_child = get_node_timeslot(addr, &linkaddr_node_addr); 
+      upward_channel_offset_for_child = get_node_channel_offset(addr, &linkaddr_node_addr);
+      upward_link_option = alice_rx_link_option;
+      alice_tsch_schedule_add_link(sf_unicast, upward_link_option, LINK_TYPE_NORMAL, 
+                                  &tsch_broadcast_address, upward_timeslot_for_child, upward_channel_offset_for_child,
                                   HCK_GET_NODE_ID_FROM_LINKADDR(addr));
 
-      timeslot_for_child_down = get_node_timeslot(&linkaddr_node_addr, addr); 
-      channel_offset_for_child_down = get_node_channel_offset(&linkaddr_node_addr, addr);
-      link_option_down = link_option_tx;
-      alice_tsch_schedule_add_link(sf_unicast, link_option_down, LINK_TYPE_NORMAL, 
-                                  &tsch_broadcast_address, timeslot_for_child_down, channel_offset_for_child_down,
+      downward_timeslot_for_child = get_node_timeslot(&linkaddr_node_addr, addr); 
+      downward_channel_offset_for_child = get_node_channel_offset(&linkaddr_node_addr, addr);
+      downward_link_option = alice_tx_link_option;
+      alice_tsch_schedule_add_link(sf_unicast, downward_link_option, LINK_TYPE_NORMAL, 
+                                  &tsch_broadcast_address, downward_timeslot_for_child, downward_channel_offset_for_child,
                                   HCK_GET_NODE_ID_FROM_LINKADDR(addr));
     }      
 #else
-    timeslot_for_child_up = get_node_timeslot(addr, &linkaddr_node_addr); 
-    channel_offset_for_child_up = get_node_channel_offset(addr, &linkaddr_node_addr);
-    link_option_up = link_option_rx;
-    alice_tsch_schedule_add_link(sf_unicast, link_option_up, LINK_TYPE_NORMAL, 
-                                &tsch_broadcast_address, timeslot_for_child_up, channel_offset_for_child_up,
+    upward_timeslot_for_child = get_node_timeslot(addr, &linkaddr_node_addr);
+    upward_channel_offset_for_child = get_node_channel_offset(addr, &linkaddr_node_addr);
+    upward_link_option = alice_rx_link_option;
+    alice_tsch_schedule_add_link(sf_unicast, upward_link_option, LINK_TYPE_NORMAL, 
+                                &tsch_broadcast_address, upward_timeslot_for_child, upward_channel_offset_for_child,
                                 HCK_GET_NODE_ID_FROM_LINKADDR(addr));
 
-    timeslot_for_child_down = get_node_timeslot(&linkaddr_node_addr, addr); 
-    channel_offset_for_child_down = get_node_channel_offset(&linkaddr_node_addr, addr);
-    link_option_down = link_option_tx;
-    alice_tsch_schedule_add_link(sf_unicast, link_option_down, LINK_TYPE_NORMAL, 
-                                &tsch_broadcast_address, timeslot_for_child_down, channel_offset_for_child_down,
+    downward_timeslot_for_child = get_node_timeslot(&linkaddr_node_addr, addr); 
+    downward_channel_offset_for_child = get_node_channel_offset(&linkaddr_node_addr, addr);
+    downward_link_option = alice_tx_link_option;
+    alice_tsch_schedule_add_link(sf_unicast, downward_link_option, LINK_TYPE_NORMAL, 
+                                &tsch_broadcast_address, downward_timeslot_for_child, downward_channel_offset_for_child,
                                 HCK_GET_NODE_ID_FROM_LINKADDR(addr));
 #endif
 
@@ -212,9 +213,10 @@ neighbor_has_uc_link(const linkaddr_t *linkaddr)
 {
   if(linkaddr != NULL && !linkaddr_cmp(linkaddr, &linkaddr_null)) {
     if((orchestra_parent_knows_us || !ORCHESTRA_UNICAST_SENDER_BASED)
-      && linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
+       && linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
       return 1;
     }
+
 #if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
     struct uip_ds6_route_neighbor_routes *routes;
     routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr);
@@ -242,71 +244,77 @@ neighbor_has_uc_link(const linkaddr_t *linkaddr)
 int
 alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offset, const linkaddr_t rx_linkaddr)
 {
-  //packet destination is rx_linkaddr. 
-  //Checks if rx_linkaddr is still the node's RPL neighbor.
-  //and checks wether this can be transmitted at the current link's cell (*timeslot, *channel_offset).
-  int is_neighbor = 0;
+  /*
+   * ALICE: First checks if rx_linkaddr is still the node's RPL neighbor,
+   * and returns the current link's timeoffset and channel_offset.
+   * Then, the caller function will check wether this packet can be transmitted at the current link.
+   */
+  int is_rpl_neighbor = 0;
 
-  //schedule the links between parent node and current node
+  /* Check parent first */
   if(linkaddr_cmp(&orchestra_parent_linkaddr, &rx_linkaddr)) {
-    is_neighbor = 1;
+    is_rpl_neighbor = 1;
 
-    *timeslot = get_node_timeslot(&linkaddr_node_addr, &orchestra_parent_linkaddr);
-    *channel_offset = get_node_channel_offset(&linkaddr_node_addr, &orchestra_parent_linkaddr);
+    *timeslot = get_node_timeslot(&linkaddr_node_addr, &rx_linkaddr);
+    *channel_offset = get_node_channel_offset(&linkaddr_node_addr, &rx_linkaddr); 
 
-    return is_neighbor;
+    return is_rpl_neighbor;
   }
 
-  //schedule the links between child-node and current node
-  //lookup all route next hops
+  /* Check child next */
   nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, &rx_linkaddr);
 #if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
   if(item != NULL) {
     struct uip_ds6_route_neighbor_routes *routes;
     routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)&rx_linkaddr);
     struct uip_ds6_route_neighbor_route *neighbor_route;
-    uint8_t real_child = 0;
+    uint8_t true_child = 0;
     for(neighbor_route = list_head(routes->route_list);
         neighbor_route != NULL;
         neighbor_route = list_item_next(neighbor_route)) {
       if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(&rx_linkaddr, &(neighbor_route->route->ipaddr))) {
-        real_child = 1;
+        true_child = 1;
         break;
       }
     }
-    if(real_child == 1) {
-      is_neighbor = 1;
+    if(true_child == 1) {
+      is_rpl_neighbor = 1;
 
       *timeslot = get_node_timeslot(&linkaddr_node_addr, &rx_linkaddr);
       *channel_offset = get_node_channel_offset(&linkaddr_node_addr, &rx_linkaddr); 
 
-      return is_neighbor;
+      return is_rpl_neighbor;
     }
   }
 #else
   if(item != NULL) {
-    is_neighbor = 1;
+    is_rpl_neighbor = 1;
 
     *timeslot = get_node_timeslot(&linkaddr_node_addr, &rx_linkaddr);
     *channel_offset = get_node_channel_offset(&linkaddr_node_addr, &rx_linkaddr); 
 
-    return is_neighbor;
+    return is_rpl_neighbor;
   }
 #endif
-  //this packet's receiver is not the node's RPL neighbor. 
+
+  /* 
+   * At this point, is_rpl_neighbor is zero
+   * and this packet's receiver is not the node's RPL neighbor.
+   */
+  // alice final check - what the return values shoud be?
   *timeslot = 0;
   *channel_offset = ALICE_COMMON_SF_HANDLE;
 
-  return is_neighbor; //returns 0 <-- ALICE EARLY PACKET DROP
+  return is_rpl_neighbor; // returns 0 -> triggers ALICE_EARLY_PACKET_DROP
 }
 #endif
 /*---------------------------------------------------------------------------*/
 /* slotframe_callback. */
 #ifdef ALICE_TIME_VARYING_SCHEDULING
 void
-alice_time_varying_scheduling(uint16_t asfn, uint16_t sfsize)
+alice_time_varying_scheduling(uint64_t asfn)
 {  
-  alice_asfn_for_schedule = asfn;  
+  alice_asfn_for_scheduling = asfn;  
   alice_schedule_unicast_slotframe();
 }
 #endif
@@ -321,8 +329,8 @@ static void
 child_removed(const linkaddr_t *linkaddr)
 {
 #if HCK_ORCHESTRA_PACKET_OFFLOADING
-    const struct tsch_neighbor *removed_child = tsch_queue_get_nbr(linkaddr);
-    tsch_queue_change_attr_of_packets_in_queue(removed_child, 2, 0);
+  const struct tsch_neighbor *removed_child = tsch_queue_get_nbr(linkaddr);
+  tsch_queue_change_attr_of_packets_in_queue(removed_child, ALICE_COMMON_SF_HANDLE, 0);
 #endif
   alice_schedule_unicast_slotframe();
 }
@@ -359,7 +367,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     }
 
 #if HCK_ORCHESTRA_PACKET_OFFLOADING
-    tsch_queue_change_attr_of_packets_in_queue(old, 2, 0);
+    tsch_queue_change_attr_of_packets_in_queue(old, ALICE_COMMON_SF_HANDLE, 0);
 #endif
 
 #ifdef ALICE_TIME_VARYING_SCHEDULING
@@ -369,11 +377,11 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     TSCH_ASN_COPY(new_asn, tsch_current_asn);
     TSCH_ASN_DEC(new_asn, mod);
 
-    alice_curr_asfn = TSCH_ASN_DIVISION(new_asn, sf_unicast->size);
-    alice_next_asfn = alice_curr_asfn;
+    alice_current_asfn = TSCH_ASN_DIVISION(new_asn, sf_unicast->size);
+    alice_lastly_scheduled_asfn = alice_current_asfn;
 
-    // hckim actually this is same with alice_curr_asfn
-    alice_asfn_for_schedule = alice_tsch_schedule_get_current_asfn(sf_unicast);
+    // hckim actually this is same with alice_current_asfn
+    alice_asfn_for_scheduling = alice_tsch_schedule_get_current_asfn(sf_unicast);
 #endif
 
     alice_schedule_unicast_slotframe(); 
@@ -387,19 +395,11 @@ init(uint16_t sf_handle)
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
 
-  LOG_INFO("ALICE: unicast sf length: %u\n", ORCHESTRA_UNICAST_PERIOD);
-
-#ifdef ALICE_TIME_VARYING_SCHEDULING
-  /* upper bound of ASFN - 65535 = 4Byte max value (0,65535) #65536 */
-  alice_asfn_upper_bound = (uint16_t)((uint32_t)65536 / (uint32_t)ORCHESTRA_UNICAST_PERIOD);
-  LOG_INFO("ALICE: upper bound of ASFN %u\n", alice_asfn_upper_bound);
-#endif 
-
 #ifdef ALICE_TIME_VARYING_SCHEDULING
   /* current ASFN */
-  alice_asfn_for_schedule = alice_tsch_schedule_get_current_asfn(sf_unicast);
+  alice_asfn_for_scheduling = alice_tsch_schedule_get_current_asfn(sf_unicast);
 #else
-  alice_asfn_for_schedule = 0;
+  alice_asfn_for_scheduling = 0;
 #endif
 }
 /*---------------------------------------------------------------------------*/
