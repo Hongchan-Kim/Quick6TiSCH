@@ -322,9 +322,6 @@
 
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
 #define WITH_ALICE                                 1
-
-#define jhShin_bug_fix                             1
-
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
