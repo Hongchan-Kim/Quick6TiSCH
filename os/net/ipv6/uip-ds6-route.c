@@ -530,7 +530,7 @@ uip_ds6_route_rm(uip_ds6_route_t *route)
 #endif
     }
 
-#if 0//ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
     /* Even if this was not the only route using this neighbor,
        execute NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK,
        if this is the neighbor */

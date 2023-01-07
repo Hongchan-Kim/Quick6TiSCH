@@ -166,7 +166,7 @@ remove_uc_link(const linkaddr_t *linkaddr)
    * (lookup all route next hops) */
   nbr_table_item_t *item = nbr_table_head(nbr_routes);
   while(item != NULL) {
-#if 0//ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
+#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
     linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
     if(!linkaddr_cmp((linkaddr_t *)addr, (linkaddr_t *)linkaddr) 
       && timeslot == get_node_timeslot(addr)) {
@@ -206,7 +206,7 @@ child_removed(const linkaddr_t *linkaddr)
 {
 #if HCK_ORCHESTRA_PACKET_OFFLOADING
     const struct tsch_neighbor *removed_child = tsch_queue_get_nbr(linkaddr);
-    tsch_queue_change_attr_of_packets_in_queue(removed_child, 2, 0);
+    tsch_queue_change_attr_of_packets_in_queue(removed_child, TSCH_SCHED_COMMON_SF_HANDLE, 0);
 #endif
   remove_uc_link(linkaddr);
 }
@@ -245,7 +245,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
 #if HCK_ORCHESTRA_PACKET_OFFLOADING
-    tsch_queue_change_attr_of_packets_in_queue(old, 2, 0);
+    tsch_queue_change_attr_of_packets_in_queue(old, TSCH_SCHED_COMMON_SF_HANDLE, 0);
 #endif
     remove_uc_link(old_addr);
     add_uc_link(new_addr);
