@@ -1204,13 +1204,16 @@ sla_apply_next_timeslot_length()
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
-#if WITH_ALICE /* alice implementation */
+#if WITH_ALICE
 #ifdef ALICE_TIME_VARYING_SCHEDULING
-uint16_t alice_curr_asfn = 0;
-uint16_t alice_next_asfn = 0;
-uint16_t alice_asfn_upper_bound = 0;
-
-/* return the current ASFN for ALICE */
+/* ALICE: ASN at the start of the ongoing slot operation. */
+struct tsch_asn_t alice_current_asn;
+/* ALICE: ASFN at the start of the ongoing slot operation. 
+   Derived from 'alice_current_asn'. */
+uint64_t alice_current_asfn = 0;
+/* ALICE: ASFN of the lastly scheduled unicast slotframe. */
+uint64_t alice_lastly_scheduled_asfn = 0;
+/* ALICE: return the current ASFN for ALICE. */
 uint16_t
 alice_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf)
 {
@@ -1872,6 +1875,10 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
 
   tsch_current_asn = ies.ie_asn;
   tsch_join_priority = ies.ie_join_priority + 1;
+
+#if WITH_ALICE
+  alice_current_asn = ies.ie_asn;
+#endif
 
 #if TSCH_JOIN_SECURED_ONLY
   if(frame.fcf.security_enabled == 0) {

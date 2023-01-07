@@ -72,7 +72,6 @@
 static uint16_t slotframe_handle = 0;
 static struct tsch_slotframe *sf_unicast;
 
-static uint16_t alice_asfn_for_scheduling = 0; // absolute slotframe number for ALICE time varying scheduling
 static uint8_t alice_rx_link_option = LINK_OPTION_RX;
 static uint8_t alice_tx_link_option = LINK_OPTION_TX | UNICAST_SLOT_SHARED_FLAG; // If it is a shared link, backoff will be applied.
 
@@ -81,9 +80,10 @@ static uint16_t
 get_node_timeslot(const linkaddr_t *addr1, const linkaddr_t *addr2)
 {
   if(addr1 != NULL && addr2 != NULL && ORCHESTRA_UNICAST_PERIOD > 0) {
+    /* ALICE: link-based timeslot determination */
     return alice_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2) 
-                             + (uint32_t)alice_asfn_for_scheduling), 
-                            (ORCHESTRA_UNICAST_PERIOD)); // link-based timeslot determination
+                             + (uint32_t)alice_lastly_scheduled_asfn), 
+                            (ORCHESTRA_UNICAST_PERIOD));
   } else {
     return 0xffff;
   }
@@ -92,18 +92,20 @@ get_node_timeslot(const linkaddr_t *addr1, const linkaddr_t *addr2)
 static uint16_t
 get_node_channel_offset(const linkaddr_t *addr1, const linkaddr_t *addr2)
 {
-  int num_ch = (sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE) / sizeof(uint8_t)) - 1; // except for EB channel offset, 1
+  /* ALICE: except for EB channel offset (1) */
+  int num_ch = (sizeof(TSCH_DEFAULT_HOPPING_SEQUENCE) / sizeof(uint8_t)) - 1;
   if(addr1 != NULL && addr2 != NULL && num_ch > 0) {
+    /* ALICE: link-based, except for EB channel offset (1) */
     return 1 + alice_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2)
-            + (uint32_t)alice_asfn_for_scheduling), num_ch); // link-based, except for EB channel offset, 1
+            + (uint32_t)alice_lastly_scheduled_asfn), num_ch); 
   } else {
-    // alice final check: should this be 0xffff ????
-    return 1 + 0; //same with common shared channel offset
+    /* alice final check: should this be 0xffff ???? */
+    return 1 + 0;
   }
 }
 /*---------------------------------------------------------------------------*/
 static uint16_t
-alice_is_root() // alice final check: can be replaced with rpl_dag_root_is_root() function
+alice_is_root() /* alice final check: can be replaced with rpl_dag_root_is_root() function */
 {
   rpl_instance_t *instance = rpl_get_default_instance();
   if(instance != NULL && instance->current_dag != NULL) {
@@ -301,7 +303,7 @@ alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offs
    * At this point, is_rpl_neighbor is zero
    * and this packet's receiver is not the node's RPL neighbor.
    */
-  // alice final check - what the return values shoud be?
+  /* alice final check - what the return values shoud be? */
   *timeslot = 0;
   *channel_offset = ALICE_COMMON_SF_HANDLE;
 
@@ -312,9 +314,8 @@ alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offs
 /* slotframe_callback. */
 #ifdef ALICE_TIME_VARYING_SCHEDULING
 void
-alice_time_varying_scheduling(uint64_t asfn)
+alice_time_varying_scheduling()
 {  
-  alice_asfn_for_scheduling = asfn;  
   alice_schedule_unicast_slotframe();
 }
 #endif
@@ -370,20 +371,6 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     tsch_queue_change_attr_of_packets_in_queue(old, ALICE_COMMON_SF_HANDLE, 0);
 #endif
 
-#ifdef ALICE_TIME_VARYING_SCHEDULING
-    uint16_t mod = TSCH_ASN_MOD(tsch_current_asn, sf_unicast->size);
-    struct tsch_asn_t new_asn;
-
-    TSCH_ASN_COPY(new_asn, tsch_current_asn);
-    TSCH_ASN_DEC(new_asn, mod);
-
-    alice_current_asfn = TSCH_ASN_DIVISION(new_asn, sf_unicast->size);
-    alice_lastly_scheduled_asfn = alice_current_asfn;
-
-    // hckim actually this is same with alice_current_asfn
-    alice_asfn_for_scheduling = alice_tsch_schedule_get_current_asfn(sf_unicast);
-#endif
-
     alice_schedule_unicast_slotframe(); 
   }
 }
@@ -394,13 +381,6 @@ init(uint16_t sf_handle)
   slotframe_handle = sf_handle;
   /* Slotframe for unicast transmissions */
   sf_unicast = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_UNICAST_PERIOD);
-
-#ifdef ALICE_TIME_VARYING_SCHEDULING
-  /* current ASFN */
-  alice_asfn_for_scheduling = alice_tsch_schedule_get_current_asfn(sf_unicast);
-#else
-  alice_asfn_for_scheduling = 0;
-#endif
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule unicast_per_neighbor_rpl_storing = {

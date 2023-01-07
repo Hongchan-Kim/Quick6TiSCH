@@ -29,6 +29,7 @@
  */
 /**
  * \file
+
  *         Orchestra: a slotframe dedicated to transmission of EBs.
  *         Nodes transmit at a timeslot defined as hash(MAC) % ORCHESTRA_EBSF_PERIOD
  *         Nodes listen at a timeslot defined as hash(time_source.MAC) % ORCHESTRA_EBSF_PERIOD
@@ -70,7 +71,7 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
     }
     /* alice implementation */
     if(channel_offset != NULL) {
-      *channel_offset = slotframe_handle; //equal to 0
+      *channel_offset = slotframe_handle; /* equal to 0 */
     }
     return 1;
   }
@@ -120,8 +121,6 @@ init(uint16_t sf_handle)
                          LINK_OPTION_TX,
                          LINK_TYPE_ADVERTISING_ONLY, &tsch_broadcast_address,
                          get_node_timeslot(&linkaddr_node_addr), ORCHESTRA_EB_CHANNEL_OFFSET, 1);
-
-  LOG_INFO("ALICE: EB sf length: %u\n", ORCHESTRA_EBSF_PERIOD);
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule eb_per_time_source = {

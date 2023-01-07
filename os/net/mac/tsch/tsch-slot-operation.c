@@ -5301,6 +5301,10 @@ ost_donothing:
         /* Update ASN */
         TSCH_ASN_INC(tsch_current_asn, timeslot_diff);
 
+#if WITH_ALICE
+        TSCH_ASN_COPY(alice_current_asn, tsch_current_asn);
+#endif
+
 #if WITH_OST && OST_ON_DEMAND_PROVISION
         if(current_link == NULL && tsch_is_locked() 
           && ost_exist_matching_slot(&tsch_current_asn)) { /* tsch-schedule is being changing, so locked */
@@ -5377,6 +5381,11 @@ tsch_slot_operation_start(void)
     }
     /* Update ASN */
     TSCH_ASN_INC(tsch_current_asn, timeslot_diff);
+
+#if WITH_ALICE
+    TSCH_ASN_COPY(alice_current_asn, tsch_current_asn);
+#endif
+
     /* Time to next wake up */
     time_to_next_active_slot = timeslot_diff * tsch_timing[tsch_ts_timeslot_length];
     /* Compensate for the base drift */
@@ -5396,6 +5405,11 @@ tsch_slot_operation_sync(rtimer_clock_t next_slot_start,
 
   current_slot_start = next_slot_start;
   tsch_current_asn = *next_slot_asn;
+
+#if WITH_ALICE
+  alice_current_asn = *next_slot_asn;
+#endif
+
   status = critical_enter();
   last_sync_asn = tsch_current_asn;
   tsch_last_sync_time = clock_time();

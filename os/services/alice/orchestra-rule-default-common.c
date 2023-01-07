@@ -101,11 +101,10 @@ select_packet(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset)
   }
   /* alice implementation */
   if(channel_offset != NULL) {
-    *channel_offset = slotframe_handle; //equal to 1
+    *channel_offset = slotframe_handle; /* equal to 1 */
   }
 
-  /* alice implementation */
-  //Data paccket -> return 0 and pass to unicast slotframe
+  /* ALICE: If Data paccket -> return 0 and pass to unicast slotframe */
   const linkaddr_t *dest = packetbuf_addr(PACKETBUF_ADDR_RECEIVER);
   if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_DATAFRAME
     && neighbor_has_uc_link(dest)) {
@@ -119,7 +118,7 @@ static void
 init(uint16_t sf_handle)
 {
   slotframe_handle = sf_handle;
-  channel_offset = slotframe_handle; //equal to 1
+  channel_offset = slotframe_handle; /* equal to 1 */
   /* Default slotframe: for broadcast or unicast to neighbors we
    * do not have a link to */
   struct tsch_slotframe *sf_common = tsch_schedule_add_slotframe(slotframe_handle, ORCHESTRA_COMMON_SHARED_PERIOD);
@@ -127,8 +126,6 @@ init(uint16_t sf_handle)
       LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED,
       ORCHESTRA_COMMON_SHARED_TYPE, &tsch_broadcast_address,
       0, channel_offset, 1);
-
-  LOG_INFO("ALICE: Broadcast/Default sf length: %u\n", ORCHESTRA_COMMON_SHARED_PERIOD);
 }
 /*---------------------------------------------------------------------------*/
 struct orchestra_rule default_common = {

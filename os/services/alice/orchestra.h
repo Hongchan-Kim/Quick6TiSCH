@@ -45,7 +45,7 @@
 struct orchestra_rule {
   void (* init)(uint16_t slotframe_handle);
   void (* new_time_source)(const struct tsch_neighbor *old, const struct tsch_neighbor *new);
-  int  (* select_packet)(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset); // ksh: ..
+  int  (* select_packet)(uint16_t *slotframe, uint16_t *timeslot, uint16_t *channel_offset);
   void (* child_added)(const linkaddr_t *addr);
   void (* child_removed)(const linkaddr_t *addr);
   const char *name;
@@ -70,10 +70,9 @@ void orchestra_callback_child_added(const linkaddr_t *addr);
 /* Set with #define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK orchestra_callback_child_removed */
 void orchestra_callback_child_removed(const linkaddr_t *addr);
 
-/* alice implementation */
 /* alice packet-cell matching on the fly */
 int alice_packet_cell_matching_on_the_fly(uint16_t* timeslot, uint16_t* channel_offset, const linkaddr_t rx_linkaddr);
 /* alice time varying scheduling */
-void alice_time_varying_scheduling(uint16_t a, uint16_t b);
+void alice_time_varying_scheduling();
 
 #endif /* __ORCHESTRA_H__ */
