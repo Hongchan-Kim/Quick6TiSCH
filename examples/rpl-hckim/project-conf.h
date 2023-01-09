@@ -344,6 +344,13 @@
 #define ALICE_COMMON_SF_HANDLE                     TSCH_SCHED_COMMON_SF_HANDLE
 #define ALICE_UNICAST_SF_HANDLE                    TSCH_SCHED_UNICAST_SF_HANDLE
 
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+#undef TSCH_SCHEDULE_CONF_MAX_LINKS
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 4 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
+#define ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE   3
+#define ENABLE_LOG_ALICE_DBT_OPERATION             0
+#endif
+
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST
 #define WITH_OST                                   1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST

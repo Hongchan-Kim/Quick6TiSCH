@@ -240,11 +240,11 @@ int TSCH_CALLBACK_PACKET_READY(void);
 #ifdef ALICE_TIME_VARYING_SCHEDULING
 /* ALICE: ASN at the start of the ongoing slot operation. */
 extern struct tsch_asn_t alice_current_asn;
-/* ALICE: ASFN at the start of the ongoing slot operation. 
-   Derived from 'alice_current_asn'. */
-extern uint64_t alice_current_asfn;
 /* ALICE: ASFN of the lastly scheduled unicast slotframe. */
 extern uint64_t alice_lastly_scheduled_asfn;
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+extern uint64_t alice_next_asfn_of_lastly_scheduled_asfn;
+#endif
 /* ALICE: return the current ASFN for ALICE. */
 uint16_t alice_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf);
 #endif

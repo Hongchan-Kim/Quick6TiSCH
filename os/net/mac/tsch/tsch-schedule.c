@@ -113,12 +113,53 @@ tsch_schedule_add_slotframe(uint16_t handle, uint16_t size)
 uint8_t
 tsch_schedule_get_next_timeslot_available_or_not(struct tsch_asn_t *asn, uint16_t *time_to_earliest)
 {
+#if WITH_ALICE
+  /* ALICE: ASFN at the start of the ongoing slot operation. 
+    Derived from 'alice_current_asn'. */
+  uint64_t dbt_current_asfn = 0;
+  struct tsch_slotframe *alice_uc_sf = tsch_schedule_get_slotframe_by_handle(ALICE_UNICAST_SF_HANDLE);
+  struct tsch_asn_t temp_asn;
+  TSCH_ASN_COPY(temp_asn, *asn);
+  uint16_t mod1 = TSCH_ASN_MOD(temp_asn, alice_uc_sf->size);
+  TSCH_ASN_DEC(temp_asn, mod1);
+  dbt_current_asfn = TSCH_ASN_DIVISION(temp_asn, alice_uc_sf->size);
+#endif
+
   uint16_t minimum_time_to_timeslot = 0;
 
   /* Check slotframe schedule */
   if(!tsch_is_locked()) { 
+
+#if ENABLE_LOG_ALICE_DBT_OPERATION
+  TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+              "alice_dbt D %llu L %llu N %llu",
+              dbt_current_asfn,
+              alice_lastly_scheduled_asfn, 
+              alice_next_asfn_of_lastly_scheduled_asfn);
+  );
+
+  if(dbt_current_asfn != alice_lastly_scheduled_asfn && dbt_current_asfn != alice_next_asfn_of_lastly_scheduled_asfn) {
+    TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+                "alice_dbt_1 D < L < N");
+    );
+  } else if(dbt_current_asfn == alice_lastly_scheduled_asfn) {
+    TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+                "alice_dbt_2 L == D < N");
+    );
+  } else if(dbt_current_asfn == alice_next_asfn_of_lastly_scheduled_asfn) {
+    TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+                "alice_dbt_3 L < D == N");
+    );
+  }
+#endif
+
     struct tsch_slotframe *sf = list_head(slotframe_list);
     while(sf != NULL) {
+#if !WITH_ALICE
       uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
       struct tsch_link *l = list_head(sf->links_list);
 
@@ -139,6 +180,195 @@ tsch_schedule_get_next_timeslot_available_or_not(struct tsch_asn_t *asn, uint16_
 
         l = list_item_next(l);
       }
+#else /* WITH_ALICE */
+      /* 
+       * First case: dbt_current_asfn < alice_lastly_scheduled_asfn < alice_next_asfn_of_lastly_scheduled_asfn.
+       * Then, check unicast slotframes of alice_lastly_scheduled_asfn and alice_next_asfn_of_lastly_scheduled_asfn.
+       * We do not need to check the unicast slotframe of current ASFN,
+       * because the difference between dbt_current_asfn and alice_lastly_scheduled_asfn means 
+       * that all links of unicast slotframe of current ASFN are expired and
+       * unicast slotframe already has links of alice_lastly_scheduled_asfn.
+       */
+      if(dbt_current_asfn != alice_lastly_scheduled_asfn && dbt_current_asfn != alice_next_asfn_of_lastly_scheduled_asfn) {
+        if(sf->handle != ALICE_UNICAST_SF_HANDLE && sf->handle != ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE) {
+          /* EB slotframe or CS slotframe */
+          uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
+          struct tsch_link *l = list_head(sf->links_list);
+
+          while(l != NULL) {
+            uint16_t time_to_timeslot =
+              l->timeslot > timeslot ?
+              l->timeslot - timeslot :
+              sf->size.val + l->timeslot - timeslot;
+
+            if(minimum_time_to_timeslot == 0 || time_to_timeslot < minimum_time_to_timeslot) {
+              minimum_time_to_timeslot = time_to_timeslot;
+            }
+
+            if(time_to_timeslot == 1) {
+              *time_to_earliest = minimum_time_to_timeslot;
+              return 0;
+            }
+
+            l = list_item_next(l);
+          }
+        } else if(sf->handle == ALICE_UNICAST_SF_HANDLE) { /* Unicast slotframe of alice_lastly_scheduled_asfn */
+          uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
+          struct tsch_link *l = list_head(sf->links_list);
+
+          while(l != NULL) {
+            uint16_t time_to_timeslot = sf->size.val + l->timeslot - timeslot;
+
+            if(minimum_time_to_timeslot == 0 || time_to_timeslot < minimum_time_to_timeslot) {
+              minimum_time_to_timeslot = time_to_timeslot;
+            }
+
+            if(time_to_timeslot == 1) {
+              *time_to_earliest = minimum_time_to_timeslot;
+              return 0;
+            }
+
+            l = list_item_next(l);
+          }
+        } else if(sf->handle == ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE) { /* Unicast slotframe of alice_next_asfn_of_lastly_scheduled_asfn */
+          uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
+          struct tsch_link *l = list_head(sf->links_list);
+
+          while(l != NULL) {
+            uint16_t time_to_timeslot = 2 * sf->size.val + l->timeslot - timeslot;
+
+            if(minimum_time_to_timeslot == 0 || time_to_timeslot < minimum_time_to_timeslot) {
+              minimum_time_to_timeslot = time_to_timeslot;
+            }
+
+            if(time_to_timeslot == 1) {
+              *time_to_earliest = minimum_time_to_timeslot;
+              return 0;
+            }
+
+            l = list_item_next(l);
+          }
+        }
+      /* 
+       * Second case: alice_lastly_scheduled_asfn == dbt_current_asfn < alice_next_asfn_of_lastly_scheduled_asfn.
+       * Then, check unicast slotframes of alice_lastly_scheduled_asfn and alice_next_asfn_of_lastly_scheduled_asfn.
+       */
+      } else if(dbt_current_asfn == alice_lastly_scheduled_asfn) {
+        if(sf->handle != ALICE_UNICAST_SF_HANDLE && sf->handle != ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE) {
+          /* EB slotframe or CS slotframe */
+          uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
+          struct tsch_link *l = list_head(sf->links_list);
+
+          while(l != NULL) {
+            uint16_t time_to_timeslot =
+              l->timeslot > timeslot ?
+              l->timeslot - timeslot :
+              sf->size.val + l->timeslot - timeslot;
+
+            if(minimum_time_to_timeslot == 0 || time_to_timeslot < minimum_time_to_timeslot) {
+              minimum_time_to_timeslot = time_to_timeslot;
+            }
+
+            if(time_to_timeslot == 1) {
+              *time_to_earliest = minimum_time_to_timeslot;
+              return 0;
+            }
+
+            l = list_item_next(l);
+          }
+        } else if(sf->handle == ALICE_UNICAST_SF_HANDLE) { /* Unicast slotframe of alice_lastly_scheduled_asfn */
+          uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
+          struct tsch_link *l = list_head(sf->links_list);
+
+          while(l != NULL) {
+            if(l->timeslot > timeslot) {
+              uint16_t time_to_timeslot = l->timeslot - timeslot;
+
+              if(minimum_time_to_timeslot == 0 || time_to_timeslot < minimum_time_to_timeslot) {
+                minimum_time_to_timeslot = time_to_timeslot;
+              }
+
+              if(time_to_timeslot == 1) {
+                *time_to_earliest = minimum_time_to_timeslot;
+                return 0;
+              }
+            }
+
+            l = list_item_next(l);
+          }
+        } else if(sf->handle == ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE) { /* Unicast slotframe of alice_next_asfn_of_lastly_scheduled_asfn */
+          uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
+          struct tsch_link *l = list_head(sf->links_list);
+
+          while(l != NULL) {
+            uint16_t time_to_timeslot = sf->size.val + l->timeslot - timeslot;
+
+            if(minimum_time_to_timeslot == 0 || time_to_timeslot < minimum_time_to_timeslot) {
+              minimum_time_to_timeslot = time_to_timeslot;
+            }
+
+            if(time_to_timeslot == 1) {
+              *time_to_earliest = minimum_time_to_timeslot;
+              return 0;
+            }
+
+            l = list_item_next(l);
+          }
+        }
+      /* 
+       * Third case: alice_lastly_scheduled_asfn < dbt_current_asfn == alice_next_asfn_of_lastly_scheduled_asfn.
+       * Then, check unicast slotframe of alice_next_asfn_of_lastly_scheduled_asfn.
+       */
+      } else if(dbt_current_asfn == alice_next_asfn_of_lastly_scheduled_asfn) {
+        if(sf->handle != ALICE_UNICAST_SF_HANDLE && sf->handle != ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE) {
+          /* EB slotframe or CS slotframe */
+          uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
+          struct tsch_link *l = list_head(sf->links_list);
+
+          while(l != NULL) {
+            uint16_t time_to_timeslot =
+              l->timeslot > timeslot ?
+              l->timeslot - timeslot :
+              sf->size.val + l->timeslot - timeslot;
+
+            if(minimum_time_to_timeslot == 0 || time_to_timeslot < minimum_time_to_timeslot) {
+              minimum_time_to_timeslot = time_to_timeslot;
+            }
+
+            if(time_to_timeslot == 1) {
+              *time_to_earliest = minimum_time_to_timeslot;
+              return 0;
+            }
+
+            l = list_item_next(l);
+          }
+        } else if(sf->handle == ALICE_UNICAST_SF_HANDLE) { /* Unicast slotframe of alice_lastly_scheduled_asfn */
+          sf = list_item_next(sf);
+          continue;
+
+        } else if(sf->handle == ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE) { /* Unicast slotframe of alice_next_asfn_of_lastly_scheduled_asfn */
+          uint16_t timeslot = TSCH_ASN_MOD(*asn, sf->size);
+          struct tsch_link *l = list_head(sf->links_list);
+
+          while(l != NULL) {
+            if(l->timeslot > timeslot) {
+              uint16_t time_to_timeslot = l->timeslot - timeslot;
+
+              if(minimum_time_to_timeslot == 0 || time_to_timeslot < minimum_time_to_timeslot) {
+                minimum_time_to_timeslot = time_to_timeslot;
+              }
+
+              if(time_to_timeslot == 1) {
+                *time_to_earliest = minimum_time_to_timeslot;
+                return 0;
+              }
+            }
+
+            l = list_item_next(l);
+          }
+        }
+      }
+#endif
       sf = list_item_next(sf);
     }
     *time_to_earliest = minimum_time_to_timeslot;
@@ -741,6 +971,20 @@ struct tsch_link *
 tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset,
     struct tsch_link **backup_link)
 {
+#if WITH_ALICE
+  /*
+   * ALICE: First, derive 'alice_current_asfn', which is the ASFN at the start of the ongoing slot operation
+   * from 'alice_current_asn', which is the ASN at the start of the ongoing slot operation.
+   */
+  uint64_t alice_current_asfn = 0;
+  struct tsch_slotframe *alice_uc_sf = tsch_schedule_get_slotframe_by_handle(ALICE_UNICAST_SF_HANDLE);
+  struct tsch_asn_t temp_asn;
+  TSCH_ASN_COPY(temp_asn, alice_current_asn);
+  uint16_t mod1 = TSCH_ASN_MOD(temp_asn, alice_uc_sf->size);
+  TSCH_ASN_DEC(temp_asn, mod1);
+  alice_current_asfn = TSCH_ASN_DIVISION(temp_asn, alice_uc_sf->size);
+#endif
+
   uint16_t time_to_curr_best = 0;
   struct tsch_link *curr_best = NULL;
   struct tsch_link *curr_backup = NULL; /* Keep a back link in case the current link
@@ -755,16 +999,6 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if WITH_ALICE /* alice implementation */
 #ifdef ALICE_TIME_VARYING_SCHEDULING
       if(sf->handle == ALICE_UNICAST_SF_HANDLE) {
-        /*
-         * First, derive 'alice_current_asfn', which is the ASFN at the start of the ongoing slot operation
-         * from 'alice_current_asn', which is the ASN at the start of the ongoing slot operation.
-         */
-        struct tsch_asn_t temp_asn;
-        TSCH_ASN_COPY(temp_asn, alice_current_asn);
-        uint16_t mod1 = TSCH_ASN_MOD(temp_asn, sf->size);
-        TSCH_ASN_DEC(temp_asn, mod1);
-        alice_current_asfn = TSCH_ASN_DIVISION(temp_asn, sf->size);
-
         /*
          * Second, check whether any remaining unicast slotframe link exists after 'alice_current_asn'
          * within the slotframe of 'alice_current_asfn'.
@@ -791,19 +1025,41 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
          * the next ASFN (alice_next_asfn).
          */
         if(alice_remaining_uicast_sf_link_exists == 0) {
+          uint64_t alice_next_asfn = 0;
           struct tsch_asn_t asn_of_next_asfn;
           TSCH_ASN_COPY(asn_of_next_asfn, alice_current_asn);
           TSCH_ASN_INC(asn_of_next_asfn, sf->size.val);
           uint16_t mod2 = TSCH_ASN_MOD(asn_of_next_asfn, sf->size);
           TSCH_ASN_DEC(asn_of_next_asfn, mod2);
-          uint64_t alice_next_asfn = TSCH_ASN_DIVISION(asn_of_next_asfn, sf->size);
+          alice_next_asfn = TSCH_ASN_DIVISION(asn_of_next_asfn, sf->size);
+
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+          uint64_t alice_after_next_asfn = 0;
+          struct tsch_asn_t asn_of_after_next_asfn;
+          TSCH_ASN_COPY(asn_of_after_next_asfn, alice_current_asn);
+          TSCH_ASN_INC(asn_of_after_next_asfn, sf->size.val);
+          TSCH_ASN_INC(asn_of_after_next_asfn, sf->size.val);
+          uint16_t mod3 = TSCH_ASN_MOD(asn_of_after_next_asfn, sf->size);
+          TSCH_ASN_DEC(asn_of_after_next_asfn, mod3);
+          alice_after_next_asfn = TSCH_ASN_DIVISION(asn_of_after_next_asfn, sf->size);
+#endif
 
           if(alice_next_asfn != alice_lastly_scheduled_asfn) {
             alice_lastly_scheduled_asfn = alice_next_asfn;
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+            alice_next_asfn_of_lastly_scheduled_asfn = alice_after_next_asfn;
+#endif
             ALICE_TIME_VARYING_SCHEDULING();
           }
         }
       }
+
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+      else if(sf->handle == ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE) {
+        sf = list_item_next(sf);
+        continue;
+      }
+#endif
 #endif
 #endif
 
@@ -819,7 +1075,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if WITH_ALICE
 #ifdef ALICE_TIME_VARYING_SCHEDULING
         /* 
-         * ALICE: To prevent the link of the following ASFN from running within the current ASFN,
+         * ALICE: To prevent the link of the following ASFN from being executed within the current ASFN,
          * add 'sf->size.val' to the links of the next ASFN and located after the current timeslot.
          */
         if(sf->handle == ALICE_UNICAST_SF_HANDLE 

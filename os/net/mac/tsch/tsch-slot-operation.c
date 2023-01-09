@@ -181,7 +181,7 @@ static struct tsch_neighbor *current_neighbor = NULL;
 static int burst_link_scheduled = 0;
 static int is_burst_slot = 0;
 #if TSCH_DBT_TEMPORARY_LINK
-struct tsch_link temporal_burst_link;
+struct tsch_link temp_burst_link;
 #endif
 #if TSCH_DBT_HANDLE_MISSED_DBT_SLOT
 static int burst_link_scheduled_count = 0;
@@ -5258,18 +5258,18 @@ ost_donothing:
             backup_link = NULL;
 
 #if TSCH_DBT_TEMPORARY_LINK
-            temporal_burst_link.next = NULL;
-            temporal_burst_link.handle = current_link->handle;
-            linkaddr_copy(&(temporal_burst_link.addr), &(current_link->addr));
-            temporal_burst_link.slotframe_handle = current_link->slotframe_handle;
-            temporal_burst_link.timeslot = (current_link->timeslot + 1) 
-                                  % tsch_schedule_get_slotframe_by_handle(temporal_burst_link.slotframe_handle)->size.val;
-            temporal_burst_link.channel_offset = current_link->channel_offset;
-            temporal_burst_link.link_options = current_link->link_options;
-            temporal_burst_link.link_type = current_link->link_type;
-            temporal_burst_link.data = current_link->data;
+            temp_burst_link.next = NULL;
+            temp_burst_link.handle = current_link->handle;
+            linkaddr_copy(&(temp_burst_link.addr), &(current_link->addr));
+            temp_burst_link.slotframe_handle = current_link->slotframe_handle;
+            temp_burst_link.timeslot = (current_link->timeslot + 1) 
+                                  % tsch_schedule_get_slotframe_by_handle(temp_burst_link.slotframe_handle)->size.val;
+            temp_burst_link.channel_offset = current_link->channel_offset;
+            temp_burst_link.link_options = current_link->link_options;
+            temp_burst_link.link_type = current_link->link_type;
+            temp_burst_link.data = current_link->data;
 
-            current_link = &temporal_burst_link;
+            current_link = &temp_burst_link;
 #endif
 
             /* Keep track of the number of repetitions */
@@ -5302,7 +5302,13 @@ ost_donothing:
         TSCH_ASN_INC(tsch_current_asn, timeslot_diff);
 
 #if WITH_ALICE
+#if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
         TSCH_ASN_COPY(alice_current_asn, tsch_current_asn);
+#else
+        if(burst_link_scheduled == 0) {
+          TSCH_ASN_COPY(alice_current_asn, tsch_current_asn);
+        }
+#endif
 #endif
 
 #if WITH_OST && OST_ON_DEMAND_PROVISION

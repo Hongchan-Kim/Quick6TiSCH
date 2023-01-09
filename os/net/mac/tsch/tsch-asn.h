@@ -103,7 +103,7 @@ struct tsch_asn_divisor_t {
 
 /* CALCULATE DIVISION FROM ASN */
 #define TSCH_ASN_DIVISION(asn, div) \
-  (uint16_t)((uint16_t)((asn).ls4b) / (div).val)
+  (uint64_t)((uint64_t)((asn).ls4b) / (div).val)
 
 #endif /* __TSCH_ASN_H__ */
 /** @} */

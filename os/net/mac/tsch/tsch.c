@@ -1208,11 +1208,11 @@ sla_apply_next_timeslot_length()
 #ifdef ALICE_TIME_VARYING_SCHEDULING
 /* ALICE: ASN at the start of the ongoing slot operation. */
 struct tsch_asn_t alice_current_asn;
-/* ALICE: ASFN at the start of the ongoing slot operation. 
-   Derived from 'alice_current_asn'. */
-uint64_t alice_current_asfn = 0;
 /* ALICE: ASFN of the lastly scheduled unicast slotframe. */
 uint64_t alice_lastly_scheduled_asfn = 0;
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+uint64_t alice_next_asfn_of_lastly_scheduled_asfn = 0;
+#endif
 /* ALICE: return the current ASFN for ALICE. */
 uint16_t
 alice_tsch_schedule_get_current_asfn(struct tsch_slotframe *sf)
