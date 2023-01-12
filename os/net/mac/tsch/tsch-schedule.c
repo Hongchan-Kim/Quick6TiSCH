@@ -133,26 +133,63 @@ tsch_schedule_get_next_timeslot_available_or_not(struct tsch_asn_t *asn, uint16_
 #if ENABLE_LOG_ALICE_DBT_OPERATION
   TSCH_LOG_ADD(tsch_log_message,
           snprintf(log->message, sizeof(log->message),
-              "alice_dbt D %llu L %llu N %llu",
-              dbt_current_asfn,
-              alice_lastly_scheduled_asfn, 
+              "al_d A_D %llx",
+              dbt_current_asfn);
+  );
+  uint8_t *temp_pt = (uint8_t *)&dbt_current_asfn;
+  TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+              "al_d A_D %x %x %x %x %x %x %x %x",
+              *(temp_pt + 0), *(temp_pt + 1),
+              *(temp_pt + 2), *(temp_pt + 3),
+              *(temp_pt + 4), *(temp_pt + 5),
+              *(temp_pt + 6), *(temp_pt + 7));
+  );
+
+  TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+              "al_d A_L %llx",
+              alice_lastly_scheduled_asfn);
+  );
+  temp_pt = (uint8_t *)&alice_lastly_scheduled_asfn;
+  TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+              "al_d A_L %x %x %x %x %x %x %x %x",
+              *(temp_pt + 0), *(temp_pt + 1),
+              *(temp_pt + 2), *(temp_pt + 3),
+              *(temp_pt + 4), *(temp_pt + 5),
+              *(temp_pt + 6), *(temp_pt + 7));
+  );
+
+  TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+              "al_d A_N %llx",
               alice_next_asfn_of_lastly_scheduled_asfn);
+  );
+  temp_pt = (uint8_t *)&alice_next_asfn_of_lastly_scheduled_asfn;
+  TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+              "al_d A_N %x %x %x %x %x %x %x %x",
+              *(temp_pt + 0), *(temp_pt + 1),
+              *(temp_pt + 2), *(temp_pt + 3),
+              *(temp_pt + 4), *(temp_pt + 5),
+              *(temp_pt + 6), *(temp_pt + 7));
   );
 
   if(dbt_current_asfn != alice_lastly_scheduled_asfn && dbt_current_asfn != alice_next_asfn_of_lastly_scheduled_asfn) {
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "alice_dbt_1 D < L < N");
+                "al_d C_1 D < L < N");
     );
   } else if(dbt_current_asfn == alice_lastly_scheduled_asfn) {
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "alice_dbt_2 L == D < N");
+                "al_d C_2 L == D < N");
     );
   } else if(dbt_current_asfn == alice_next_asfn_of_lastly_scheduled_asfn) {
     TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-                "alice_dbt_3 L < D == N");
+                "al_d C_3 L < D == N");
     );
   }
 #endif
