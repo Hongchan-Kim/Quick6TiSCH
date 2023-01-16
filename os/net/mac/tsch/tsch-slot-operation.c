@@ -1902,24 +1902,46 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       if(do_wait_for_ack
              && tsch_current_burst_count + 1 < TSCH_BURST_MAX_LEN
              && tsch_queue_nbr_packet_count(current_neighbor) > 1) {
+
+#if TSCH_DBT_QUEUE_AWARENESS
+        /* consider current packet: ringbufindex_elements(&dequeued_ringbuf) + 1 */
+        int dbt_empty_space_of_dequeued_ringbuf
+            = ((int)TSCH_DEQUEUED_ARRAY_SIZE - 1) - (ringbufindex_elements(&dequeued_ringbuf) + 1) > 0 ?
+              ((int)TSCH_DEQUEUED_ARRAY_SIZE - 1) - (ringbufindex_elements(&dequeued_ringbuf) + 1) : 0;
+        if(dbt_empty_space_of_dequeued_ringbuf > 0) {
+#endif
+
 #if MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
-        uint16_t time_to_earliest_schedule = 0;
-        if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
+          uint16_t time_to_earliest_schedule = 0;
+          if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
+#endif
+            burst_link_requested = 1;
+            tsch_packet_set_frame_pending(packet, packet_len);
+#if MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
 #if ENABLE_MODIFIED_DBT_LOG
-          TSCH_LOG_ADD(tsch_log_message,
-              snprintf(log->message, sizeof(log->message),
-              "sched dbt tx req %d %d", burst_link_requested, time_to_earliest_schedule));
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "sched dbt tx req %d %d", burst_link_requested, time_to_earliest_schedule));
+#endif
+          }
+#if ENABLE_MODIFIED_DBT_LOG
+          else {
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "sched dbt tx coll %d %d", burst_link_requested, time_to_earliest_schedule));
+          }
 #endif
 #endif
-          burst_link_requested = 1;
-          tsch_packet_set_frame_pending(packet, packet_len);
-#if MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION
+
+#if TSCH_DBT_QUEUE_AWARENESS
         }
 #if ENABLE_MODIFIED_DBT_LOG
         else {
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "sched dbt tx coll %d %d", burst_link_requested, time_to_earliest_schedule));
+              "sched dbt tx full %d %d %d", burst_link_requested, 
+                                               ringbufindex_elements(&dequeued_ringbuf) + 1, 
+                                               dbt_empty_space_of_dequeued_ringbuf));
         }
 #endif
 #endif
@@ -3381,22 +3403,67 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               /* Schedule a burst link iff the frame pending bit was set */
               int frame_pending_bit_set_or_not = tsch_packet_get_frame_pending(current_input->payload, current_input->len);
               if(frame_pending_bit_set_or_not) {
-                uint16_t time_to_earliest_schedule = 0;
-                if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
-                  burst_link_scheduled = 1;
-#if ENABLE_MODIFIED_DBT_LOG
-                  TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                      "sched dbt rx succ %d %d", burst_link_scheduled, time_to_earliest_schedule));
-#endif
+
+#if TSCH_DBT_QUEUE_AWARENESS
+                /* consider current packet: ringbufindex_elements(&input_ringbuf) + 1 */
+                int dbt_empty_space_of_input_ringbuf
+                        = ((int)TSCH_MAX_INCOMING_PACKETS - 1) - (ringbufindex_elements(&input_ringbuf) + 1) > 0 ?
+                          ((int)TSCH_MAX_INCOMING_PACKETS - 1) - (ringbufindex_elements(&input_ringbuf) + 1) : 0;
+
+                /* consider current packet: tsch_queue_global_packet_count() + 1 */
+                int dbt_empty_space_of_global_queue
+                        = (int)QUEUEBUF_NUM - (tsch_queue_global_packet_count() + 1) > 0 ?
+                          (int)QUEUEBUF_NUM - (tsch_queue_global_packet_count() + 1) : 0;
+
+                int dbt_min_empty_space_of_ringbuf_or_queue = 0;
+
+                int dbt_is_root = tsch_rpl_callback_is_root();
+                int dbt_has_no_children = tsch_rpl_callback_has_no_children();
+
+                int dbt_is_root_or_has_no_children = (dbt_is_root == 1) || (dbt_has_no_children == 1);
+                if(dbt_is_root_or_has_no_children == 1) { /* Do not consider queue length for root/end nodes */
+                  dbt_min_empty_space_of_ringbuf_or_queue = dbt_empty_space_of_input_ringbuf;
                 } else {
-                  burst_link_scheduled = 0;
+                  dbt_min_empty_space_of_ringbuf_or_queue = (int)MIN(dbt_empty_space_of_input_ringbuf, dbt_empty_space_of_global_queue);
+                }
+
+                if(dbt_min_empty_space_of_ringbuf_or_queue > 0) {
+#endif
+
+                  uint16_t time_to_earliest_schedule = 0;
+                  if(tsch_schedule_get_next_timeslot_available_or_not(&tsch_current_asn, &time_to_earliest_schedule)) {
+                    burst_link_scheduled = 1;
 #if ENABLE_MODIFIED_DBT_LOG
+                    TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "sched dbt rx succ %d %d", burst_link_scheduled, time_to_earliest_schedule));
+#endif
+                  } else {
+                    burst_link_scheduled = 0;
+#if ENABLE_MODIFIED_DBT_LOG
+                    TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "sched dbt rx coll %d %d", burst_link_scheduled, time_to_earliest_schedule));
+#endif
+                  }
+
+#if TSCH_DBT_QUEUE_AWARENESS
+                }
+#if ENABLE_MODIFIED_DBT_LOG
+                else {
                   TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                      "sched dbt rx coll %d %d", burst_link_scheduled, time_to_earliest_schedule));
-#endif
+                      "sched dbt rx full %d %d %d %d %d %d %d", burst_link_scheduled, 
+                                                      dbt_is_root_or_has_no_children, 
+                                                      ringbufindex_elements(&input_ringbuf) + 1,
+                                                      dbt_empty_space_of_input_ringbuf,
+                                                      tsch_queue_global_packet_count() + 1,
+                                                      dbt_empty_space_of_global_queue,
+                                                      dbt_min_empty_space_of_ringbuf_or_queue));
                 }
+#endif
+#endif
+
               } else {
                 burst_link_scheduled = 0;
               }

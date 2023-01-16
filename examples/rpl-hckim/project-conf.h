@@ -49,6 +49,7 @@
 #define TSCH_DBT_HANDLE_SKIPPED_DBT_SLOT           1
 #define TSCH_DBT_HANDLE_MISSED_DBT_SLOT            1
 #define TSCH_DBT_HOLD_CURRENT_NBR                  1
+#define TSCH_DBT_QUEUE_AWARENESS                   1
 #else
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 #endif

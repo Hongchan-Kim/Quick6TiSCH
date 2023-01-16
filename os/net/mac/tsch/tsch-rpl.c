@@ -61,7 +61,7 @@
 #define LOG_LEVEL LOG_LEVEL_MAC
 
 /*---------------------------------------------------------------------------*/
-#if WITH_UPA
+#if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS
 int
 tsch_rpl_callback_is_root(void)
 {

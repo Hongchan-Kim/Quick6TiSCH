@@ -48,7 +48,7 @@
 #endif
 
 /********** Functions *********/
-#if WITH_UPA
+#if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS
 int tsch_rpl_callback_is_root(void);
 int tsch_rpl_callback_has_no_children(void);
 #endif
