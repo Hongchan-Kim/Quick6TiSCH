@@ -54,18 +54,27 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
+/*---------------------------------------------------------------------------*/
 static uint16_t rpl_dio_reset_count;
 static uint16_t first_hop_distance_measure;
 static uint16_t next_hop_distance_measure;
 static uint32_t hop_distance_measure_count;
 static uint32_t hop_distance_measure_sum;
-
 #if HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 static uint8_t ignore_redundancy = 1;
 #endif
-
+/*---------------------------------------------------------------------------*/
+void print_log_rpl_timers()
+{
+  rpl_dag_t *dag = rpl_get_any_dag();
+  LOG_HK("hopD_now %u hopD_sum %lu hopD_cnt %lu |\n", 
+        dag->preferred_parent->hop_distance + 1, 
+        hop_distance_measure_sum, hop_distance_measure_count);
+}
+/*---------------------------------------------------------------------------*/
 void reset_log_rpl_timers()
 {
+  print_log_rpl_timers();
 #if HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
   ignore_redundancy = 0;
 #endif
@@ -75,6 +84,7 @@ void reset_log_rpl_timers()
   hop_distance_measure_count = 0;
   hop_distance_measure_sum = 0;
 }
+/*---------------------------------------------------------------------------*/
 
 /* A configurable function called after update of the RPL DIO interval */
 #ifdef RPL_CALLBACK_NEW_DIO_INTERVAL
@@ -128,15 +138,11 @@ handle_periodic_timer(void *ptr)
         && (dag->preferred_parent->rank != RPL_INFINITE_RANK) 
         && (dag->preferred_parent->hop_distance != 0xff)) {
         uint8_t my_hop_distance = dag->preferred_parent->hop_distance + 1;
-        LOG_HK("hopD_now %u |\n", my_hop_distance);
-
         hop_distance_measure_sum += (uint32_t)my_hop_distance;
         hop_distance_measure_count++;
       }
 
       next_hop_distance_measure = 0;
-      LOG_HK("hopD_sum %lu hopD_cnt %lu |\n", 
-            hop_distance_measure_sum, hop_distance_measure_count);
     }
   }
 

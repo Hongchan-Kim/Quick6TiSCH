@@ -50,19 +50,29 @@
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "Energest"
-#define LOG_LEVEL LOG_LEVEL_INFO
+#define LOG_LEVEL LOG_LEVEL_ENERGEST // LOG_LEVEL_INFO
 
+/*---------------------------------------------------------------------------*/
 uint32_t dc_count;
 uint32_t dc_tx_sum;
 uint32_t dc_rx_sum;
 uint32_t dc_total_sum;
+/*---------------------------------------------------------------------------*/
+void print_log_simple_energest()
+{
+  LOG_HK("dc_count %lu dc_tx_sum %lu dc_rx_sum %lu dc_total_sum %lu |\n", 
+          dc_count, dc_tx_sum, dc_rx_sum, dc_total_sum);
+}
+/*---------------------------------------------------------------------------*/
 void reset_log_simple_energest()
 {
+  print_log_simple_energest();
   dc_count = 0;
   dc_tx_sum = 0;
   dc_rx_sum = 0;
   dc_total_sum = 0;
 }
+/*---------------------------------------------------------------------------*/
 
 static unsigned long last_tx, last_rx, last_time, last_cpu, last_lpm, last_deep_lpm;
 static unsigned long delta_tx, delta_rx, delta_time, delta_cpu, delta_lpm, delta_deep_lpm;
@@ -123,9 +133,6 @@ simple_energest_step(void)
   dc_tx_sum += to_per_ten_thousand(delta_tx, delta_time);
   dc_rx_sum += to_per_ten_thousand(delta_rx, delta_time);
   dc_total_sum += to_per_ten_thousand(delta_tx+delta_rx, delta_time);
-
-  LOG_HK("dc_count %lu dc_tx_sum %lu dc_rx_sum %lu dc_total_sum %lu |\n", 
-          dc_count, dc_tx_sum, dc_rx_sum, dc_total_sum);
 }
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(simple_energest_process, ev, data)

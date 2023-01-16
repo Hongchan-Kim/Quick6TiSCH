@@ -155,6 +155,7 @@ extern uint32_t tsch_ost_pp_sf_upa_rx_timeslots;
 #endif
 #endif
 
+void print_log_tsch();
 void reset_log_tsch();
 
 /* Include Arch-Specific conf */

@@ -105,11 +105,10 @@ static uint16_t sla_eb_packet_qloss_count;
 static uint16_t sla_eb_packet_enqueue_count;
 #endif
 
-/* hckim periodically measure utilization */
-static struct ctimer utilization_timer;
-
 /* hckim measure associated cell counts */
 static uint32_t tsch_timeslots_until_last_session;
+static int32_t tsch_timeslots_in_current_session; // timeslots in current session
+static uint32_t tsch_total_associated_timeslots; // timeslots until last session + timeslots in current session
 static struct tsch_asn_t tsch_last_asn_associated;
 static uint16_t tsch_log_association_count;
 
@@ -249,7 +248,8 @@ uint32_t tsch_ost_pp_sf_upa_rx_timeslots;
 uint16_t alice_early_packet_drop_count;
 #endif
 
-void reset_log_tsch()
+/*---------------------------------------------------------------------------*/
+void print_log_tsch()
 {
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
   LOG_HK("e_drop %u |\n", alice_early_packet_drop_count);
@@ -262,9 +262,9 @@ void reset_log_tsch()
           tsch_dequeued_ringbuf_available_count);
 
   //timeslots in current session
-  int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
+  tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
   //timeslots until last session + timeslots in current session
-  uint32_t tsch_total_associated_timeslots = 
+  tsch_total_associated_timeslots = 
           tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
 
 #if WITH_OST
@@ -406,7 +406,12 @@ void reset_log_tsch()
           tsch_unicast_sf_upa_rx_timeslots);
 #endif
 #endif
-
+}
+/*---------------------------------------------------------------------------*/
+void reset_log_tsch()
+{
+  print_log_tsch();
+  
   tsch_timeslots_until_last_session = 0;
   TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
 
@@ -541,168 +546,7 @@ void reset_log_tsch()
   alice_early_packet_drop_count = 0;
 #endif
 }
-
-static void
-print_utilization()
-{
-#if WITH_ALICE && ALICE_EARLY_PACKET_DROP
-  LOG_HK("e_drop %u |\n", alice_early_packet_drop_count);
-#endif
-
-  LOG_HK("input_full %u input_avail %u dequeued_full %u dequeued_avail %u |\n", 
-          tsch_input_ringbuf_full_count, 
-          tsch_input_ringbuf_available_count, 
-          tsch_dequeued_ringbuf_full_count, 
-          tsch_dequeued_ringbuf_available_count);
-
-  //timeslots in current session
-  int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
-  //timeslots until last session + timeslots in current session
-  uint32_t tsch_total_associated_timeslots = 
-          tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
-
-#if WITH_OST
-  LOG_HK("asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu sch_pp_tx %lu sch_pp_rx %lu sch_odp_tx %lu sch_odp_rx %lu |\n", 
-          tsch_total_associated_timeslots, 
-          tsch_scheduled_eb_sf_cell_count, 
-          tsch_scheduled_common_sf_cell_count, 
-          tsch_scheduled_unicast_sf_cell_count,
-          tsch_scheduled_ost_pp_sf_tx_cell_count, 
-          tsch_scheduled_ost_pp_sf_rx_cell_count, 
-          tsch_scheduled_ost_odp_sf_tx_cell_count, 
-          tsch_scheduled_ost_odp_sf_rx_cell_count);
-#else
-  LOG_HK("asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
-          tsch_total_associated_timeslots, 
-          tsch_scheduled_eb_sf_cell_count, 
-          tsch_scheduled_common_sf_cell_count, 
-          tsch_scheduled_unicast_sf_cell_count);
-#endif
-
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-#if WITH_OST
-  LOG_HK("sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu sch_pp_bst_tx %lu sch_pp_bst_rx %lu |\n", 
-          tsch_scheduled_common_sf_bst_tx_cell_count,
-          tsch_scheduled_common_sf_bst_rx_cell_count,
-          tsch_scheduled_unicast_sf_bst_tx_cell_count,
-          tsch_scheduled_unicast_sf_bst_rx_cell_count,
-          tsch_scheduled_ost_pp_sf_bst_tx_cell_count,
-          tsch_scheduled_ost_pp_sf_bst_rx_cell_count);
-#else
-  LOG_HK("sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu |\n", 
-          tsch_scheduled_common_sf_bst_tx_cell_count,
-          tsch_scheduled_common_sf_bst_rx_cell_count,
-          tsch_scheduled_unicast_sf_bst_tx_cell_count,
-          tsch_scheduled_unicast_sf_bst_rx_cell_count);
-#endif
-#endif
-
-#if WITH_UPA
-#if WITH_OST
-  LOG_HK("sch_bc_upa_tx %lu sch_bc_upa_rx %lu sch_uc_upa_tx %lu sch_uc_upa_rx %lu sch_pp_upa_tx %lu sch_pp_upa_rx %lu |\n", 
-          tsch_scheduled_common_sf_upa_tx_cell_count,
-          tsch_scheduled_common_sf_upa_rx_cell_count,
-          tsch_scheduled_unicast_sf_upa_tx_cell_count,
-          tsch_scheduled_unicast_sf_upa_rx_cell_count,
-          tsch_scheduled_ost_pp_sf_upa_tx_cell_count,
-          tsch_scheduled_ost_pp_sf_upa_rx_cell_count);
-#else
-  LOG_HK("sch_bc_upa_tx %lu sch_bc_upa_rx %lu sch_uc_upa_tx %lu sch_uc_upa_rx %lu |\n", 
-          tsch_scheduled_common_sf_upa_tx_cell_count,
-          tsch_scheduled_common_sf_upa_rx_cell_count,
-          tsch_scheduled_unicast_sf_upa_tx_cell_count,
-          tsch_scheduled_unicast_sf_upa_rx_cell_count);
-#endif
-#endif
-
-#if WITH_OST
-  LOG_HK("eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu pp_tx_op %lu pp_rx_op %lu odp_tx_op %lu odp_rx_op %lu |\n", 
-          tsch_eb_sf_tx_operation_count, 
-          tsch_eb_sf_rx_operation_count, 
-          tsch_common_sf_tx_operation_count, 
-          tsch_common_sf_rx_operation_count, 
-          tsch_unicast_sf_tx_operation_count, 
-          tsch_unicast_sf_rx_operation_count,
-          tsch_ost_pp_sf_tx_operation_count, 
-          tsch_ost_pp_sf_rx_operation_count, 
-          tsch_ost_odp_sf_tx_operation_count, 
-          tsch_ost_odp_sf_rx_operation_count);
-#else
-  LOG_HK("eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
-          tsch_eb_sf_tx_operation_count, 
-          tsch_eb_sf_rx_operation_count, 
-          tsch_common_sf_tx_operation_count, 
-          tsch_common_sf_rx_operation_count, 
-          tsch_unicast_sf_tx_operation_count, 
-          tsch_unicast_sf_rx_operation_count);
-#endif
-
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-#if WITH_OST
-  LOG_HK("bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu pp_bst_tx_op %lu pp_bst_rx_op %lu |\n", 
-          tsch_common_sf_bst_tx_operation_count,
-          tsch_common_sf_bst_rx_operation_count,
-          tsch_unicast_sf_bst_tx_operation_count,
-          tsch_unicast_sf_bst_rx_operation_count,
-          tsch_ost_pp_sf_bst_tx_operation_count,
-          tsch_ost_pp_sf_bst_rx_operation_count);
-#else
-  LOG_HK("bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu |\n", 
-          tsch_common_sf_bst_tx_operation_count,
-          tsch_common_sf_bst_rx_operation_count,
-          tsch_unicast_sf_bst_tx_operation_count,
-          tsch_unicast_sf_bst_rx_operation_count);
-#endif
-#endif
-
-#if WITH_UPA
-#if WITH_OST
-  LOG_HK("bc_upa_tx_rs %lu bc_upa_rx_rs %lu uc_upa_tx_rs %lu uc_upa_rx_rs %lu pp_upa_tx_rs %lu pp_upa_rx_rs %lu |\n", 
-          tsch_common_sf_upa_tx_reserved_count,
-          tsch_common_sf_upa_rx_reserved_count,
-          tsch_unicast_sf_upa_tx_reserved_count,
-          tsch_unicast_sf_upa_rx_reserved_count,
-          tsch_ost_pp_sf_upa_tx_reserved_count,
-          tsch_ost_pp_sf_upa_rx_reserved_count);
-
-  LOG_HK("bc_upa_tx_ok %lu bc_upa_rx_ok %lu uc_upa_tx_ok %lu uc_upa_rx_ok %lu pp_upa_tx_ok %lu pp_upa_rx_ok %lu |\n", 
-          tsch_common_sf_upa_tx_ok_count,
-          tsch_common_sf_upa_rx_ok_count,
-          tsch_unicast_sf_upa_tx_ok_count,
-          tsch_unicast_sf_upa_rx_ok_count,
-          tsch_ost_pp_sf_upa_tx_ok_count,
-          tsch_ost_pp_sf_upa_rx_ok_count);
-
-  LOG_HK("bc_upa_tx_ts %lu bc_upa_rx_ts %lu uc_upa_tx_ts %lu uc_upa_rx_ts %lu pp_upa_tx_ts %lu pp_upa_rx_ts %lu |\n", 
-          tsch_common_sf_upa_tx_timeslots,
-          tsch_common_sf_upa_rx_timeslots,
-          tsch_unicast_sf_upa_tx_timeslots,
-          tsch_unicast_sf_upa_rx_timeslots, 
-          tsch_ost_pp_sf_upa_tx_timeslots,
-          tsch_ost_pp_sf_upa_rx_timeslots);
-#else
-  LOG_HK("bc_upa_tx_rs %lu bc_upa_rx_rs %lu uc_upa_tx_rs %lu uc_upa_rx_rs %lu |\n", 
-          tsch_common_sf_upa_tx_reserved_count,
-          tsch_common_sf_upa_rx_reserved_count,
-          tsch_unicast_sf_upa_tx_reserved_count,
-          tsch_unicast_sf_upa_rx_reserved_count);
-
-  LOG_HK("bc_upa_tx_ok %lu bc_upa_rx_ok %lu uc_upa_tx_ok %lu uc_upa_rx_ok %lu |\n", 
-          tsch_common_sf_upa_tx_ok_count,
-          tsch_common_sf_upa_rx_ok_count,
-          tsch_unicast_sf_upa_tx_ok_count,
-          tsch_unicast_sf_upa_rx_ok_count);
-
-  LOG_HK("bc_upa_tx_ts %lu bc_upa_rx_ts %lu uc_upa_tx_ts %lu uc_upa_rx_ts %lu |\n", 
-          tsch_common_sf_upa_tx_timeslots,
-          tsch_common_sf_upa_rx_timeslots,
-          tsch_unicast_sf_upa_tx_timeslots,
-          tsch_unicast_sf_upa_rx_timeslots);
-#endif
-#endif
-
-  ctimer_reset(&utilization_timer);
-}
+/*---------------------------------------------------------------------------*/
 
 /* The address of the last node we received an EB from (other than our time source).
  * Used for recovery */
@@ -2178,8 +2022,6 @@ PROCESS_THREAD(tsch_process, ev, data)
 
     //hckim record the asn when association is achieved
     TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
-    //hckim start ctimer to record utilization
-    ctimer_set(&utilization_timer, TSCH_NEXT_PRINT_PERIOD, print_utilization, NULL);
 
 #if WITH_SLA /* Coordinator: start sla_timer for frame/ACK length observation */
     if(tsch_is_coordinator) {
@@ -2195,163 +2037,7 @@ PROCESS_THREAD(tsch_process, ev, data)
      * as long as we are associated */
     PROCESS_YIELD_UNTIL(!tsch_is_associated);
 
-
-    ctimer_stop(&utilization_timer);
-
-#if WITH_ALICE && ALICE_EARLY_PACKET_DROP
-    LOG_HK("e_drop %u |\n", alice_early_packet_drop_count);
-#endif
-
-  LOG_HK("input_full %u input_avail %u dequeued_full %u dequeued_avail %u |\n", 
-          tsch_input_ringbuf_full_count, 
-          tsch_input_ringbuf_available_count, 
-          tsch_dequeued_ringbuf_full_count, 
-          tsch_dequeued_ringbuf_available_count);
-
-    //timeslots in current session
-    int32_t tsch_timeslots_in_current_session = TSCH_ASN_DIFF(tsch_current_asn, tsch_last_asn_associated);
-    uint32_t tsch_total_associated_timeslots = 
-            tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
-
-#if WITH_OST
-  LOG_HK("asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu sch_pp_tx %lu sch_pp_rx %lu sch_odp_tx %lu sch_odp_rx %lu |\n", 
-          tsch_total_associated_timeslots, 
-          tsch_scheduled_eb_sf_cell_count, 
-          tsch_scheduled_common_sf_cell_count, 
-          tsch_scheduled_unicast_sf_cell_count,
-          tsch_scheduled_ost_pp_sf_tx_cell_count, 
-          tsch_scheduled_ost_pp_sf_rx_cell_count, 
-          tsch_scheduled_ost_odp_sf_tx_cell_count, 
-          tsch_scheduled_ost_odp_sf_rx_cell_count);
-#else
-  LOG_HK("asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
-          tsch_total_associated_timeslots, 
-          tsch_scheduled_eb_sf_cell_count, 
-          tsch_scheduled_common_sf_cell_count, 
-          tsch_scheduled_unicast_sf_cell_count);
-#endif
-
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-#if WITH_OST
-  LOG_HK("sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu sch_pp_bst_tx %lu sch_pp_bst_rx %lu |\n", 
-          tsch_scheduled_common_sf_bst_tx_cell_count,
-          tsch_scheduled_common_sf_bst_rx_cell_count,
-          tsch_scheduled_unicast_sf_bst_tx_cell_count,
-          tsch_scheduled_unicast_sf_bst_rx_cell_count,
-          tsch_scheduled_ost_pp_sf_bst_tx_cell_count,
-          tsch_scheduled_ost_pp_sf_bst_rx_cell_count);
-#else
-  LOG_HK("sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu |\n", 
-          tsch_scheduled_common_sf_bst_tx_cell_count,
-          tsch_scheduled_common_sf_bst_rx_cell_count,
-          tsch_scheduled_unicast_sf_bst_tx_cell_count,
-          tsch_scheduled_unicast_sf_bst_rx_cell_count);
-#endif
-#endif
-
-#if WITH_UPA
-#if WITH_OST
-  LOG_HK("sch_bc_upa_tx %lu sch_bc_upa_rx %lu sch_uc_upa_tx %lu sch_uc_upa_rx %lu sch_pp_upa_tx %lu sch_pp_upa_rx %lu |\n", 
-          tsch_scheduled_common_sf_upa_tx_cell_count,
-          tsch_scheduled_common_sf_upa_rx_cell_count,
-          tsch_scheduled_unicast_sf_upa_tx_cell_count,
-          tsch_scheduled_unicast_sf_upa_rx_cell_count,
-          tsch_scheduled_ost_pp_sf_upa_tx_cell_count,
-          tsch_scheduled_ost_pp_sf_upa_rx_cell_count);
-#else
-  LOG_HK("sch_bc_upa_tx %lu sch_bc_upa_rx %lu sch_uc_upa_tx %lu sch_uc_upa_rx %lu |\n", 
-          tsch_scheduled_common_sf_upa_tx_cell_count,
-          tsch_scheduled_common_sf_upa_rx_cell_count,
-          tsch_scheduled_unicast_sf_upa_tx_cell_count,
-          tsch_scheduled_unicast_sf_upa_rx_cell_count);
-#endif
-#endif
-
-#if WITH_OST
-  LOG_HK("eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu pp_tx_op %lu pp_rx_op %lu odp_tx_op %lu odp_rx_op %lu |\n", 
-          tsch_eb_sf_tx_operation_count, 
-          tsch_eb_sf_rx_operation_count, 
-          tsch_common_sf_tx_operation_count, 
-          tsch_common_sf_rx_operation_count, 
-          tsch_unicast_sf_tx_operation_count, 
-          tsch_unicast_sf_rx_operation_count,
-          tsch_ost_pp_sf_tx_operation_count, 
-          tsch_ost_pp_sf_rx_operation_count, 
-          tsch_ost_odp_sf_tx_operation_count, 
-          tsch_ost_odp_sf_rx_operation_count);
-#else
-  LOG_HK("eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
-          tsch_eb_sf_tx_operation_count, 
-          tsch_eb_sf_rx_operation_count, 
-          tsch_common_sf_tx_operation_count, 
-          tsch_common_sf_rx_operation_count, 
-          tsch_unicast_sf_tx_operation_count, 
-          tsch_unicast_sf_rx_operation_count);
-#endif
-
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-#if WITH_OST
-  LOG_HK("bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu pp_bst_tx_op %lu pp_bst_rx_op %lu |\n", 
-          tsch_common_sf_bst_tx_operation_count,
-          tsch_common_sf_bst_rx_operation_count,
-          tsch_unicast_sf_bst_tx_operation_count,
-          tsch_unicast_sf_bst_rx_operation_count,
-          tsch_ost_pp_sf_bst_tx_operation_count,
-          tsch_ost_pp_sf_bst_rx_operation_count);
-#else
-  LOG_HK("bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu |\n", 
-          tsch_common_sf_bst_tx_operation_count,
-          tsch_common_sf_bst_rx_operation_count,
-          tsch_unicast_sf_bst_tx_operation_count,
-          tsch_unicast_sf_bst_rx_operation_count);
-#endif
-#endif
-
-#if WITH_UPA
-#if WITH_OST
-  LOG_HK("bc_upa_tx_rs %lu bc_upa_rx_rs %lu uc_upa_tx_rs %lu uc_upa_rx_rs %lu pp_upa_tx_rs %lu pp_upa_rx_rs %lu |\n", 
-          tsch_common_sf_upa_tx_reserved_count,
-          tsch_common_sf_upa_rx_reserved_count,
-          tsch_unicast_sf_upa_tx_reserved_count,
-          tsch_unicast_sf_upa_rx_reserved_count,
-          tsch_ost_pp_sf_upa_tx_reserved_count,
-          tsch_ost_pp_sf_upa_rx_reserved_count);
-
-  LOG_HK("bc_upa_tx_ok %lu bc_upa_rx_ok %lu uc_upa_tx_ok %lu uc_upa_rx_ok %lu pp_upa_tx_ok %lu pp_upa_rx_ok %lu |\n", 
-          tsch_common_sf_upa_tx_ok_count,
-          tsch_common_sf_upa_rx_ok_count,
-          tsch_unicast_sf_upa_tx_ok_count,
-          tsch_unicast_sf_upa_rx_ok_count,
-          tsch_ost_pp_sf_upa_tx_ok_count,
-          tsch_ost_pp_sf_upa_rx_ok_count);
-
-  LOG_HK("bc_upa_tx_ts %lu bc_upa_rx_ts %lu uc_upa_tx_ts %lu uc_upa_rx_ts %lu pp_upa_tx_ts %lu pp_upa_rx_ts %lu |\n", 
-          tsch_common_sf_upa_tx_timeslots,
-          tsch_common_sf_upa_rx_timeslots,
-          tsch_unicast_sf_upa_tx_timeslots,
-          tsch_unicast_sf_upa_rx_timeslots, 
-          tsch_ost_pp_sf_upa_tx_timeslots,
-          tsch_ost_pp_sf_upa_rx_timeslots);
-#else
-  LOG_HK("bc_upa_tx_rs %lu bc_upa_rx_rs %lu uc_upa_tx_rs %lu uc_upa_rx_rs %lu |\n", 
-          tsch_common_sf_upa_tx_reserved_count,
-          tsch_common_sf_upa_rx_reserved_count,
-          tsch_unicast_sf_upa_tx_reserved_count,
-          tsch_unicast_sf_upa_rx_reserved_count);
-
-  LOG_HK("bc_upa_tx_ok %lu bc_upa_rx_ok %lu uc_upa_tx_ok %lu uc_upa_rx_ok %lu |\n", 
-          tsch_common_sf_upa_tx_ok_count,
-          tsch_common_sf_upa_rx_ok_count,
-          tsch_unicast_sf_upa_tx_ok_count,
-          tsch_unicast_sf_upa_rx_ok_count);
-
-  LOG_HK("bc_upa_tx_ts %lu bc_upa_rx_ts %lu uc_upa_tx_ts %lu uc_upa_rx_ts %lu |\n", 
-          tsch_common_sf_upa_tx_timeslots,
-          tsch_common_sf_upa_rx_timeslots,
-          tsch_unicast_sf_upa_tx_timeslots,
-          tsch_unicast_sf_upa_rx_timeslots);
-#endif
-#endif
+    print_log_tsch();
 
     tsch_timeslots_until_last_session = tsch_total_associated_timeslots;
 

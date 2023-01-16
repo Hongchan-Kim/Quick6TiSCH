@@ -142,6 +142,15 @@ reset_log()
 }
 /*---------------------------------------------------------------------------*/
 static void
+print_log()
+{
+  print_log_tsch();
+  print_log_rpl_timers();
+  print_log_rpl();
+  print_log_simple_energest();
+}
+/*---------------------------------------------------------------------------*/
+static void
 udp_rx_callback(struct simple_udp_connection *c,
          const uip_ipaddr_t *sender_addr,
          uint16_t sender_port,
@@ -192,6 +201,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 {
   static struct etimer print_node_info_timer;
   static struct etimer reset_log_timer;
+  static struct etimer print_log_timer;
 
 #if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
   static struct etimer opt_start_timer;
@@ -235,6 +245,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
   etimer_set(&print_node_info_timer, APP_PRINT_NODE_INFO_DELAY);
   etimer_set(&reset_log_timer, APP_RESET_LOG_DELAY);
+  etimer_set(&print_log_timer, APP_PRINT_LOG_DELAY);
 
 #if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
   etimer_set(&opt_start_timer, (APP_TOPOLOGY_OPT_START_DELAY + random_rand() % (APP_TOPOLOGY_OPT_SEND_INTERVAL / 2)));
@@ -295,6 +306,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #endif
     else if(data == &reset_log_timer) {
       reset_log();
+    } else if(data == &print_log_timer) {
+      etimer_set(&print_log_timer, APP_PRINT_LOG_PERIOD);
+      print_log();
     } else if(data == &data_start_timer || data == &data_periodic_timer) {
 #if WITH_VARYING_PPM
       etimer_set(&data_send_timer, random_rand() % (APP_UPWARD_SEND_VARYING_INTERVAL[index] / 2));

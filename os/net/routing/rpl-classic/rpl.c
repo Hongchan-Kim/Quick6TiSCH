@@ -65,18 +65,27 @@
 rpl_stats_t rpl_stats;
 #endif
 
+/*---------------------------------------------------------------------------*/
 static uint16_t first_subtree_measure;
 static uint16_t next_subtree_measure;
 static uint32_t subtree_measure_count;
 static uint32_t subtree_measure_sum;
-
+/*---------------------------------------------------------------------------*/
+void print_log_rpl()
+{
+  LOG_HK("subtree_now %d subtree_sum %lu subtree_cnt %lu |\n", 
+        uip_ds6_route_num_routes(), subtree_measure_sum, subtree_measure_count);
+}
+/*---------------------------------------------------------------------------*/
 void reset_log_rpl()
 {
+  print_log_rpl();
   first_subtree_measure = 0;
   next_subtree_measure = 0;
   subtree_measure_count = 0;
   subtree_measure_sum = 0;
 }
+/*---------------------------------------------------------------------------*/
 
 static enum rpl_mode mode = RPL_MODE_MESH;
 /*---------------------------------------------------------------------------*/
@@ -199,15 +208,11 @@ rpl_purge_routes(void)
 
       if((tsch_is_associated == 1) && rpl_has_joined()) {
         int my_subtree_node_size = uip_ds6_route_num_routes();
-        LOG_HK("subtree_now %d |\n", my_subtree_node_size);
-
         subtree_measure_sum += (uint32_t)my_subtree_node_size;
         subtree_measure_count++;
       }
 
       next_subtree_measure = 0;
-      LOG_HK("subtree_sum %lu subtree_cnt %lu |\n", 
-            subtree_measure_sum, subtree_measure_count);
     }
   } 
 }

@@ -103,6 +103,7 @@
 #define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_NONE
 #define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_NONE
+#define LOG_LEVEL_ENERGEST                         LOG_LEVEL_NONE
 #else
 #define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
@@ -110,6 +111,7 @@
 #define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
 #define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
+#define LOG_LEVEL_ENERGEST                         LOG_LEVEL_INFO
 #endif
 
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
@@ -146,6 +148,8 @@
 #define APP_RESET_LOG_DELAY                        (5 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (6 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+#define APP_PRINT_LOG_DELAY                        (68 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 3)
 
 #else /* HCK_RPL_FIXED_TOPOLOGY */
 
@@ -160,12 +164,20 @@
 #define APP_RESET_LOG_DELAY                        (40 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (45 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+
+#define APP_PRINT_LOG_DELAY                        (107 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 2)
+
 #else /* APP_TOPOLOGY_OPT_DURING_BOOTSTRAP */
 #define APP_RESET_LOG_DELAY                        (52 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (57 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 //#define APP_DATA_START_DELAY                       (2 * 60 * CLOCK_SECOND)
 //#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
+
+#define APP_PRINT_LOG_DELAY                        (119 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 3)
+
 #endif /* APP_TOPOLOGY_OPT_DURING_BOOTSTRAP */
 
 #endif /* HCK_RPL_FIXED_TOPOLOGY */
