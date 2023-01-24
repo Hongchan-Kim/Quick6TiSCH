@@ -201,6 +201,28 @@ uip_ds6_nbr_add(const uip_ipaddr_t *ipaddr, const uip_lladdr_t *lladdr,
     stimer_set(&nbr->sendns, 0);
     nbr->nscount = 0;
 #endif /* UIP_ND6_SEND_NS */
+
+
+#if WITH_A3
+    nbr->a3_c_num_tx_slot = WITH_A3;
+    nbr->a3_c_num_rx_slot = WITH_A3;
+
+    nbr->a3_c_num_tx_pkt_success = 0;
+    nbr->a3_c_num_tx_pkt_collision = 0;
+
+    nbr->a3_c_num_rx_pkt_success = 0;
+    nbr->a3_c_num_rx_pkt_collision = 0;
+    nbr->a3_c_num_rx_pkt_idle = 0;
+    nbr->a3_c_num_rx_pkt_others = 0;
+    nbr->a3_c_num_rx_pkt_unscheduled = 0;
+
+    nbr->a3_c_tx_attempt_rate_ewma = 0.5;
+    nbr->a3_c_rx_attempt_rate_ewma = 0.5;
+
+    nbr->a3_c_tx_success_rate_ewma = 0.4;
+    nbr->a3_c_rx_success_rate_ewma = 0.4;
+#endif
+
     LOG_INFO("Adding neighbor with ip addr ");
     LOG_INFO_6ADDR(ipaddr);
     LOG_INFO_(" link addr ");

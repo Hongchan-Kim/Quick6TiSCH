@@ -106,11 +106,19 @@ struct tsch_link *tsch_schedule_add_link(struct tsch_slotframe *slotframe,
                                          uint16_t timeslot, uint16_t channel_offset, uint8_t do_remove);
 
 #if WITH_ALICE /* alice implementation */
+#if WITH_A3
+struct tsch_link *alice_tsch_schedule_add_link(struct tsch_slotframe *slotframe,
+                                            uint8_t link_options, enum link_type link_type, const linkaddr_t *address,
+                                            uint16_t timeslot, uint16_t channel_offset,
+                                            uint16_t target_id,
+                                            const linkaddr_t *nbr_addr);
+#else /* WITH_A3 */
 struct tsch_link *alice_tsch_schedule_add_link(struct tsch_slotframe *slotframe,
                                             uint8_t link_options, enum link_type link_type, const linkaddr_t *address,
                                             uint16_t timeslot, uint16_t channel_offset,
                                             uint16_t target_id);
-#endif
+#endif /* WITH_A3 */
+#endif /* WITH_ALICE */
 
 /**
 * \brief Looks for a link from a handle

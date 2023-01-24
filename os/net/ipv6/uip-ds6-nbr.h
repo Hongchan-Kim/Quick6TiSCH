@@ -120,6 +120,26 @@ typedef struct uip_ds6_nbr {
 #define UIP_DS6_NBR_PACKET_LIFETIME CLOCK_SECOND * 4
 #endif                          /*UIP_CONF_QUEUE_PKT */
 
+#if WITH_A3
+  uint8_t a3_c_num_tx_slot;
+  uint8_t a3_c_num_rx_slot;
+
+  uint8_t a3_c_num_tx_pkt_success;
+  uint8_t a3_c_num_tx_pkt_collision;
+
+  uint8_t a3_c_num_rx_pkt_success;
+  uint8_t a3_c_num_rx_pkt_collision;
+  uint8_t a3_c_num_rx_pkt_idle;
+  uint8_t a3_c_num_rx_pkt_others;
+  uint8_t a3_c_num_rx_pkt_unscheduled;
+
+  double a3_c_tx_attempt_rate_ewma;
+  double a3_c_rx_attempt_rate_ewma;
+
+  double a3_c_tx_success_rate_ewma;
+  double a3_c_rx_success_rate_ewma;
+#endif
+
 #if WITH_OST
   /* OST for Tx */
   uint16_t ost_my_N;             // 1. determined by me

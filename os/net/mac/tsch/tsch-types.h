@@ -65,6 +65,9 @@ struct tsch_link {
   uint16_t handle;
   /* MAC address of neighbor */
   linkaddr_t addr;
+#if WITH_A3
+  linkaddr_t a3_nbr_addr;
+#endif
   /* Slotframe identifier */
   uint16_t slotframe_handle;
   /* Identifier of Slotframe to which this link belongs

@@ -1,6 +1,18 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+
+/* A3 */ //ghlee
+#define WITH_A3                                    1
+
+#if WITH_A3
+#define WITH_A3_DBG                                1
+#define ALICE1_ORB2_OSB3                           1
+#define A3_MAX_ZONE                                4 // 2, 4, 8
+#define A3_INITIAL_NUM_OF_ZONE                     1
+#endif
+
+
 /*---------------------------------------------------------------------------*/
 /*
  * HCK modifications independent of proposed scheme
@@ -23,7 +35,7 @@
 
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
 
-#define HCK_RPL_FIXED_TOPOLOGY                     0
+#define HCK_RPL_FIXED_TOPOLOGY                     0 //
 #if HCK_RPL_FIXED_TOPOLOGY
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
@@ -339,8 +351,11 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
+#if WITH_A3
 #define ORCHESTRA_CONF_UNICAST_PERIOD              23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
-
+#else
+#define ORCHESTRA_CONF_UNICAST_PERIOD              24 // unicast, should be longer than (2N-2)/3 to provide contention-free links
+#endif
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
 #define ALICE_EARLY_PACKET_DROP                    0
@@ -349,7 +364,7 @@
 #define ENABLE_ALICE_EARLY_PACKET_DROP_LOG         0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
-#define ENABLE_LOG_ALICE_LINK_ADD_REMOVE           0
+#define ENABLE_LOG_ALICE_LINK_ADD_REMOVE           1
 
 #define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
 #define TSCH_SCHED_COMMON_SF_HANDLE                1 //slotframe handle of broadcast/default slotframe

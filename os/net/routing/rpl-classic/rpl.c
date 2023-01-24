@@ -385,6 +385,26 @@ init(void)
   LOG_INFO("rpl-classic started\n");
   default_instance = NULL;
 
+#if WITH_A3
+  a3_p_num_tx_slot = WITH_A3;
+  a3_p_num_rx_slot = WITH_A3;
+
+  a3_p_tx_attempt_rate_ewma = 0.5;
+  a3_p_rx_attempt_rate_ewma = 0.5;
+
+  a3_p_tx_success_rate_ewma = 0.4;
+  a3_p_rx_success_rate_ewma = 0.4;
+
+  a3_p_num_tx_pkt_success = 0;
+  a3_p_num_tx_pkt_collision = 0;
+
+  a3_p_num_rx_pkt_unscheduled = 0;
+  a3_p_num_rx_pkt_others = 0;
+  a3_p_num_rx_pkt_success = 0;
+  a3_p_num_rx_pkt_collision = 0;
+  a3_p_num_rx_pkt_idle = 0;
+#endif
+
   rpl_dag_init();
   rpl_reset_periodic_timer();
   rpl_icmp6_register_handlers();

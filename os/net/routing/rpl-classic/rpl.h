@@ -54,6 +54,27 @@ void reset_log_rpl_timers();
 void reset_log_rpl();
 void reset_log_rpl_ext_header();
 
+#if WITH_A3
+uint8_t a3_p_num_tx_slot;
+uint8_t a3_p_num_rx_slot;
+
+uint8_t a3_p_num_tx_pkt_success;
+uint8_t a3_p_num_tx_pkt_collision;
+
+uint8_t a3_p_num_rx_pkt_success;
+uint8_t a3_p_num_rx_pkt_collision;
+uint8_t a3_p_num_rx_pkt_idle;
+uint8_t a3_p_num_rx_pkt_unscheduled;
+uint8_t a3_p_num_rx_pkt_others;
+
+double a3_p_tx_attempt_rate_ewma;
+double a3_p_rx_attempt_rate_ewma;
+
+double a3_p_tx_success_rate_ewma;
+double a3_p_rx_success_rate_ewma;
+
+#endif
+
 /*---------------------------------------------------------------------------*/
 typedef uint16_t rpl_rank_t;
 typedef uint16_t rpl_ocp_t;
