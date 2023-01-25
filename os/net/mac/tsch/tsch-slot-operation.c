@@ -240,9 +240,8 @@ uint8_t eval_01_num_of_pkts_aggregated = 1;
 #endif
 
 #if WITH_A3
-static int a3_rssi;
+static int a3_rx_rssi;
 static int a3_rx_result; /* 0: idle, 1: success, 2: others, 3: collision */
-
 static int a3_rx_frame_valid;
 #endif
 
@@ -2491,19 +2490,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
 #if WITH_A3
-    if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) { /* Unicast SF */
-      if(!current_neighbor->is_broadcast) {
+    if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) { /* A3: Unicast SF only */
+      if(!current_neighbor->is_broadcast) { // HCK-A3: do we really need this condition?
         int a3_up1_down2 = 2; /* Default is downward. root has downward only. */
+        // HCK-A3: Can be replaced with TSCH_RPL_CHECK_DODAG_JOINED() or orchestra_parent_linkaddr
         rpl_instance_t *instance = rpl_get_default_instance();
-
-#ifdef TSCH_RPL_CHECK_DODAG_JOINED
-        /* Implementation section 6.3 of RFC 8180 */
-        if(TSCH_RPL_CHECK_DODAG_JOINED()) {
-#else
         if(instance != NULL 
            && instance->current_dag != NULL 
            && instance->current_dag->preferred_parent != NULL) {
-#endif /* TSCH_RPL_CHECK_DODAG_JOINED */
           if(linkaddr_cmp(queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER),
                           rpl_get_parent_lladdr(instance->current_dag->preferred_parent))) {
             a3_up1_down2 = 1;
@@ -2514,61 +2508,37 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
         if(a3_up1_down2 == 1) { /* Upward */
           if(mac_tx_status == MAC_TX_OK) {
-            a3_p_num_tx_pkt_success++; 
-#if WITH_A3_DBG
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                    "a3_d t_p_succ %u", a3_p_num_tx_pkt_success);
-            );
-#endif
+            a3_p_num_tx_pkt_success++;
           } else {
             a3_p_num_tx_pkt_collision++;
-#if WITH_A3_DBG
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                    "a3_d t_p_coll %u", a3_p_num_tx_pkt_collision);
-            );
-#endif
           }
 
         } else { /* Downward */
+#if A3_ALICE1_ORB2_OSB3 == 3 /* O-SB: Records Tx results for all nodes into a single variable */
           if(mac_tx_status == MAC_TX_OK) {
-#if ALICE1_ORB2_OSB3 == 3 /* O-SB: Records Tx results for all nodes into a single variable */
             a3_p_num_tx_pkt_success++;
+          } else {
+            a3_p_num_tx_pkt_collision++;
+          }
 #else /* ALICE, O-RB: Records Tx results for each node into separate variables */
+          if(mac_tx_status == MAC_TX_OK) {
             nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER)); 
             if(item != NULL) {
               uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER));
               if(it != NULL) {
                 it->a3_c_num_tx_pkt_success++;
-#if WITH_A3_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3_d t_c_succ %u", it->a3_c_num_tx_pkt_success);
-                );
-#endif
               }
             }
-#endif
           } else {
-#if ALICE1_ORB2_OSB3 == 3 /* O-SB: Records Tx results for all nodes into a single variable */
-            a3_p_num_tx_pkt_collision++;
-#else /* ALICE, O-RB: Records Tx results for each node into separate variables */
             nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER)); 
             if(item != NULL) {
               uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER));
               if(it != NULL) {
                 it->a3_c_num_tx_pkt_collision++;
-#if WITH_A3_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3_d t_c_coll %u", it->a3_c_num_tx_pkt_collision);
-                );
-#endif
               }
             }
-#endif
           }
+#endif /* A3_ALICE1_ORB2_OSB3 */
         }
       }
     }
@@ -3128,11 +3098,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
    * 5. Drift calculated in the ACK callback registered with the radio driver. Use it if receiving from a time source neighbor.
    **/
 
-#if 0//WITH_A3
-  int a3_rssi = 0;
-  int a3_rx_result = 0; /* 0: idle, 1: success, 2: others, 3: collision */
-#endif
-
   struct tsch_neighbor *n;
   static linkaddr_t source_address;
   static linkaddr_t destination_address;
@@ -3142,7 +3107,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
   PT_BEGIN(pt);
 
 #if WITH_A3
-  a3_rssi = 0;
+  a3_rx_rssi = 0;
   a3_rx_result = 0; /* 0: idle, 1: success, 2: others, 3: collision */
   a3_rx_frame_valid = 0;
 #endif
@@ -3228,15 +3193,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
 
 #if WITH_A3
-      NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &a3_rssi);
-#if WITH_A3_DBG
-      if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) { 
-        TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-            "a3_d n_R %d %d", (0b00011111 & a3_rssi), (-91 + 3 * (0b00011111 & a3_rssi))));
-      }
-#endif
-      if((0b00011111 & a3_rssi) > 0 ) { // || NETSTACK_RADIO.receiving_packet() || !NETSTACK_RADIO.channel_clear() ) {
+      NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &a3_rx_rssi);
+      if(a3_rx_rssi > -91) {
         a3_rx_result = 3; /* 0: idle, 1: success, 2: others, 3: collision */
       }
 #endif
@@ -3250,16 +3208,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           "!no packet seen"));
 #endif
     } else {
-
-#if WITH_A3_DBG
-      if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) { 
-        NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &a3_rssi);
-        TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-            "a3_d y_R %d %d", (0b00011111 & a3_rssi), (-91 + 3 * (0b00011111 & a3_rssi))));
-      }
-#endif
-
 
 #if WITH_A3
       /* By default, set a3_rx_result as collision */
@@ -3896,187 +3844,108 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
   }
 
 #if WITH_A3
-  if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
+  if(current_link->slotframe_handle == TSCH_SCHED_UNICAST_SF_HANDLE) { /* Unicast SF */
     if(a3_rx_frame_valid) { /* This is unicast packet and frame is valid. This node already sent ACK to the source node. */
-#if ALICE1_ORB2_OSB3 == 1
+      a3_rx_frame_valid = 0;
+#if A3_ALICE1_ORB2_OSB3 == 1
       if(linkaddr_cmp(&destination_address, &linkaddr_node_addr)) { /* Unicast packet for me */
         a3_rx_result = 1; /* 0: idle, 1: success, 2: others, 3: collision */
       } else { /* Unicast packet for others */
         a3_rx_result = 2; /* 0: idle, 1: success, 2: others, 3: collision */
       }
-#else /* O-RB, O-SB */
+#else /* A3_ALICE1_ORB2_OSB3, O-RB, O-SB */
       a3_rx_result = 1; 
-#endif
+#endif /* A3_ALICE1_ORB2_OSB3 */
     }
-    a3_rx_frame_valid = 0;
 
-#if ALICE1_ORB2_OSB3 != 2 /* O-RB일 때는 어떻게 하지? */
-    struct tsch_slotframe *a3_unicast_sf = tsch_schedule_get_slotframe_by_handle(TSCH_SCHED_UNICAST_SF_HANDLE);
-    if(a3_unicast_sf != NULL) {
-#if 0
-      struct tsch_link *l = tsch_schedule_get_link_by_timeslot(a3_unicast_sf, current_link->timeslot, current_link->channel_offset);
-      if(l->link_options & LINK_OPTION_RX) {
-#else
-      struct tsch_link *l = list_head(a3_unicast_sf->links_list);
-      while(l != NULL) {
-        if((l->link_options & LINK_OPTION_RX) // if((l->link_option_alice & LINK_OPTION_RX) 
-            && (l->timeslot == current_link->timeslot) 
-            && (l->channel_offset == current_link->channel_offset)) {
-          linkaddr_t *addr = &(l->a3_nbr_addr); // linkaddr_t *addr = &(l->neighbor);
-          rpl_instance_t *instance = rpl_get_default_instance();
-
-#if ALICE1_ORB2_OSB3 == 1
-          /* Link for parent */
-          if(addr != NULL 
-            && instance != NULL 
-            && instance->current_dag != NULL 
-            && instance->current_dag->preferred_parent != NULL 
-            && linkaddr_cmp(rpl_get_parent_lladdr(instance->current_dag->preferred_parent), addr)) {
-            if(a3_rx_result == 0) { //idle
-              a3_p_num_rx_pkt_idle++;
-#if WITH_A3_DBG
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                      "a3_d r_p_idle %u", a3_p_num_rx_pkt_idle);
-              );
-#endif
-            } else if(a3_rx_result == 1) { //success
-              /* Above line compared &destination_address with &linkaddr_node_addr 
-                 Here compare &source_address of packet with neighbor address of current link */
-              if(linkaddr_cmp(&source_address, addr)) { 
-                a3_p_num_rx_pkt_success++;
-#if WITH_A3_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3_d r_p_succ %u", a3_p_num_rx_pkt_success);
-                );
-#endif
-              } else {
-                a3_p_num_rx_pkt_others++;
-#if WITH_A3_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3_d r_p_oth1 %u", a3_p_num_rx_pkt_others);
-                );
-#endif
-              }
-            } else if(a3_rx_result == 2) { //others
-              a3_p_num_rx_pkt_others++;
-#if WITH_A3_DBG
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                      "a3_d r_p_oth2 %u", a3_p_num_rx_pkt_others);
-              );
-#endif
-            } else {//a3_rx_result == 3 //collision
-              a3_p_num_rx_pkt_collision++;
-#if WITH_A3_DBG
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                      "a3_d r_p_coll %u", a3_p_num_rx_pkt_collision);
-              );
-#endif
-            }
-
-          /* Link for child */
-          } else if(addr != NULL 
-                    && nbr_table_get_from_lladdr(nbr_routes, addr) != NULL 
-                    && uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr) != NULL) {
-            uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
-            if(it != NULL) {
-              if(a3_rx_result == 0) { //idle
-                it->a3_c_num_rx_pkt_idle++;
-#if WITH_A3_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3_d r_c_idle %u", it->a3_c_num_rx_pkt_idle);
-                );
-#endif
-              } else if(a3_rx_result == 1) { //success
-                /* Above line compared &destination_address with &linkaddr_node_addr 
-                  Here compare &source_address of packet with neighbor address of current link */
-                if(linkaddr_cmp(&source_address, addr)) {
-                  it->a3_c_num_rx_pkt_success++;
-#if WITH_A3_DBG
-                  TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "a3_d r_c_succ %u", it->a3_c_num_rx_pkt_success);
-                  );
-#endif
-                } else {
-                  it->a3_c_num_rx_pkt_others++;
-#if WITH_A3_DBG
-                  TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "a3_d r_c_oth1 %u", it->a3_c_num_rx_pkt_others);
-                  );
-#endif
-                }
-              } else if(a3_rx_result == 2) { //others
-                it->a3_c_num_rx_pkt_others++;
-#if WITH_A3_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3_d r_c_oth2 %u", it->a3_c_num_rx_pkt_others);
-                );
-#endif
-              } else {//a3_rx_result ==3 //collision
-                it->a3_c_num_rx_pkt_collision++;
-#if WITH_A3_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3_d r_c_coll %u", it->a3_c_num_rx_pkt_collision);
-                );
-#endif
-              }
-            }
-          }
-
-#elif ALICE1_ORB2_OSB3 == 3 //O-SB /* 위에 ALICE랑 합쳐도 된다 ???? */
-          //this link is from parent
-          if(addr != NULL 
-            && instance != NULL 
-            && instance->current_dag != NULL 
-            && instance->current_dag->preferred_parent != NULL 
-            && linkaddr_cmp(rpl_get_parent_lladdr(instance->current_dag->preferred_parent), addr)) {
-            if(a3_rx_result == 0) { //idle
-                a3_p_num_rx_pkt_idle++;
-            } else if(a3_rx_result == 1 || a3_rx_result == 2) { //success
-              if(linkaddr_cmp(&source_address, addr)) {
-                a3_p_num_rx_pkt_success++;
-              } else {
-                a3_p_num_rx_pkt_others++;
-              }
-            } else { //a3_rx_result ==3 //collision
-              a3_p_num_rx_pkt_collision++;
-            }
-
-          //this link is from children
-          } else if(addr != NULL 
-                    && nbr_table_get_from_lladdr(nbr_routes, addr) != NULL 
-                    && uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr) !=NULL) {
-            uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
-            if(it != NULL) {
-              if(a3_rx_result == 0) { //idle
-                it->a3_c_num_rx_pkt_idle++;
-              } else if(a3_rx_result == 1 || a3_rx_result == 2) { //success
-                if(linkaddr_cmp(&source_address, addr)) {
-                  it->a3_c_num_rx_pkt_success++;
-                } else {
-                  it->a3_c_num_rx_pkt_others++;
-                }
-              } else { //a3_rx_result ==3 //collision
-                it->a3_c_num_rx_pkt_collision++;
-              }
-            }
-          }
-#endif /* ALICE1_ORB2_OSB3 */
+#if A3_ALICE1_ORB2_OSB3 == 1 /* ALICE */
+    linkaddr_t *addr = &(current_link->a3_nbr_addr); // linkaddr_t *addr = &(l->neighbor);
+    rpl_instance_t *instance = rpl_get_default_instance();
+    /* Link for parent */
+    if(addr != NULL 
+      && instance != NULL 
+      && instance->current_dag != NULL 
+      && instance->current_dag->preferred_parent != NULL 
+      && linkaddr_cmp(rpl_get_parent_lladdr(instance->current_dag->preferred_parent), addr)) {
+      if(a3_rx_result == 0) { //idle
+        a3_p_num_rx_pkt_idle++;
+      } else if(a3_rx_result == 1) { //success
+        /* Above line compared &destination_address with &linkaddr_node_addr 
+            Here compare &source_address of packet with neighbor address of current link */
+        if(linkaddr_cmp(&source_address, addr)) { //HCK-A3: move this part to above
+          a3_p_num_rx_pkt_success++;
+        } else {
+          a3_p_num_rx_pkt_others++;
         }
-        l = list_item_next(l);
+      } else if(a3_rx_result == 2) { //others
+        a3_p_num_rx_pkt_others++;
+      } else {//a3_rx_result == 3 //collision
+        a3_p_num_rx_pkt_collision++;
       }
-#endif
+    /* Link for child */
+    } else if(addr != NULL 
+              && nbr_table_get_from_lladdr(nbr_routes, addr) != NULL 
+              && uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr) != NULL) {
+      uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
+      if(it != NULL) {
+        if(a3_rx_result == 0) { //idle
+          it->a3_c_num_rx_pkt_idle++;
+        } else if(a3_rx_result == 1) { //success
+          /* Above line compared &destination_address with &linkaddr_node_addr 
+            Here compare &source_address of packet with neighbor address of current link */
+          if(linkaddr_cmp(&source_address, addr)) {
+            it->a3_c_num_rx_pkt_success++;
+          } else {
+            it->a3_c_num_rx_pkt_others++;
+          }
+        } else if(a3_rx_result == 2) { //others
+          it->a3_c_num_rx_pkt_others++;
+        } else {//a3_rx_result ==3 //collision
+          it->a3_c_num_rx_pkt_collision++;
+        }
+      }
     }
-#endif /* ALICE1_ORB2_OSB3 */
+#elif A3_ALICE1_ORB2_OSB3 == 3 //O-SB /* 위에 ALICE랑 합쳐도 된다 ???? */
+    linkaddr_t *addr = &(current_link->a3_nbr_addr); // linkaddr_t *addr = &(l->neighbor);
+    rpl_instance_t *instance = rpl_get_default_instance();
+    //this link is from parent
+    if(addr != NULL 
+      && instance != NULL 
+      && instance->current_dag != NULL 
+      && instance->current_dag->preferred_parent != NULL 
+      && linkaddr_cmp(rpl_get_parent_lladdr(instance->current_dag->preferred_parent), addr)) {
+      if(a3_rx_result == 0) { //idle
+          a3_p_num_rx_pkt_idle++;
+      } else if(a3_rx_result == 1 || a3_rx_result == 2) { //success
+        if(linkaddr_cmp(&source_address, addr)) {
+          a3_p_num_rx_pkt_success++;
+        } else {
+          a3_p_num_rx_pkt_others++;
+        }
+      } else { //a3_rx_result ==3 //collision
+        a3_p_num_rx_pkt_collision++;
+      }
+
+    //this link is from children
+    } else if(addr != NULL 
+              && nbr_table_get_from_lladdr(nbr_routes, addr) != NULL 
+              && uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr) !=NULL) {
+      uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)addr);
+      if(it != NULL) {
+        if(a3_rx_result == 0) { //idle
+          it->a3_c_num_rx_pkt_idle++;
+        } else if(a3_rx_result == 1 || a3_rx_result == 2) { //success
+          if(linkaddr_cmp(&source_address, addr)) {
+            it->a3_c_num_rx_pkt_success++;
+          } else {
+            it->a3_c_num_rx_pkt_others++;
+          }
+        } else { //a3_rx_result ==3 //collision
+          it->a3_c_num_rx_pkt_collision++;
+        }
+      }
+    }
+#endif /* A3_ALICE1_ORB2_OSB3 */
   }
 #endif /* WITH_A3 */
 

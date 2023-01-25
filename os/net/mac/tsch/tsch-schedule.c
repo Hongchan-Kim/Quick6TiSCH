@@ -1168,7 +1168,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 
             int txChangeFlag = 0;
 
-#if ALICE1_ORB2_OSB3 != 2 //O-SB, ALICE
+#if A3_ALICE1_ORB2_OSB3 != 2 //O-SB, ALICE
             // if(p_tx_collision_ewma > maxErr && a3_p_num_tx_slot > 1) {
             if((a3_p_tx_attempt_rate_ewma - a3_p_tx_success_rate_ewma) / (a3_p_tx_attempt_rate_ewma) > maxErr 
                 && a3_p_num_tx_slot > 1) {
@@ -1253,7 +1253,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 
                   int txFlagChangedForChild = 0;
 
-#if ALICE1_ORB2_OSB3 != 2 //O-SB, ALICE
+#if A3_ALICE1_ORB2_OSB3 != 2 //O-SB, ALICE
                   // if(it->c_tx_collision_ewma > maxErr && it->a3_c_num_tx_slot > 1){
                   if((it->a3_c_tx_attempt_rate_ewma - it->a3_c_tx_success_rate_ewma) / (it->a3_c_tx_attempt_rate_ewma) > maxErr 
                       && it->a3_c_num_tx_slot > 1) {                    

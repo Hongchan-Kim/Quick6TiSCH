@@ -7,7 +7,7 @@
 
 #if WITH_A3
 #define WITH_A3_DBG                                1
-#define ALICE1_ORB2_OSB3                           1
+#define A3_ALICE1_ORB2_OSB3                        1
 #define A3_MAX_ZONE                                4 // 2, 4, 8
 #define A3_INITIAL_NUM_OF_ZONE                     1
 #endif

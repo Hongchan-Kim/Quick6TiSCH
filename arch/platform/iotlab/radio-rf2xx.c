@@ -120,6 +120,7 @@ static int rf2xx_wr_receiving_packet(void);
 static int rf2xx_wr_pending_packet(void);
 
 #if WITH_IOTLAB
+static int phy_rssi_dbm;
 static int last_rssi_dbm;
 #endif
 
@@ -619,9 +620,9 @@ get_value(radio_param_t param, radio_value_t *value)
 
 #if WITH_IOTLAB
   case RADIO_PARAM_RSSI:
-    // *value = -91 + rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_ED_LEVEL);
-    // *value = -91 + 3 * ((int8_t)rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_RSSI) - 1);
-    *value =  rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_RSSI);
+    // HCK-A3: later use RF2XX_PHY_RSSI_MASK__RSSI
+    phy_rssi_dbm = rf2xx_reg_read(RF2XX_DEVICE, RF2XX_REG__PHY_RSSI);
+    *value = -91 + 3 * (0b00011111 & phy_rssi_dbm);
     return RADIO_RESULT_OK;
 
   case RADIO_PARAM_LAST_RSSI:
