@@ -5,11 +5,29 @@
 /* A3 */ //ghlee
 #define WITH_A3                                    1
 
+#define WITH_A3_TEMP                               1
+
 #if WITH_A3
 #define WITH_A3_DBG                                1
+#define WITH_A3_DBG_VALUE                          1
+#define WITH_A3_DBG_BYTE                           0
+
 #define A3_ALICE1_ORB2_OSB3                        1
 #define A3_MAX_ZONE                                4 // 2, 4, 8
-#define A3_INITIAL_NUM_OF_ZONE                     1
+
+#define A3_INITIAL_NUM_OF_SLOTS                    1
+#define A3_INITIAL_NUM_OF_PKTS                     0
+
+#define A3_INITIAL_TX_ATTEMPT_RATE_EWMA            (0.5)
+#define A3_INITIAL_RX_ATTEMPT_RATE_EWMA            (0.5)
+#define A3_INITIAL_TX_SUCCESS_RATE_EWMA            (0.4)
+#define A3_INITIAL_RX_SUCCESS_RATE_EWMA            (0.4)
+
+#define A3_TX_INCREASE_THRESH                      (0.75)
+#define A3_TX_DECREASE_THRESH                      (0.36)
+#define A3_RX_INCREASE_THRESH                      (0.65)
+#define A3_RX_DECREASE_THRESH                      (0.29)
+#define A3_MAX_ERR_PROB                            (0.5)
 #endif
 
 

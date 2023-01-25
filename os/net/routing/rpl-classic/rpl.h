@@ -55,9 +55,7 @@ void reset_log_rpl();
 void reset_log_rpl_ext_header();
 
 #if WITH_A3
-uint8_t a3_p_num_tx_slot;
-uint8_t a3_p_num_rx_slot;
-
+// HCK-A3: should these be here???
 uint8_t a3_p_num_tx_pkt_success;
 uint8_t a3_p_num_tx_pkt_collision;
 
@@ -71,8 +69,10 @@ double a3_p_tx_attempt_rate_ewma;
 double a3_p_rx_attempt_rate_ewma;
 
 double a3_p_tx_success_rate_ewma;
-double a3_p_rx_success_rate_ewma;
+double a3_p_rx_success_rate_ewma; //HCK-A3: remove this variable
 
+uint8_t a3_p_num_tx_slot;
+uint8_t a3_p_num_rx_slot;
 #endif
 
 /*---------------------------------------------------------------------------*/
