@@ -1104,28 +1104,6 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             double alphaPlus = alpha * 0.2;
             double dynamicAlpha = 0;
 
-#if WITH_A3_DBG_VALUE
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d alpha %.4f", alpha);
-            );
-#endif
-#if WITH_A3_DBG_BYTE
-            uint8_t *alpha_pt = (uint8_t *)(&alpha);
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d alpha %x %x %x %x", 
-                        *(alpha_pt + 0), *(alpha_pt + 1),
-                        *(alpha_pt + 2), *(alpha_pt + 3));
-            );
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d alpha %x %x %x %x", 
-                        *(alpha_pt + 4), *(alpha_pt + 5),
-                        *(alpha_pt + 6), *(alpha_pt + 7));
-            );
-#endif
-
             static double txIncreaseThresh = A3_TX_INCREASE_THRESH;
             static double txDecreaseThresh = A3_TX_DECREASE_THRESH;
             static double rxIncreaseThresh = A3_RX_INCREASE_THRESH;
@@ -1147,52 +1125,25 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             }
             a3_p_tx_attempt_rate_ewma = (1 - alpha) * a3_p_tx_attempt_rate_ewma + alpha * newVal;
 
-#if WITH_A3_DBG_VALUE
+#if A3_DBG_VALUE
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                        "a3-d t_a %u %u %u", 
-                        a3_p_num_tx_pkt_success, a3_p_num_tx_pkt_collision, a3_p_num_tx_slot);
+                        "A3 t_a %u %u %u | %.3f %.3f %.3f", 
+                        a3_p_num_tx_pkt_success, a3_p_num_tx_pkt_collision, a3_p_num_tx_slot,
+                        alpha, newVal, a3_p_tx_attempt_rate_ewma);
             );
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d t_a newVal %.4f", newVal);
-            );
-#endif
-#if WITH_A3_DBG_BYTE
-            uint8_t *newVal_pt = (uint8_t *)(&newVal);
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d newVal %x %x %x %x", 
-                        *(newVal_pt + 0), *(newVal_pt + 1),
-                        *(newVal_pt + 2), *(newVal_pt + 3));
-            );
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d newVal %x %x %x %x", 
-                        *(newVal_pt + 4), *(newVal_pt + 5),
-                        *(newVal_pt + 6), *(newVal_pt + 7));
-            );
-#endif
-#if WITH_A3_DBG_VALUE
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d t_a ewma %.4f", a3_p_tx_attempt_rate_ewma);
-            );
-#endif
-#if WITH_A3_DBG_BYTE
-            uint8_t *ewma_pt = (uint8_t *)(&a3_p_tx_attempt_rate_ewma);
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d ewma %x %x %x %x", 
-                        *(ewma_pt + 0), *(ewma_pt + 1),
-                        *(ewma_pt + 2), *(ewma_pt + 3));
-            );
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d ewma %x %x %x %x", 
-                        *(ewma_pt + 4), *(ewma_pt + 5),
-                        *(ewma_pt + 6), *(ewma_pt + 7));
-            );
+            if(alpha > 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3 t_a alpha positive");
+              );
+            }
+            if(newVal > 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3 t_a newVal positive");
+              );
+            }
 #endif
 
             /* Calculate EWMA of 'Tx success rate' toward parent */
@@ -1202,57 +1153,16 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             }
             a3_p_tx_success_rate_ewma = (1 - alpha) * a3_p_tx_success_rate_ewma + alpha * newVal;
 
-#if WITH_A3_DBG_VALUE
+#if A3_DBG_VALUE
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                        "a3-d t_s %u %u %u", 
-                        a3_p_num_tx_pkt_success, a3_p_num_tx_pkt_collision, a3_p_num_tx_slot);
-            );
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d t_s newVal %.4f", newVal);
-            );
-#endif
-#if WITH_A3_DBG_BYTE
-            newVal_pt = (uint8_t *)(&newVal);
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d newVal %x %x %x %x", 
-                        *(newVal_pt + 0), *(newVal_pt + 1),
-                        *(newVal_pt + 2), *(newVal_pt + 3));
-            );
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d newVal %x %x %x %x", 
-                        *(newVal_pt + 4), *(newVal_pt + 5),
-                        *(newVal_pt + 6), *(newVal_pt + 7));
-            );
-#endif
-#if WITH_A3_DBG_VALUE
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d t_s ewma %.4f", a3_p_tx_success_rate_ewma);
-            );
-#endif
-#if WITH_A3_DBG_BYTE
-            ewma_pt = (uint8_t *)(&a3_p_tx_success_rate_ewma);
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d ewma %x %x %x %x", 
-                        *(ewma_pt + 0), *(ewma_pt + 1),
-                        *(ewma_pt + 2), *(ewma_pt + 3));
-            );
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d ewma %x %x %x %x", 
-                        *(ewma_pt + 4), *(ewma_pt + 5),
-                        *(ewma_pt + 6), *(ewma_pt + 7));
+                        "A3 t_s %.3f %.3f", newVal, a3_p_tx_success_rate_ewma);
             );
 #endif
 
             /* Calculate EWMA of 'Rx attempt rate' from parent */
-            sumRx = a3_p_num_rx_pkt_collision 
-                  + a3_p_num_rx_pkt_success 
+            sumRx = a3_p_num_rx_pkt_success 
+                  + a3_p_num_rx_pkt_collision 
                   + a3_p_num_rx_pkt_idle 
                   + a3_p_num_rx_pkt_others;
             diffRx = (a3_p_num_rx_slot - sumRx); //difference
@@ -1275,66 +1185,62 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             }
             a3_p_rx_attempt_rate_ewma = (1 - dynamicAlpha) * a3_p_rx_attempt_rate_ewma + dynamicAlpha * newVal;
 
-#if WITH_A3_DBG_VALUE
+#if A3_DBG_VALUE
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                        "a3-d r_a %u %u %u", 
-                        a3_p_num_rx_pkt_success, a3_p_num_rx_pkt_collision, a3_p_num_rx_pkt_unscheduled);
+                        "A3 r_a %u %u %u %u %u | %u", 
+                        a3_p_num_rx_pkt_success, a3_p_num_rx_pkt_collision, 
+                        a3_p_num_rx_pkt_idle, a3_p_num_rx_pkt_others, 
+                        a3_p_num_rx_pkt_unscheduled, sumRx);
             );
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                        "a3-d r_a d_alpha %.4f", dynamicAlpha);
-            );
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d r_a newVal %.4f", newVal);
-            );
-            TSCH_LOG_ADD(tsch_log_message,
-                    snprintf(log->message, sizeof(log->message),
-                        "a3-d r_a ewma %.4f", a3_p_rx_attempt_rate_ewma);
+                        "A3 r_a %.3f %.3f %.3f", 
+                        dynamicAlpha, newVal, a3_p_rx_attempt_rate_ewma);
             );
 #endif
 
-            int txChangeFlag = 0;
+            int txChangedFlag = 0;
 
 #if A3_ALICE1_ORB2_OSB3 != 2 //O-SB, ALICE
             if((a3_p_tx_attempt_rate_ewma - a3_p_tx_success_rate_ewma) / (a3_p_tx_attempt_rate_ewma) > maxErr 
                 && a3_p_num_tx_slot > 1) {
               a3_p_num_tx_slot /= 2;
-              txChangeFlag = 1;
+              txChangedFlag = 1;
 
-              a3_p_tx_attempt_rate_ewma = 0.5;
-              a3_p_tx_success_rate_ewma = 0.4;
+              a3_p_tx_attempt_rate_ewma = A3_INITIAL_TX_ATTEMPT_RATE_EWMA;
+              a3_p_tx_success_rate_ewma = A3_INITIAL_TX_SUCCESS_RATE_EWMA;
 
-#if WITH_A3_DBG_VALUE
+#if A3_DBG_VALUE
               TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "a3-d t_c %u %.4f %.4f", 
-                          txChangeFlag, a3_p_tx_attempt_rate_ewma, a3_p_tx_success_rate_ewma);
+                          "A3 t_half_c %u %u | %.3f %.3f", 
+                          a3_p_num_tx_slot, txChangedFlag, 
+                          a3_p_tx_attempt_rate_ewma, a3_p_tx_success_rate_ewma);
               );
 #endif
             }
 #endif
 
-            if(txChangeFlag == 0) {
+            if(txChangedFlag == 0) {
               if(a3_p_tx_attempt_rate_ewma > txIncreaseThresh && a3_p_num_tx_slot < A3_MAX_ZONE) {
                 a3_p_num_tx_slot *= 2;
                 a3_p_tx_attempt_rate_ewma /= 2;
-#if WITH_A3_DBG
+#if A3_DBG
                 TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                            "a3-d t_double %u %.4f", 
-                            a3_p_num_tx_slot, a3_p_tx_attempt_rate_ewma);
+                            "A3 t_double %u %.3f | %.3f", 
+                            a3_p_num_tx_slot, a3_p_tx_attempt_rate_ewma, txIncreaseThresh);
                 );
 #endif
               } else if(a3_p_tx_attempt_rate_ewma < txDecreaseThresh && a3_p_num_tx_slot > 1) {
                 a3_p_num_tx_slot /= 2;
                 a3_p_tx_attempt_rate_ewma *= 2;
-#if WITH_A3_DBG
+#if A3_DBG
                 TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                            "a3-d t_half %u %.4f", 
-                            a3_p_num_tx_slot, a3_p_tx_attempt_rate_ewma);
+                            "A3 t_half %u %.3f | %.3f", 
+                            a3_p_num_tx_slot, a3_p_tx_attempt_rate_ewma, txDecreaseThresh);
                 );
 #endif
               }
@@ -1343,33 +1249,33 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             if(a3_p_rx_attempt_rate_ewma > rxIncreaseThresh && a3_p_num_rx_slot < A3_MAX_ZONE) {
               a3_p_num_rx_slot *= 2;
               a3_p_rx_attempt_rate_ewma /= 2;
-#if WITH_A3_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                        snprintf(log->message, sizeof(log->message),
-                            "a3-d r_double %u %.4f", 
-                            a3_p_num_rx_slot, a3_p_rx_attempt_rate_ewma);
-                );
+#if A3_DBG
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3 r_double %u %.3f | %.3f", 
+                          a3_p_num_rx_slot, a3_p_rx_attempt_rate_ewma, rxIncreaseThresh);
+              );
 #endif
             } else if(a3_p_rx_attempt_rate_ewma < rxDecreaseThresh && a3_p_num_rx_slot > 1) {
               a3_p_num_rx_slot /= 2;
               a3_p_rx_attempt_rate_ewma *= 2;
-#if WITH_A3_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                        snprintf(log->message, sizeof(log->message),
-                            "a3-d r_half %u %.4f", 
-                            a3_p_num_rx_slot, a3_p_rx_attempt_rate_ewma);
-                );
+#if A3_DBG
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3 r_half %u %.3f | %.3f", 
+                          a3_p_num_rx_slot, a3_p_rx_attempt_rate_ewma, rxDecreaseThresh);
+              );
 #endif
             }
 
-            a3_p_num_tx_pkt_success = 0;
-            a3_p_num_tx_pkt_collision = 0;
+            a3_p_num_tx_pkt_success = A3_INITIAL_NUM_OF_PKTS;
+            a3_p_num_tx_pkt_collision = A3_INITIAL_NUM_OF_PKTS;
 
-            a3_p_num_rx_pkt_success = 0;
-            a3_p_num_rx_pkt_collision = 0;
-            a3_p_num_rx_pkt_idle = 0;
-            a3_p_num_rx_pkt_unscheduled = 0;
-            a3_p_num_rx_pkt_others = 0;
+            a3_p_num_rx_pkt_success = A3_INITIAL_NUM_OF_PKTS;
+            a3_p_num_rx_pkt_collision = A3_INITIAL_NUM_OF_PKTS;
+            a3_p_num_rx_pkt_idle = A3_INITIAL_NUM_OF_PKTS;
+            a3_p_num_rx_pkt_unscheduled = A3_INITIAL_NUM_OF_PKTS;
+            a3_p_num_rx_pkt_others = A3_INITIAL_NUM_OF_PKTS;
 
             /* Consider child nodes */
             nbr_table_item_t *item = nbr_table_head(nbr_routes);
@@ -1416,20 +1322,20 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
                   }
                   it->a3_c_rx_attempt_rate_ewma = (1 - dynamicAlpha) * it->a3_c_rx_attempt_rate_ewma + dynamicAlpha * newVal;
 
-                  int txFlagChangedForChild = 0;
+                  int txChangedForChildFlag = 0;
 
 #if A3_ALICE1_ORB2_OSB3 != 2 //O-SB, ALICE
                   if((it->a3_c_tx_attempt_rate_ewma - it->a3_c_tx_success_rate_ewma) / (it->a3_c_tx_attempt_rate_ewma) > maxErr 
                       && it->a3_c_num_tx_slot > 1) {                    
                     it->a3_c_num_tx_slot /= 2;
-                    txFlagChangedForChild = 1;
+                    txChangedForChildFlag = 1;
 
-                    it->a3_c_tx_attempt_rate_ewma = 0.5;
-                    it->a3_c_tx_success_rate_ewma = 0.4;
+                    it->a3_c_tx_attempt_rate_ewma = A3_INITIAL_TX_ATTEMPT_RATE_EWMA;
+                    it->a3_c_tx_success_rate_ewma = A3_INITIAL_TX_SUCCESS_RATE_EWMA;
                   }
 #endif
 
-                  if(txFlagChangedForChild == 0) {
+                  if(txChangedForChildFlag == 0) {
                     if(it->a3_c_tx_attempt_rate_ewma > txIncreaseThresh && it->a3_c_num_tx_slot < A3_MAX_ZONE) {
                       it->a3_c_num_tx_slot *= 2;
                       it->a3_c_tx_attempt_rate_ewma /= 2;
@@ -1447,14 +1353,14 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
                     it->a3_c_rx_attempt_rate_ewma *= 2;
                   }
 
-                  it->a3_c_num_tx_pkt_success = 0;
-                  it->a3_c_num_tx_pkt_collision = 0;
+                  it->a3_c_num_tx_pkt_success = A3_INITIAL_NUM_OF_PKTS;
+                  it->a3_c_num_tx_pkt_collision = A3_INITIAL_NUM_OF_PKTS;
 
-                  it->a3_c_num_rx_pkt_success = 0;
-                  it->a3_c_num_rx_pkt_collision = 0;
-                  it->a3_c_num_rx_pkt_idle = 0;
-                  it->a3_c_num_rx_pkt_unscheduled = 0;
-                  it->a3_c_num_rx_pkt_others = 0;
+                  it->a3_c_num_rx_pkt_success = A3_INITIAL_NUM_OF_PKTS;
+                  it->a3_c_num_rx_pkt_collision = A3_INITIAL_NUM_OF_PKTS;
+                  it->a3_c_num_rx_pkt_idle = A3_INITIAL_NUM_OF_PKTS;
+                  it->a3_c_num_rx_pkt_others = A3_INITIAL_NUM_OF_PKTS;
+                  it->a3_c_num_rx_pkt_unscheduled = A3_INITIAL_NUM_OF_PKTS;
                 }
               }
 

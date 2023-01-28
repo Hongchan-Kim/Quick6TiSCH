@@ -402,7 +402,6 @@ init(void)
   a3_p_rx_attempt_rate_ewma = A3_INITIAL_RX_ATTEMPT_RATE_EWMA;
 
   a3_p_tx_success_rate_ewma = A3_INITIAL_TX_SUCCESS_RATE_EWMA;
-  a3_p_rx_success_rate_ewma = A3_INITIAL_RX_SUCCESS_RATE_EWMA;
 #endif
 
   rpl_dag_init();

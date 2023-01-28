@@ -130,14 +130,13 @@ typedef struct uip_ds6_nbr {
   uint8_t a3_c_num_rx_pkt_success;
   uint8_t a3_c_num_rx_pkt_collision;
   uint8_t a3_c_num_rx_pkt_idle;
-  uint8_t a3_c_num_rx_pkt_unscheduled;
   uint8_t a3_c_num_rx_pkt_others;
+  uint8_t a3_c_num_rx_pkt_unscheduled;
 
   double a3_c_tx_attempt_rate_ewma;
   double a3_c_rx_attempt_rate_ewma;
 
   double a3_c_tx_success_rate_ewma;
-  double a3_c_rx_success_rate_ewma;
 #endif
 
 #if WITH_OST

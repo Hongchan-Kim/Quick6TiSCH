@@ -202,7 +202,6 @@ uip_ds6_nbr_add(const uip_ipaddr_t *ipaddr, const uip_lladdr_t *lladdr,
     nbr->nscount = 0;
 #endif /* UIP_ND6_SEND_NS */
 
-
 #if WITH_A3
     nbr->a3_c_num_tx_slot = A3_INITIAL_NUM_OF_SLOTS;
     nbr->a3_c_num_rx_slot = A3_INITIAL_NUM_OF_SLOTS;
@@ -213,14 +212,13 @@ uip_ds6_nbr_add(const uip_ipaddr_t *ipaddr, const uip_lladdr_t *lladdr,
     nbr->a3_c_num_rx_pkt_success = A3_INITIAL_NUM_OF_PKTS;
     nbr->a3_c_num_rx_pkt_collision = A3_INITIAL_NUM_OF_PKTS;
     nbr->a3_c_num_rx_pkt_idle = A3_INITIAL_NUM_OF_PKTS;
-    nbr->a3_c_num_rx_pkt_unscheduled = A3_INITIAL_NUM_OF_PKTS;
     nbr->a3_c_num_rx_pkt_others = A3_INITIAL_NUM_OF_PKTS;
+    nbr->a3_c_num_rx_pkt_unscheduled = A3_INITIAL_NUM_OF_PKTS;
 
     nbr->a3_c_tx_attempt_rate_ewma = A3_INITIAL_TX_ATTEMPT_RATE_EWMA;
     nbr->a3_c_rx_attempt_rate_ewma = A3_INITIAL_RX_ATTEMPT_RATE_EWMA;
 
     nbr->a3_c_tx_success_rate_ewma = A3_INITIAL_TX_SUCCESS_RATE_EWMA;
-    nbr->a3_c_rx_success_rate_ewma = A3_INITIAL_RX_SUCCESS_RATE_EWMA;
 #endif
 
     LOG_INFO("Adding neighbor with ip addr ");

@@ -69,7 +69,6 @@ double a3_p_tx_attempt_rate_ewma;
 double a3_p_rx_attempt_rate_ewma;
 
 double a3_p_tx_success_rate_ewma;
-double a3_p_rx_success_rate_ewma; //HCK-A3: remove this variable
 
 uint8_t a3_p_num_tx_slot;
 uint8_t a3_p_num_rx_slot;
