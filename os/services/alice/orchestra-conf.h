@@ -91,7 +91,7 @@
 #ifdef ORCHESTRA_CONF_LINKADDR_HASH2
 #define ORCHESTRA_LINKADDR_HASH2                  ORCHESTRA_CONF_LINKADDR_HASH2
 #else /* ORCHESTRA_CONF_LINKADDR_HASH2 */
-#define ORCHESTRA_LINKADDR_HASH2(addr1, addr2)    ((addr1 != NULL && addr2 != NULL) ? (((((addr1)->u8[LINKADDR_SIZE - 2] + (addr1)->u8[LINKADDR_SIZE-1]) * 512) + (addr2)->u8[LINKADDR_SIZE - 2] + (addr2)->u8[LINKADDR_SIZE - 1]))  : -1)
+#define ORCHESTRA_LINKADDR_HASH2(addr1, addr2)    ((addr1 != NULL && addr2 != NULL) ? ((((addr1)->u8[LINKADDR_SIZE - 2] + (addr1)->u8[LINKADDR_SIZE - 1]) * 512) + ((addr2)->u8[LINKADDR_SIZE - 2] + (addr2)->u8[LINKADDR_SIZE - 1])) : -1)
 #endif /* ORCHESTRA_CONF_LINKADDR_HASH2 */
 
 /* The maximum hash */

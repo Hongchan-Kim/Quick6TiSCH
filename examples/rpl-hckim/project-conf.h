@@ -4,14 +4,7 @@
 
 /* A3 */ //ghlee
 #define WITH_A3                                    1
-
-#define WITH_A3_TEMP                               1
-
 #if WITH_A3
-#define WITH_A3_DBG                                1
-#define WITH_A3_DBG_VALUE                          1
-#define WITH_A3_DBG_BYTE                           0
-
 #define A3_ALICE1_ORB2_OSB3                        1
 #define A3_MAX_ZONE                                4 // 2, 4, 8
 
@@ -21,13 +14,16 @@
 #define A3_INITIAL_TX_ATTEMPT_RATE_EWMA            (0.5)
 #define A3_INITIAL_RX_ATTEMPT_RATE_EWMA            (0.5)
 #define A3_INITIAL_TX_SUCCESS_RATE_EWMA            (0.4)
-#define A3_INITIAL_RX_SUCCESS_RATE_EWMA            (0.4)
 
 #define A3_TX_INCREASE_THRESH                      (0.75)
-#define A3_TX_DECREASE_THRESH                      (0.36)
+#define A3_TX_DECREASE_THRESH                      (0.34) //0.36 in code, 0.34 in paper
 #define A3_RX_INCREASE_THRESH                      (0.65)
 #define A3_RX_DECREASE_THRESH                      (0.29)
 #define A3_MAX_ERR_PROB                            (0.5)
+
+#define A3_DBG                                     0
+#define A3_DBG_VALUE                               0
+#define A3_DBG_VALUE_64BITS                        0
 #endif
 
 
@@ -53,7 +49,7 @@
 
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
 
-#define HCK_RPL_FIXED_TOPOLOGY                     0 //
+#define HCK_RPL_FIXED_TOPOLOGY                     1 //
 #if HCK_RPL_FIXED_TOPOLOGY
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
@@ -103,10 +99,12 @@
 #define IOTLAB_GRENOBLE_79_L_CORNER_U              1 /* 79 nodes */
 #define IOTLAB_GRENOBLE_79_R_CORNER_U              2 /* 79 nodes */
 #define IOTLAB_LILLE_79_CORNER                     3 /* 79 nodes */
+#define IOTLAB_GRENOBLE_6_L_CORNER_U               4 /* 6 nodes */
 
 #define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_6_L_CORNER_U
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 #define NODE_NUM                                   79
@@ -114,6 +112,8 @@
 #define NODE_NUM                                   79
 #elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
 #define NODE_NUM                                   79
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_6_L_CORNER_U
+#define NODE_NUM                                   6
 #endif
 
 #endif /* WITH_IOTLAB */
@@ -370,9 +370,10 @@
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
 #if WITH_A3
-#define ORCHESTRA_CONF_UNICAST_PERIOD              23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
+//#define ORCHESTRA_CONF_UNICAST_PERIOD              24 // unicast, should be longer than (2N-2)/3 to provide contention-free links
+#define ORCHESTRA_CONF_UNICAST_PERIOD              40 // unicast, should be longer than (2N-2)/3 to provide contention-free links
 #else
-#define ORCHESTRA_CONF_UNICAST_PERIOD              24 // unicast, should be longer than (2N-2)/3 to provide contention-free links
+#define ORCHESTRA_CONF_UNICAST_PERIOD              23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
 #endif
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
@@ -382,7 +383,7 @@
 #define ENABLE_ALICE_EARLY_PACKET_DROP_LOG         0
 #undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
-#define ENABLE_LOG_ALICE_LINK_ADD_REMOVE           1
+#define ENABLE_LOG_ALICE_LINK_ADD_REMOVE           0
 
 #define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
 #define TSCH_SCHED_COMMON_SF_HANDLE                1 //slotframe handle of broadcast/default slotframe

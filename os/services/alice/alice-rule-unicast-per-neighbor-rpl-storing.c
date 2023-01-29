@@ -76,7 +76,6 @@ static uint8_t alice_rx_link_option = LINK_OPTION_RX;
 static uint8_t alice_tx_link_option = LINK_OPTION_TX | UNICAST_SLOT_SHARED_FLAG; // If it is a shared link, backoff will be applied.
 
 #if WITH_A3
-
 static uint16_t A3_ZONE_PERIOD;
 
 #if A3_MAX_ZONE == 2
@@ -111,7 +110,7 @@ get_node_timeslot(const linkaddr_t *addr1, const linkaddr_t *addr2)
     uint16_t a3_shifted_zone = (a3_primary_zone + A3_SHIFT[a3_slot_id]) % A3_MAX_ZONE;
     return (A3_ZONE_PERIOD) * a3_shifted_zone 
           + alice_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2)
-                              +(uint32_t)alice_lastly_scheduled_asfn), (A3_ZONE_PERIOD)); 
+                              + (uint32_t)alice_lastly_scheduled_asfn), (A3_ZONE_PERIOD)); 
 #else /* WITH_A3 */
     return alice_real_hash5(((uint32_t)ORCHESTRA_LINKADDR_HASH2(addr1, addr2) 
                              + (uint32_t)alice_lastly_scheduled_asfn), 
@@ -311,7 +310,6 @@ alice_schedule_unicast_slotframe(void)
         alice_tsch_schedule_add_link(sf_unicast, upward_link_option, LINK_TYPE_NORMAL, 
                                     &tsch_broadcast_address, upward_timeslot_for_child, upward_channel_offset_for_child,
                                     addr);
-
       }
 
       for(a3_slot_id = 0; a3_slot_id < a3_c_num_tx_slot; a3_slot_id++) {
@@ -463,6 +461,11 @@ alice_packet_cell_matching_on_the_fly(uint16_t *timeslot, uint16_t *channel_offs
    */
   int is_rpl_neighbor = 0;
 
+#if WITH_A3
+  uint16_t current_timeslot = *timeslot;
+  uint16_t current_channel_offset = *channel_offset;
+#endif
+
   /* Check parent first */
   if(linkaddr_cmp(&orchestra_parent_linkaddr, rx_linkaddr)) {
     is_rpl_neighbor = 1;
@@ -473,8 +476,12 @@ alice_packet_cell_matching_on_the_fly(uint16_t *timeslot, uint16_t *channel_offs
       *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr, a3_slot_id);
       *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr, a3_slot_id);
 
-      return is_rpl_neighbor;
+      if(current_timeslot == *timeslot && current_channel_offset == *channel_offset) {
+        return is_rpl_neighbor;
+      }
     }
+    // HCK-A3: timeslot, channel_offset needs to be changed
+    return is_rpl_neighbor;
 #else /* WITH_A3 */
     *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr);
     *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr); 
@@ -504,7 +511,6 @@ alice_packet_cell_matching_on_the_fly(uint16_t *timeslot, uint16_t *channel_offs
 
 #if WITH_A3
       uint8_t a3_c_num_tx_slot = 1;
-      // struct uip_ds6_route_neighbor_routes* it = nbr_table_get_from_lladdr(nbr_routes, addr);
       uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&rx_linkaddr);
       if(it != NULL) {
         a3_c_num_tx_slot = it->a3_c_num_tx_slot;
@@ -514,23 +520,48 @@ alice_packet_cell_matching_on_the_fly(uint16_t *timeslot, uint16_t *channel_offs
       for(a3_slot_id = 0; a3_slot_id < a3_c_num_tx_slot; a3_slot_id++) {
         *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr, a3_slot_id);
         *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr, a3_slot_id);
+
+        if(current_timeslot == *timeslot && current_channel_offset == *channel_offset) {
+          return is_rpl_neighbor;
+        }
       }
+      return is_rpl_neighbor;
 #else /* WITH_A3 */
       *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr);
       *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr); 
-#endif
 
       return is_rpl_neighbor;
+#endif
     }
   }
 #else
   if(item != NULL) {
     is_rpl_neighbor = 1;
 
+#if WITH_A3
+    uint8_t a3_c_num_tx_slot = 1;
+    // struct uip_ds6_route_neighbor_routes* it = nbr_table_get_from_lladdr(nbr_routes, addr);
+    uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&rx_linkaddr);
+    if(it != NULL) {
+      a3_c_num_tx_slot = it->a3_c_num_tx_slot;
+    }
+
+    uint8_t a3_slot_id = 0;
+    for(a3_slot_id = 0; a3_slot_id < a3_c_num_tx_slot; a3_slot_id++) {
+      *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr, a3_slot_id);
+      *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr, a3_slot_id);
+
+      if(current_timeslot == *timeslot && current_channel_offset == *channel_offset) {
+        return is_rpl_neighbor;
+      }
+    }
+    return is_rpl_neighbor;
+#else /* WITH_A3 */
     *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr);
     *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr); 
 
     return is_rpl_neighbor;
+#endif
   }
 #endif
 
@@ -584,7 +615,6 @@ child_added(const linkaddr_t *linkaddr)
     }
   }
 #endif
-
 
   alice_schedule_unicast_slotframe();
 }

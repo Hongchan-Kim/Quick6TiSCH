@@ -1128,22 +1128,77 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG_VALUE
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                        "A3 t_a %u %u %u | %.3f %.3f %.3f", 
-                        a3_p_num_tx_pkt_success, a3_p_num_tx_pkt_collision, a3_p_num_tx_slot,
-                        alpha, newVal, a3_p_tx_attempt_rate_ewma);
+                        "A3-v p_t_a %u | %u %u %u", 
+                        HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
+                        a3_p_num_tx_pkt_success, a3_p_num_tx_pkt_collision, a3_p_num_tx_slot);
             );
+
+            TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                        "A3-v p_t_a alpha %.3f", alpha);
+            );
+#if A3_DBG_VALUE_64BITS
             if(alpha > 0) {
               TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "A3 t_a alpha positive");
+                          "A3-v p_t_a alpha positive");
+              );
+            } else if(alpha == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_a alpha zero");
+              );
+            } else {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_a alpha negative");
               );
             }
+#endif
+            TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                        "A3-v p_t_a newVal %.3f", newVal);
+            );
+#if A3_DBG_VALUE_64BITS
             if(newVal > 0) {
               TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "A3 t_a newVal positive");
+                          "A3-v p_t_a newVal positive");
+              );
+            } else if(newVal == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_a newVal zero");
+              );
+            } else {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_a newVal negative");
               );
             }
+#endif
+            TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                        "A3-v p_t_a ewma %.3f", a3_p_tx_attempt_rate_ewma);
+            );
+#if A3_DBG_VALUE_64BITS
+            if(a3_p_tx_attempt_rate_ewma > 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_a ewma positive");
+              );
+            } else if(a3_p_tx_attempt_rate_ewma == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_a ewma zero");
+              );
+            } else {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_a ewma negative");
+              );
+            }
+#endif
 #endif
 
             /* Calculate EWMA of 'Tx success rate' toward parent */
@@ -1156,8 +1211,48 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG_VALUE
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                        "A3 t_s %.3f %.3f", newVal, a3_p_tx_success_rate_ewma);
+                        "A3-v p_t_s newVal %.3f", newVal);
             );
+#if A3_DBG_VALUE_64BITS
+            if(newVal > 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_s newVal positive");
+              );
+            } else if(newVal == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_s newVal zero");
+              );
+            } else {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_s newVal negative");
+              );
+            }
+#endif
+            TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                        "A3-v p_t_s ewma %.3f", a3_p_tx_success_rate_ewma);
+            );
+#if A3_DBG_VALUE_64BITS
+            if(a3_p_tx_success_rate_ewma > 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_s ewma positive");
+              );
+            } else if(a3_p_tx_success_rate_ewma == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_s ewma zero");
+              );
+            } else {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_t_s ewma negative");
+              );
+            }
+#endif
 #endif
 
             /* Calculate EWMA of 'Rx attempt rate' from parent */
@@ -1188,16 +1283,78 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG_VALUE
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                        "A3 r_a %u %u %u %u %u | %u", 
+                        "A3-v p_r_a %u | %u %u %u %u %u | %u", 
+                        HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
                         a3_p_num_rx_pkt_success, a3_p_num_rx_pkt_collision, 
                         a3_p_num_rx_pkt_idle, a3_p_num_rx_pkt_others, 
                         a3_p_num_rx_pkt_unscheduled, sumRx);
             );
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                        "A3 r_a %.3f %.3f %.3f", 
-                        dynamicAlpha, newVal, a3_p_rx_attempt_rate_ewma);
+                        "A3-v p_r_a dalpha %.3f", dynamicAlpha);
             );
+#if A3_DBG_VALUE_64BITS
+            if(dynamicAlpha > 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_r_a dalpha positive");
+              );
+            } else if(dynamicAlpha == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_r_a dalpha zero");
+              );
+            } else {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_r_a dalpha negative");
+              );
+            }
+#endif
+            TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                        "A3-v p_r_a newVal %.3f", newVal);
+            );
+#if A3_DBG_VALUE_64BITS
+            if(newVal > 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_r_a newVal positive");
+              );
+            } else if(newVal == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_r_a newVal zero");
+              );
+            } else {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_r_a newVal negative");
+              );
+            }
+#endif
+            TSCH_LOG_ADD(tsch_log_message,
+                    snprintf(log->message, sizeof(log->message),
+                        "A3-v p_r_a ewma %.3f", a3_p_rx_attempt_rate_ewma);
+            );
+#if A3_DBG_VALUE_64BITS
+            if(a3_p_rx_attempt_rate_ewma > 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_r_a ewma positive");
+              );
+            } else if(a3_p_rx_attempt_rate_ewma == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_r_a ewma zero");
+              );
+            } else {
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-v p_r_a ewma negative");
+              );
+            }
+#endif
 #endif
 
             int txChangedFlag = 0;
@@ -1205,67 +1362,71 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_ALICE1_ORB2_OSB3 != 2 //O-SB, ALICE
             if((a3_p_tx_attempt_rate_ewma - a3_p_tx_success_rate_ewma) / (a3_p_tx_attempt_rate_ewma) > maxErr 
                 && a3_p_num_tx_slot > 1) {
+#if A3_DBG
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "A3-a p_t_half_c %u | %u | %.3f %.3f", 
+                          HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
+                          a3_p_num_tx_slot, 
+                          a3_p_tx_attempt_rate_ewma, a3_p_tx_success_rate_ewma);
+              );
+#endif
               a3_p_num_tx_slot /= 2;
               txChangedFlag = 1;
 
               a3_p_tx_attempt_rate_ewma = A3_INITIAL_TX_ATTEMPT_RATE_EWMA;
               a3_p_tx_success_rate_ewma = A3_INITIAL_TX_SUCCESS_RATE_EWMA;
-
-#if A3_DBG_VALUE
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3 t_half_c %u %u | %.3f %.3f", 
-                          a3_p_num_tx_slot, txChangedFlag, 
-                          a3_p_tx_attempt_rate_ewma, a3_p_tx_success_rate_ewma);
-              );
-#endif
             }
 #endif
 
             if(txChangedFlag == 0) {
               if(a3_p_tx_attempt_rate_ewma > txIncreaseThresh && a3_p_num_tx_slot < A3_MAX_ZONE) {
-                a3_p_num_tx_slot *= 2;
-                a3_p_tx_attempt_rate_ewma /= 2;
 #if A3_DBG
                 TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                            "A3 t_double %u %.3f | %.3f", 
+                            "A3-a p_t_double %u | %u %.3f | %.3f", 
+                            HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
                             a3_p_num_tx_slot, a3_p_tx_attempt_rate_ewma, txIncreaseThresh);
                 );
 #endif
+                a3_p_num_tx_slot *= 2;
+                a3_p_tx_attempt_rate_ewma /= 2;
               } else if(a3_p_tx_attempt_rate_ewma < txDecreaseThresh && a3_p_num_tx_slot > 1) {
-                a3_p_num_tx_slot /= 2;
-                a3_p_tx_attempt_rate_ewma *= 2;
 #if A3_DBG
                 TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                            "A3 t_half %u %.3f | %.3f", 
+                            "A3-a p_t_half %u | %u %.3f | %.3f", 
+                            HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
                             a3_p_num_tx_slot, a3_p_tx_attempt_rate_ewma, txDecreaseThresh);
                 );
 #endif
+                a3_p_num_tx_slot /= 2;
+                a3_p_tx_attempt_rate_ewma *= 2;
               }
             }
 
             if(a3_p_rx_attempt_rate_ewma > rxIncreaseThresh && a3_p_num_rx_slot < A3_MAX_ZONE) {
-              a3_p_num_rx_slot *= 2;
-              a3_p_rx_attempt_rate_ewma /= 2;
 #if A3_DBG
               TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "A3 r_double %u %.3f | %.3f", 
+                          "A3-a p_r_double %u | %u %.3f | %.3f", 
+                          HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
                           a3_p_num_rx_slot, a3_p_rx_attempt_rate_ewma, rxIncreaseThresh);
               );
 #endif
+              a3_p_num_rx_slot *= 2;
+              a3_p_rx_attempt_rate_ewma /= 2;
             } else if(a3_p_rx_attempt_rate_ewma < rxDecreaseThresh && a3_p_num_rx_slot > 1) {
-              a3_p_num_rx_slot /= 2;
-              a3_p_rx_attempt_rate_ewma *= 2;
 #if A3_DBG
               TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "A3 r_half %u %.3f | %.3f", 
+                          "A3-a p_r_half %u | %u %.3f | %.3f", 
+                          HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
                           a3_p_num_rx_slot, a3_p_rx_attempt_rate_ewma, rxDecreaseThresh);
               );
 #endif
+              a3_p_num_rx_slot /= 2;
+              a3_p_rx_attempt_rate_ewma *= 2;
             }
 
             a3_p_num_tx_pkt_success = A3_INITIAL_NUM_OF_PKTS;
@@ -1292,14 +1453,46 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
                   }
                   it->a3_c_tx_attempt_rate_ewma = (1 - alpha) * it->a3_c_tx_attempt_rate_ewma + alpha * newVal;
 
+#if A3_DBG_VALUE
+                  TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "A3-v c_t_a %u | %u %u %u", 
+                              HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                              it->a3_c_num_tx_pkt_success, it->a3_c_num_tx_pkt_collision, it->a3_c_num_tx_slot);
+                  );
+                  TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "A3-v c_t_a alpha %.3f", alpha);
+                  );
+                  TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "A3-v c_t_a newVal %.3f", newVal);
+                  );
+                  TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "A3-v c_t_a ewma %.3f", it->a3_c_tx_attempt_rate_ewma);
+                  );
+#endif
+
                   newVal = (double)(it->a3_c_num_tx_pkt_success) / (double)(it->a3_c_num_tx_slot);
                   if(newVal > 1) {
                     newVal = 1;
                   }
                   it->a3_c_tx_success_rate_ewma = (1 - alpha) * it->a3_c_tx_success_rate_ewma + alpha * newVal;
 
-                  sumRx = it->a3_c_num_rx_pkt_collision 
-                        + it->a3_c_num_rx_pkt_success 
+#if A3_DBG_VALUE
+                  TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "A3-v c_t_s newVal %.3f", newVal);
+                  );
+                  TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "A3-v c_t_s ewma %.3f", it->a3_c_tx_success_rate_ewma);
+                  );
+#endif
+
+                  sumRx = it->a3_c_num_rx_pkt_success 
+                        + it->a3_c_num_rx_pkt_collision  
                         + it->a3_c_num_rx_pkt_idle 
                         + it->a3_c_num_rx_pkt_others;
                   diffRx = (it->a3_c_num_rx_slot - sumRx); // differance
@@ -1322,11 +1515,45 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
                   }
                   it->a3_c_rx_attempt_rate_ewma = (1 - dynamicAlpha) * it->a3_c_rx_attempt_rate_ewma + dynamicAlpha * newVal;
 
+#if A3_DBG_VALUE
+                  TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "A3-v c_r_a %u | %u %u %u %u %u | %u", 
+                              HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                              it->a3_c_num_rx_pkt_success, it->a3_c_num_rx_pkt_collision, 
+                              it->a3_c_num_rx_pkt_idle, it->a3_c_num_rx_pkt_others, 
+                              it->a3_c_num_rx_pkt_unscheduled, sumRx);
+                  );
+                  TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "A3-v c_r_a dalpha %.3f", dynamicAlpha);
+                  );
+                  TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "A3-v c_r_a newVal %.3f", newVal);
+                  );
+                  TSCH_LOG_ADD(tsch_log_message,
+                          snprintf(log->message, sizeof(log->message),
+                              "A3-v c_r_a ewma %.3f", it->a3_c_rx_attempt_rate_ewma);
+                  );
+#endif
+
                   int txChangedForChildFlag = 0;
 
 #if A3_ALICE1_ORB2_OSB3 != 2 //O-SB, ALICE
                   if((it->a3_c_tx_attempt_rate_ewma - it->a3_c_tx_success_rate_ewma) / (it->a3_c_tx_attempt_rate_ewma) > maxErr 
-                      && it->a3_c_num_tx_slot > 1) {                    
+                      && it->a3_c_num_tx_slot > 1) {
+
+#if A3_DBG
+                    TSCH_LOG_ADD(tsch_log_message,
+                            snprintf(log->message, sizeof(log->message),
+                                "A3-a c_t_half_c %u | %u | %.3f %.3f", 
+                                HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                                it->a3_c_num_tx_slot, 
+                                it->a3_c_tx_attempt_rate_ewma, it->a3_c_tx_success_rate_ewma);
+                    );
+#endif
+
                     it->a3_c_num_tx_slot /= 2;
                     txChangedForChildFlag = 1;
 
@@ -1337,18 +1564,62 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 
                   if(txChangedForChildFlag == 0) {
                     if(it->a3_c_tx_attempt_rate_ewma > txIncreaseThresh && it->a3_c_num_tx_slot < A3_MAX_ZONE) {
+
+#if A3_DBG
+                      TSCH_LOG_ADD(tsch_log_message,
+                              snprintf(log->message, sizeof(log->message),
+                                  "A3-a c_t_double %u | %u | %.3f %.3f", 
+                                  HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                                  it->a3_c_num_tx_slot, 
+                                  it->a3_c_tx_attempt_rate_ewma, txIncreaseThresh);
+                      );
+#endif
+
                       it->a3_c_num_tx_slot *= 2;
                       it->a3_c_tx_attempt_rate_ewma /= 2;
                     } else if(it->a3_c_tx_attempt_rate_ewma < txDecreaseThresh && it->a3_c_num_tx_slot > 1) {
+
+#if A3_DBG
+                      TSCH_LOG_ADD(tsch_log_message,
+                              snprintf(log->message, sizeof(log->message),
+                                  "A3-a c_t_half %u | %u | %.3f %.3f", 
+                                  HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                                  it->a3_c_num_tx_slot, 
+                                  it->a3_c_tx_attempt_rate_ewma, txDecreaseThresh);
+                      );
+#endif
+
                       it->a3_c_num_tx_slot /= 2;
                       it->a3_c_tx_attempt_rate_ewma *= 2;
                     }
                   }
 
                   if(it->a3_c_rx_attempt_rate_ewma > rxIncreaseThresh && it->a3_c_num_rx_slot < A3_MAX_ZONE) {
+
+#if A3_DBG
+                      TSCH_LOG_ADD(tsch_log_message,
+                              snprintf(log->message, sizeof(log->message),
+                                  "A3-a c_r_double %u | %u | %.3f %.3f", 
+                                  HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                                  it->a3_c_num_rx_slot, 
+                                  it->a3_c_rx_attempt_rate_ewma, rxIncreaseThresh);
+                      );
+#endif
+
                     it->a3_c_num_rx_slot *= 2;
                     it->a3_c_rx_attempt_rate_ewma /= 2;
                   } else if(it->a3_c_rx_attempt_rate_ewma < rxDecreaseThresh && it->a3_c_num_rx_slot > 1) {
+
+#if A3_DBG
+                      TSCH_LOG_ADD(tsch_log_message,
+                              snprintf(log->message, sizeof(log->message),
+                                  "A3-a c_r_half %u | %u | %.3f %.3f", 
+                                  HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                                  it->a3_c_num_rx_slot, 
+                                  it->a3_c_rx_attempt_rate_ewma, rxDecreaseThresh);
+                      );
+#endif
+
                     it->a3_c_num_rx_slot /= 2;
                     it->a3_c_rx_attempt_rate_ewma *= 2;
                   }
