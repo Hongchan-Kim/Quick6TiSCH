@@ -1,37 +1,13 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
-
-/* A3 */ //ghlee
-#define WITH_A3                                    1
-#if WITH_A3
-#define A3_ALICE1_ORB2_OSB3                        1
-#define A3_MAX_ZONE                                4 // 2, 4, 8
-
-#define A3_INITIAL_NUM_OF_SLOTS                    1
-#define A3_INITIAL_NUM_OF_PKTS                     0
-
-#define A3_INITIAL_TX_ATTEMPT_RATE_EWMA            (0.5)
-#define A3_INITIAL_RX_ATTEMPT_RATE_EWMA            (0.5)
-#define A3_INITIAL_TX_SUCCESS_RATE_EWMA            (0.4)
-
-#define A3_TX_INCREASE_THRESH                      (0.75)
-#define A3_TX_DECREASE_THRESH                      (0.34) //0.36 in code, 0.34 in paper
-#define A3_RX_INCREASE_THRESH                      (0.65)
-#define A3_RX_DECREASE_THRESH                      (0.29)
-#define A3_MAX_ERR_PROB                            (0.5)
-
-#define A3_DBG                                     0
-#define A3_DBG_VALUE                               0
-#define A3_DBG_VALUE_64BITS                        0
-#endif
-
-
 /*---------------------------------------------------------------------------*/
 /*
  * HCK modifications independent of proposed scheme
  */
 #define LOG_HK_ENABLED                             1
+
+#define HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT   1
 
 #define HCK_ORCHESTRA_PACKET_OFFLOADING            1
 
@@ -49,7 +25,7 @@
 
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
 
-#define HCK_RPL_FIXED_TOPOLOGY                     1 //
+#define HCK_RPL_FIXED_TOPOLOGY                     1
 #if HCK_RPL_FIXED_TOPOLOGY
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
@@ -63,38 +39,11 @@
 
 /*---------------------------------------------------------------------------*/
 /*
- * Default burst transmission implementation
- */
-#define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
-
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-#define TSCH_CONF_BURST_MAX_LEN                    16 /* turn burst on */
-#define MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION   1
-#define ENABLE_MODIFIED_DBT_LOG                    0
-#define TSCH_DBT_TEMPORARY_LINK                    1
-#define TSCH_DBT_HANDLE_SKIPPED_DBT_SLOT           1
-#define TSCH_DBT_HANDLE_MISSED_DBT_SLOT            1
-#define TSCH_DBT_HOLD_CURRENT_NBR                  1
-#define TSCH_DBT_QUEUE_AWARENESS                   1
-#else
-#define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
-#endif
-/*---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*/
-/*
  * Configure testbed site, node num, topology
  */
-#define WITH_COOJA                                 0
 #define WITH_IOTLAB                                1
-#if WITH_COOJA && WITH_IOTLAB
-#error "Wrong topoligy setting. See project-conf.h"
-#endif
 
-#if WITH_COOJA
-#define NODE_NUM                                   5
-
-#elif WITH_IOTLAB
+#if WITH_IOTLAB
 
 #define IOTLAB_GRENOBLE_79_L_CORNER_U              1 /* 79 nodes */
 #define IOTLAB_GRENOBLE_79_R_CORNER_U              2 /* 79 nodes */
@@ -156,17 +105,7 @@
 /*
  * Configure App
  */
-#if WITH_COOJA
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 30)
-#define DOWNWARD_TRAFFIC                           0
-#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
-
-#define APP_PRINT_NODE_INFO_DELAY                  (1 * 60 * CLOCK_SECOND / 2)
-#define APP_RESET_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)
-#define APP_DATA_START_DELAY                       (2 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
-
-#elif WITH_IOTLAB
+#if WITH_IOTLAB
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
 #define DOWNWARD_TRAFFIC                           0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
@@ -336,9 +275,6 @@
                           &unicast_per_neighbor_rpl_storing, \
                           &default_common }
 
-#define ORCHESTRA_MODIFIED_CHILD_OPERATION         1
-#define ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(linkaddr, ipaddr) (((((linkaddr)->u8[LINKADDR_SIZE - 2]) << 8) | (linkaddr)->u8[LINKADDR_SIZE - 1]) == ((((ipaddr)->u8[14]) << 8) | (ipaddr)->u8[15]))
-
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
 #define WITH_ORCHESTRA                             1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
@@ -369,12 +305,7 @@
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
-#if WITH_A3
-//#define ORCHESTRA_CONF_UNICAST_PERIOD              24 // unicast, should be longer than (2N-2)/3 to provide contention-free links
-#define ORCHESTRA_CONF_UNICAST_PERIOD              40 // unicast, should be longer than (2N-2)/3 to provide contention-free links
-#else
 #define ORCHESTRA_CONF_UNICAST_PERIOD              23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
-#endif
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
 #define ALICE_EARLY_PACKET_DROP                    0
@@ -444,6 +375,54 @@
 #endif /* CURRENT_TSCH_SCHEDULER */
 /*---------------------------------------------------------------------------*/
 
+/*---------------------------------------------------------------------------*/
+/*
+ * Default burst transmission implementation
+ */
+#define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
+
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+#define TSCH_CONF_BURST_MAX_LEN                    16 /* turn burst on */
+#define MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION   1
+#define ENABLE_MODIFIED_DBT_LOG                    0
+#define TSCH_DBT_TEMPORARY_LINK                    1
+#define TSCH_DBT_HANDLE_SKIPPED_DBT_SLOT           1
+#define TSCH_DBT_HANDLE_MISSED_DBT_SLOT            1
+#define TSCH_DBT_HOLD_CURRENT_NBR                  1
+#define TSCH_DBT_QUEUE_AWARENESS                   1
+#else
+#define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
+#endif
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*
+ * A3 implementation
+ */
+#define WITH_A3                                    1
+#if WITH_A3
+#define A3_ALICE1_ORB2_OSB3                        1
+#define A3_MAX_ZONE                                4 // 2, 4, 8
+
+#define A3_INITIAL_NUM_OF_SLOTS                    1
+#define A3_INITIAL_NUM_OF_PKTS                     0
+
+#define A3_INITIAL_TX_ATTEMPT_RATE_EWMA            (0.5)
+#define A3_INITIAL_RX_ATTEMPT_RATE_EWMA            (0.5)
+#define A3_INITIAL_TX_SUCCESS_RATE_EWMA            (0.4)
+
+#define A3_TX_INCREASE_THRESH                      (0.75)
+#define A3_TX_DECREASE_THRESH                      (0.34) //0.36 in code, 0.34 in paper
+#define A3_RX_INCREASE_THRESH                      (0.65)
+#define A3_RX_DECREASE_THRESH                      (0.29)
+#define A3_MAX_ERR_PROB                            (0.5)
+
+#define A3_DBG                                     0
+#define A3_DBG_VALUE                               0
+#define A3_DBG_VALUE_64BITS                        0
+#endif
+/*---------------------------------------------------------------------------*/
+
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -460,7 +439,6 @@
 //#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m90dBm
 #define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
 /*---------------------------------------------------------------------------*/
-
 
 
 /*---------------------------------------------------------------------------*/
