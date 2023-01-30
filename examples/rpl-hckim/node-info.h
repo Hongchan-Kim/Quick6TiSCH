@@ -6,13 +6,7 @@
 
 #include <stdio.h>
 
-#if WITH_COOJA
-#define APP_ROOT_ID                    1
-#define NON_ROOT_NUM                   (NODE_NUM - 1)
-
-extern uint16_t cooja_nodes[NODE_NUM];
-
-#elif WITH_IOTLAB
+#if WITH_IOTLAB
 #define APP_ROOT_ID                    1
 #define NON_ROOT_NUM                   (NODE_NUM - 1)
 

@@ -4,10 +4,7 @@
 #define LOG_MODULE "App"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-#if WITH_COOJA
-uint16_t cooja_nodes[NODE_NUM];
-
-#elif WITH_IOTLAB
+#if WITH_IOTLAB
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 uint16_t iotlab_nodes[NODE_NUM][3] = {
