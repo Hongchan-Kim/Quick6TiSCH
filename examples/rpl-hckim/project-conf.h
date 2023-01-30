@@ -42,18 +42,15 @@
  * Configure testbed site, node num, topology
  */
 #define WITH_IOTLAB                                1
-
 #if WITH_IOTLAB
 
 #define IOTLAB_GRENOBLE_79_L_CORNER_U              1 /* 79 nodes */
 #define IOTLAB_GRENOBLE_79_R_CORNER_U              2 /* 79 nodes */
 #define IOTLAB_LILLE_79_CORNER                     3 /* 79 nodes */
-#define IOTLAB_GRENOBLE_6_L_CORNER_U               4 /* 6 nodes */
 
 #define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_R_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_6_L_CORNER_U
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 #define NODE_NUM                                   79
@@ -61,8 +58,6 @@
 #define NODE_NUM                                   79
 #elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
 #define NODE_NUM                                   79
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_6_L_CORNER_U
-#define NODE_NUM                                   6
 #endif
 
 #endif /* WITH_IOTLAB */

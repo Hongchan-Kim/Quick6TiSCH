@@ -74,8 +74,6 @@ uint8_t fixed_parent_id[NODE_NUM] = {0,  1,  1,  1,  1,  1,  9,  1,  1,  9,
                                     42, 48, 54, 42, 49, 40, 54, 54, 56, 54, 
                                     54, 56, 62, 62, 61, 68, 61, 56, 70, 68, 
                                     68, 68, 70, 68, 71, 72, 74, 72, 74};
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_6_L_CORNER_U
-uint8_t fixed_parent_id[NODE_NUM] = {0,  1,  2,  2,  2,  2};
 #endif
 #endif
 
