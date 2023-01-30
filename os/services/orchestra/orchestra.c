@@ -84,7 +84,7 @@ orchestra_packet_sent(int mac_status)
      && mac_status == MAC_TX_OK
      && packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6
      && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION
+#if HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
     if(packetbuf_attr(PACKETBUF_ATTR_RPL_NO_PATH_DAO) == 0) {
 #endif
     if(!linkaddr_cmp(&orchestra_parent_linkaddr, &linkaddr_null)
@@ -94,7 +94,7 @@ orchestra_packet_sent(int mac_status)
       uint64_t orchestra_one_parent_knows_us_asn = tsch_calculate_current_asn();
       LOG_HK_ORCHESTRA("opku 1 at %llx |\n", orchestra_one_parent_knows_us_asn);
     }
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION
+#if HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
     }
 #endif
   }
@@ -195,15 +195,7 @@ orchestra_init(void)
   }
 #if ORCHESTRA_CONF_UNICAST_SENDER_BASED
   LOG_INFO("Orchestra-SB: initialization done\n");
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION
-  LOG_INFO("modified_child_op %d sb %d\n", 
-          ORCHESTRA_MODIFIED_CHILD_OPERATION, ORCHESTRA_UNICAST_SENDER_BASED);
-#endif
 #else
   LOG_INFO("Orchestra-RB: initialization done\n");
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION
-  LOG_INFO("modified_child_op %d sb %d\n", 
-          ORCHESTRA_MODIFIED_CHILD_OPERATION, ORCHESTRA_UNICAST_SENDER_BASED);
-#endif
 #endif
 }

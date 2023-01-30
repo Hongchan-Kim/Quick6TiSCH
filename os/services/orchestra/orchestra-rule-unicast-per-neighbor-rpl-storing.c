@@ -97,25 +97,9 @@ neighbor_has_uc_link(const linkaddr_t *linkaddr)
        && linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
       return 1;
     }
-
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
-    struct uip_ds6_route_neighbor_routes *routes;
-    routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr);
-    if(routes != NULL) {
-      struct uip_ds6_route_neighbor_route *neighbor_route;
-      for(neighbor_route = list_head(routes->route_list);
-          neighbor_route != NULL;
-          neighbor_route = list_item_next(neighbor_route)) {
-        if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(linkaddr, &(neighbor_route->route->ipaddr))) {
-          return 1;
-        }
-      }
-    }      
-#else /* original code */
     if(nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr) != NULL) {
       return 1;
     }
-#endif
   }
   return 0;
 }
@@ -166,20 +150,11 @@ remove_uc_link(const linkaddr_t *linkaddr)
    * (lookup all route next hops) */
   nbr_table_item_t *item = nbr_table_head(nbr_routes);
   while(item != NULL) {
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
-    linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
-    if(!linkaddr_cmp((linkaddr_t *)addr, (linkaddr_t *)linkaddr) 
-      && timeslot == get_node_timeslot(addr)) {
-      /* Yes, this timeslot is being used, return */
-      return;
-    }
-#else
     linkaddr_t *addr = nbr_table_get_lladdr(nbr_routes, item);
     if(timeslot == get_node_timeslot(addr)) {
       /* Yes, this timeslot is being used, return */
       return;
     }
-#endif
     item = nbr_table_next(nbr_routes, item);
   }
 

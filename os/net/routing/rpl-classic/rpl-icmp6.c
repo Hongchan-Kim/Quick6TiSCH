@@ -1361,7 +1361,7 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   buffer[pos++] = 0; /* path seq - ignored */
   buffer[pos++] = lifetime;
 
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION
+#if HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
   if(lifetime != RPL_ZERO_LIFETIME) {
     packetbuf_set_attr(PACKETBUF_ATTR_RPL_NO_PATH_DAO, 0);
   } else {

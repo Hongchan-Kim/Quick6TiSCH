@@ -287,94 +287,22 @@ alice_schedule_unicast_slotframe(void)
       a3_c_num_tx_slot = it->a3_c_num_tx_slot;
       a3_c_num_rx_slot = it->a3_c_num_rx_slot;
     }
-#endif
-
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
-    struct uip_ds6_route_neighbor_routes *routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)addr);
-    struct uip_ds6_route_neighbor_route *neighbor_route;
-    uint8_t true_child = 0;
-    for(neighbor_route = list_head(routes->route_list);
-        neighbor_route != NULL;
-        neighbor_route = list_item_next(neighbor_route)) {
-      if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(addr, &(neighbor_route->route->ipaddr))) {
-        true_child = 1;
-        break;
-      }
-    }
-    if(true_child == 1) {
-#if WITH_A3
-      for(a3_slot_id = 0; a3_slot_id < a3_c_num_rx_slot; a3_slot_id++) {
-        upward_timeslot_for_child = get_node_timeslot(addr, &linkaddr_node_addr, a3_slot_id); 
-        upward_channel_offset_for_child = get_node_channel_offset(addr, &linkaddr_node_addr, a3_slot_id);
-        upward_link_option = alice_rx_link_option;
-        alice_tsch_schedule_add_link(sf_unicast, upward_link_option, LINK_TYPE_NORMAL, 
-                                    &tsch_broadcast_address, upward_timeslot_for_child, upward_channel_offset_for_child,
-                                    addr);
-      }
-
-      for(a3_slot_id = 0; a3_slot_id < a3_c_num_tx_slot; a3_slot_id++) {
-        downward_timeslot_for_child = get_node_timeslot(&linkaddr_node_addr, addr, a3_slot_id);
-        downward_channel_offset_for_child = get_node_channel_offset(&linkaddr_node_addr, addr, a3_slot_id);
-        downward_link_option = alice_tx_link_option;
-        alice_tsch_schedule_add_link(sf_unicast, downward_link_option, LINK_TYPE_NORMAL, 
-                                    &tsch_broadcast_address, downward_timeslot_for_child, downward_channel_offset_for_child,
-                                    addr);
-      }
-#else /* WITH_A3 */
-      upward_timeslot_for_child = get_node_timeslot(addr, &linkaddr_node_addr); 
-      upward_channel_offset_for_child = get_node_channel_offset(addr, &linkaddr_node_addr);
+    for(a3_slot_id = 0; a3_slot_id < a3_c_num_rx_slot; a3_slot_id++) {
+      upward_timeslot_for_child = get_node_timeslot(addr, &linkaddr_node_addr, a3_slot_id);
+      upward_channel_offset_for_child = get_node_channel_offset(addr, &linkaddr_node_addr, a3_slot_id);
       upward_link_option = alice_rx_link_option;
       alice_tsch_schedule_add_link(sf_unicast, upward_link_option, LINK_TYPE_NORMAL, 
                                   &tsch_broadcast_address, upward_timeslot_for_child, upward_channel_offset_for_child,
                                   addr);
-
-      downward_timeslot_for_child = get_node_timeslot(&linkaddr_node_addr, addr); 
-      downward_channel_offset_for_child = get_node_channel_offset(&linkaddr_node_addr, addr);
+    }
+    for(a3_slot_id = 0; a3_slot_id < a3_c_num_tx_slot; a3_slot_id++) {
+      downward_timeslot_for_child = get_node_timeslot(&linkaddr_node_addr, addr, a3_slot_id);
+      downward_channel_offset_for_child = get_node_channel_offset(&linkaddr_node_addr, addr, a3_slot_id);
       downward_link_option = alice_tx_link_option;
       alice_tsch_schedule_add_link(sf_unicast, downward_link_option, LINK_TYPE_NORMAL, 
                                   &tsch_broadcast_address, downward_timeslot_for_child, downward_channel_offset_for_child,
                                   addr);
-#endif /* WITH_A3 */
-
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-      scheduling_sf_unicast_after_lastly_scheduled_asfn = 1;
-
-      upward_timeslot_for_child = get_node_timeslot(addr, &linkaddr_node_addr); 
-      upward_channel_offset_for_child = get_node_channel_offset(addr, &linkaddr_node_addr);
-      upward_link_option = alice_rx_link_option;
-      alice_tsch_schedule_add_link(sf_unicast_after_lastly_scheduled_asfn, upward_link_option, LINK_TYPE_NORMAL, 
-                                  &tsch_broadcast_address, upward_timeslot_for_child, upward_channel_offset_for_child,
-                                  addr);
-
-      downward_timeslot_for_child = get_node_timeslot(&linkaddr_node_addr, addr); 
-      downward_channel_offset_for_child = get_node_channel_offset(&linkaddr_node_addr, addr);
-      downward_link_option = alice_tx_link_option;
-      alice_tsch_schedule_add_link(sf_unicast_after_lastly_scheduled_asfn, downward_link_option, LINK_TYPE_NORMAL, 
-                                  &tsch_broadcast_address, downward_timeslot_for_child, downward_channel_offset_for_child,
-                                  addr);
-
-      scheduling_sf_unicast_after_lastly_scheduled_asfn = 0;
-#endif
-
-    }      
-#else
-#if WITH_A3
-      for(a3_slot_id = 0; a3_slot_id < a3_c_num_rx_slot; a3_slot_id++) {
-        upward_timeslot_for_child = get_node_timeslot(addr, &linkaddr_node_addr, a3_slot_id);
-        upward_channel_offset_for_child = get_node_channel_offset(addr, &linkaddr_node_addr, a3_slot_id);
-        upward_link_option = alice_rx_link_option;
-        alice_tsch_schedule_add_link(sf_unicast, upward_link_option, LINK_TYPE_NORMAL, 
-                                    &tsch_broadcast_address, upward_timeslot_for_child, upward_channel_offset_for_child,
-                                    addr);
-      }
-      for(a3_slot_id = 0; a3_slot_id < a3_c_num_tx_slot; a3_slot_id++) {
-        downward_timeslot_for_child = get_node_timeslot(&linkaddr_node_addr, addr, a3_slot_id);
-        downward_channel_offset_for_child = get_node_channel_offset(&linkaddr_node_addr, addr, a3_slot_id);
-        downward_link_option = alice_tx_link_option;
-        alice_tsch_schedule_add_link(sf_unicast, downward_link_option, LINK_TYPE_NORMAL, 
-                                    &tsch_broadcast_address, downward_timeslot_for_child, downward_channel_offset_for_child,
-                                    addr);
-      }
+    }
 #else /* WITH_A3 */
     upward_timeslot_for_child = get_node_timeslot(addr, &linkaddr_node_addr);
     upward_channel_offset_for_child = get_node_channel_offset(addr, &linkaddr_node_addr);
@@ -411,8 +339,6 @@ alice_schedule_unicast_slotframe(void)
     scheduling_sf_unicast_after_lastly_scheduled_asfn = 0;
 #endif
 
-#endif
-
     /* move to the next item for while loop. */
     item = nbr_table_next(nbr_routes, item);
   }
@@ -426,25 +352,9 @@ neighbor_has_uc_link(const linkaddr_t *linkaddr)
        && linkaddr_cmp(&orchestra_parent_linkaddr, linkaddr)) {
       return 1;
     }
-
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
-    struct uip_ds6_route_neighbor_routes *routes;
-    routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr);
-    if(routes != NULL) {
-      struct uip_ds6_route_neighbor_route *neighbor_route;
-      for(neighbor_route = list_head(routes->route_list);
-          neighbor_route != NULL;
-          neighbor_route = list_item_next(neighbor_route)) {
-        if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(linkaddr, &(neighbor_route->route->ipaddr))) {
-          return 1;
-        }
-      }
-    }      
-#else /* original code */
     if(nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)linkaddr) != NULL) {
       return 1;
     }
-#endif
   }
   return 0;
 }
@@ -492,55 +402,11 @@ alice_packet_cell_matching_on_the_fly(uint16_t *timeslot, uint16_t *channel_offs
 
   /* Check child next */
   nbr_table_item_t *item = nbr_table_get_from_lladdr(nbr_routes, rx_linkaddr);
-#if ORCHESTRA_MODIFIED_CHILD_OPERATION && ORCHESTRA_UNICAST_SENDER_BASED
-  if(item != NULL) {
-    struct uip_ds6_route_neighbor_routes *routes;
-    routes = nbr_table_get_from_lladdr(nbr_routes, (linkaddr_t *)rx_linkaddr);
-    struct uip_ds6_route_neighbor_route *neighbor_route;
-    uint8_t true_child = 0;
-    for(neighbor_route = list_head(routes->route_list);
-        neighbor_route != NULL;
-        neighbor_route = list_item_next(neighbor_route)) {
-      if(ORCHESTRA_COMPARE_LINKADDR_AND_IPADDR(rx_linkaddr, &(neighbor_route->route->ipaddr))) {
-        true_child = 1;
-        break;
-      }
-    }
-    if(true_child == 1) {
-      is_rpl_neighbor = 1;
-
-#if WITH_A3
-      uint8_t a3_c_num_tx_slot = 1;
-      uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&rx_linkaddr);
-      if(it != NULL) {
-        a3_c_num_tx_slot = it->a3_c_num_tx_slot;
-      }
-
-      uint8_t a3_slot_id = 0;
-      for(a3_slot_id = 0; a3_slot_id < a3_c_num_tx_slot; a3_slot_id++) {
-        *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr, a3_slot_id);
-        *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr, a3_slot_id);
-
-        if(current_timeslot == *timeslot && current_channel_offset == *channel_offset) {
-          return is_rpl_neighbor;
-        }
-      }
-      return is_rpl_neighbor;
-#else /* WITH_A3 */
-      *timeslot = get_node_timeslot(&linkaddr_node_addr, rx_linkaddr);
-      *channel_offset = get_node_channel_offset(&linkaddr_node_addr, rx_linkaddr); 
-
-      return is_rpl_neighbor;
-#endif
-    }
-  }
-#else
   if(item != NULL) {
     is_rpl_neighbor = 1;
 
 #if WITH_A3
     uint8_t a3_c_num_tx_slot = 1;
-    // struct uip_ds6_route_neighbor_routes* it = nbr_table_get_from_lladdr(nbr_routes, addr);
     uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&rx_linkaddr);
     if(it != NULL) {
       a3_c_num_tx_slot = it->a3_c_num_tx_slot;
@@ -563,7 +429,6 @@ alice_packet_cell_matching_on_the_fly(uint16_t *timeslot, uint16_t *channel_offs
     return is_rpl_neighbor;
 #endif
   }
-#endif
 
   /* 
    * At this point, is_rpl_neighbor is zero
