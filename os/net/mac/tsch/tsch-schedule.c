@@ -1137,68 +1137,14 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
                     snprintf(log->message, sizeof(log->message),
                         "A3-v p_t_a alpha %.3f", alpha);
             );
-#if A3_DBG_VALUE_64BITS
-            if(alpha > 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_a alpha positive");
-              );
-            } else if(alpha == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_a alpha zero");
-              );
-            } else {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_a alpha negative");
-              );
-            }
-#endif
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
                         "A3-v p_t_a newVal %.3f", newVal);
             );
-#if A3_DBG_VALUE_64BITS
-            if(newVal > 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_a newVal positive");
-              );
-            } else if(newVal == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_a newVal zero");
-              );
-            } else {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_a newVal negative");
-              );
-            }
-#endif
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
                         "A3-v p_t_a ewma %.3f", a3_p_tx_attempt_rate_ewma);
             );
-#if A3_DBG_VALUE_64BITS
-            if(a3_p_tx_attempt_rate_ewma > 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_a ewma positive");
-              );
-            } else if(a3_p_tx_attempt_rate_ewma == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_a ewma zero");
-              );
-            } else {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_a ewma negative");
-              );
-            }
-#endif
 #endif
 
             /* Calculate EWMA of 'Tx success rate' toward parent */
@@ -1213,46 +1159,10 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
                     snprintf(log->message, sizeof(log->message),
                         "A3-v p_t_s newVal %.3f", newVal);
             );
-#if A3_DBG_VALUE_64BITS
-            if(newVal > 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_s newVal positive");
-              );
-            } else if(newVal == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_s newVal zero");
-              );
-            } else {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_s newVal negative");
-              );
-            }
-#endif
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
                         "A3-v p_t_s ewma %.3f", a3_p_tx_success_rate_ewma);
             );
-#if A3_DBG_VALUE_64BITS
-            if(a3_p_tx_success_rate_ewma > 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_s ewma positive");
-              );
-            } else if(a3_p_tx_success_rate_ewma == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_s ewma zero");
-              );
-            } else {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_t_s ewma negative");
-              );
-            }
-#endif
 #endif
 
             /* Calculate EWMA of 'Rx attempt rate' from parent */
@@ -1293,68 +1203,14 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
                     snprintf(log->message, sizeof(log->message),
                         "A3-v p_r_a dalpha %.3f", dynamicAlpha);
             );
-#if A3_DBG_VALUE_64BITS
-            if(dynamicAlpha > 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_r_a dalpha positive");
-              );
-            } else if(dynamicAlpha == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_r_a dalpha zero");
-              );
-            } else {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_r_a dalpha negative");
-              );
-            }
-#endif
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
                         "A3-v p_r_a newVal %.3f", newVal);
             );
-#if A3_DBG_VALUE_64BITS
-            if(newVal > 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_r_a newVal positive");
-              );
-            } else if(newVal == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_r_a newVal zero");
-              );
-            } else {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_r_a newVal negative");
-              );
-            }
-#endif
             TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
                         "A3-v p_r_a ewma %.3f", a3_p_rx_attempt_rate_ewma);
             );
-#if A3_DBG_VALUE_64BITS
-            if(a3_p_rx_attempt_rate_ewma > 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_r_a ewma positive");
-              );
-            } else if(a3_p_rx_attempt_rate_ewma == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_r_a ewma zero");
-              );
-            } else {
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "A3-v p_r_a ewma negative");
-              );
-            }
-#endif
 #endif
 
             int txChangedFlag = 0;
@@ -1384,7 +1240,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
                 TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                            "A3-a p_t_double %u | %u %.3f | %.3f", 
+                            "A3-a p_t_double %u | %u | %.3f %.3f", 
                             HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
                             a3_p_num_tx_slot, a3_p_tx_attempt_rate_ewma, txIncreaseThresh);
                 );
@@ -1395,7 +1251,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
                 TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                            "A3-a p_t_half %u | %u %.3f | %.3f", 
+                            "A3-a p_t_half %u | %u | %.3f %.3f", 
                             HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
                             a3_p_num_tx_slot, a3_p_tx_attempt_rate_ewma, txDecreaseThresh);
                 );
@@ -1409,7 +1265,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
               TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "A3-a p_r_double %u | %u %.3f | %.3f", 
+                          "A3-a p_r_double %u | %u | %.3f %.3f", 
                           HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
                           a3_p_num_rx_slot, a3_p_rx_attempt_rate_ewma, rxIncreaseThresh);
               );
@@ -1420,7 +1276,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
               TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "A3-a p_r_half %u | %u %.3f | %.3f", 
+                          "A3-a p_r_half %u | %u | %.3f %.3f", 
                           HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
                           a3_p_num_rx_slot, a3_p_rx_attempt_rate_ewma, rxDecreaseThresh);
               );
