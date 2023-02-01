@@ -16,7 +16,7 @@
 
 #include "sys/log.h"
 #define LOG_MODULE "App"
-#define LOG_LEVEL LOG_LEVEL_INFO
+#define LOG_LEVEL LOG_LEVEL_APP // LOG_LEVEL_INFO
 
 #include "node-info.h"
 #include "sys/node-id.h"
