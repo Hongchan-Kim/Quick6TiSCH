@@ -803,15 +803,15 @@ for (target_latency_list, target_result_list) in [(bootstrap_latency_list, boots
         if float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]) == 0:
             target_result_list[i][result_list.index('uLT')] = 'NaN'
         else:
-            target_result_list[i][result_list.index('uLT')] = round(float(target_latency_list[i][latency_list.index('upward_per_hop_latency_sum')]) / float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]), 2)
+            target_result_list[i][result_list.index('uLT')] = round(float(target_latency_list[i][latency_list.index('upward_per_hop_latency_sum')]) / float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]), 1)
         if float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')]) == 0:
             target_result_list[i][result_list.index('dLT')] = 'NaN'
         else:
-            target_result_list[i][result_list.index('dLT')] = round(float(target_latency_list[i][latency_list.index('downward_per_hop_latency_sum')]) / float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')]), 2)
+            target_result_list[i][result_list.index('dLT')] = round(float(target_latency_list[i][latency_list.index('downward_per_hop_latency_sum')]) / float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')]), 1)
         if (float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')])) == 0:
             target_result_list[i][result_list.index('LT')] = 'NaN'
         else:
-            target_result_list[i][result_list.index('LT')] = round((float(target_latency_list[i][latency_list.index('upward_per_hop_latency_sum')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_sum')])) / (float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')])), 2)
+            target_result_list[i][result_list.index('LT')] = round((float(target_latency_list[i][latency_list.index('upward_per_hop_latency_sum')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_sum')])) / (float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')])), 1)
 
 
 # Parse slot length
