@@ -71,14 +71,16 @@
 #define HCK_LOG_LEVEL_LITE                         1
 
 #if HCK_LOG_LEVEL_LITE
-#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_NONE
+#define LOG_LEVEL_APP                              LOG_LEVEL_ERR //LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_ERR //LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_ERR //LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_ERR //LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_ERR //LOG_LEVEL_NONE
 #define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
-#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_NONE
-#define LOG_LEVEL_ENERGEST                         LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_ERR //LOG_LEVEL_NONE
+#define LOG_LEVEL_ENERGEST                         LOG_LEVEL_ERR //LOG_LEVEL_NONE
 #else
+#define LOG_LEVEL_APP                              LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
@@ -317,13 +319,6 @@
 #define ALICE_COMMON_SF_HANDLE                     TSCH_SCHED_COMMON_SF_HANDLE
 #define ALICE_UNICAST_SF_HANDLE                    TSCH_SCHED_UNICAST_SF_HANDLE
 
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-#undef TSCH_SCHEDULE_CONF_MAX_LINKS
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 4 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
-#define ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE   3
-#define ENABLE_LOG_ALICE_DBT_OPERATION             0
-#endif
-
 #elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST
 #define WITH_OST                                   1
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
@@ -385,6 +380,14 @@
 #define TSCH_DBT_HANDLE_MISSED_DBT_SLOT            1
 #define TSCH_DBT_HOLD_CURRENT_NBR                  1
 #define TSCH_DBT_QUEUE_AWARENESS                   1
+
+#if WITH_ALICE
+#undef TSCH_SCHEDULE_CONF_MAX_LINKS
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 4 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
+#define ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE   3
+#define ENABLE_LOG_ALICE_DBT_OPERATION             0
+#endif
+
 #else
 #define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
 #endif
@@ -394,10 +397,18 @@
 /*
  * A3 implementation
  */
-#define WITH_A3                                    1
+#define WITH_A3                                    0
 #if WITH_A3
+#undef ORCHESTRA_CONF_UNICAST_PERIOD
+#define ORCHESTRA_CONF_UNICAST_PERIOD              40
+
+#if WITH_ALICE
+#undef TSCH_SCHEDULE_CONF_MAX_LINKS
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
+#endif
+
 #define A3_ALICE1_ORB2_OSB3                        1
-#define A3_MAX_ZONE                                4 // 2, 4, 8
+#define A3_MAX_ZONE                                8 // 2, 4, 8
 
 #define A3_INITIAL_NUM_OF_SLOTS                    1
 #define A3_INITIAL_NUM_OF_PKTS                     0
@@ -412,9 +423,8 @@
 #define A3_RX_DECREASE_THRESH                      (0.29)
 #define A3_MAX_ERR_PROB                            (0.5)
 
-#define A3_DBG                                     0
+#define A3_DBG                                     1
 #define A3_DBG_VALUE                               0
-#define A3_DBG_VALUE_64BITS                        0
 #endif
 /*---------------------------------------------------------------------------*/
 
