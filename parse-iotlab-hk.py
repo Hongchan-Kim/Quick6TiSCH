@@ -182,7 +182,7 @@ for node_index in range(1, NODE_NUM):
 
 # Derive result from parsed data
 result_list = ['id', 'bootP', 'bootQ',
-            'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 'uLT', 'dLT', 'LT',
+            'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 'uLT', 'dLT', 'LT', 'MuLT', 'MdLT',
             'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
             'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
             'leave', 'dc',
@@ -562,7 +562,9 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
 
 # Parse latency
 # List to store latency result
-latency_list = ['upward_per_hop_latency_count', 'upward_per_hop_latency_sum', 'downward_per_hop_latency_count', 'downward_per_hop_latency_sum']
+latency_list = ['upward_per_hop_latency_count', 'upward_per_hop_latency_sum', 
+                'downward_per_hop_latency_count', 'downward_per_hop_latency_sum', 
+                'max_upward_end_to_end_latency', 'max_downward_end_to_end_latency']
 LATENCY_NUM = len(latency_list)
 
 bootstrap_latency_list = [[0 for i in range(LATENCY_NUM)] for j in range(NODE_NUM)]
@@ -653,6 +655,10 @@ if IS_SLA_ON:
                     target_latency_list[lt_up_from_index][latency_list.index('upward_per_hop_latency_count')] += 1
                     target_latency_list[lt_up_from_index][latency_list.index('upward_per_hop_latency_sum')] += lt_up_ms_per_hop
 
+                    lt_up_asn_diff = lt_up_r_asn - lt_up_t_asn
+                    if lt_up_asn_diff > target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')]:
+                        target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')] = lt_up_asn_diff
+
         line = f.readline()
     f.close()
 
@@ -720,6 +726,10 @@ if IS_SLA_ON:
                         target_latency_list[lt_down_to_index][latency_list.index('downward_per_hop_latency_count')] += 1
                         target_latency_list[lt_down_to_index][latency_list.index('downward_per_hop_latency_sum')] += lt_down_ms_per_hop
 
+                        lt_down_asn_diff = lt_down_r_asn - lt_down_t_asn
+                        if lt_down_asn_diff > target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')]:
+                            target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')] = lt_down_asn_diff
+
             line = f.readline()
         f.close()
 
@@ -758,6 +768,10 @@ else: # IS_SLA_ON == 0
                     target_latency_list[lt_up_from_index][latency_list.index('upward_per_hop_latency_count')] += 1
                     target_latency_list[lt_up_from_index][latency_list.index('upward_per_hop_latency_sum')] += lt_up_ms_per_hop
 
+                    lt_up_asn_diff = lt_up_r_asn - lt_up_t_asn
+                    if lt_up_asn_diff > target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')]:
+                        target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')] = lt_up_asn_diff
+
         line = f.readline()
     f.close()
 
@@ -794,6 +808,10 @@ else: # IS_SLA_ON == 0
                         target_latency_list[lt_down_to_index][latency_list.index('downward_per_hop_latency_count')] += 1
                         target_latency_list[lt_down_to_index][latency_list.index('downward_per_hop_latency_sum')] += lt_down_ms_per_hop
 
+                        lt_down_asn_diff = lt_down_r_asn - lt_down_t_asn
+                        if lt_down_asn_diff > target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')]:
+                            target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')] = lt_down_asn_diff
+
             line = f.readline()
         f.close()
 
@@ -812,7 +830,8 @@ for (target_latency_list, target_result_list) in [(bootstrap_latency_list, boots
             target_result_list[i][result_list.index('LT')] = 'NaN'
         else:
             target_result_list[i][result_list.index('LT')] = round((float(target_latency_list[i][latency_list.index('upward_per_hop_latency_sum')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_sum')])) / (float(target_latency_list[i][latency_list.index('upward_per_hop_latency_count')]) + float(target_latency_list[i][latency_list.index('downward_per_hop_latency_count')])), 1)
-
+        target_result_list[i][result_list.index('MuLT')] = target_latency_list[i][latency_list.index('max_upward_end_to_end_latency')]
+        target_result_list[i][result_list.index('MdLT')] = target_latency_list[i][latency_list.index('max_downward_end_to_end_latency')]
 
 # Parse slot length
 # List to store slot length result
@@ -844,9 +863,10 @@ if IS_SLA_ON:
                         target_slot_len_list = data_slot_len_list
                 if line_postfix == 'HK-T':
                     line_body = line.split('] ')[1].split(' ')
-                    current_slot_len = float(line_body[-3]) / 1000
-                    target_slot_len_list[node_index][slot_len_list.index('slot_len_count')] += 1
-                    target_slot_len_list[node_index][slot_len_list.index('slot_len_ms_sum')] += current_slot_len
+                    if line_body[-3] != '0':
+                        current_slot_len = float(line_body[-3]) / 1000
+                        target_slot_len_list[node_index][slot_len_list.index('slot_len_count')] += 1
+                        target_slot_len_list[node_index][slot_len_list.index('slot_len_ms_sum')] += current_slot_len
 
             line = f.readline()
         f.close()
