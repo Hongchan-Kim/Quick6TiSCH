@@ -1221,10 +1221,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
               TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "A3-a p_t_half_c %u | %u | %.3f %.3f", 
+                          "A3-a p_t_half_c %u | %u", 
                           HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
-                          a3_p_num_tx_slot, 
-                          a3_p_tx_attempt_rate_ewma, a3_p_tx_success_rate_ewma);
+                          a3_p_num_tx_slot);
               );
 #endif
               a3_p_num_tx_slot /= 2;
@@ -1240,9 +1239,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
                 TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                            "A3-a p_t_double %u | %u | %.3f %.3f", 
+                            "A3-a p_t_double %u | %u", 
                             HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
-                            a3_p_num_tx_slot, a3_p_tx_attempt_rate_ewma, txIncreaseThresh);
+                            a3_p_num_tx_slot);
                 );
 #endif
                 a3_p_num_tx_slot *= 2;
@@ -1251,9 +1250,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
                 TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                            "A3-a p_t_half %u | %u | %.3f %.3f", 
+                            "A3-a p_t_half %u | %u", 
                             HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
-                            a3_p_num_tx_slot, a3_p_tx_attempt_rate_ewma, txDecreaseThresh);
+                            a3_p_num_tx_slot);
                 );
 #endif
                 a3_p_num_tx_slot /= 2;
@@ -1265,9 +1264,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
               TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "A3-a p_r_double %u | %u | %.3f %.3f", 
+                          "A3-a p_r_double %u | %u", 
                           HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
-                          a3_p_num_rx_slot, a3_p_rx_attempt_rate_ewma, rxIncreaseThresh);
+                          a3_p_num_rx_slot);
               );
 #endif
               a3_p_num_rx_slot *= 2;
@@ -1276,9 +1275,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
               TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                          "A3-a p_r_half %u | %u | %.3f %.3f", 
+                          "A3-a p_r_half %u | %u", 
                           HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(tsch_queue_get_time_source())),
-                          a3_p_num_rx_slot, a3_p_rx_attempt_rate_ewma, rxDecreaseThresh);
+                          a3_p_num_rx_slot);
               );
 #endif
               a3_p_num_rx_slot /= 2;
@@ -1403,10 +1402,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
                     TSCH_LOG_ADD(tsch_log_message,
                             snprintf(log->message, sizeof(log->message),
-                                "A3-a c_t_half_c %u | %u | %.3f %.3f", 
+                                "A3-a c_t_half_c %u | %u", 
                                 HCK_GET_NODE_ID_FROM_LINKADDR(addr),
-                                it->a3_c_num_tx_slot, 
-                                it->a3_c_tx_attempt_rate_ewma, it->a3_c_tx_success_rate_ewma);
+                                it->a3_c_num_tx_slot);
                     );
 #endif
 
@@ -1424,10 +1422,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
                       TSCH_LOG_ADD(tsch_log_message,
                               snprintf(log->message, sizeof(log->message),
-                                  "A3-a c_t_double %u | %u | %.3f %.3f", 
+                                  "A3-a c_t_double %u | %u", 
                                   HCK_GET_NODE_ID_FROM_LINKADDR(addr),
-                                  it->a3_c_num_tx_slot, 
-                                  it->a3_c_tx_attempt_rate_ewma, txIncreaseThresh);
+                                  it->a3_c_num_tx_slot);
                       );
 #endif
 
@@ -1438,10 +1435,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
                       TSCH_LOG_ADD(tsch_log_message,
                               snprintf(log->message, sizeof(log->message),
-                                  "A3-a c_t_half %u | %u | %.3f %.3f", 
+                                  "A3-a c_t_half %u | %u", 
                                   HCK_GET_NODE_ID_FROM_LINKADDR(addr),
-                                  it->a3_c_num_tx_slot, 
-                                  it->a3_c_tx_attempt_rate_ewma, txDecreaseThresh);
+                                  it->a3_c_num_tx_slot);
                       );
 #endif
 
@@ -1455,10 +1451,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
                       TSCH_LOG_ADD(tsch_log_message,
                               snprintf(log->message, sizeof(log->message),
-                                  "A3-a c_r_double %u | %u | %.3f %.3f", 
+                                  "A3-a c_r_double %u | %u", 
                                   HCK_GET_NODE_ID_FROM_LINKADDR(addr),
-                                  it->a3_c_num_rx_slot, 
-                                  it->a3_c_rx_attempt_rate_ewma, rxIncreaseThresh);
+                                  it->a3_c_num_rx_slot);
                       );
 #endif
 
@@ -1469,10 +1464,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 #if A3_DBG
                       TSCH_LOG_ADD(tsch_log_message,
                               snprintf(log->message, sizeof(log->message),
-                                  "A3-a c_r_half %u | %u | %.3f %.3f", 
+                                  "A3-a c_r_half %u | %u", 
                                   HCK_GET_NODE_ID_FROM_LINKADDR(addr),
-                                  it->a3_c_num_rx_slot, 
-                                  it->a3_c_rx_attempt_rate_ewma, rxDecreaseThresh);
+                                  it->a3_c_num_rx_slot);
                       );
 #endif
 
