@@ -24,6 +24,7 @@ print()
 
 
 # Extract the number of nodes
+print("Parse the number of nodes")
 node_num = 0
 file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + any_id + '.txt'
 f = open(file_name, 'r', errors='ignore')
@@ -93,6 +94,7 @@ root_node_bootstrap_finished = 0
 IS_SLA_ON = 0
 IS_UPA_ON = 0
 
+print("Parse root node")
 file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
 f = open(file_name, 'r', errors='ignore')
 print(file_name)
@@ -145,6 +147,7 @@ print('IS_SLA_ON: ' + str(IS_UPA_ON))
 print()
 
 # Parse non-root nodes next
+print("Parse non-root nodes")
 for node_index in range(1, NODE_NUM):
     node_id = node_index + 1
     file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
@@ -183,6 +186,7 @@ for node_index in range(1, NODE_NUM):
 # Derive result from parsed data
 result_list = ['id', 'bootP', 'bootQ',
             'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 'uLT', 'dLT', 'LT', 'MuLT', 'MdLT',
+#            't_gap', 'r_gap', 'a_gap',
             'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
             'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
             'leave', 'dc',
@@ -570,13 +574,15 @@ LATENCY_NUM = len(latency_list)
 bootstrap_latency_list = [[0 for i in range(LATENCY_NUM)] for j in range(NODE_NUM)]
 data_latency_list = [[0 for i in range(LATENCY_NUM)] for j in range(NODE_NUM)]
 
+print()
+print("Parse latency result")
+
 if IS_SLA_ON:
     # If SLA is applied, first parse application asn
     sla_trig_asn_list = [[1, 10]]
 
     file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
     f = open(file_name, 'r', errors='ignore')
-    print()
     print(file_name)
 
     line = f.readline()
@@ -656,8 +662,9 @@ if IS_SLA_ON:
                     target_latency_list[lt_up_from_index][latency_list.index('upward_per_hop_latency_sum')] += lt_up_ms_per_hop
 
                     lt_up_asn_diff = lt_up_r_asn - lt_up_t_asn
-                    if lt_up_asn_diff > target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')]:
-                        target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')] = lt_up_asn_diff
+                    lt_up_asn_diff_per_hop = round(lt_up_asn_diff / lt_up_hops)
+                    if lt_up_asn_diff_per_hop > target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')]:
+                        target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')] = lt_up_asn_diff_per_hop
 
         line = f.readline()
     f.close()
@@ -727,8 +734,9 @@ if IS_SLA_ON:
                         target_latency_list[lt_down_to_index][latency_list.index('downward_per_hop_latency_sum')] += lt_down_ms_per_hop
 
                         lt_down_asn_diff = lt_down_r_asn - lt_down_t_asn
-                        if lt_down_asn_diff > target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')]:
-                            target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')] = lt_down_asn_diff
+                        lt_down_asn_diff_per_hop = round(lt_down_asn_diff / lt_down_hops)
+                        if lt_down_asn_diff_per_hop > target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')]:
+                            target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')] = lt_down_asn_diff_per_hop
 
             line = f.readline()
         f.close()
@@ -739,7 +747,6 @@ else: # IS_SLA_ON == 0
     # First record upward per hop latency
     file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
     f = open(file_name, 'r', errors='ignore')
-    print()
     print(file_name)
 
     target_latency_list = bootstrap_latency_list
@@ -769,8 +776,9 @@ else: # IS_SLA_ON == 0
                     target_latency_list[lt_up_from_index][latency_list.index('upward_per_hop_latency_sum')] += lt_up_ms_per_hop
 
                     lt_up_asn_diff = lt_up_r_asn - lt_up_t_asn
-                    if lt_up_asn_diff > target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')]:
-                        target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')] = lt_up_asn_diff
+                    lt_up_asn_diff_per_hop = round(lt_up_asn_diff / lt_up_hops)
+                    if lt_up_asn_diff_per_hop > target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')]:
+                        target_latency_list[lt_up_from_index][latency_list.index('max_upward_end_to_end_latency')] = lt_up_asn_diff_per_hop
 
         line = f.readline()
     f.close()
@@ -809,12 +817,12 @@ else: # IS_SLA_ON == 0
                         target_latency_list[lt_down_to_index][latency_list.index('downward_per_hop_latency_sum')] += lt_down_ms_per_hop
 
                         lt_down_asn_diff = lt_down_r_asn - lt_down_t_asn
-                        if lt_down_asn_diff > target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')]:
-                            target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')] = lt_down_asn_diff
+                        lt_down_asn_diff_per_hop = round(lt_down_asn_diff / lt_down_hops)
+                        if lt_down_asn_diff_per_hop > target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')]:
+                            target_latency_list[lt_down_to_index][latency_list.index('max_downward_end_to_end_latency')] = lt_down_asn_diff_per_hop
 
             line = f.readline()
         f.close()
-
 
 for (target_latency_list, target_result_list) in [(bootstrap_latency_list, bootstrap_period_result), (data_latency_list, data_period_result)]:
     for i in range(NODE_NUM):
@@ -833,10 +841,96 @@ for (target_latency_list, target_result_list) in [(bootstrap_latency_list, boots
         target_result_list[i][result_list.index('MuLT')] = target_latency_list[i][latency_list.index('max_upward_end_to_end_latency')]
         target_result_list[i][result_list.index('MdLT')] = target_latency_list[i][latency_list.index('max_downward_end_to_end_latency')]
 
+
+# Parse unicast link asn gap
+# List to store slot length result
+'''
+print()
+print("Parse unicast slotframe asn gap")
+
+uc_link_asn_gap_list = ['uc_tx_link_max_asn_gap', 'uc_rx_link_max_asn_gap', 'uc_any_link_max_asn_gap']
+UC_LINK_ASN_GAP_NUM = len(uc_link_asn_gap_list)
+
+bootstrap_uc_link_asn_gap_list = [[0 for i in range(UC_LINK_ASN_GAP_NUM)] for j in range(NODE_NUM)]
+data_uc_link_asn_gap_list = [[0 for i in range(UC_LINK_ASN_GAP_NUM)] for j in range(NODE_NUM)]
+
+for node_index in range(0, NODE_NUM):
+    node_id = node_index + 1
+    file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
+    f = open(file_name, 'r', errors='ignore')
+    print(file_name)
+
+    last_uc_tx_link_asn = 0
+    last_uc_rx_link_asn = 0
+    last_uc_any_link_asn = 0
+    curr_uc_link_asn = 0
+
+    target_uc_link_asn_gap_list = bootstrap_uc_link_asn_gap_list
+
+    line = f.readline()
+    while line:
+        if len(line) > 1:
+            line = line.replace('\n', '')
+            line_prefix = line.split(':')[0]
+            line_postfix = line.split(' ')[-1]
+            if line_prefix == '[HK-P':
+                line_body = line.split('] ')[1].split(' ')
+                if line_body[0] == 'reset_log':
+                    target_uc_link_asn_gap_list = data_uc_link_asn_gap_list
+                    last_uc_tx_link_asn = 0
+                    last_uc_rx_link_asn = 0
+                    last_uc_any_link_asn = 0
+                    curr_uc_link_asn = 0
+
+            if line_postfix == 'HK-T':
+                line_body = line.split(' ')
+                is_curr_uc_link_tx = 0
+                if line_body[line_body.index('link') + 2] == '2':
+                    if 'tx' in line_body:
+                        is_curr_uc_link_tx = 1
+                    curr_uc_link_asn = int(line_body[line_body.index('{asn') + 1].split('.')[1], 16)
+
+                    if is_curr_uc_link_tx == 1: # ucsf tx link
+                        if last_uc_tx_link_asn == 0:
+                            last_uc_tx_link_asn = curr_uc_link_asn
+                        else:
+                            curr_uc_tx_link_asn_gap = curr_uc_link_asn - last_uc_tx_link_asn
+                            if curr_uc_tx_link_asn_gap > target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_tx_link_max_asn_gap')]:
+                                target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_tx_link_max_asn_gap')] = curr_uc_tx_link_asn_gap
+                            last_uc_tx_link_asn = curr_uc_link_asn
+                    else: # ucsf rx link
+                        if last_uc_rx_link_asn == 0:
+                            last_uc_rx_link_asn = curr_uc_link_asn
+                        else:
+                            curr_uc_rx_link_asn_gap = curr_uc_link_asn - last_uc_rx_link_asn
+                            if curr_uc_rx_link_asn_gap > target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_rx_link_max_asn_gap')]:
+                                target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_rx_link_max_asn_gap')] = curr_uc_rx_link_asn_gap
+                            last_uc_rx_link_asn = curr_uc_link_asn
+
+                    if last_uc_any_link_asn == 0:
+                        last_uc_any_link_asn = curr_uc_link_asn
+                    else:
+                        curr_uc_any_link_asn_gap = curr_uc_link_asn - last_uc_any_link_asn
+                        if curr_uc_any_link_asn_gap > target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_any_link_max_asn_gap')]:
+                            target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_any_link_max_asn_gap')] = curr_uc_any_link_asn_gap
+                        last_uc_any_link_asn = curr_uc_link_asn
+
+        line = f.readline()
+    f.close()
+
+for (target_uc_link_asn_gap_list, target_result_list) in [(bootstrap_uc_link_asn_gap_list, bootstrap_period_result), (data_uc_link_asn_gap_list, data_period_result)]:
+    for i in range(NODE_NUM):
+        target_result_list[i][result_list.index('t_gap')] = target_uc_link_asn_gap_list[i][uc_link_asn_gap_list.index('uc_tx_link_max_asn_gap')]
+        target_result_list[i][result_list.index('r_gap')] = target_uc_link_asn_gap_list[i][uc_link_asn_gap_list.index('uc_rx_link_max_asn_gap')]
+        target_result_list[i][result_list.index('a_gap')] = target_uc_link_asn_gap_list[i][uc_link_asn_gap_list.index('uc_any_link_max_asn_gap')]
+'''
+
 # Parse slot length
 # List to store slot length result
 if IS_SLA_ON:
     print()
+    print("Parse slot length")
+
     slot_len_list = ['slot_len_count', 'slot_len_ms_sum']
     SLOT_LEN_NUM = len(slot_len_list)
 

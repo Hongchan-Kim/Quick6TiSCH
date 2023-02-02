@@ -71,14 +71,14 @@
 #define HCK_LOG_LEVEL_LITE                         1
 
 #if HCK_LOG_LEVEL_LITE
-#define LOG_LEVEL_APP                              LOG_LEVEL_ERR //LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_ERR //LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_ERR //LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_ERR //LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_ERR //LOG_LEVEL_NONE
+#define LOG_LEVEL_APP                              LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_NONE
 #define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
-#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_ERR //LOG_LEVEL_NONE
-#define LOG_LEVEL_ENERGEST                         LOG_LEVEL_ERR //LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_NONE
+#define LOG_LEVEL_ENERGEST                         LOG_LEVEL_NONE
 #else
 #define LOG_LEVEL_APP                              LOG_LEVEL_INFO
 #define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO

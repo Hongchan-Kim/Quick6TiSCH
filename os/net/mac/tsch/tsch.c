@@ -2334,19 +2334,25 @@ send_packet(mac_callback_t sent, void *ptr)
       ret = MAC_TX_ERR;
       if(sent == keepalive_packet_sent) {
         ++tsch_ka_packet_qloss_count;
-        LOG_HK("ka_qloss %u |\n", tsch_ka_packet_qloss_count);
+        LOG_HK("ka_qloss %u | to %u seq %u\n", tsch_ka_packet_qloss_count,
+                                              HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                                              tsch_packet_seqno);
       } else {
         ++tsch_ip_packet_qloss_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
           ++tsch_ip_icmp6_packet_qloss_count;
-          LOG_HK("ip_qloss %u ip_icmp6_qloss %u |\n", 
+          LOG_HK("ip_qloss %u ip_icmp6_qloss %u | to %u seq %u\n", 
                 tsch_ip_packet_qloss_count, 
-                tsch_ip_icmp6_packet_qloss_count);
+                tsch_ip_icmp6_packet_qloss_count,
+                HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                tsch_packet_seqno);
         } else {
           ++tsch_ip_udp_packet_qloss_count;
-          LOG_HK("ip_qloss %u ip_udp_qloss %u |\n", 
+          LOG_HK("ip_qloss %u ip_udp_qloss %u | to %u seq %u\n", 
                 tsch_ip_packet_qloss_count, 
-                tsch_ip_udp_packet_qloss_count);
+                tsch_ip_udp_packet_qloss_count,
+                HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                tsch_packet_seqno);
         }
       }
     } else {
@@ -2359,19 +2365,31 @@ send_packet(mac_callback_t sent, void *ptr)
              QUEUEBUF_NUM, p->header_len, queuebuf_datalen(p->qb));
       if(sent == keepalive_packet_sent) {
         ++tsch_ka_packet_enqueue_count;
-        LOG_HK("ka_enq %u |\n", tsch_ka_packet_enqueue_count);
+        LOG_HK("ka_enq %u | to %u seq %u len %u %u\n", tsch_ka_packet_enqueue_count,
+                                                      HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                                                      tsch_packet_seqno,
+                                                      p->header_len, 
+                                                      queuebuf_datalen(p->qb));
       } else {
         ++tsch_ip_packet_enqueue_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
           ++tsch_ip_icmp6_packet_enqueue_count;
-          LOG_HK("ip_enq %u ip_icmp6_enq %u |\n", 
+          LOG_HK("ip_enq %u ip_icmp6_enq %u | to %u seq %u len %u %u\n", 
                 tsch_ip_packet_enqueue_count, 
-                tsch_ip_icmp6_packet_enqueue_count);
+                tsch_ip_icmp6_packet_enqueue_count,
+                HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                tsch_packet_seqno,
+                p->header_len, 
+                queuebuf_datalen(p->qb));
         } else {
           ++tsch_ip_udp_packet_enqueue_count;
-          LOG_HK("ip_enq %u ip_udp_enq %u |\n", 
+          LOG_HK("ip_enq %u ip_udp_enq %u | to %u seq %u len %u %u\n", 
                 tsch_ip_packet_enqueue_count, 
-                tsch_ip_udp_packet_enqueue_count);
+                tsch_ip_udp_packet_enqueue_count,
+                HCK_GET_NODE_ID_FROM_LINKADDR(addr),
+                tsch_packet_seqno,
+                p->header_len, 
+                queuebuf_datalen(p->qb));
         }
       }
 
