@@ -153,6 +153,27 @@ reset_log()
         tsch_queue_global_packet_count(),
         tsch_queue_nbr_packet_count(n_eb),
         app_server_reset_log_asn);
+
+#if HCK_LOG_EVAL_CONFIG
+  LOG_HK("eval_config 1 fixed_topology %u lite_log %u |\n", 
+          HCK_RPL_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
+  LOG_HK("eval_config 2 traffic_load %u app_payload_len %u |\n", 
+          (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL), APP_PAYLOAD_LEN);
+  LOG_HK("eval_config 3 slot_len %u ucsf_period %u |\n", 
+          HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
+#if WITH_UPA
+  LOG_HK("eval_config 4 with_upa %u |\n", WITH_UPA);
+#endif
+#if WITH_SLA
+  LOG_HK("eval_config 5 with_sla %u sla_k %u |\n", WITH_SLA, SLA_K_TH_PERCENTILE);
+#endif
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+  LOG_HK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
+#endif
+#if WITH_A3
+  LOG_HK("eval_config 7 with_a3 %u a3_max_zone %u |\n", WITH_A3, A3_MAX_ZONE);
+#endif
+#endif
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -274,6 +295,27 @@ PROCESS_THREAD(udp_server_process, ev, data)
   etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % (APP_DOWNWARD_SEND_VARYING_INTERVAL[0] / 2)));
 #else
   etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % (APP_DOWNWARD_SEND_INTERVAL / 2)));
+#endif
+#endif
+
+#if HCK_LOG_EVAL_CONFIG
+  LOG_HK("eval_config 1 fixed_topology %u lite_log %u |\n", 
+          HCK_RPL_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
+  LOG_HK("eval_config 2 traffic_load %u app_payload_len %u |\n", 
+          (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL), APP_PAYLOAD_LEN);
+  LOG_HK("eval_config 3 slot_len %u ucsf_period %u |\n", 
+          HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
+#if WITH_UPA
+  LOG_HK("eval_config 4 with_upa %u |\n", WITH_UPA);
+#endif
+#if WITH_SLA
+  LOG_HK("eval_config 5 with_sla %u sla_k %u |\n", WITH_SLA, SLA_K_TH_PERCENTILE);
+#endif
+#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
+  LOG_HK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
+#endif
+#if WITH_A3
+  LOG_HK("eval_config 7 with_a3 %u a3_max_zone %u |\n", WITH_A3, A3_MAX_ZONE);
 #endif
 #endif
 

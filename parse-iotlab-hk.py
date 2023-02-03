@@ -50,7 +50,12 @@ print()
 
 
 # Metric keys to parse
-key_list = ['reset_log', 'rs_opku', 'rs_q',
+key_list = ['fixed_topology', 'lite_log',
+            'traffic_load', 'app_payload_len',
+            'slot_len', 'ucsf_period',
+            'with_upa', 'with_sla', 'sla_k',
+            'with_dbt', 'with_a3', 'a3_max_zone',
+            'reset_log', 'rs_opku', 'rs_q',
             'tx_up', 'rx_up', 'tx_down', 'rx_down',
             'fwd_ok', 'fwd_no_nexthop', 'fwd_err',
             'ip_uc_tx', 'ip_uc_ok', 'ip_uc_noack', 'ip_uc_err',
@@ -91,8 +96,6 @@ ROOT_ID = 1
 ROOT_INDEX = 0
 root_node_bootstrap_finished = 0
 
-IS_SLA_ON = 0
-IS_UPA_ON = 0
 
 print("Parse root node")
 file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(ROOT_ID) + '.txt'
@@ -135,18 +138,12 @@ while line:
                 val_loc += 2
                 if key_loc >= len(line_body) or val_loc >= len(line_body):
                     break
-        if IS_SLA_ON == 0 and line_prefix == '[HK-S':
-            IS_SLA_ON = 1
-        if IS_UPA_ON == 0 and line_postfix == 'HK-U':
-            IS_UPA_ON = 1
     line = f.readline()
 f.close()
 
-print('IS_SLA_ON: ' + str(IS_SLA_ON))
-print('IS_SLA_ON: ' + str(IS_UPA_ON))
-print()
 
 # Parse non-root nodes next
+print()
 print("Parse non-root nodes")
 for node_index in range(1, NODE_NUM):
     node_id = node_index + 1
@@ -183,21 +180,34 @@ for node_index in range(1, NODE_NUM):
     f.close()
 
 
+EVAL_CONFIG_FIXED_TOPOLOGY = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('fixed_topology')])
+EVAL_CONFIG_LITE_LOG = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('lite_log')])
+EVAL_CONFIG_TRAFFIC_LOAD = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('traffic_load')])
+EVAL_CONFIG_APP_PAYLOAD_LEN = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('app_payload_len')])
+EVAL_CONFIG_SLOT_LEN = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('slot_len')])
+EVAL_CONFIG_UCSF_PERIOD = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('ucsf_period')])
+EVAL_CONFIG_WITH_UPA = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('with_upa')])
+EVAL_CONFIG_WITH_SLA = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('with_sla')])
+EVAL_CONFIG_SLA_K = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('sla_k')])
+EVAL_CONFIG_WITH_DBT = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('with_dbt')])
+EVAL_CONFIG_WITH_A3 = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('with_a3')])
+EVAL_CONFIG_A3_MAX_ZONE = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('a3_max_zone')])
+
+
 # Derive result from parsed data
 result_list = ['id', 'bootP', 'bootQ',
             'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 'uLT', 'dLT', 'LT', 'MuLT', 'MdLT',
-#            't_gap', 'r_gap', 'a_gap',
             'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
             'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
             'leave', 'dc',
             'as_ts', 'sch_eb', 'sch_bc', 'sch_uc']
 
 sla_result_list = ['ts_l']
-if IS_SLA_ON:
+if EVAL_CONFIG_WITH_SLA:
     result_list.extend(sla_result_list)
 
 upa_result_list = ['UTS', 'UTR', 'UTO', 'UTU', 'URS', 'URR', 'URO', 'URU', 'UU']
-if IS_UPA_ON:
+if EVAL_CONFIG_WITH_UPA:
     result_list.extend(upa_result_list)
 
 show_all_result_list = ['SCR',
@@ -577,7 +587,7 @@ data_latency_list = [[0 for i in range(LATENCY_NUM)] for j in range(NODE_NUM)]
 print()
 print("Parse latency result")
 
-if IS_SLA_ON:
+if EVAL_CONFIG_WITH_SLA:
     # If SLA is applied, first parse application asn
     sla_trig_asn_list = [[1, 10]]
 
@@ -741,7 +751,7 @@ if IS_SLA_ON:
             line = f.readline()
         f.close()
 
-else: # IS_SLA_ON == 0
+else: # EVAL_CONFIG_WITH_SLA == 0
     DEFAULT_SLOT_LEN = 10
 
     # First record upward per hop latency
@@ -842,92 +852,9 @@ for (target_latency_list, target_result_list) in [(bootstrap_latency_list, boots
         target_result_list[i][result_list.index('MdLT')] = target_latency_list[i][latency_list.index('max_downward_end_to_end_latency')]
 
 
-# Parse unicast link asn gap
-# List to store slot length result
-'''
-print()
-print("Parse unicast slotframe asn gap")
-
-uc_link_asn_gap_list = ['uc_tx_link_max_asn_gap', 'uc_rx_link_max_asn_gap', 'uc_any_link_max_asn_gap']
-UC_LINK_ASN_GAP_NUM = len(uc_link_asn_gap_list)
-
-bootstrap_uc_link_asn_gap_list = [[0 for i in range(UC_LINK_ASN_GAP_NUM)] for j in range(NODE_NUM)]
-data_uc_link_asn_gap_list = [[0 for i in range(UC_LINK_ASN_GAP_NUM)] for j in range(NODE_NUM)]
-
-for node_index in range(0, NODE_NUM):
-    node_id = node_index + 1
-    file_name = 'log-' + any_scheduler + '-' + any_iter + '-' + str(node_id) + '.txt'
-    f = open(file_name, 'r', errors='ignore')
-    print(file_name)
-
-    last_uc_tx_link_asn = 0
-    last_uc_rx_link_asn = 0
-    last_uc_any_link_asn = 0
-    curr_uc_link_asn = 0
-
-    target_uc_link_asn_gap_list = bootstrap_uc_link_asn_gap_list
-
-    line = f.readline()
-    while line:
-        if len(line) > 1:
-            line = line.replace('\n', '')
-            line_prefix = line.split(':')[0]
-            line_postfix = line.split(' ')[-1]
-            if line_prefix == '[HK-P':
-                line_body = line.split('] ')[1].split(' ')
-                if line_body[0] == 'reset_log':
-                    target_uc_link_asn_gap_list = data_uc_link_asn_gap_list
-                    last_uc_tx_link_asn = 0
-                    last_uc_rx_link_asn = 0
-                    last_uc_any_link_asn = 0
-                    curr_uc_link_asn = 0
-
-            if line_postfix == 'HK-T':
-                line_body = line.split(' ')
-                is_curr_uc_link_tx = 0
-                if line_body[line_body.index('link') + 2] == '2':
-                    if 'tx' in line_body:
-                        is_curr_uc_link_tx = 1
-                    curr_uc_link_asn = int(line_body[line_body.index('{asn') + 1].split('.')[1], 16)
-
-                    if is_curr_uc_link_tx == 1: # ucsf tx link
-                        if last_uc_tx_link_asn == 0:
-                            last_uc_tx_link_asn = curr_uc_link_asn
-                        else:
-                            curr_uc_tx_link_asn_gap = curr_uc_link_asn - last_uc_tx_link_asn
-                            if curr_uc_tx_link_asn_gap > target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_tx_link_max_asn_gap')]:
-                                target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_tx_link_max_asn_gap')] = curr_uc_tx_link_asn_gap
-                            last_uc_tx_link_asn = curr_uc_link_asn
-                    else: # ucsf rx link
-                        if last_uc_rx_link_asn == 0:
-                            last_uc_rx_link_asn = curr_uc_link_asn
-                        else:
-                            curr_uc_rx_link_asn_gap = curr_uc_link_asn - last_uc_rx_link_asn
-                            if curr_uc_rx_link_asn_gap > target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_rx_link_max_asn_gap')]:
-                                target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_rx_link_max_asn_gap')] = curr_uc_rx_link_asn_gap
-                            last_uc_rx_link_asn = curr_uc_link_asn
-
-                    if last_uc_any_link_asn == 0:
-                        last_uc_any_link_asn = curr_uc_link_asn
-                    else:
-                        curr_uc_any_link_asn_gap = curr_uc_link_asn - last_uc_any_link_asn
-                        if curr_uc_any_link_asn_gap > target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_any_link_max_asn_gap')]:
-                            target_uc_link_asn_gap_list[node_index][uc_link_asn_gap_list.index('uc_any_link_max_asn_gap')] = curr_uc_any_link_asn_gap
-                        last_uc_any_link_asn = curr_uc_link_asn
-
-        line = f.readline()
-    f.close()
-
-for (target_uc_link_asn_gap_list, target_result_list) in [(bootstrap_uc_link_asn_gap_list, bootstrap_period_result), (data_uc_link_asn_gap_list, data_period_result)]:
-    for i in range(NODE_NUM):
-        target_result_list[i][result_list.index('t_gap')] = target_uc_link_asn_gap_list[i][uc_link_asn_gap_list.index('uc_tx_link_max_asn_gap')]
-        target_result_list[i][result_list.index('r_gap')] = target_uc_link_asn_gap_list[i][uc_link_asn_gap_list.index('uc_rx_link_max_asn_gap')]
-        target_result_list[i][result_list.index('a_gap')] = target_uc_link_asn_gap_list[i][uc_link_asn_gap_list.index('uc_any_link_max_asn_gap')]
-'''
-
 # Parse slot length
 # List to store slot length result
-if IS_SLA_ON:
+if EVAL_CONFIG_WITH_SLA:
     print()
     print("Parse slot length")
 
@@ -971,6 +898,20 @@ if IS_SLA_ON:
                 target_result_list[i][result_list.index('ts_l')] = 'NaN'
             else:
                 target_result_list[i][result_list.index('ts_l')] = round(float(target_slot_len_list[i][slot_len_list.index('slot_len_ms_sum')]) / float(target_slot_len_list[i][slot_len_list.index('slot_len_count')]), 2)
+
+
+print()
+print('----- evaluation configuration -----')
+print('FIXED_TOPOLOGY: ' + str(EVAL_CONFIG_FIXED_TOPOLOGY))
+print('LITE_LOG: ' + str(EVAL_CONFIG_LITE_LOG))
+print('TRAFFIC_LOAD: ' + str(EVAL_CONFIG_TRAFFIC_LOAD))
+print('APP_PAYLOAD_LEN: ' + str(EVAL_CONFIG_APP_PAYLOAD_LEN))
+print('SLOT_LEN: ' + str(EVAL_CONFIG_SLOT_LEN))
+print('UCSF_PERIOD: ' + str(EVAL_CONFIG_UCSF_PERIOD))
+print('WITH_UPA: ' + str(EVAL_CONFIG_WITH_UPA))
+print('WITH_SLA: ' + str(EVAL_CONFIG_WITH_SLA) + ' (k: ' + str(EVAL_CONFIG_SLA_K) + ')')
+print('WITH_DBT: ' + str(EVAL_CONFIG_WITH_DBT))
+print('WITH_A3: ' + str(EVAL_CONFIG_WITH_A3) + ' (max zone: ' + str(EVAL_CONFIG_A3_MAX_ZONE) + ')')
 
 
 # Print derived result

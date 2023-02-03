@@ -68,6 +68,7 @@
 /*
  * Configure log
  */
+#define HCK_LOG_EVAL_CONFIG                        1
 #define HCK_LOG_LEVEL_LITE                         1
 
 #if HCK_LOG_LEVEL_LITE
