@@ -17,6 +17,8 @@
 #define NETSTACK_CONF_MAC_SEQNO_HISTORY            16
 #endif
 
+#define HCK_DBG_ALICE_RESCHEDULE_INTERVAL          0
+
 #define HCK_DBG_REGULAR_SLOT_DETAIL                0
 #define HCK_DBG_REGULAR_SLOT_TIMING                (0 && HCK_DBG_REGULAR_SLOT_DETAIL)
 

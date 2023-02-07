@@ -71,6 +71,10 @@
 #define LOG_MODULE "TSCH Sched"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+#if HCK_DBG_ALICE_RESCHEDULE_INTERVAL
+static uint64_t hck_dbg_alice_last_reschedule_asfn = 0;
+#endif
+
 #if WITH_ALICE
 #ifdef ALICE_TIME_VARYING_SCHEDULING
 void ALICE_TIME_VARYING_SCHEDULING(); 
@@ -1063,6 +1067,27 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
           l = list_item_next(l);
         }
 
+        int alice_remaining_uicast_sf_link_exists_at_tsch_current_asn = 0;
+
+        timeslot = TSCH_ASN_MOD(*asn, sf->size);
+        l = list_head(sf->links_list);
+        while(l != NULL) {
+          /* Check if any link exists after this timeslot in the current unicast slotframe */
+          if(l->timeslot > timeslot) {
+            /* In the current unicast slotframe schedule, the current timeslot is not a last one. */
+            alice_remaining_uicast_sf_link_exists_at_tsch_current_asn = 1;
+            break;
+          }
+          l = list_item_next(l);
+        }
+
+        uint64_t alice_current_asfn_at_tsch_current_asn = 0;
+        struct tsch_asn_t temp_asn_at_tsch_current_asn;
+        TSCH_ASN_COPY(temp_asn_at_tsch_current_asn, *asn);
+        uint16_t mod1_at_tsch_current_asn = TSCH_ASN_MOD(temp_asn_at_tsch_current_asn, sf->size);
+        TSCH_ASN_DEC(temp_asn_at_tsch_current_asn, mod1_at_tsch_current_asn);
+        alice_current_asfn_at_tsch_current_asn = TSCH_ASN_DIVISION(temp_asn_at_tsch_current_asn, sf->size);
+
         /*
          * Third, if 'alice_remaining_uicast_sf_link_exists' is zero,
          * there is no more unicast slotframe link within the current ASFN (alice_current_asfn).
@@ -1070,7 +1095,9 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
          * only when lastly scheduled ASFN (alice_lastly_scheduled_asfn) is different from
          * the next ASFN (alice_next_asfn).
          */
-        if(alice_remaining_uicast_sf_link_exists == 0) {
+        if(alice_remaining_uicast_sf_link_exists == 0 
+          || alice_remaining_uicast_sf_link_exists_at_tsch_current_asn == 0
+          || alice_current_asfn_at_tsch_current_asn != alice_current_asfn) {
           uint64_t alice_next_asfn = 0;
           struct tsch_asn_t asn_of_next_asfn;
           TSCH_ASN_COPY(asn_of_next_asfn, alice_current_asn);
@@ -1489,6 +1516,19 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             }
 #endif /* WITH_A3 */
 
+#if HCK_DBG_ALICE_RESCHEDULE_INTERVAL
+            if(hck_dbg_alice_last_reschedule_asfn == 0) {
+              hck_dbg_alice_last_reschedule_asfn = alice_lastly_scheduled_asfn;
+            } else {
+              uint16_t hck_dbg_alice_reschedule_interval = alice_lastly_scheduled_asfn - hck_dbg_alice_last_reschedule_asfn;
+              hck_dbg_alice_last_reschedule_asfn = alice_lastly_scheduled_asfn;
+
+              TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "atvs-int %u %llx", hck_dbg_alice_reschedule_interval, alice_current_asfn);
+              );
+            }
+#endif
             ALICE_TIME_VARYING_SCHEDULING();
           }
         }
