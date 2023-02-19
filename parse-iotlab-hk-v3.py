@@ -15,7 +15,7 @@ any_iter = args.any_iter
 any_id = args.any_id
 show_all = args.show_all
 
-print('----- evaluation info -----')
+print('----- Parsing info -----')
 print('any_scheduler: ' + any_scheduler)
 print('any_iter: ' + any_iter)
 print('any_id: ' + any_id)
@@ -905,62 +905,48 @@ for (target_slot_len_list, target_result_list) in [(bootstrap_slot_len_list, boo
             target_result_list[i][result_list.index('ts_l')] = round(float(target_slot_len_list[i][slot_len_list.index('slot_len_ms_sum')]) / float(target_slot_len_list[i][slot_len_list.index('slot_len_count')]), 2)
 
 
-print()
-print('----- evaluation configuration -----')
-print('FIXED_TOPOLOGY: ' + str(EVAL_CONFIG_FIXED_TOPOLOGY))
-print('LITE_LOG: ' + str(EVAL_CONFIG_LITE_LOG))
-print('TRAFFIC_LOAD: ' + str(EVAL_CONFIG_TRAFFIC_LOAD))
-print('APP_PAYLOAD_LEN: ' + str(EVAL_CONFIG_APP_PAYLOAD_LEN))
-print('SLOT_LEN: ' + str(EVAL_CONFIG_SLOT_LEN))
-print('UCSF_PERIOD: ' + str(EVAL_CONFIG_UCSF_PERIOD))
-print('WITH_UPA: ' + str(EVAL_CONFIG_WITH_UPA))
-print('WITH_SLA: ' + str(EVAL_CONFIG_WITH_SLA) + ' (k: ' + str(EVAL_CONFIG_SLA_K) + ')')
-print('WITH_DBT: ' + str(EVAL_CONFIG_WITH_DBT))
-print('WITH_A3: ' + str(EVAL_CONFIG_WITH_A3) + ' (max zone: ' + str(EVAL_CONFIG_A3_MAX_ZONE) + ')')
-
-
-# Print derived result
-SUMMARY_KEY = 'as_ts'
+# Print parsed result
+SPLIT_KEY = 'as_ts'
 
 print()
 for target_result_list in [bootstrap_period_result, data_period_result]:
     if target_result_list == bootstrap_period_result:
-        print('----- bootstrap period -----')
+        print('----- Bootstrap period -----')
     else:
-        print('----- data period -----')
+        print('----- Data period -----')
 
     if show_all == '0':
-        for i in range(result_list.index(SUMMARY_KEY) - 1):
+        for i in range(result_list.index(SPLIT_KEY) - 1):
             print(result_list[i], '\t', end='')
-        print(result_list[result_list.index(SUMMARY_KEY) - 1])
+        print(result_list[result_list.index(SPLIT_KEY) - 1])
         for i in range(NODE_NUM):
-            for j in range(result_list.index(SUMMARY_KEY) - 1):
+            for j in range(result_list.index(SPLIT_KEY) - 1):
                 print(target_result_list[i][j], '\t', end='')
-            print(target_result_list[i][result_list.index(SUMMARY_KEY) - 1])
+            print(target_result_list[i][result_list.index(SPLIT_KEY) - 1])
         print()
 
     elif show_all == '1':
-        for i in range(result_list.index(SUMMARY_KEY) - 1):
+        for i in range(result_list.index(SPLIT_KEY) - 1):
             print(result_list[i], '\t', end='')
-        print(result_list[result_list.index(SUMMARY_KEY) - 1])
+        print(result_list[result_list.index(SPLIT_KEY) - 1])
         for i in range(NODE_NUM):
-            for j in range(result_list.index(SUMMARY_KEY) - 1):
+            for j in range(result_list.index(SPLIT_KEY) - 1):
                 print(target_result_list[i][j], '\t', end='')
-            print(target_result_list[i][result_list.index(SUMMARY_KEY) - 1])
+            print(target_result_list[i][result_list.index(SPLIT_KEY) - 1])
         print()
-        for i in range(result_list.index(SUMMARY_KEY), RESULT_NUM - 1): 
+        for i in range(result_list.index(SPLIT_KEY), RESULT_NUM - 1): 
             print(result_list[i], '\t', end='')
         print(result_list[-1], '\t', end='')
         print(result_list[0])
         for i in range(NODE_NUM):
-            for j in range(result_list.index(SUMMARY_KEY), RESULT_NUM - 1): 
+            for j in range(result_list.index(SPLIT_KEY), RESULT_NUM - 1): 
                 print(target_result_list[i][j], '\t', end='')
             print(target_result_list[i][-1], '\t', end='')
             print(target_result_list[i][0])
         print()
 
     if root_node_bootstrap_finished == 0:
-        print('----- in bootstrap period -----')
+        print('----- In bootstrap period -----')
         break
 
 
@@ -979,4 +965,57 @@ for i in range(NODE_NUM):
         o.write(output_data)
     output_data = str(data_period_result[i][-1]) + '\n'
     o.write(output_data)
+o.close()
+
+
+# Print summarized result
+all_bootP_ok = 1
+all_bootQ_ok = 1
+
+for i in range(1, NODE_NUM):
+    if data_period_parsed[i][key_list.index('rs_opku')] == 0:
+        all_bootP_ok = 0
+    if data_period_parsed[i][key_list.index('rs_q')] > 1:
+        all_bootQ_ok = 0
+
+print('----- Evaluation configuration -----')
+print('FIXED_TOPOLOGY: ' + str(EVAL_CONFIG_FIXED_TOPOLOGY))
+print('LITE_LOG: ' + str(EVAL_CONFIG_LITE_LOG))
+print('TRAFFIC_LOAD: ' + str(EVAL_CONFIG_TRAFFIC_LOAD))
+print('APP_PAYLOAD_LEN: ' + str(EVAL_CONFIG_APP_PAYLOAD_LEN))
+print('SLOT_LEN: ' + str(EVAL_CONFIG_SLOT_LEN))
+print('UCSF_PERIOD: ' + str(EVAL_CONFIG_UCSF_PERIOD))
+print('WITH_UPA: ' + str(EVAL_CONFIG_WITH_UPA))
+print('WITH_SLA: ' + str(EVAL_CONFIG_WITH_SLA) + ' (k: ' + str(EVAL_CONFIG_SLA_K) + ')')
+print('WITH_DBT: ' + str(EVAL_CONFIG_WITH_DBT))
+print('WITH_A3: ' + str(EVAL_CONFIG_WITH_A3) + ' (max zone: ' + str(EVAL_CONFIG_A3_MAX_ZONE) + ')')
+print('BootP: ' + str(all_bootP_ok))
+print('BootQ: ' + str(all_bootQ_ok))
+
+output_file_name = 'summary.txt'
+o = open(output_file_name, 'w')
+output_data = 'FIXED_TOPOLOGY: ' + str(EVAL_CONFIG_FIXED_TOPOLOGY) + '\n'
+o.write(output_data)
+output_data = 'LITE_LOG: ' + str(EVAL_CONFIG_LITE_LOG) + '\n'
+o.write(output_data)
+output_data = 'TRAFFIC_LOAD: ' + str(EVAL_CONFIG_TRAFFIC_LOAD) + '\n'
+o.write(output_data)
+output_data = 'APP_PAYLOAD_LEN: ' + str(EVAL_CONFIG_APP_PAYLOAD_LEN) + '\n'
+o.write(output_data)
+output_data = 'SLOT_LEN: ' + str(EVAL_CONFIG_SLOT_LEN) + '\n'
+o.write(output_data)
+output_data = 'UCSF_PERIOD: ' + str(EVAL_CONFIG_UCSF_PERIOD) + '\n'
+o.write(output_data)
+output_data = 'WITH_UPA: ' + str(EVAL_CONFIG_WITH_UPA) + '\n'
+o.write(output_data)
+output_data = 'WITH_SLA: ' + str(EVAL_CONFIG_WITH_SLA) + ' (k: ' + str(EVAL_CONFIG_SLA_K) + ')' + '\n'
+o.write(output_data)
+output_data = 'WITH_DBT: ' + str(EVAL_CONFIG_WITH_DBT) + '\n'
+o.write(output_data)
+output_data = 'WITH_A3: ' + str(EVAL_CONFIG_WITH_A3) + ' (max zone: ' + str(EVAL_CONFIG_A3_MAX_ZONE) + ')' + '\n'
+o.write(output_data)
+output_data = 'BootP: ' + str(all_bootP_ok) + '\n'
+o.write(output_data)
+output_data = 'BootQ: ' + str(all_bootQ_ok) + '\n'
+o.write(output_data)
 o.close()
