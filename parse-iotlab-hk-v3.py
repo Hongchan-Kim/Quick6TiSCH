@@ -51,11 +51,11 @@ print()
 
 # Metric keys to parse
 key_list = ['fixed_topology', 'lite_log',
-            'traffic_load', 'app_payload_len',
+            'traffic_load', 'down_traffic_load', 'app_payload_len',
             'slot_len', 'ucsf_period',
             'with_upa', 'with_sla', 'sla_k',
             'with_dbt', 'with_a3', 'a3_max_zone',
-            'reset_log', 'rs_opku', 'rs_q',
+            'reset_log', 'rs_opku', 'rs_q', 'opku',
             'tx_up', 'rx_up', 'tx_down', 'rx_down',
             'fwd_ok', 'fwd_no_nexthop', 'fwd_err',
             'ip_uc_tx', 'ip_uc_ok', 'ip_uc_noack', 'ip_uc_err',
@@ -122,6 +122,8 @@ while line:
                 if curr_key == 'reset_log':
                     data_period_parsed[ROOT_INDEX][key_list.index('lastP')] \
                         = bootstrap_period_parsed[ROOT_INDEX][key_list.index('lastP')]
+                    data_period_parsed[ROOT_INDEX][key_list.index('opku')] \
+                        = bootstrap_period_parsed[ROOT_INDEX][key_list.index('opku')]
                     target_parsed_list = data_period_parsed
                     root_node_bootstrap_finished = 1
                 if curr_key in key_list:
@@ -174,6 +176,8 @@ for node_index in range(1, NODE_NUM):
                     if curr_key == 'reset_log':
                         data_period_parsed[node_index][key_list.index('lastP')] \
                             = bootstrap_period_parsed[node_index][key_list.index('lastP')]
+                        data_period_parsed[node_index][key_list.index('opku')] \
+                            = bootstrap_period_parsed[node_index][key_list.index('opku')]
                         target_parsed_list = data_period_parsed
                     if curr_key in key_list:
                         curr_key_index = key_list.index(curr_key)
@@ -189,6 +193,7 @@ for node_index in range(1, NODE_NUM):
 EVAL_CONFIG_FIXED_TOPOLOGY = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('fixed_topology')])
 EVAL_CONFIG_LITE_LOG = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('lite_log')])
 EVAL_CONFIG_TRAFFIC_LOAD = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('traffic_load')])
+EVAL_CONFIG_DOWN_TRAFFIC_LOAD = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('down_traffic_load')])
 EVAL_CONFIG_APP_PAYLOAD_LEN = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('app_payload_len')])
 EVAL_CONFIG_SLOT_LEN = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('slot_len')])
 EVAL_CONFIG_UCSF_PERIOD = int(bootstrap_period_parsed[ROOT_INDEX][key_list.index('ucsf_period')])
@@ -204,7 +209,7 @@ EVAL_CONFIG_WITH_SLA = int(IS_SLA_ON)
 
 
 # Derive result from parsed data
-result_list = ['id', 'bootP', 'bootQ',
+result_list = ['id', 'bootP', 'bootQ', 'opku',
             'tx_up', 'rx_up', 'uPdr', 'tx_dw', 'rx_dw', 'dPdr', 'pdr', 'uLT', 'dLT', 'LT', 'MuLT', 'MdLT',
             'lastP', 'ps', 'hopD', 'aHopD', 'STN', 'aSTN', 
             'IPQL', 'IPQR', 'IPLL', 'IPLR', 'IUQL', 'IUQR', 'IULL', 'IULR', 'InQL', 'linkE', 
@@ -214,7 +219,7 @@ result_list = ['id', 'bootP', 'bootQ',
 sla_result_list = ['ts_l']
 result_list.extend(sla_result_list)
 
-upa_result_list = ['UTS', 'UTR', 'UTO', 'UTU', 'URS', 'URR', 'URO', 'URU', 'UU']
+upa_result_list = ['UTC', 'UTS', 'UTR', 'UTO', 'UTU', 'URC', 'URS', 'URR', 'URO', 'URU', 'UU']
 result_list.extend(upa_result_list)
 
 show_all_result_list = ['SCR',
@@ -241,8 +246,10 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
                     target_result_list[i][j] = '1'
                 else:
                     target_result_list[i][j] = '0'
-            if result_list[j] == 'bootQ':
+            elif result_list[j] == 'bootQ':
                 target_result_list[i][j] = target_parsed_list[i][key_list.index('rs_q')]
+            elif result_list[j] == 'opku':
+                target_result_list[i][j] = target_parsed_list[i][key_list.index('opku')]
             elif result_list[j] == 'tx_up':
                 target_result_list[i][j] = target_parsed_list[i][key_list.index('tx_up')]
             elif result_list[j] == 'rx_up':
@@ -350,6 +357,10 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
             elif result_list[j] == 'sch_uc':
                 target_result_list[i][j] = target_parsed_list[i][key_list.index('sch_uc')]
 
+            elif result_list[j] == 'UTC':
+                target_result_list[i][j] = int(target_parsed_list[i][key_list.index('sch_bc_upa_tx')]) + \
+                                                int(target_parsed_list[i][key_list.index('sch_uc_upa_tx')]) + \
+                                                int(target_parsed_list[i][key_list.index('sch_pp_upa_tx')])
             elif result_list[j] == 'UTS':
                 target_result_list[i][j] = int(target_parsed_list[i][key_list.index('sch_bc_upa_tx')]) + \
                                                 int(target_parsed_list[i][key_list.index('sch_uc_upa_tx')]) + \
@@ -376,6 +387,10 @@ for (target_parsed_list, target_result_list) in [(bootstrap_period_parsed, boots
                     target_result_list[i][j] = 'NaN'
                 else:
                     target_result_list[i][j] = round(float(target_result_list[i][result_list.index('UTO')]) / float(target_result_list[i][result_list.index('UTS')]), 2)
+            elif result_list[j] == 'URC':
+                target_result_list[i][j] = int(target_parsed_list[i][key_list.index('sch_bc_upa_rx')]) + \
+                                                int(target_parsed_list[i][key_list.index('sch_uc_upa_rx')]) + \
+                                                int(target_parsed_list[i][key_list.index('sch_pp_upa_rx')])
             elif result_list[j] == 'URS':
                 target_result_list[i][j] = int(target_parsed_list[i][key_list.index('sch_bc_upa_rx')]) + \
                                                 int(target_parsed_list[i][key_list.index('sch_uc_upa_rx')]) + \
@@ -947,6 +962,7 @@ for target_result_list in [bootstrap_period_result, data_period_result]:
 
     if root_node_bootstrap_finished == 0:
         print('----- In bootstrap period -----')
+        print()
         break
 
 
@@ -982,6 +998,7 @@ print('----- Evaluation configuration -----')
 print('FIXED_TOPOLOGY: ' + str(EVAL_CONFIG_FIXED_TOPOLOGY))
 print('LITE_LOG: ' + str(EVAL_CONFIG_LITE_LOG))
 print('TRAFFIC_LOAD: ' + str(EVAL_CONFIG_TRAFFIC_LOAD))
+print('TRAFFIC_LOAD: ' + str(EVAL_CONFIG_DOWN_TRAFFIC_LOAD))
 print('APP_PAYLOAD_LEN: ' + str(EVAL_CONFIG_APP_PAYLOAD_LEN))
 print('SLOT_LEN: ' + str(EVAL_CONFIG_SLOT_LEN))
 print('UCSF_PERIOD: ' + str(EVAL_CONFIG_UCSF_PERIOD))
@@ -999,6 +1016,8 @@ o.write(output_data)
 output_data = 'LITE_LOG: ' + str(EVAL_CONFIG_LITE_LOG) + '\n'
 o.write(output_data)
 output_data = 'TRAFFIC_LOAD: ' + str(EVAL_CONFIG_TRAFFIC_LOAD) + '\n'
+o.write(output_data)
+output_data = 'TRAFFIC_LOAD: ' + str(EVAL_CONFIG_DOWN_TRAFFIC_LOAD) + '\n'
 o.write(output_data)
 output_data = 'APP_PAYLOAD_LEN: ' + str(EVAL_CONFIG_APP_PAYLOAD_LEN) + '\n'
 o.write(output_data)
