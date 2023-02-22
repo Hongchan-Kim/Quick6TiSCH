@@ -92,7 +92,7 @@ orchestra_packet_sent(int mac_status)
       orchestra_parent_knows_us = 1;
 
       uint64_t orchestra_one_parent_knows_us_asn = tsch_calculate_current_asn();
-      LOG_HK_ORCHESTRA("opku 1 at %llx |\n", orchestra_one_parent_knows_us_asn);
+      LOG_HK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_one_parent_knows_us_asn);
     }
 #if HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
     }
@@ -169,7 +169,7 @@ orchestra_callback_new_time_source(const struct tsch_neighbor *old, const struct
     orchestra_parent_knows_us = 0;
 
     uint64_t orchestra_zero_parent_knows_us_asn = tsch_calculate_current_asn();
-    LOG_HK_ORCHESTRA("opku 0 at %llx |\n", orchestra_zero_parent_knows_us_asn);
+    LOG_HK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_zero_parent_knows_us_asn);
   }
   for(i = 0; i < NUM_RULES; i++) {
     if(all_rules[i]->new_time_source != NULL) {
