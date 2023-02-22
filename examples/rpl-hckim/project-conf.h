@@ -106,9 +106,11 @@
  * Configure App
  */
 #if WITH_IOTLAB
+#define WITH_UPWARD_TRAFFIC                        1
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
-#define DOWNWARD_TRAFFIC                           0
-#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 1)
+
+#define WITH_DOWNWARD_TRAFFIC                      0
+#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 2)
 
 #define APP_PRINT_NODE_INFO_DELAY                  (1 * 60 * CLOCK_SECOND / 2)
 
@@ -126,16 +128,16 @@
 
 #if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
 #define APP_TOPOLOGY_OPT_START_DELAY               (5 * 60 * CLOCK_SECOND)
-#define APP_TOPOLOGY_OPT_PERIOD                    (30 * 60 * CLOCK_SECOND)
-#define APP_TOPOLOGY_OPT_SEND_INTERVAL             (1 * 60 * CLOCK_SECOND / 1)
+#define APP_TOPOLOGY_OPT_PERIOD                    (25 * 60 * CLOCK_SECOND)
+#define APP_TOPOLOGY_OPT_SEND_INTERVAL             (1 * 60 * CLOCK_SECOND / 2)
 #define APP_TOPOLOGY_OPT_MAX_TX                    (APP_TOPOLOGY_OPT_PERIOD / APP_TOPOLOGY_OPT_SEND_INTERVAL)
 
-#define APP_RESET_LOG_DELAY                        (40 * 60 * CLOCK_SECOND)
-#define APP_DATA_START_DELAY                       (45 * 60 * CLOCK_SECOND)
+#define APP_RESET_LOG_DELAY                        (32 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (33 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 
-#define APP_PRINT_LOG_DELAY                        (107 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
-#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 2)
+#define APP_PRINT_LOG_DELAY                        (95 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 4)
 
 #else /* APP_TOPOLOGY_OPT_DURING_BOOTSTRAP */
 #define APP_RESET_LOG_DELAY                        (52 * 60 * CLOCK_SECOND)

@@ -43,8 +43,10 @@
 #define APP_DOWNWARD_MAX_TX          100
 #endif
 
-#if DOWNWARD_TRAFFIC
+#if WITH_DOWNWARD_TRAFFIC
 #define APP_DOWN_INTERVAL   (APP_DOWNWARD_SEND_INTERVAL / (NON_ROOT_NUM + 1))
+
+static unsigned count = 1;
 #endif
 
 static struct simple_udp_connection udp_conn;
@@ -127,6 +129,10 @@ reset_log_app_server()
     }
 #endif
   }
+
+#if WITH_DOWNWARD_TRAFFIC
+  count = 1;
+#endif
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -157,8 +163,10 @@ reset_log()
 #if HCK_LOG_EVAL_CONFIG
   LOG_HK("eval_config 1 fixed_topology %u lite_log %u |\n", 
           HCK_RPL_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
-  LOG_HK("eval_config 2 traffic_load %u app_payload_len %u |\n", 
-          (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL), APP_PAYLOAD_LEN);
+  LOG_HK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
+          WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
+          WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
+          APP_PAYLOAD_LEN);
   LOG_HK("eval_config 3 slot_len %u ucsf_period %u |\n", 
           HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
 #if WITH_UPA
@@ -246,7 +254,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
   static struct etimer reset_log_timer;
   static struct etimer print_log_timer;
 
-#if DOWNWARD_TRAFFIC
+#if WITH_DOWNWARD_TRAFFIC
   static struct etimer data_start_timer;
   static struct etimer data_periodic_timer;
   static struct etimer data_send_timer;
@@ -290,7 +298,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
   etimer_set(&reset_log_timer, APP_RESET_LOG_DELAY);
   etimer_set(&print_log_timer, APP_PRINT_LOG_DELAY);
 
-#if DOWNWARD_TRAFFIC
+#if WITH_DOWNWARD_TRAFFIC
 #if WITH_VARYING_PPM
   etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % (APP_DOWNWARD_SEND_VARYING_INTERVAL[0] / 2)));
 #else
@@ -331,7 +339,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
       etimer_set(&print_log_timer, APP_PRINT_LOG_PERIOD);
       print_log();
     }
-#if DOWNWARD_TRAFFIC
+#if WITH_DOWNWARD_TRAFFIC
     else if(data == &data_start_timer || data == &data_periodic_timer) {
 #if WITH_VARYING_PPM
       etimer_set(&data_send_timer, APP_DOWN_VARYING_INTERVAL[index]);
@@ -376,7 +384,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
           varycount++;
           count++;
         } else { /* not the last non-root node yet */
-          etimer_reset(&send_timer);
+          etimer_reset(&data_send_timer);
         }
       }
       else if (index < VARY_LENGTH - 1){
@@ -416,7 +424,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
           dest_id = 2;
           count++;
         } else { /* not the last non-root node yet */
-          etimer_reset(&send_timer);
+          etimer_reset(&data_send_timer);
         }
       }
 #endif

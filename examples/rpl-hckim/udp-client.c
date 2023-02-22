@@ -46,7 +46,9 @@
 
 static struct simple_udp_connection udp_conn;
 
+#if WITH_UPWARD_TRAFFIC || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
 static unsigned count = 1;
+#endif
 static uint16_t app_rxd_count;
 
 #if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
@@ -59,7 +61,7 @@ struct app_down_seqno {
   clock_time_t app_down_timestamp;
   uint16_t app_down_seqno;
 };
-static struct app_down_seqno received_seqnos[APP_SEQNO_HISTORY];
+static struct app_down_seqno app_down_received_seqnos[APP_SEQNO_HISTORY];
 /*---------------------------------------------------------------------------*/
 int
 app_down_sequence_is_duplicate(uint16_t current_app_down_seqno)
@@ -72,9 +74,9 @@ app_down_sequence_is_duplicate(uint16_t current_app_down_seqno)
    * packet with the last few ones we saw.
    */
   for(i = 0; i < APP_SEQNO_HISTORY; ++i) {
-    if(current_app_down_seqno == received_seqnos[i].app_down_seqno) {
+    if(current_app_down_seqno == app_down_received_seqnos[i].app_down_seqno) {
 #if APP_SEQNO_MAX_AGE > 0
-      if(now - received_seqnos[i].app_down_timestamp <= APP_SEQNO_MAX_AGE) {
+      if(now - app_down_received_seqnos[i].app_down_timestamp <= APP_SEQNO_MAX_AGE) {
         /* Duplicate packet. */
         return 1;
       }
@@ -94,7 +96,7 @@ app_down_sequence_register_seqno(uint16_t current_app_down_seqno)
 
   /* Locate possible previous sequence number for this address. */
   for(i = 0; i < APP_SEQNO_HISTORY; ++i) {
-    if(current_app_down_seqno == received_seqnos[i].app_down_seqno) {
+    if(current_app_down_seqno == app_down_received_seqnos[i].app_down_seqno) {
       i++;
       break;
     }
@@ -102,17 +104,21 @@ app_down_sequence_register_seqno(uint16_t current_app_down_seqno)
 
   /* Keep the last sequence number for each address as per 802.15.4e. */
   for(j = i - 1; j > 0; --j) {
-    memcpy(&received_seqnos[j], &received_seqnos[j - 1], sizeof(struct app_down_seqno));
+    memcpy(&app_down_received_seqnos[j], &app_down_received_seqnos[j - 1], sizeof(struct app_down_seqno));
   }
-  received_seqnos[0].app_down_seqno = current_app_down_seqno;
-  received_seqnos[0].app_down_timestamp = clock_time();
+  app_down_received_seqnos[0].app_down_seqno = current_app_down_seqno;
+  app_down_received_seqnos[0].app_down_timestamp = clock_time();
 }
 #endif /* APP_SEQNO_DUPLICATE_CHECK */
 /*---------------------------------------------------------------------------*/
 static void
 reset_log_app_client()
 {
+#if WITH_UPWARD_TRAFFIC
   count = 1;
+#endif
+
+  app_rxd_count = 0;
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -143,8 +149,10 @@ reset_log()
 #if HCK_LOG_EVAL_CONFIG
   LOG_HK("eval_config 1 fixed_topology %u lite_log %u |\n", 
           HCK_RPL_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
-  LOG_HK("eval_config 2 traffic_load %u app_payload_len %u |\n", 
-          (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL), APP_PAYLOAD_LEN);
+  LOG_HK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
+          WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
+          WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
+          APP_PAYLOAD_LEN);
   LOG_HK("eval_config 3 slot_len %u ucsf_period %u |\n", 
           HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
 #if WITH_UPA
@@ -229,16 +237,20 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer opt_periodic_timer;
 #endif
 
+#if WITH_UPWARD_TRAFFIC
   static struct etimer data_start_timer;
   static struct etimer data_periodic_timer;
   static struct etimer data_send_timer;
+#endif
 
+#if WITH_UPWARD_TRAFFIC || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
   uip_ipaddr_t dest_ipaddr;
 
   static uint8_t app_payload[128];
   static uint16_t current_payload_len = APP_PAYLOAD_LEN;
   static uint32_t app_seqno = 0;
   static uint16_t app_magic = (uint16_t)APP_DATA_MAGIC;
+#endif
 
 #if HCK_ASAP_EVAL_01_SLA_REAL_TIME
   current_payload_len = APP_PAYLOAD_LEN_FIRST;
@@ -272,10 +284,12 @@ PROCESS_THREAD(udp_client_process, ev, data)
   etimer_set(&opt_start_timer, (APP_TOPOLOGY_OPT_START_DELAY + random_rand() % (APP_TOPOLOGY_OPT_SEND_INTERVAL / 2)));
 #endif
 
+#if WITH_UPWARD_TRAFFIC
 #if WITH_VARYING_PPM
   etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % APP_UPWARD_SEND_VARYING_INTERVAL[0]));
 #else
   etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % (APP_UPWARD_SEND_INTERVAL)));
+#endif
 #endif
 
 #if HCK_LOG_EVAL_CONFIG
@@ -351,7 +365,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
     } else if(data == &print_log_timer) {
       etimer_set(&print_log_timer, APP_PRINT_LOG_PERIOD);
       print_log();
-    } else if(data == &data_start_timer || data == &data_periodic_timer) {
+    }
+#if WITH_UPWARD_TRAFFIC
+    else if(data == &data_start_timer || data == &data_periodic_timer) {
 #if WITH_VARYING_PPM
       etimer_set(&data_send_timer, random_rand() % (APP_UPWARD_SEND_VARYING_INTERVAL[index] / 2));
       etimer_set(&data_periodic_timer, APP_UPWARD_SEND_VARYING_INTERVAL[index]);
@@ -442,6 +458,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
       }
 #endif /* WITH_VARYING_PPM */
     }
+#endif
   }
 
   PROCESS_END();
