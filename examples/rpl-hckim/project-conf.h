@@ -32,7 +32,11 @@
 #undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
 #define RPL_CONF_DEFAULT_LIFETIME                  RPL_INFINITE_LIFETIME
-#endif
+#else /* HCK_RPL_FIXED_TOPOLOGY */
+#define HCK_ORCHESTRA_PACKET_DROP_DURING_BOOTSTRAP 1
+#undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
+#endif /* HCK_RPL_FIXED_TOPOLOGY */
 
 #define HCK_TSCH_TIMESLOT_LENGTH                   10000
 
@@ -216,7 +220,11 @@
  * Configure RPL
  */
 #define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST
+#if HCK_RPL_FIXED_TOPOLOGY
 #define RPL_CONF_WITH_DAO_ACK                      0
+#else /* HCK_RPL_FIXED_TOPOLOGY */
+#define RPL_CONF_WITH_DAO_ACK                      1
+#endif /* HCK_RPL_FIXED_TOPOLOGY */
 #define RPL_CONF_WITH_PROBING                      1
 #define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
 #define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND) /* originally 5 seconds */
@@ -444,10 +452,14 @@
 //#define RF2XX_TX_POWER                             PHY_POWER_3dBm
 
 /* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
-   m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
+   m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */ //
 //#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m101dBm
 //#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m90dBm
+#if IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
+#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m75dBm
+#else
 #define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
+#endif
 /*---------------------------------------------------------------------------*/
 
 

@@ -75,4 +75,8 @@ int alice_packet_cell_matching_on_the_fly(uint16_t *timeslot, uint16_t *channel_
 /* alice time varying scheduling */
 void alice_time_varying_scheduling();
 
+#if HCK_ORCHESTRA_PACKET_DROP_DURING_BOOTSTRAP
+void reset_flag_alice();
+#endif
+
 #endif /* __ORCHESTRA_H__ */

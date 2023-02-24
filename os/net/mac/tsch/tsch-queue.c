@@ -709,6 +709,19 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
   return in_queue;
 }
 /*---------------------------------------------------------------------------*/
+#if HCK_ORCHESTRA_PACKET_DROP_DURING_BOOTSTRAP
+void
+tsch_queue_drop_packets(struct tsch_neighbor *n)
+{
+  if(n != NULL) {
+    /* Flush queue */
+    tsch_queue_flush_nbr_queue(n);
+    /* Reset backoff exponent */
+    tsch_queue_backoff_reset(n);
+  }
+}
+#endif
+/*---------------------------------------------------------------------------*/
 #if HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
 /* Flush all neighbor queues */
 void
