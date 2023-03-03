@@ -535,6 +535,7 @@
  */
 #define WITH_ASAP                                  (1 || (WITH_UPA || WITH_SLA))
 #if WITH_ASAP
+#define ASAP_RX_DURATION_VALID_THRESHOLD           5
 #define ASAP_DBG_SLOT_END                          (0 || UPA_DBG_SLOT_TIMING)
 #endif
 
