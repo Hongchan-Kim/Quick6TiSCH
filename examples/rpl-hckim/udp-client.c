@@ -200,6 +200,7 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint32_t app_received_seqno = 0;
   memcpy(&app_received_seqno, data + datalen - 6, 4);
 
+#if APP_SEQNO_DUPLICATE_CHECK
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_down_sequence_is_duplicate(app_received_seqno_count)) {
@@ -209,6 +210,7 @@ udp_rx_callback(struct simple_udp_connection *c,
               app_rx_down_asn);
   } else {
     app_down_sequence_register_seqno(app_received_seqno_count);
+#endif /* APP_SEQNO_DUPLICATE_CHECK */
     LOG_INFO("Received message from ");
     LOG_INFO_6ADDR(sender_addr);
     LOG_INFO_("\n");
@@ -224,7 +226,9 @@ udp_rx_callback(struct simple_udp_connection *c,
               app_rx_down_asn,
               app_tx_down_asn,
               hops);
+#if APP_SEQNO_DUPLICATE_CHECK
   }
+#endif /* APP_SEQNO_DUPLICATE_CHECK */
 }
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client");

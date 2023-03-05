@@ -1,6 +1,8 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+#define HCK_ROOT_WITH_LARGE_QUEUE                  0
+
 /*---------------------------------------------------------------------------*/
 /*
  * HCK modifications independent of proposed scheme
@@ -14,7 +16,11 @@
 #define HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK     1
 #if HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
 #define NETSTACK_CONF_MAC_SEQNO_MAX_AGE            (20 * CLOCK_SECOND)
+#if !HCK_ROOT_WITH_LARGE_QUEUE
 #define NETSTACK_CONF_MAC_SEQNO_HISTORY            16
+#else
+#define NETSTACK_CONF_MAC_SEQNO_HISTORY            12
+#endif
 #endif
 
 #define HCK_DBG_ALICE_RESCHEDULE_INTERVAL          0
@@ -38,6 +44,7 @@
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
 #endif /* HCK_RPL_FIXED_TOPOLOGY */
 
+#define HCK_TSCH_DEACTIVATE_INTERRUPT_MODE         1
 #define HCK_TSCH_TIMESLOT_LENGTH                   10000
 
 #define HCK_APPLY_LATEST_CONTIKI                   1
@@ -192,7 +199,11 @@
 #define APP_SEQNO_DUPLICATE_CHECK                  1
 #if APP_SEQNO_DUPLICATE_CHECK
 #define APP_SEQNO_MAX_AGE                          (20 * CLOCK_SECOND)
+#if !HCK_ROOT_WITH_LARGE_QUEUE
 #define APP_SEQNO_HISTORY                          16
+#else
+#define APP_SEQNO_HISTORY                          12
+#endif
 #endif
 /*---------------------------------------------------------------------------*/
 
@@ -243,7 +254,11 @@
 /*
  * Configure TSCH
  */
+#if HCK_ROOT_WITH_LARGE_QUEUE
+#define QUEUEBUF_CONF_NUM                          32 /* 16 in Orchestra, ALICE, and OST, originally 8 */
+#else
 #define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
+#endif
 #define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* 8 in OST, originally 4 */
 #define IEEE802154_CONF_PANID                      0x58FA //22782 hckim //0x81a5 //ksh
 #define TSCH_CONF_CCA_ENABLED                      1

@@ -252,7 +252,8 @@ static uint16_t asap_curr_passed_timeslots; /* Includes the first (triggering) s
 static uint16_t asap_curr_passed_timeslots_except_first_slot;
 static uint16_t asap_timeslot_diff_at_the_end;
 
-/* To filter out data frames received incorrectly at the time of previous ACK or B-ACK reception */
+/* To filter out data frames received incorrectly 
+at the time of previous ACK or B-ACK reception */
 static uint8_t asap_rx_duration_valid;
 #endif
 
@@ -3445,9 +3446,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                           ((int)TSCH_MAX_INCOMING_PACKETS - 1) - (ringbufindex_elements(&input_ringbuf) + 1) : 0;
 
                 /* consider current packet: tsch_queue_global_packet_count() + 1 */
+                /* consider tx_ringbuf and use QUEUEBUF_NUM - 1 */
                 int upa_empty_space_of_global_queue
-                        = (int)QUEUEBUF_NUM - (tsch_queue_global_packet_count() + 1) > 0 ?
-                          (int)QUEUEBUF_NUM - (tsch_queue_global_packet_count() + 1) : 0;
+                        = ((int)QUEUEBUF_NUM - 1) - (tsch_queue_global_packet_count() + 1) > 0 ?
+                          ((int)QUEUEBUF_NUM - 1) - (tsch_queue_global_packet_count() + 1) : 0;
 
                 int upa_min_empty_space_of_ringbuf_or_queue = 0;
 
