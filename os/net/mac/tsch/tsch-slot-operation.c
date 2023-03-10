@@ -3542,9 +3542,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                           ((int)TSCH_MAX_INCOMING_PACKETS - 1) - (ringbufindex_elements(&input_ringbuf) + 1) : 0;
 
                 /* consider current packet: tsch_queue_global_packet_count() + 1 */
+                /* consider tx_ringbuf and use QUEUEBUF_NUM - 1 */
                 int dbt_empty_space_of_global_queue
-                        = (int)QUEUEBUF_NUM - (tsch_queue_global_packet_count() + 1) > 0 ?
-                          (int)QUEUEBUF_NUM - (tsch_queue_global_packet_count() + 1) : 0;
+                        = ((int)QUEUEBUF_NUM - 1) - (tsch_queue_global_packet_count() + 1) > 0 ?
+                          ((int)QUEUEBUF_NUM - 1) - (tsch_queue_global_packet_count() + 1) : 0;
 
                 int dbt_min_empty_space_of_ringbuf_or_queue = 0;
 
