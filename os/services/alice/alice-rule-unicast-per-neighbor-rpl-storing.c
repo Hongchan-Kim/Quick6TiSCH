@@ -92,14 +92,6 @@ static struct tsch_slotframe *sf_unicast_after_lastly_scheduled_asfn;
 static uint8_t scheduling_sf_unicast_after_lastly_scheduled_asfn = 0;
 #endif
 
-#if HCK_ORCHESTRA_PACKET_DROP_DURING_BOOTSTRAP
-static uint8_t drop_pkts_during_bootstrap = 1;
-void reset_flag_alice()
-{
-  drop_pkts_during_bootstrap = 0;
-}
-#endif
-
 /*---------------------------------------------------------------------------*/
 static uint16_t
 #if WITH_A3
@@ -495,7 +487,10 @@ child_added(const linkaddr_t *linkaddr)
 static void
 child_removed(const linkaddr_t *linkaddr)
 {
-#if HCK_ORCHESTRA_PACKET_OFFLOADING
+#if HCK_ORCHESTRA_PACKET_DROP
+  struct tsch_neighbor *temp_nbr = tsch_queue_get_nbr(linkaddr);
+  tsch_queue_drop_packets(temp_nbr);
+#elif HCK_ORCHESTRA_PACKET_OFFLOADING
   const struct tsch_neighbor *removed_child = tsch_queue_get_nbr(linkaddr);
   tsch_queue_change_attr_of_packets_in_queue(removed_child, ALICE_COMMON_SF_HANDLE, 0);
 #endif
@@ -561,18 +556,12 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
 
-#if HCK_ORCHESTRA_PACKET_DROP_DURING_BOOTSTRAP
-    if(drop_pkts_during_bootstrap) {
-      linkaddr_t *old_addr = tsch_queue_get_nbr_address(old);
-      struct tsch_neighbor *old_temp = tsch_queue_get_nbr(old_addr);
-      tsch_queue_drop_packets(old_temp);
-    } else {
-#endif
-#if HCK_ORCHESTRA_PACKET_OFFLOADING
+#if HCK_ORCHESTRA_PACKET_DROP
+    linkaddr_t *old_addr = tsch_queue_get_nbr_address(old);
+    struct tsch_neighbor *old_temp = tsch_queue_get_nbr(old_addr);
+    tsch_queue_drop_packets(old_temp);
+#elif HCK_ORCHESTRA_PACKET_OFFLOADING
     tsch_queue_change_attr_of_packets_in_queue(old, ALICE_COMMON_SF_HANDLE, 0);
-#endif
-#if HCK_ORCHESTRA_PACKET_DROP_DURING_BOOTSTRAP
-    }
 #endif
 
     alice_schedule_unicast_slotframe(); 

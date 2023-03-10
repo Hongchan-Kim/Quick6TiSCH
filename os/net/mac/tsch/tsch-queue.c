@@ -709,7 +709,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
   return in_queue;
 }
 /*---------------------------------------------------------------------------*/
-#if HCK_ORCHESTRA_PACKET_DROP_DURING_BOOTSTRAP
+#if HCK_ORCHESTRA_PACKET_DROP
 void
 tsch_queue_drop_packets(struct tsch_neighbor *n)
 {

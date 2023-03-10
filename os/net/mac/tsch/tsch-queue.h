@@ -63,7 +63,7 @@ struct tsch_packet *tsch_queue_upa_get_next_packet_for_nbr(const struct tsch_nei
 struct tsch_packet * tsch_queue_burst_get_next_packet_for_nbr(const struct tsch_neighbor *n);
 #endif
 
-#if HCK_ORCHESTRA_PACKET_DROP_DURING_BOOTSTRAP
+#if HCK_ORCHESTRA_PACKET_DROP
 void tsch_queue_drop_packets(struct tsch_neighbor *n);
 #endif
 

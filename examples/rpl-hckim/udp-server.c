@@ -153,10 +153,6 @@ reset_log()
   reset_log_rpl_ext_header();     /* rpl-ext-header.c */
   reset_log_simple_energest();    /* simple-energest.c */
 
-#if HCK_ORCHESTRA_PACKET_DROP_DURING_BOOTSTRAP
-  reset_flag_alice();
-#endif
-
   uint64_t app_server_reset_log_asn = tsch_calculate_current_asn();
   LOG_HK("reset_log 1 rs_opku %u rs_q %d | rs_q_eb %d at %llx\n", 
         orchestra_parent_knows_us,
