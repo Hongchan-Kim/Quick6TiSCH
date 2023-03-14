@@ -855,9 +855,18 @@ sla_calculate_triggering_asn()
 
   TSCH_ASN_INIT(sla_triggering_asn, sla_current_asn >> 32, sla_current_asn & 0xFFFFFFFF);
 
+  uint16_t sla_curr_max_hop_distance_from_ttl
+            = sla_max_hop_distance[sla_current_window_index];
+
+  uint16_t sla_curr_max_hop_distance_from_dao 
+            = sla_get_rpl_dao_max_hop_distance();
+
+  uint16_t sla_max_hop_distance_between_ttl_and_dao
+            = MAX(sla_curr_max_hop_distance_from_ttl, sla_curr_max_hop_distance_from_dao);
+
   uint16_t sla_curr_max_hop_distance 
-            = sla_max_hop_distance[sla_current_window_index] != 0 ?
-              sla_max_hop_distance[sla_current_window_index] : SLA_ZERO_HOP_DISTANCE_OFFSET;
+            = sla_max_hop_distance_between_ttl_and_dao != 0 ?
+              sla_max_hop_distance_between_ttl_and_dao : SLA_ZERO_HOP_DISTANCE_OFFSET;
 
   if(sla_curr_ref_hop_distance <= sla_curr_max_hop_distance) {
     sla_curr_ref_hop_distance = sla_curr_max_hop_distance;

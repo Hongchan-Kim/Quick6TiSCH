@@ -753,6 +753,10 @@ dao_input_storing(void)
 
   flags = buffer[pos++];
   /* reserved */
+#if WITH_SLA
+  uint8_t sla_dao_hop_distance = buffer[pos];
+  buffer[pos] = sla_dao_hop_distance + 1;
+#endif
   pos++;
   sequence = buffer[pos++];
 
@@ -872,6 +876,10 @@ dao_input_storing(void)
       RPL_ROUTE_SET_NOPATH_RECEIVED(rep);
       rep->state.lifetime = RPL_NOPATH_REMOVAL_DELAY;
 
+#if WITH_SLA
+      rep->state.sla_dao_hop_distance = sla_dao_hop_distance;
+#endif
+
 #if WITH_OST
       /* received No-path DAO */
       uint16_t prefix_id = OST_NODE_ID_FROM_IPADDR(&prefix);
@@ -967,6 +975,10 @@ dao_input_storing(void)
   /* set lifetime and clear NOPATH bit */
   rep->state.lifetime = RPL_LIFETIME(instance, lifetime);
   RPL_ROUTE_CLEAR_NOPATH_RECEIVED(rep);
+
+#if WITH_SLA
+  rep->state.sla_dao_hop_distance = sla_dao_hop_distance;
+#endif
 
 #if RPL_WITH_MULTICAST
 fwd_dao:
@@ -1337,7 +1349,11 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   }
 #endif /* RPL_WITH_DAO_ACK */
   ++pos;
+#if With_SLA
+  buffer[pos++] = 1; /* reserved */
+#else
   buffer[pos++] = 0; /* reserved */
+#endif
   buffer[pos++] = seq_no;
 #if RPL_DAO_SPECIFY_DAG
   memcpy(buffer + pos, &dag->dag_id, sizeof(dag->dag_id));

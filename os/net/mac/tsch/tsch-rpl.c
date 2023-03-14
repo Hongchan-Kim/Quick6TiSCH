@@ -75,6 +75,26 @@ tsch_rpl_callback_has_no_children(void)
 }
 #endif
 /*---------------------------------------------------------------------------*/
+#if WITH_SLA
+uint16_t sla_get_rpl_dao_max_hop_distance(void)
+{
+  uint16_t max_hop_distance = 0;
+
+  uip_ds6_route_t *r;
+  r = uip_ds6_route_head();
+
+  while(r != NULL) {
+    if(r->state.lifetime != 0 
+       && r->state.sla_dao_hop_distance > max_hop_distance) {
+      max_hop_distance = r->state.sla_dao_hop_distance;
+    }
+    r = uip_ds6_route_next(r);
+  }
+
+  return max_hop_distance;
+}
+#endif
+/*---------------------------------------------------------------------------*/
 /* To use, set #define TSCH_CALLBACK_KA_SENT tsch_rpl_callback_ka_sent */
 void
 tsch_rpl_callback_ka_sent(int status, int transmissions)

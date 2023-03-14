@@ -53,6 +53,10 @@ int tsch_rpl_callback_is_root(void);
 int tsch_rpl_callback_has_no_children(void);
 #endif
 
+#if WITH_SLA
+uint16_t sla_get_rpl_dao_max_hop_distance(void);
+#endif
+
 /**
 * \brief Report statiscs from KA packet sent in RPL.
 * To use, set TSCH_CALLBACK_KA_SENT to tsch_rpl_callback_ka_sent
