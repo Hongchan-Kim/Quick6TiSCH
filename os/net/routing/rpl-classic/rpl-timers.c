@@ -137,7 +137,8 @@ handle_periodic_timer(void *ptr)
       if((tsch_is_associated == 1) && (dag->preferred_parent != NULL) 
         && (dag->preferred_parent->rank != RPL_INFINITE_RANK) 
         && (dag->preferred_parent->hop_distance != 0xff)) {
-        uint8_t my_hop_distance = dag->preferred_parent->hop_distance + 1;
+        uint8_t my_hop_distance = dag->rank == ROOT_RANK(dag->instance) ?
+                                  0 : dag->preferred_parent->hop_distance + 1;
         hop_distance_measure_sum += (uint32_t)my_hop_distance;
         hop_distance_measure_count++;
       }
