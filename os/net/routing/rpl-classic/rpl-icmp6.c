@@ -1349,7 +1349,7 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   }
 #endif /* RPL_WITH_DAO_ACK */
   ++pos;
-#if With_SLA
+#if WITH_SLA
   buffer[pos++] = 1; /* reserved */
 #else
   buffer[pos++] = 0; /* reserved */
