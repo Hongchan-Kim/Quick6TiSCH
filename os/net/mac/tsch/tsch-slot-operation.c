@@ -251,10 +251,6 @@ static rtimer_clock_t asap_curr_slot_end;
 static uint16_t asap_curr_passed_timeslots; /* Includes the first (triggering) slot */
 static uint16_t asap_curr_passed_timeslots_except_first_slot;
 static uint16_t asap_timeslot_diff_at_the_end;
-
-/* To filter out data frames received incorrectly 
-at the time of previous ACK or B-ACK reception */
-static uint8_t asap_rx_duration_valid;
 #endif
 
 #if WITH_UPA
@@ -3110,10 +3106,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
   PT_BEGIN(pt);
 
-#if WITH_ASAP
-  asap_rx_duration_valid = 0;
-#endif
-
 #if WITH_A3
   a3_rx_rssi = 0;
   a3_rx_result = 0; /* 0: idle, 1: success, 2: others, 3: collision */
@@ -3183,6 +3175,18 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     regular_slot_timestamp_rx[2] = RTIMER_NOW();
 #endif
 
+#if WITH_UPA || WITH_SLA || WITH_ASAP
+    /* To filter out data frames received incorrectly 
+       at the time of previous ACK or B-ACK reception */
+    if(NETSTACK_RADIO.pending_packet()) {
+      uint8_t invalid_pending_rx_buf[TSCH_PACKET_MAX_LEN];
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "!invalid pending rx"));
+      NETSTACK_RADIO.read((void *)invalid_pending_rx_buf, 0);
+    }
+#endif
+
     packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
 
     if(!packet_seen) {
@@ -3243,15 +3247,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       regular_slot_timestamp_rx[4] = RTIMER_NOW();
 #endif
 
-#if WITH_ASAP
-      rtimer_clock_t asap_rx_end_time = RTIMER_NOW();
-      if((unsigned)RTIMER_CLOCK_DIFF(asap_rx_end_time, rx_start_time) < ASAP_RX_DURATION_VALID_THRESHOLD) {
-        asap_rx_duration_valid = 0;
-      } else {
-        asap_rx_duration_valid = 1;
-      }
-#endif
-
       tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
 
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegRx5: after tsch_radio_off() */
@@ -3288,12 +3283,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
           frame802154_check_dest_panid(&frame) &&
           frame802154_extract_linkaddr(&frame, &source_address, &destination_address);
 
-#if WITH_ASAP
-      if(asap_rx_duration_valid == 0) {
-        frame_valid = 0;
-      }
-#endif
-
 #if WITH_A3
         a3_rx_frame_valid = frame_valid;
 #endif
@@ -3317,19 +3306,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
         if(!frame_valid) {
-#if WITH_ASAP
-          if(asap_rx_duration_valid == 0) {
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                "!invalid rx duration"));
-          } else {
-#endif
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
               "!failed to parse frame %u %u", header_len, current_input->len));
-#if WITH_ASAP
-          }
-#endif
         }
 
 #if HCK_DBG_REGULAR_SLOT_DETAIL
