@@ -1505,7 +1505,7 @@ packet_sent(void *ptr, int status, int transmissions)
     return;
   }
 
-#if WITH_UPA
+#if WITH_UPA && UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
   int upa_sent_in_batch = 0;
   if(transmissions >= 0xff) {
     upa_sent_in_batch = 1;
@@ -1575,7 +1575,7 @@ packet_sent(void *ptr, int status, int transmissions)
     }
   }
 
-#if WITH_UPA
+#if WITH_UPA && UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
   /* call link_stats_packet_sent only for packets sent in regular schedule */
   if(upa_sent_in_batch == 0) {
     /* Update neighbor link statistics */

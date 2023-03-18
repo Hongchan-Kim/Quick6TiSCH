@@ -464,6 +464,7 @@
 #if WITH_UPA
 #define UPA_TRIPLE_CCA                             1
 #define UPA_RX_SLOT_POLICY                         1 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
+#define UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH    0
 
 #define UPA_DBG_ESSENTIAL                          1
 #define UPA_DBG_OPERATION                          0

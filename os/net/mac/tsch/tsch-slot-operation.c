@@ -2485,7 +2485,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     current_packet->transmissions++;
     current_packet->ret = mac_tx_status;
 
-#if WITH_UPA
+#if WITH_UPA && UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
     current_packet->upa_sent_in_batch = 0;
 #endif
 
@@ -2961,8 +2961,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     uint8_t upa_seq = 0;
     for(upa_seq = 0; upa_seq < upa_pkts_to_send; upa_seq++) {
       upa_tx_slot_packet_array[upa_seq]->transmissions++;
+#if UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
       upa_tx_slot_packet_array[upa_seq]->upa_sent_in_batch = 1;
-
+#endif
       uint8_t upa_result = (upa_b_ack_received_info & (1 << upa_seq)) >> upa_seq;
       if(upa_result == 1) {
         upa_tx_slot_packet_array[upa_seq]->ret = MAC_TX_OK;

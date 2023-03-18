@@ -1573,7 +1573,7 @@ tsch_tx_process_pending(void)
 #endif
 
 #if WITH_OST
-#if WITH_UPA
+#if WITH_UPA && UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
     if(p->upa_sent_in_batch == 0) { /* Sent in regular schcedule */
       ost_post_process_rx_t_offset(p);
     }
@@ -1656,7 +1656,7 @@ tsch_tx_process_pending(void)
       }
     }
 
-#if WITH_UPA
+#if WITH_UPA && UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
     if(p->upa_sent_in_batch == 1) { /* sent in exclusive period */
       /* Call packet_sent callback */
       mac_call_sent_callback(p->sent, p->ptr, p->ret, 0xff + p->transmissions);

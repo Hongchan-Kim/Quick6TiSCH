@@ -114,7 +114,7 @@ struct tsch_packet {
 #if WITH_SLA
   uint8_t sla_is_broadcast;
 #endif
-#if WITH_UPA
+#if WITH_UPA && UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
   uint8_t upa_sent_in_batch;
 #endif
 
