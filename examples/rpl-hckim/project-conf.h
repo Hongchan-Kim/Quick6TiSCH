@@ -28,7 +28,7 @@
 
 #define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
 
-#define HCK_RPL_FIXED_TOPOLOGY                     1
+#define HCK_RPL_FIXED_TOPOLOGY                     0
 #if HCK_RPL_FIXED_TOPOLOGY
 #define RPL_CONF_DEFAULT_LIFETIME                  RPL_INFINITE_LIFETIME
 #endif /* HCK_RPL_FIXED_TOPOLOGY */
@@ -107,10 +107,10 @@
  */
 #if WITH_IOTLAB
 #define WITH_UPWARD_TRAFFIC                        1
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 2)
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4)
 
 #define WITH_DOWNWARD_TRAFFIC                      0
-#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 2)
+#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 4)
 
 #define APP_PRINT_NODE_INFO_DELAY                  (1 * 60 * CLOCK_SECOND / 2)
 
@@ -118,8 +118,8 @@
 
 #define APP_RESET_LOG_DELAY                        (5 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (6 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
-#define APP_PRINT_LOG_DELAY                        (68 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
+#define APP_PRINT_LOG_DELAY                        (37 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 4)
 
 #else /* HCK_RPL_FIXED_TOPOLOGY */
@@ -127,16 +127,15 @@
 #define APP_TOPOLOGY_OPT_DURING_BOOTSTRAP          1
 
 #if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
-#define APP_TOPOLOGY_OPT_START_DELAY               (5 * 60 * CLOCK_SECOND)
-#define APP_TOPOLOGY_OPT_PERIOD                    (25 * 60 * CLOCK_SECOND)
+#define APP_TOPOLOGY_OPT_START_DELAY               (3 * 60 * CLOCK_SECOND)
+#define APP_TOPOLOGY_OPT_PERIOD                    (20 * 60 * CLOCK_SECOND)
 #define APP_TOPOLOGY_OPT_SEND_INTERVAL             (1 * 60 * CLOCK_SECOND / 2)
 #define APP_TOPOLOGY_OPT_MAX_TX                    (APP_TOPOLOGY_OPT_PERIOD / APP_TOPOLOGY_OPT_SEND_INTERVAL)
 
-#define APP_RESET_LOG_DELAY                        (32 * 60 * CLOCK_SECOND)
-#define APP_DATA_START_DELAY                       (33 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
-
-#define APP_PRINT_LOG_DELAY                        (95 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_RESET_LOG_DELAY                        (25 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (26 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
+#define APP_PRINT_LOG_DELAY                        (57 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 4)
 
 #else /* APP_TOPOLOGY_OPT_DURING_BOOTSTRAP */
@@ -147,7 +146,7 @@
 //#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
 
 #define APP_PRINT_LOG_DELAY                        (119 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
-#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 3)
+#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 4)
 
 #endif /* APP_TOPOLOGY_OPT_DURING_BOOTSTRAP */
 
@@ -310,8 +309,13 @@
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
+#if HCK_RPL_FIXED_TOPOLOGY
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
+#else
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        17 // broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_UNICAST_PERIOD              20 // unicast, should be longer than (2N-2)/3 to provide contention-free links
+#endif
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
 #define ALICE_EARLY_PACKET_DROP                    0
@@ -409,7 +413,7 @@
 #define WITH_A3                                    0
 #if WITH_A3
 #undef ORCHESTRA_CONF_UNICAST_PERIOD
-#define ORCHESTRA_CONF_UNICAST_PERIOD              40
+#define ORCHESTRA_CONF_UNICAST_PERIOD              20 // 20, 40
 
 #if WITH_ALICE
 #undef TSCH_SCHEDULE_CONF_MAX_LINKS
@@ -417,7 +421,7 @@
 #endif
 
 #define A3_ALICE1_ORB2_OSB3                        1
-#define A3_MAX_ZONE                                8 // 2, 4, 8
+#define A3_MAX_ZONE                                4 // 2, 4, 8
 
 #define A3_INITIAL_NUM_OF_SLOTS                    1
 #define A3_INITIAL_NUM_OF_PKTS                     0
