@@ -116,39 +116,44 @@
 
 #if HCK_RPL_FIXED_TOPOLOGY
 
-#define APP_RESET_LOG_DELAY                        (5 * 60 * CLOCK_SECOND)
+#define APP_RESET_BEFORE_DATA_DELAY                (5 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (6 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
-#define APP_PRINT_LOG_DELAY                        (37 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_PRINT_LOG_DELAY                        (37 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 1
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 4)
 
 #else /* HCK_RPL_FIXED_TOPOLOGY */
 
-#define APP_TOPOLOGY_OPT_DURING_BOOTSTRAP          1
+#define APP_OPT_DURING_BOOTSTRAP                   1
 
-#if APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
-#define APP_TOPOLOGY_OPT_START_DELAY               (3 * 60 * CLOCK_SECOND)
-#define APP_TOPOLOGY_OPT_PERIOD                    (20 * 60 * CLOCK_SECOND)
+#if APP_OPT_DURING_BOOTSTRAP
+#define APP_TOPOLOGY_OPT_START_DELAY               (5 * 60 * CLOCK_SECOND)
+#define APP_TOPOLOGY_OPT_PERIOD                    (25 * 60 * CLOCK_SECOND)
 #define APP_TOPOLOGY_OPT_SEND_INTERVAL             (1 * 60 * CLOCK_SECOND / 2)
 #define APP_TOPOLOGY_OPT_MAX_TX                    (APP_TOPOLOGY_OPT_PERIOD / APP_TOPOLOGY_OPT_SEND_INTERVAL)
+#define APP_TOPOLOGY_OPT_RESET_DELAY               (32 * 60 * CLOCK_SECOND)
 
-#define APP_RESET_LOG_DELAY                        (25 * 60 * CLOCK_SECOND)
-#define APP_DATA_START_DELAY                       (26 * 60 * CLOCK_SECOND)
+#define APP_TRAFFIC_OPT_START_DELAY                (33 * 60 * CLOCK_SECOND)
+#define APP_TRAFFIC_OPT_PERIOD                     (10 * 60 * CLOCK_SECOND)
+#define APP_TRAFFIC_OPT_UPWARD_SEND_INTERVAL       APP_UPWARD_SEND_INTERVAL
+#define APP_TRAFFIC_OPT_MAX_UPWARD_TX              (APP_TRAFFIC_OPT_PERIOD / APP_TRAFFIC_OPT_UPWARD_SEND_INTERVAL)
+#define APP_TRAFFIC_OPT_DOWNWARD_SEND_INTERVAL     APP_DOWNWARD_SEND_INTERVAL
+#define APP_TRAFFIC_OPT_MAX_DOWNWARD_TX            (APP_TRAFFIC_OPT_PERIOD / APP_TRAFFIC_OPT_DOWNWARD_SEND_INTERVAL)
+
+#define APP_RESET_BEFORE_DATA_DELAY                (45 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (46 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
-#define APP_PRINT_LOG_DELAY                        (57 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_PRINT_LOG_DELAY                        (77 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 1
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 4)
 
-#else /* APP_TOPOLOGY_OPT_DURING_BOOTSTRAP */
-#define APP_RESET_LOG_DELAY                        (52 * 60 * CLOCK_SECOND)
+#else /* APP_OPT_DURING_BOOTSTRAP */
+#define APP_RESET_BEFORE_DATA_DELAY                (52 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (57 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
-//#define APP_DATA_START_DELAY                       (2 * 60 * CLOCK_SECOND)
-//#define APP_DATA_PERIOD                            (8 * 60 * CLOCK_SECOND)
-
 #define APP_PRINT_LOG_DELAY                        (119 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 4)
 
-#endif /* APP_TOPOLOGY_OPT_DURING_BOOTSTRAP */
+#endif /* APP_OPT_DURING_BOOTSTRAP */
 
 #endif /* HCK_RPL_FIXED_TOPOLOGY */
 
@@ -156,11 +161,6 @@
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
 #define APP_DOWNWARD_MAX_TX                        (APP_DATA_PERIOD / APP_DOWNWARD_SEND_INTERVAL)
-
-#define WITH_VARYING_PPM                           0
-#if WITH_VARYING_PPM
-#define VARY_LENGTH                                8
-#endif
 
 /* Orchestra or ALICE
    - Wihtout any: Max in single hop: 87, Max in multi hop: 70
@@ -228,6 +228,7 @@
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
 #define RPL_RELAXED_ETX_NOACK_PENALTY              0
 #define RPL_MRHOF_CONF_SQUARED_ETX                 0
+#define RPL_CONF_PARENT_SWITCH_THRESHOLD           192 /* 96 (0.75), 128 (1), 192 (1.5) */
 #define RPL_MODIFIED_DAO_OPERATION_1               RPL_CONF_WITH_DAO_ACK /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 //#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /*  original: 0, set 1 in ALICE to enable local repair, quickly find another parent. */
@@ -619,11 +620,11 @@
 #undef APP_UPWARD_SEND_INTERVAL
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 60 / NUM_OF_PACKETS_PER_SECOND)
 
-#undef APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
-#define APP_TOPOLOGY_OPT_DURING_BOOTSTRAP          0
+#undef APP_OPT_DURING_BOOTSTRAP
+#define APP_OPT_DURING_BOOTSTRAP                   0
 
-#undef APP_RESET_LOG_DELAY
-#define APP_RESET_LOG_DELAY                        (80 * 60 * CLOCK_SECOND)
+#undef APP_RESET_BEFORE_DATA_DELAY
+#define APP_RESET_BEFORE_DATA_DELAY                (80 * 60 * CLOCK_SECOND)
 #undef APP_DATA_START_DELAY
 #define APP_DATA_START_DELAY                       (5 * 60 * CLOCK_SECOND)
 #undef APP_DATA_PERIOD

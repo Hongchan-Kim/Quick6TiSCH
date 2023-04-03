@@ -67,9 +67,7 @@ struct tsch_packet * tsch_queue_burst_get_next_packet_for_nbr(const struct tsch_
 void tsch_queue_drop_packets(struct tsch_neighbor *n);
 #endif
 
-#if HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
 void tsch_queue_reset_except_n_eb(void);
-#endif
 #if HCK_ORCHESTRA_PACKET_OFFLOADING
 void tsch_queue_change_attr_of_packets_in_queue(const struct tsch_neighbor *target_nbr, 
                                            uint16_t sf_handle, uint16_t timeslot);

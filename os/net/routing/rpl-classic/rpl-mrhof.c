@@ -85,11 +85,19 @@
  * in order to switch preferred parent. Default in RFC6719: 192, eq ETX of 1.5.
  * We use a more aggressive setting: 96, eq ETX of 0.75.
  */
+#ifdef RPL_CONF_PARENT_SWITCH_THRESHOLD
+#define PARENT_SWITCH_THRESHOLD RPL_CONF_PARENT_SWITCH_THRESHOLD
+#else
 #define PARENT_SWITCH_THRESHOLD 96 /* Eq ETX of 0.75 */
+#endif
 #else /* !RPL_MRHOF_SQUARED_ETX */
 #define MAX_LINK_METRIC     2048 /* Eq ETX of 4 */
+#ifdef RPL_CONF_PARENT_SWITCH_THRESHOLD
+#define PARENT_SWITCH_THRESHOLD RPL_CONF_PARENT_SWITCH_THRESHOLD
+#else
 #define PARENT_SWITCH_THRESHOLD 160 /* Eq ETX of 1.25 (results in a churn comparable
 to the threshold of 96 in the non-squared case) */
+#endif
 #endif /* !RPL_MRHOF_SQUARED_ETX */
 
 /* Reject parents that have a higher path cost than the following. */

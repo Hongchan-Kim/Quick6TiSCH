@@ -722,7 +722,6 @@ tsch_queue_drop_packets(struct tsch_neighbor *n)
 }
 #endif
 /*---------------------------------------------------------------------------*/
-#if HCK_RPL_FIXED_TOPOLOGY || APP_TOPOLOGY_OPT_DURING_BOOTSTRAP
 /* Flush all neighbor queues */
 void
 tsch_queue_reset_except_n_eb(void)
@@ -769,7 +768,6 @@ tsch_queue_reset_except_n_eb(void)
             bc_queued_pkts,
             eb_queued_pkts);
 }
-#endif
 /*---------------------------------------------------------------------------*/
 /* Flush all neighbor queues */
 void
