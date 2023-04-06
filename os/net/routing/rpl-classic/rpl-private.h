@@ -52,6 +52,10 @@
 extern uint8_t fixed_parent_id[NODE_NUM];
 #endif
 
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* timer variable */
+extern uint8_t rpl_parent_switch_restriction_time;
+#endif
+
 /*---------------------------------------------------------------------------*/
 /** \brief Is IPv6 address addr the link-local, all-RPL-nodes
     multicast address? */

@@ -344,6 +344,11 @@ rpl_ipv6_neighbor_callback(uip_ds6_nbr_t *nbr)
     if(instance->used == 1 ) {
       p = rpl_find_parent_any_dag(instance, &nbr->ipaddr);
       if(p != NULL) {
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0
+        if(p == instance->current_dag->preferred_parent) {
+          rpl_parent_switch_restriction_time = 0;
+        }
+#endif
         p->rank = RPL_INFINITE_RANK;
         p->hop_distance = 0xff; /* hckim to measure hop distance accurately */
         /* Trigger DAG rank recalculation. */

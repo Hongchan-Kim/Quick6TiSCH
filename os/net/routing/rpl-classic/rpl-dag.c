@@ -77,6 +77,15 @@ uint8_t fixed_parent_id[NODE_NUM] = {0,  1,  1,  1,  1,  1,  9,  1,  1,  9,
 #endif
 #endif
 
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* timer variable */
+static uint8_t apply_rpl_parent_switch_restriction = 0;
+void set_apply_rpl_parent_switch_restriction(uint8_t i)
+{
+  LOG_HK("| apply rpl parent switch restriction %u\n", RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT);
+  apply_rpl_parent_switch_restriction = i;
+}
+#endif
+
 static uint16_t rpl_parent_switch_count;
 static uint16_t rpl_local_repair_count;
 
@@ -270,6 +279,13 @@ static void
 rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
 {
   if(dag != NULL && dag->preferred_parent != p) {
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* restrict parent switch */
+    if(apply_rpl_parent_switch_restriction == 1
+       && rpl_parent_switch_restriction_time > 0
+       && p != NULL) {
+      return;
+    }
+#endif
     LOG_INFO("rpl_set_preferred_parent ");
     if(p != NULL) {
       LOG_INFO_6ADDR(rpl_parent_get_ipaddr(p));
@@ -292,6 +308,7 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
 
 #ifdef RPL_CALLBACK_PARENT_SWITCH
     RPL_CALLBACK_PARENT_SWITCH(dag->preferred_parent, p);
+#endif /* RPL_CALLBACK_PARENT_SWITCH */
 
 #if RPL_MODIFIED_DAO_OPERATION_1
     rpl_parent_t *old_p = dag->preferred_parent;
@@ -306,13 +323,26 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
       }
     }
 #endif
-#endif /* RPL_CALLBACK_PARENT_SWITCH */
 
     /* Always keep the preferred parent locked, so it remains in the
      * neighbor table. */
     nbr_table_unlock(rpl_parents, dag->preferred_parent);
     nbr_table_lock(rpl_parents, p);
     dag->preferred_parent = p;
+
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* reset timer */
+    if(rpl_parent_switch_restriction_time == 0
+       && p != NULL) {
+      if(apply_rpl_parent_switch_restriction == 1) {
+        rpl_parent_switch_restriction_time = RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT;
+      } else {
+        rpl_parent_switch_restriction_time = 0;
+      }
+    } else if(p == NULL) {
+      rpl_parent_switch_restriction_time = 0;
+    }
+#endif
+
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -671,6 +701,9 @@ rpl_alloc_dag(uint8_t instance_id, uip_ipaddr_t *dag_id)
       dag->rank = RPL_INFINITE_RANK;
       dag->min_rank = RPL_INFINITE_RANK;
       dag->instance = instance;
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0
+      rpl_parent_switch_restriction_time = 0;
+#endif
       return dag;
     }
   }
@@ -885,6 +918,9 @@ rpl_select_dag(rpl_instance_t *instance, rpl_parent_t *p)
 
   if(!acceptable_rank(best_dag, best_dag->rank)) {
     LOG_WARN("New rank unacceptable!\n");
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* unaccepable rank */
+    rpl_parent_switch_restriction_time = 0;
+#endif
     rpl_set_preferred_parent(instance->current_dag, NULL);
     if(RPL_IS_STORING(instance) && last_parent != NULL) {
       /* Send a No-Path DAO to the removed preferred parent. */
@@ -1007,6 +1043,9 @@ rpl_select_parent(rpl_dag_t *dag)
     dag->rank = rpl_rank_via_parent(dag->preferred_parent);
 #endif /* RPL_WITH_PROBING */
   } else {
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* set preferred parent NULL */
+    rpl_parent_switch_restriction_time = 0;
+#endif
     rpl_set_preferred_parent(dag, NULL);
   }
 
@@ -1035,6 +1074,9 @@ rpl_nullify_parent(rpl_parent_t *parent)
      need to handle this condition in order to trigger uip_ds6_defrt_rm. */
   if(parent == dag->preferred_parent || dag->preferred_parent == NULL) {
     dag->rank = RPL_INFINITE_RANK;
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0
+    rpl_parent_switch_restriction_time = 0;
+#endif
     if(dag->joined) {
       if(dag->instance->def_route != NULL) {
         LOG_DBG("Removing default route ");
@@ -1383,6 +1425,10 @@ rpl_add_dag(uip_ipaddr_t *from, rpl_dio_t *dio)
 static void
 global_repair(uip_ipaddr_t *from, rpl_dag_t *dag, rpl_dio_t *dio)
 {
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0
+  rpl_parent_switch_restriction_time = 0;
+#endif
+
   rpl_parent_t *p;
 
   remove_parents(dag, 0);
@@ -1430,6 +1476,10 @@ rpl_local_repair(rpl_instance_t *instance)
 
   ++rpl_local_repair_count;
   LOG_HK("local_repair %u |\n", rpl_local_repair_count);
+
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0
+  rpl_parent_switch_restriction_time = 0;
+#endif
 
   for(i = 0; i < RPL_MAX_DAG_PER_INSTANCE; i++) {
     if(instance->dag_table[i].used) {
@@ -1501,6 +1551,12 @@ rpl_process_parent_event(rpl_instance_t *instance, rpl_parent_t *p)
   }
 
   if(!acceptable_rank(p->dag, rpl_rank_via_parent(p))) {
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* unacceptable rank */
+    if(p == instance->current_dag->preferred_parent) {
+      rpl_parent_switch_restriction_time = 0;
+    }
+#endif
+
     /* The candidate parent is no longer valid: the rank increase resulting
        from the choice of it as a parent would be too high. */
     LOG_WARN("Unacceptable rank %u (Current min %u, MaxRankInc %u)\n", (unsigned)p->rank,
@@ -1710,6 +1766,10 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
   p->hop_distance = dio->hop_distance; /* hckim to measure hop distance accurately */
 
   if(dio->rank == RPL_INFINITE_RANK && p == dag->preferred_parent) {
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0
+    rpl_parent_switch_restriction_time = 0;
+#endif
+
     /* Our preferred parent advertised an infinite rank, reset DIO timer */
     rpl_reset_dio_timer(instance);
   }

@@ -150,6 +150,11 @@ rpl_ext_header_hbh_update(uint8_t *ext_buf, int opt_offset)
     LOG_WARN("Loop detected - senderrank: %d my-rank: %d sender_closer: %d\n",
            sender_rank, instance->current_dag->rank,
            sender_closer);
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* restrict parent switch */
+    if(sender == instance->current_dag->preferred_parent) {
+      rpl_parent_switch_restriction_time = 0;
+    }
+#endif
 #if !HCK_RPL_FIXED_TOPOLOGY
     /* Attempt to repair the loop by sending a unicast DIO back to the sender
      * so that it gets a fresh update of our rank. */

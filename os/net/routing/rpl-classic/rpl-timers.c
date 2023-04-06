@@ -64,6 +64,10 @@ static uint32_t hop_distance_measure_sum;
 static uint8_t ignore_redundancy = 1;
 #endif
 /*---------------------------------------------------------------------------*/
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* timer variable */
+uint8_t rpl_parent_switch_restriction_time = 0;
+#endif
+/*---------------------------------------------------------------------------*/
 void print_log_rpl_timers()
 {
   rpl_dag_t *dag = rpl_get_any_dag();
@@ -116,6 +120,13 @@ static uint8_t dio_send_ok;
 static void
 handle_periodic_timer(void *ptr)
 {
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* decrease timer */
+  if(rpl_parent_switch_restriction_time > 0) {
+    rpl_parent_switch_restriction_time--;
+  } else {
+    rpl_parent_switch_restriction_time = 0;
+  }
+#endif
   rpl_dag_t *dag = rpl_get_any_dag();
 
   rpl_purge_dags();

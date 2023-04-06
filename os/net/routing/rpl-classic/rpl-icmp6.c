@@ -790,6 +790,11 @@ dao_input_storing(void)
        DAG_RANK(parent->rank, instance) < DAG_RANK(dag->rank, instance)) {
       LOG_WARN("Loop detected when receiving a unicast DAO from a node with a lower rank! (%u < %u)\n",
              DAG_RANK(parent->rank, instance), DAG_RANK(dag->rank, instance));
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0
+      if(parent == dag->preferred_parent) {
+        rpl_parent_switch_restriction_time = 0;
+      }
+#endif
 #if !HCK_RPL_FIXED_TOPOLOGY
       parent->rank = RPL_INFINITE_RANK;
       parent->hop_distance = 0xff; /* hckim to measure hop distance accurately */
@@ -801,6 +806,9 @@ dao_input_storing(void)
     /* If we get the DAO from our parent, we also have a loop. */
     if(parent != NULL && parent == dag->preferred_parent) {
       LOG_WARN("Loop detected when receiving a unicast DAO from our parent\n");
+#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0 /* loop detected */
+      rpl_parent_switch_restriction_time = 0;
+#endif
 #if !HCK_RPL_FIXED_TOPOLOGY
       parent->rank = RPL_INFINITE_RANK;
       parent->hop_distance = 0xff; /* hckim to measure hop distance accurately */
