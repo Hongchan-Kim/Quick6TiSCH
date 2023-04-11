@@ -116,12 +116,6 @@ reset_eval(uint8_t phase)
   tsch_queue_reset_except_n_eb();
   tsch_queue_free_unused_neighbors();
 
-#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0
-  if(phase == 0) { /* At the end of topology optimization */
-    set_apply_rpl_parent_switch_restriction(1);
-  }
-#endif
-
   reset_log_app_client();         /* udp-client.c */
   reset_log_tcpip();              /* tcpip.c */
   reset_log_sicslowpan();         /* sicslowpan.c */
@@ -148,8 +142,8 @@ reset_eval(uint8_t phase)
           WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
           WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
           APP_PAYLOAD_LEN);
-  LOG_HK("eval_config 3 hysteresis %u restrict_time %u slot_len %u ucsf_period %u |\n", 
-          RPL_CONF_PARENT_SWITCH_THRESHOLD, RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT,
+  LOG_HK("eval_config 3 hysteresis %u slot_len %u ucsf_period %u |\n", 
+          RPL_CONF_PARENT_SWITCH_THRESHOLD, 
           HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
 #if WITH_UPA
   LOG_HK("eval_config 4 with_upa %u |\n", WITH_UPA);
@@ -289,8 +283,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
           WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
           WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
           APP_PAYLOAD_LEN);
-  LOG_HK("eval_config 3 hysteresis %u restrict_time %u slot_len %u ucsf_period %u |\n", 
-          RPL_CONF_PARENT_SWITCH_THRESHOLD, RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT,
+  LOG_HK("eval_config 3 hysteresis %u slot_len %u ucsf_period %u |\n", 
+          RPL_CONF_PARENT_SWITCH_THRESHOLD, 
           HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
 #if WITH_UPA
   LOG_HK("eval_config 4 with_upa %u |\n", WITH_UPA);

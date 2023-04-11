@@ -226,10 +226,9 @@
 #define RPL_FIRST_MEASURE_PERIOD                   (1 * 60)
 #define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
-#define RPL_RELAXED_ETX_NOACK_PENALTY              0
+#define RPL_RELAXED_ETX_NOACK_PENALTY              1
 #define RPL_MRHOF_CONF_SQUARED_ETX                 0
-#define RPL_CONF_PARENT_SWITCH_THRESHOLD           96 /* 96 (0.75), 127 (0.99), 128 (1) */
-#define RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT      180 /* seconds */
+#define RPL_CONF_PARENT_SWITCH_THRESHOLD           128 /* 96 (0.75, default), 127 (0.99), 128 (1) */
 #define RPL_MODIFIED_DAO_OPERATION_1               RPL_CONF_WITH_DAO_ACK /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 //#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /*  original: 0, set 1 in ALICE to enable local repair, quickly find another parent. */

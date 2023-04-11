@@ -45,10 +45,6 @@
 #include "net/ipv6/uip-ds6.h"
 #include "sys/ctimer.h"
 
-#if RPL_PARENT_SWITCH_RESTRICTION_TIMEOUT > 0
-void set_apply_rpl_parent_switch_restriction(uint8_t i);
-#endif
-
 void print_log_rpl_timers();
 void print_log_rpl();
 
