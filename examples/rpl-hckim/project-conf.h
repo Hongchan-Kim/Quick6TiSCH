@@ -418,7 +418,7 @@
 
 #if WITH_ALICE
 #undef TSCH_SCHEDULE_CONF_MAX_LINKS
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * MAX_NBR_NODE_NUM) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
 #endif
 
 #define A3_ALICE1_ORB2_OSB3                        1
