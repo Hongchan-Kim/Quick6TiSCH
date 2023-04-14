@@ -29,8 +29,9 @@ static struct simple_udp_connection udp_conn;
 #define APP_DOWN_INTERVAL (APP_DOWNWARD_SEND_INTERVAL / (NON_ROOT_NUM + 1))
 #if APP_OPT_DURING_BOOTSTRAP
 #define APP_TRAFFIC_OPT_DOWN_INTERVAL APP_DOWN_INTERVAL
+static unsigned traffic_opt_count = 1;
 #endif
-static unsigned count = 1;
+static unsigned data_count = 1;
 static unsigned dest_id = APP_ROOT_ID + 1;
 #endif
 
@@ -115,7 +116,6 @@ reset_log_app_server()
 
 #if WITH_DOWNWARD_TRAFFIC
   dest_id = APP_ROOT_ID + 1;
-  count = 1;
 #endif
 }
 /*---------------------------------------------------------------------------*/
@@ -332,15 +332,19 @@ PROCESS_THREAD(udp_server_process, ev, data)
         uint64_t app_traffic_opt_start_asn = tsch_calculate_current_asn();
         LOG_HK("| traffic_opt_start at %llx \n", app_traffic_opt_start_asn);
       }
-      etimer_set(&traffic_opt_send_timer, APP_TRAFFIC_OPT_DOWN_INTERVAL);
-      etimer_set(&traffic_opt_periodic_timer, APP_TRAFFIC_OPT_DOWNWARD_SEND_INTERVAL);
+      if(traffic_opt_count <= APP_TRAFFIC_OPT_MAX_DOWNWARD_TX) {
+        etimer_set(&traffic_opt_send_timer, APP_TRAFFIC_OPT_DOWN_INTERVAL);
+      }
+      if(traffic_opt_count < APP_TRAFFIC_OPT_MAX_DOWNWARD_TX) {
+        etimer_set(&traffic_opt_periodic_timer, APP_TRAFFIC_OPT_DOWNWARD_SEND_INTERVAL);
+      }
     } else if(data == &traffic_opt_send_timer) {
-      if(count <= APP_TRAFFIC_OPT_MAX_DOWNWARD_TX) {
+      if(traffic_opt_count <= APP_TRAFFIC_OPT_MAX_DOWNWARD_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
 
         uint64_t app_tx_down_asn = tsch_calculate_current_asn();
 
-        app_seqno = (2 << 28) + ((uint32_t)dest_id << 16) + count;
+        app_seqno = (2 << 28) + ((uint32_t)dest_id << 16) + traffic_opt_count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
         memcpy(app_payload + current_payload_len - sizeof(app_tx_down_asn) - sizeof(app_seqno) - sizeof(app_magic), 
@@ -354,7 +358,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
         LOG_INFO_("\n");
 
         LOG_HK("tx_down %u | traffic-opt to %u a_seq %lx len %u at %llx\n", 
-                  count,
+                  traffic_opt_count,
                   dest_id,
                   app_seqno,
                   current_payload_len, 
@@ -365,7 +369,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
         dest_id++;
         if(dest_id > NODE_NUM) { /* the last non-root node */
           dest_id = 2;
-          count++;
+          traffic_opt_count++;
         } else { /* not the last non-root node yet */
           etimer_reset(&traffic_opt_send_timer);
         }
@@ -378,15 +382,23 @@ PROCESS_THREAD(udp_server_process, ev, data)
     }
 #if WITH_DOWNWARD_TRAFFIC
     else if(data == &data_start_timer || data == &data_periodic_timer) {
-      etimer_set(&data_send_timer, APP_DOWN_INTERVAL);
-      etimer_set(&data_periodic_timer, APP_DOWNWARD_SEND_INTERVAL);
+      if(data == &data_start_timer) {
+        uint64_t app_data_start_asn = tsch_calculate_current_asn();
+        LOG_HK("| data_start at %llx \n", app_data_start_asn);
+      }
+      if(data_count <= APP_DOWNWARD_MAX_TX) {
+        etimer_set(&data_send_timer, APP_DOWN_INTERVAL);
+      }
+      if(data_count < APP_DOWNWARD_MAX_TX) {
+        etimer_set(&data_periodic_timer, APP_DOWNWARD_SEND_INTERVAL);
+      }
     } else if(data == &data_send_timer) {
-      if(count <= APP_DOWNWARD_MAX_TX) {
+      if(data_count <= APP_DOWNWARD_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
 
         uint64_t app_tx_down_asn = tsch_calculate_current_asn();
 
-        app_seqno = (2 << 28) + ((uint32_t)dest_id << 16) + count;
+        app_seqno = (2 << 28) + ((uint32_t)dest_id << 16) + data_count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
         memcpy(app_payload + current_payload_len - sizeof(app_tx_down_asn) - sizeof(app_seqno) - sizeof(app_magic), 
@@ -400,7 +412,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
         LOG_INFO_("\n");
 
         LOG_HK("tx_down %u | to %u a_seq %lx len %u at %llx\n", 
-                  count,
+                  data_count,
                   dest_id,
                   app_seqno,
                   current_payload_len, 
@@ -411,7 +423,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
         dest_id++;
         if(dest_id > NODE_NUM) { /* the last non-root node */
           dest_id = 2;
-          count++;
+          data_count++;
         } else { /* not the last non-root node yet */
           etimer_reset(&data_send_timer);
         }
