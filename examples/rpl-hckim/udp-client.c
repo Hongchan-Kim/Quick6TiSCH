@@ -27,7 +27,9 @@
 static struct simple_udp_connection udp_conn;
 
 #if WITH_UPWARD_TRAFFIC || APP_OPT_DURING_BOOTSTRAP
-static unsigned count = 1;
+static unsigned topology_opt_count = 1;
+static unsigned traffic_opt_count = 1;
+static unsigned data_count = 1;
 #endif
 
 static uint16_t app_rxd_count;
@@ -95,10 +97,6 @@ app_down_sequence_register_seqno(uint16_t current_app_down_seqno)
 static void
 reset_log_app_client()
 {
-#if WITH_UPWARD_TRAFFIC
-  count = 1;
-#endif
-
   app_rxd_count = 0;
 
 #if APP_SEQNO_DUPLICATE_CHECK
@@ -311,12 +309,12 @@ PROCESS_THREAD(udp_client_process, ev, data)
         uint64_t app_topology_opt_start_asn = tsch_calculate_current_asn();
         LOG_HK("| topology_opt_start at %llx \n", app_topology_opt_start_asn);
       }
-      if(count <= APP_TOPOLOGY_OPT_MAX_TX) {
+      if(topology_opt_count <= APP_TOPOLOGY_OPT_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
 
         uint64_t app_tx_up_asn = tsch_calculate_current_asn();
 
-        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + count;
+        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + topology_opt_count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
         memcpy(app_payload + current_payload_len - sizeof(app_tx_up_asn) - sizeof(app_seqno) - sizeof(app_magic), 
@@ -330,7 +328,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_("\n");
 
         LOG_HK("tx_up %u | topology-opt to %u a_seq %lx len %u at %llx\n", 
-                  count,
+                  topology_opt_count,
                   HCK_GET_NODE_ID_FROM_IPADDR(&dest_ipaddr),
                   app_seqno,
                   current_payload_len,
@@ -338,9 +336,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
-        count++;
+        topology_opt_count++;
       }
-      if(count <= APP_TOPOLOGY_OPT_MAX_TX) {
+      if(topology_opt_count <= APP_TOPOLOGY_OPT_MAX_TX) {
         etimer_set(&topology_opt_periodic_timer, APP_TOPOLOGY_OPT_SEND_INTERVAL);
       }
     }
@@ -353,12 +351,12 @@ PROCESS_THREAD(udp_client_process, ev, data)
         uint64_t app_traffic_opt_start_asn = tsch_calculate_current_asn();
         LOG_HK("| traffic_opt_start at %llx \n", app_traffic_opt_start_asn);
       }
-      if(count <= APP_TRAFFIC_OPT_MAX_UPWARD_TX) {
+      if(traffic_opt_count <= APP_TRAFFIC_OPT_MAX_UPWARD_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
 
         uint64_t app_tx_up_asn = tsch_calculate_current_asn();
 
-        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + count;
+        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + traffic_opt_count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
         memcpy(app_payload + current_payload_len - sizeof(app_tx_up_asn) - sizeof(app_seqno) - sizeof(app_magic), 
@@ -372,7 +370,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_("\n");
 
         LOG_HK("tx_up %u | traffic-opt to %u a_seq %lx len %u at %llx\n", 
-                  count,
+                  traffic_opt_count,
                   HCK_GET_NODE_ID_FROM_IPADDR(&dest_ipaddr),
                   app_seqno,
                   current_payload_len,
@@ -380,9 +378,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
-        count++;
+        traffic_opt_count++;
       }
-      if(count <= APP_TRAFFIC_OPT_MAX_UPWARD_TX) {
+      if(traffic_opt_count <= APP_TRAFFIC_OPT_MAX_UPWARD_TX) {
         etimer_set(&traffic_opt_periodic_timer, APP_TRAFFIC_OPT_UPWARD_SEND_INTERVAL);
       }
     }
@@ -393,21 +391,29 @@ PROCESS_THREAD(udp_client_process, ev, data)
     }
 #if WITH_UPWARD_TRAFFIC
     else if(data == &data_start_timer || data == &data_periodic_timer) {
-      etimer_set(&data_send_timer, random_rand() % (APP_UPWARD_SEND_INTERVAL / 2));
-      etimer_set(&data_periodic_timer, APP_UPWARD_SEND_INTERVAL);
+      if(data == &data_start_timer) {
+        uint64_t app_data_start_asn = tsch_calculate_current_asn();
+        LOG_HK("| data_start at %llx \n", app_data_start_asn);
+      }
+      if(data_count <= APP_UPWARD_MAX_TX) {
+        etimer_set(&data_send_timer, random_rand() % (APP_UPWARD_SEND_INTERVAL / 2));
+      }
+      if(data_count < APP_UPWARD_MAX_TX) {
+        etimer_set(&data_periodic_timer, APP_UPWARD_SEND_INTERVAL);
+      }
     } else if(data == &data_send_timer) {
-      if(count <= APP_UPWARD_MAX_TX) {
+      if(data_count <= APP_UPWARD_MAX_TX) {
         uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
 
         uint64_t app_tx_up_asn = tsch_calculate_current_asn();
 
-        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + count;
+        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + data_count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
 #if HCK_ASAP_EVAL_01_SLA_REAL_TIME
-        if((count > (APP_UPWARD_MAX_TX / 3)) && (count <= (APP_UPWARD_MAX_TX / 3 * 2))) {
+        if((data_count > (APP_UPWARD_MAX_TX / 3)) && (data_count <= (APP_UPWARD_MAX_TX / 3 * 2))) {
           current_payload_len = APP_PAYLOAD_LEN_SECOND;
-        } else if(count > (APP_UPWARD_MAX_TX / 3 * 2)) {
+        } else if(data_count > (APP_UPWARD_MAX_TX / 3 * 2)) {
           current_payload_len = APP_PAYLOAD_LEN_THIRD;
         }
 #endif
@@ -427,7 +433,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_("\n");
 
         LOG_HK("tx_up %u | to %u a_seq %lx len %u at %llx\n", 
-                  count,
+                  data_count,
                   HCK_GET_NODE_ID_FROM_IPADDR(&dest_ipaddr),
                   app_seqno,
                   current_payload_len,
@@ -435,7 +441,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
-        count++;
+        data_count++;
 
 #if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
         eval_01_count++;
