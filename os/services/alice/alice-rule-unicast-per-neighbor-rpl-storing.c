@@ -407,7 +407,7 @@ alice_packet_cell_matching_on_the_fly(uint16_t *timeslot, uint16_t *channel_offs
 
 #if WITH_A3
     uint8_t a3_c_num_tx_slot = 1;
-    uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)&rx_linkaddr);
+    uip_ds6_nbr_t *it = uip_ds6_nbr_ll_lookup((uip_lladdr_t *)rx_linkaddr);
     if(it != NULL) {
       a3_c_num_tx_slot = it->a3_c_num_tx_slot;
     }
