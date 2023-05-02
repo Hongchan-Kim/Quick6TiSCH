@@ -28,8 +28,10 @@ static struct simple_udp_connection udp_conn;
 
 #if WITH_UPWARD_TRAFFIC || APP_OPT_DURING_BOOTSTRAP
 static unsigned topology_opt_count = 1;
+#if WITH_UPWARD_TRAFFIC
 static unsigned traffic_opt_count = 1;
 static unsigned data_count = 1;
+#endif
 #endif
 
 static uint16_t app_rxd_count;
@@ -411,10 +413,12 @@ PROCESS_THREAD(udp_client_process, ev, data)
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
 #if HCK_ASAP_EVAL_01_SLA_REAL_TIME
-        if((data_count > (APP_UPWARD_MAX_TX / 3)) && (data_count <= (APP_UPWARD_MAX_TX / 3 * 2))) {
+        if((data_count > (APP_UPWARD_MAX_TX / 4)) && (data_count <= (APP_UPWARD_MAX_TX / 4 * 2))) {
           current_payload_len = APP_PAYLOAD_LEN_SECOND;
-        } else if(data_count > (APP_UPWARD_MAX_TX / 3 * 2)) {
+        } else if((data_count > (APP_UPWARD_MAX_TX / 4 * 2)) && (data_count <= (APP_UPWARD_MAX_TX / 4 * 3))) {
           current_payload_len = APP_PAYLOAD_LEN_THIRD;
+        } else if(data_count > (APP_UPWARD_MAX_TX / 4 * 3)) {
+          current_payload_len = APP_PAYLOAD_LEN_FOURTH;
         }
 #endif
 

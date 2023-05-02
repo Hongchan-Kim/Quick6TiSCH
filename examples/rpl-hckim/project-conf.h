@@ -544,17 +544,18 @@
  */
 #define HCK_ASAP_EVAL_01_SLA_REAL_TIME             0
 #if HCK_ASAP_EVAL_01_SLA_REAL_TIME
-#define APP_PAYLOAD_MAX_LEN                        69
+#define APP_PAYLOAD_MAX_LEN                        63
 #define APP_PAYLOAD_MIN_LEN                        14
 #define APP_PAYLOAD_LEN_FIRST                      APP_PAYLOAD_MAX_LEN
 #define APP_PAYLOAD_LEN_SECOND                     APP_PAYLOAD_MIN_LEN
-#define APP_PAYLOAD_LEN_THIRD                      ((APP_PAYLOAD_MAX_LEN + APP_PAYLOAD_MIN_LEN) / 2)
+#define APP_PAYLOAD_LEN_THIRD                      (APP_PAYLOAD_MIN_LEN + 32)
+#define APP_PAYLOAD_LEN_FOURTH                     (APP_PAYLOAD_MIN_LEN + 16)
 
 #undef SLA_K_TH_PERCENTILE
 #define SLA_K_TH_PERCENTILE                        90
 
 #undef SLA_START_DELAY
-#define SLA_START_DELAY                            (6 * 60 * CLOCK_SECOND)
+#define SLA_START_DELAY                            (46 * 60 * CLOCK_SECOND)
 #endif /* HCK_ASAP_EVAL_01_SLA_REAL_TIME */
 
 #define HCK_ASAP_EVAL_02_UPA_SINGLE_HOP            0
