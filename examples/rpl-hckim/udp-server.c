@@ -27,10 +27,6 @@ static struct simple_udp_connection udp_conn;
 
 #if WITH_DOWNWARD_TRAFFIC
 #define APP_DOWN_INTERVAL (APP_DOWNWARD_SEND_INTERVAL / (NON_ROOT_NUM + 1))
-#if APP_OPT_DURING_BOOTSTRAP
-#define APP_TRAFFIC_OPT_DOWN_INTERVAL APP_DOWN_INTERVAL
-static unsigned traffic_opt_count = 1;
-#endif
 static unsigned data_count = 1;
 static unsigned dest_id = APP_ROOT_ID + 1;
 #endif
@@ -243,16 +239,6 @@ PROCESS_THREAD(udp_server_process, ev, data)
   static struct etimer reset_before_data_timer;
   static struct etimer print_log_timer;
 
-#if APP_OPT_DURING_BOOTSTRAP
-  static struct etimer topology_opt_start_timer;
-  static struct etimer topology_opt_reset_timer;
-#if WITH_DOWNWARD_TRAFFIC
-  static struct etimer traffic_opt_start_timer;
-  static struct etimer traffic_opt_periodic_timer;
-  static struct etimer traffic_opt_send_timer;
-#endif
-#endif
-
 #if WITH_DOWNWARD_TRAFFIC
   static struct etimer data_start_timer;
   static struct etimer data_periodic_timer;
@@ -277,14 +263,6 @@ PROCESS_THREAD(udp_server_process, ev, data)
   etimer_set(&print_node_info_timer, APP_PRINT_NODE_INFO_DELAY);
   etimer_set(&reset_before_data_timer, APP_RESET_BEFORE_DATA_DELAY);
   etimer_set(&print_log_timer, APP_PRINT_LOG_DELAY);
-
-#if APP_OPT_DURING_BOOTSTRAP
-  etimer_set(&topology_opt_start_timer, APP_TOPOLOGY_OPT_START_DELAY);
-  etimer_set(&topology_opt_reset_timer, APP_TOPOLOGY_OPT_RESET_DELAY);
-#if WITH_DOWNWARD_TRAFFIC
-  etimer_set(&traffic_opt_start_timer, (APP_TRAFFIC_OPT_START_DELAY + random_rand() % (APP_TRAFFIC_OPT_DOWNWARD_SEND_INTERVAL / 2)));
-#endif
-#endif
 
 #if WITH_DOWNWARD_TRAFFIC
   etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % (APP_DOWNWARD_SEND_INTERVAL / 2)));
@@ -319,64 +297,6 @@ PROCESS_THREAD(udp_server_process, ev, data)
     if(data == &print_node_info_timer) {
       print_iotlab_node_info();
     }
-#if APP_OPT_DURING_BOOTSTRAP
-    else if(data == &topology_opt_start_timer) {
-      uint64_t app_topology_opt_start_asn = tsch_calculate_current_asn();
-      LOG_HK("| topology_opt_start at %llx \n", app_topology_opt_start_asn);
-    } else if(data == &topology_opt_reset_timer) {
-      reset_eval(0);
-    }
-#if WITH_DOWNWARD_TRAFFIC
-    else if(data == &traffic_opt_start_timer || data == &traffic_opt_periodic_timer) {
-      if(data == &traffic_opt_start_timer) {
-        uint64_t app_traffic_opt_start_asn = tsch_calculate_current_asn();
-        LOG_HK("| traffic_opt_start at %llx \n", app_traffic_opt_start_asn);
-      }
-      if(traffic_opt_count <= APP_TRAFFIC_OPT_MAX_DOWNWARD_TX) {
-        etimer_set(&traffic_opt_send_timer, APP_TRAFFIC_OPT_DOWN_INTERVAL);
-      }
-      if(traffic_opt_count < APP_TRAFFIC_OPT_MAX_DOWNWARD_TX) {
-        etimer_set(&traffic_opt_periodic_timer, APP_TRAFFIC_OPT_DOWNWARD_SEND_INTERVAL);
-      }
-    } else if(data == &traffic_opt_send_timer) {
-      if(traffic_opt_count <= APP_TRAFFIC_OPT_MAX_DOWNWARD_TX) {
-        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, dest_id);
-
-        uint64_t app_tx_down_asn = tsch_calculate_current_asn();
-
-        app_seqno = (2 << 28) + ((uint32_t)dest_id << 16) + traffic_opt_count;
-        app_magic = (uint16_t)APP_DATA_MAGIC;
-
-        memcpy(app_payload + current_payload_len - sizeof(app_tx_down_asn) - sizeof(app_seqno) - sizeof(app_magic), 
-              &app_tx_down_asn, sizeof(app_tx_down_asn));
-        memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
-        memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
-
-        /* Send to clients */
-        LOG_INFO("Sending message to ");
-        LOG_INFO_6ADDR(&dest_ipaddr);
-        LOG_INFO_("\n");
-
-        LOG_HK("tx_down %u | traffic-opt to %u a_seq %lx len %u at %llx\n", 
-                  traffic_opt_count,
-                  dest_id,
-                  app_seqno,
-                  current_payload_len, 
-                  app_tx_down_asn);
-
-        simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
-
-        dest_id++;
-        if(dest_id > NODE_NUM) { /* the last non-root node */
-          dest_id = 2;
-          traffic_opt_count++;
-        } else { /* not the last non-root node yet */
-          etimer_reset(&traffic_opt_send_timer);
-        }
-      }
-    }
-#endif
-#endif
     else if(data == &reset_before_data_timer) {
       reset_eval(1);
     }

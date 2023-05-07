@@ -26,12 +26,8 @@
 
 static struct simple_udp_connection udp_conn;
 
-#if WITH_UPWARD_TRAFFIC || APP_OPT_DURING_BOOTSTRAP
-static unsigned topology_opt_count = 1;
 #if WITH_UPWARD_TRAFFIC
-static unsigned traffic_opt_count = 1;
 static unsigned data_count = 1;
-#endif
 #endif
 
 static uint16_t app_rxd_count;
@@ -226,23 +222,11 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static struct etimer reset_before_data_timer;
   static struct etimer print_log_timer;
 
-#if APP_OPT_DURING_BOOTSTRAP
-  static struct etimer topology_opt_start_timer;
-  static struct etimer topology_opt_periodic_timer;
-  static struct etimer topology_opt_reset_timer;
-#if WITH_UPWARD_TRAFFIC
-  static struct etimer traffic_opt_start_timer;
-  static struct etimer traffic_opt_periodic_timer;
-#endif
-#endif
-
 #if WITH_UPWARD_TRAFFIC
   static struct etimer data_start_timer;
   static struct etimer data_periodic_timer;
   static struct etimer data_send_timer;
-#endif
 
-#if WITH_UPWARD_TRAFFIC || APP_OPT_DURING_BOOTSTRAP
   uip_ipaddr_t dest_ipaddr;
   static uint8_t app_payload[128];
   static uint16_t current_payload_len = APP_PAYLOAD_LEN;
@@ -263,14 +247,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
   etimer_set(&print_node_info_timer, APP_PRINT_NODE_INFO_DELAY);
   etimer_set(&reset_before_data_timer, APP_RESET_BEFORE_DATA_DELAY);
   etimer_set(&print_log_timer, APP_PRINT_LOG_DELAY);
-
-#if APP_OPT_DURING_BOOTSTRAP
-  etimer_set(&topology_opt_start_timer, (APP_TOPOLOGY_OPT_START_DELAY + random_rand() % (APP_TOPOLOGY_OPT_SEND_INTERVAL / 2)));
-  etimer_set(&topology_opt_reset_timer, APP_TOPOLOGY_OPT_RESET_DELAY);
-#if WITH_UPWARD_TRAFFIC
-  etimer_set(&traffic_opt_start_timer, (APP_TRAFFIC_OPT_START_DELAY + random_rand() % (APP_TRAFFIC_OPT_UPWARD_SEND_INTERVAL / 2)));
-#endif
-#endif
 
 #if WITH_UPWARD_TRAFFIC
   etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % (APP_UPWARD_SEND_INTERVAL)));
@@ -305,89 +281,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
     if(data == &print_node_info_timer) {
       print_iotlab_node_info();
     }
-#if APP_OPT_DURING_BOOTSTRAP
-    else if(data == &topology_opt_start_timer || data == &topology_opt_periodic_timer) {
-      if(data == &topology_opt_start_timer) {
-        uint64_t app_topology_opt_start_asn = tsch_calculate_current_asn();
-        LOG_HK("| topology_opt_start at %llx \n", app_topology_opt_start_asn);
-      }
-      if(topology_opt_count <= APP_TOPOLOGY_OPT_MAX_TX) {
-        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
-
-        uint64_t app_tx_up_asn = tsch_calculate_current_asn();
-
-        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + topology_opt_count;
-        app_magic = (uint16_t)APP_DATA_MAGIC;
-
-        memcpy(app_payload + current_payload_len - sizeof(app_tx_up_asn) - sizeof(app_seqno) - sizeof(app_magic), 
-              &app_tx_up_asn, sizeof(app_tx_up_asn));
-        memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
-        memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
-
-        /* Send to DAG root */
-        LOG_INFO("Sending message to ");
-        LOG_INFO_6ADDR(&dest_ipaddr);
-        LOG_INFO_("\n");
-
-        LOG_HK("tx_up %u | topology-opt to %u a_seq %lx len %u at %llx\n", 
-                  topology_opt_count,
-                  HCK_GET_NODE_ID_FROM_IPADDR(&dest_ipaddr),
-                  app_seqno,
-                  current_payload_len,
-                  app_tx_up_asn);
-
-        simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
-
-        topology_opt_count++;
-      }
-      if(topology_opt_count <= APP_TOPOLOGY_OPT_MAX_TX) {
-        etimer_set(&topology_opt_periodic_timer, APP_TOPOLOGY_OPT_SEND_INTERVAL);
-      }
-    }
-    else if(data == &topology_opt_reset_timer) {
-      reset_eval(0);
-    }
-#if WITH_UPWARD_TRAFFIC
-    else if(data == &traffic_opt_start_timer || data == &traffic_opt_periodic_timer) {
-      if(data == &traffic_opt_start_timer) {
-        uint64_t app_traffic_opt_start_asn = tsch_calculate_current_asn();
-        LOG_HK("| traffic_opt_start at %llx \n", app_traffic_opt_start_asn);
-      }
-      if(traffic_opt_count <= APP_TRAFFIC_OPT_MAX_UPWARD_TX) {
-        uip_ip6addr((&dest_ipaddr), 0xfd00, 0, 0, 0, 0, 0, 0, APP_ROOT_ID);
-
-        uint64_t app_tx_up_asn = tsch_calculate_current_asn();
-
-        app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + traffic_opt_count;
-        app_magic = (uint16_t)APP_DATA_MAGIC;
-
-        memcpy(app_payload + current_payload_len - sizeof(app_tx_up_asn) - sizeof(app_seqno) - sizeof(app_magic), 
-              &app_tx_up_asn, sizeof(app_tx_up_asn));
-        memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
-        memcpy(app_payload + current_payload_len - sizeof(app_magic), &app_magic, sizeof(app_magic));
-
-        /* Send to DAG root */
-        LOG_INFO("Sending message to ");
-        LOG_INFO_6ADDR(&dest_ipaddr);
-        LOG_INFO_("\n");
-
-        LOG_HK("tx_up %u | traffic-opt to %u a_seq %lx len %u at %llx\n", 
-                  traffic_opt_count,
-                  HCK_GET_NODE_ID_FROM_IPADDR(&dest_ipaddr),
-                  app_seqno,
-                  current_payload_len,
-                  app_tx_up_asn);
-
-        simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
-
-        traffic_opt_count++;
-      }
-      if(traffic_opt_count <= APP_TRAFFIC_OPT_MAX_UPWARD_TX) {
-        etimer_set(&traffic_opt_periodic_timer, APP_TRAFFIC_OPT_UPWARD_SEND_INTERVAL);
-      }
-    }
-#endif
-#endif
     else if(data == &reset_before_data_timer) {
       reset_eval(1);
     }
