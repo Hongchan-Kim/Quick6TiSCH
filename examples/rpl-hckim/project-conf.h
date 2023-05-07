@@ -49,10 +49,12 @@
 #define IOTLAB_GRENOBLE_79_L_CORNER_U              1 /* 79 nodes */
 #define IOTLAB_GRENOBLE_78_R_CORNER_U              2 /* 78 nodes */
 #define IOTLAB_LILLE_79_CORNER                     3 /* 79 nodes */
+#define IOTLAB_LILLE_2_CORNER                      4 /* 2 nodes */
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
-#define IOTLAB_SITE                                IOTLAB_GRENOBLE_78_R_CORNER_U
+//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_78_R_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
+#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 #define NODE_NUM                                   79
@@ -60,6 +62,8 @@
 #define NODE_NUM                                   78
 #elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
 #define NODE_NUM                                   79
+#elif IOTLAB_SITE == IOTLAB_LILLE_2_CORNER
+#define NODE_NUM                                   2
 #endif
 
 #endif /* WITH_IOTLAB */
