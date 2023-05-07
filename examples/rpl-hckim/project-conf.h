@@ -15,7 +15,7 @@
 #define HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK     1
 #if HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
 #define NETSTACK_CONF_MAC_SEQNO_MAX_AGE            (20 * CLOCK_SECOND)
-#define NETSTACK_CONF_MAC_SEQNO_HISTORY            16
+#define NETSTACK_CONF_MAC_SEQNO_HISTORY            8
 #endif
 
 #define HCK_DBG_ALICE_RESCHEDULE_INTERVAL          0
@@ -26,7 +26,7 @@
 #define HCK_GET_NODE_ID_FROM_IPADDR(addr)          ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 
-#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     1
+#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     0
 
 #define HCK_RPL_FIXED_TOPOLOGY                     0
 #if HCK_RPL_FIXED_TOPOLOGY
@@ -167,7 +167,7 @@
 #define APP_SEQNO_DUPLICATE_CHECK                  1
 #if APP_SEQNO_DUPLICATE_CHECK
 #define APP_SEQNO_MAX_AGE                          (20 * CLOCK_SECOND)
-#define APP_SEQNO_HISTORY                          16
+#define APP_SEQNO_HISTORY                          8
 #endif
 /*---------------------------------------------------------------------------*/
 
@@ -208,7 +208,7 @@
 #define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
 #define RPL_RELAXED_ETX_NOACK_PENALTY              1
 #define RPL_MRHOF_CONF_SQUARED_ETX                 0
-#define RPL_CONF_PARENT_SWITCH_THRESHOLD           128 /* 96 (0.75, default), 127 (0.99), 128 (1) */
+#define RPL_CONF_PARENT_SWITCH_THRESHOLD           96 /* 96 (0.75, default), 127 (0.99), 128 (1) */
 #define RPL_MODIFIED_DAO_OPERATION_1               RPL_CONF_WITH_DAO_ACK /* stop dao retransmission when preferred parent changed */
 #define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 //#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /*  original: 0, set 1 in ALICE to enable local repair, quickly find another parent. */
@@ -290,13 +290,8 @@
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
-#if HCK_RPL_FIXED_TOPOLOGY
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              23 // unicast, should be longer than (2N-2)/3 to provide contention-free links
-#else
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        17 // broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              20 // unicast, should be longer than (2N-2)/3 to provide contention-free links
-#endif
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
 #define ALICE_EARLY_PACKET_DROP                    0
@@ -318,9 +313,9 @@
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
 #define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        41 //31 broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
 
-#define OST_ON_DEMAND_PROVISION                    0
+#define OST_ON_DEMAND_PROVISION                    1
 
 #define OST_HANDLE_QUEUED_PACKETS                  1
 #define WITH_OST_LOG_INFO                          0
@@ -352,6 +347,8 @@
 #define OST_ONDEMAND_SF_ID_OFFSET                  SSQ_SCHEDULE_HANDLE_OFFSET
 
 /* OST only */
+#undef TSCH_LOG_CONF_QUEUE_LEN
+#define TSCH_LOG_CONF_QUEUE_LEN                    16 // originally 16
 #define TSCH_CONF_RX_WAIT                          800 /* ignore too late packets */
 #define OST_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define OST_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
