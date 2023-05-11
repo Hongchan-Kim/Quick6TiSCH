@@ -65,6 +65,10 @@ frequency hopping for enhanced reliability.
 #include "net/mac/tsch/tsch-rpl.h"
 #endif /* UIP_CONF_IPV6_RPL */
 
+#if HCKIM_NEXT
+void keepalive_packet_sent(void *ptr, int status, int transmissions);
+#endif
+
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
 extern uint16_t alice_early_packet_drop_count;
 #endif

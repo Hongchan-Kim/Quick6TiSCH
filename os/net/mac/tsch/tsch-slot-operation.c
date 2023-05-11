@@ -54,6 +54,11 @@
 #include "net/mac/tsch/tsch.h"
 #include "sys/critical.h"
 
+#if HCKIM_NEXT
+#include "net/ipv6/uip-icmp6.h"
+#include "net/routing/rpl-classic/rpl-private.h"
+#endif
+
 #if WITH_A3
 #include "net/routing/rpl-classic/rpl-private.h"
 #include "net/ipv6/uip-ds6-nbr.h"
@@ -134,6 +139,11 @@ enum tsch_radio_state_off_cmd {
   TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT,
   TSCH_RADIO_CMD_OFF_FORCE,
 };
+
+#if HCKIM_NEXT
+static uint8_t hnext_tx_packet_type = 0; /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+static uint8_t hnext_rx_packet_type = 0; /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+#endif
 
 /* A ringbuf storing outgoing packets after they were dequeued.
  * Will be processed layer by tsch_tx_process_pending */
@@ -1858,6 +1868,42 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       regular_slot_tx_do_wait_for_ack = do_wait_for_ack;
 #endif
 
+#if HCKIM_NEXT
+      hnext_tx_packet_type = 0; /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+
+      if(((((uint8_t *)(queuebuf_dataptr(current_packet->qb)))[0]) & 7) == FRAME802154_BEACONFRAME) {
+        hnext_tx_packet_type = 0; // EB
+      } else {
+        if(current_packet->sent == keepalive_packet_sent) {
+          hnext_tx_packet_type = 1; // KA
+        } else {
+          if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_NETWORK_ID)) {
+            if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIS)) {
+              hnext_tx_packet_type = 2; // DIS
+            } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)) {
+              if(current_neighbor->is_broadcast) {
+                hnext_tx_packet_type = 3; // m-DIO
+              } else {
+                hnext_tx_packet_type = 4; // u-DIO
+              }
+            } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
+              hnext_tx_packet_type = 5; // DAO
+            } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
+              hnext_tx_packet_type = 6; // DAO-ACK
+            }
+          } else {
+            hnext_tx_packet_type = 7; // Data
+          }
+        }
+
+        frame802154_t hnext_frame;
+        int hnext_hdr_len;
+        hnext_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &hnext_frame);
+        ((uint8_t *)(packet))[hnext_hdr_len + 2] = (uint8_t)(hnext_tx_packet_type & 0xFF);
+        ((uint8_t *)(packet))[hnext_hdr_len + 3] = (uint8_t)((hnext_tx_packet_type >> 8) & 0xFF);
+      }
+#endif
+
 #if WITH_UPA
       upa_link_requested = 0;
       
@@ -2597,11 +2643,16 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
           memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
+#if HCKIM_NEXT
+          log->tx.hnext_packet_type = hnext_tx_packet_type;
+          log->tx.asap_ack_len = asap_tot_ack_len;
+#else
           log->tx.asap_unused_offset_time = RTIMERTICKS_TO_US(current_slot_unused_offset_time);
           log->tx.asap_idle_time = RTIMERTICKS_TO_US(current_slot_idle_time);
           log->tx.asap_curr_slot_len = tsch_timing_us[tsch_ts_timeslot_length];
           log->tx.asap_num_of_slots_until_idle_time = current_slot_passed_slots;
           log->tx.asap_ack_len = asap_tot_ack_len;
+#endif
       );
 #if WITH_UPA
     }
@@ -3753,6 +3804,20 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               tsch_stats_rx_packet(n, current_input->rssi, radio_last_lqi, tsch_current_channel);
             }
 
+#if HCKIM_NEXT
+            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+            hnext_rx_packet_type = 0;
+            if(frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
+              if(frame.fcf.ie_list_present) {
+                struct ieee802154_ies hnext_ies;
+                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &hnext_ies);
+                hnext_rx_packet_type = (int)hnext_ies.ie_hnext_packet_type;
+              } else {
+                hnext_rx_packet_type = 0;
+              }
+            }
+#endif
+
             /* Log every reception */
             TSCH_LOG_ADD(tsch_log_rx,
               linkaddr_copy(&log->rx.src, (linkaddr_t *)&frame.src_addr);
@@ -3769,6 +3834,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               memcpy(&log->rx.app_magic, (uint8_t *)current_input->payload + current_input->len - 2, 2);
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
+#if HCKIM_NEXT
+              log->rx.hnext_packet_type = hnext_rx_packet_type;
+              log->rx.asap_ack_len = asap_tot_ack_len;
+#else
 #if WITH_UPA
               log->rx.asap_unused_offset_time = upa_link_scheduled == 0 ? RTIMERTICKS_TO_US(current_slot_unused_offset_time) : 0;
               log->rx.asap_idle_time = upa_link_scheduled == 0 ? RTIMERTICKS_TO_US(current_slot_idle_time) : 0;
@@ -3781,6 +3850,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.asap_curr_slot_len = tsch_timing_us[tsch_ts_timeslot_length];
               log->rx.asap_num_of_slots_until_idle_time = current_slot_passed_slots;
               log->rx.asap_ack_len = asap_tot_ack_len;
+#endif
 #endif
             );
 

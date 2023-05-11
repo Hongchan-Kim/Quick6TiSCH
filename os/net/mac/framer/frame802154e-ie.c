@@ -50,6 +50,9 @@ enum ieee802154e_header_ie_id {
 #if WITH_UPA /* Header IE in Data and ACK frames */
   HEADER_IE_UPA_INFO = 0x01,
 #endif
+#if HCKIM_NEXT
+  HEADER_IE_HNEXT_PACKET_TYPE = 0x02,
+#endif
   HEADER_IE_LE_CSL = 0x1a,
   HEADER_IE_LE_RIT,
   HEADER_IE_DSME_PAN_DESCRIPTOR,
@@ -151,6 +154,23 @@ frame80215e_create_ie_header_upa_info(uint8_t *buf, int len,
     uint16_t upa_info = ies->ie_upa_info;
     WRITE16(buf+2, upa_info);
     create_header_ie_descriptor(buf, HEADER_IE_UPA_INFO, ie_len);
+    return 2 + ie_len;
+  } else {
+    return -1;
+  }
+}
+#endif
+
+#if HCKIM_NEXT
+int
+frame80215e_create_ie_header_hnext_packet_type(uint8_t *buf, int len,
+    struct ieee802154_ies *ies)
+{
+  int ie_len = 2; /* 16 bits */
+  if(len >= 2 + ie_len && ies != NULL) {
+    uint16_t hnext_packet_type = ies->ie_hnext_packet_type;
+    WRITE16(buf+2, hnext_packet_type);
+    create_header_ie_descriptor(buf, HEADER_IE_HNEXT_PACKET_TYPE, ie_len);
     return 2 + ie_len;
   } else {
     return -1;
@@ -414,6 +434,18 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
           uint16_t upa_info = 0;
           READ16(buf, upa_info);
           ies->ie_upa_info = upa_info;
+        }
+        return len;
+      }
+      break;
+#endif
+#if HCKIM_NEXT
+    case HEADER_IE_HNEXT_PACKET_TYPE:
+      if(len == 2) {
+        if(ies != NULL) {
+          uint16_t hnext_packet_type = 0;
+          READ16(buf, hnext_packet_type);
+          ies->ie_hnext_packet_type = hnext_packet_type;
         }
         return len;
       }

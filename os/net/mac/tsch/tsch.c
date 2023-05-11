@@ -1240,7 +1240,11 @@ resynchronize(const linkaddr_t *original_time_source_addr)
 
 /*---------------------------------------------------------------------------*/
 /* Tx callback for keepalive messages */
+#if HCKIM_NEXT
+void
+#else
 static void
+#endif
 keepalive_packet_sent(void *ptr, int status, int transmissions)
 {
   int schedule_next_keepalive = 1;
@@ -1901,6 +1905,11 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
       LOG_INFO_LLADDR((const linkaddr_t *)&frame.src_addr);
       LOG_INFO_("\n");
 
+#if HCKIM_NEXT
+      uint64_t asso_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
+      LOG_HNEXT("asso %u | at %llu\n", tsch_association_count, asso_asn);
+#endif
+
       tsch_log_association_count++;
       if(tsch_log_association_count > 1) {
         clock_inst_leaving_time = clock_time() - clock_last_leaving;
@@ -2045,6 +2054,13 @@ PROCESS_THREAD(tsch_process, ev, data)
     /* Yield our main process. Slot operation will re-schedule itself
      * as long as we are associated */
     PROCESS_YIELD_UNTIL(!tsch_is_associated);
+
+#if HCKIM_NEXT
+    uint64_t leaving_asn = tsch_calculate_current_asn();
+    LOG_HNEXT("leave %u | at %llu\n", 
+              tsch_leaving_count + 1,
+              leaving_asn);
+#endif
 
     print_log_tsch();
 
@@ -2303,6 +2319,10 @@ send_packet(mac_callback_t sent, void *ptr)
   }
 
   packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
+
+#if HCKIM_NEXT
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
+#endif
 
 #if LLSEC802154_ENABLED
   tsch_security_set_packetbuf_attr(FRAME802154_DATAFRAME);

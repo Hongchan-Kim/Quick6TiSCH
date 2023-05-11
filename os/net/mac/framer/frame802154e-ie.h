@@ -71,6 +71,9 @@ struct ieee802154_ies {
 #if WITH_UPA
   uint16_t ie_upa_info;
 #endif
+#if HCKIM_NEXT
+  uint16_t ie_hnext_packet_type;
+#endif
   int16_t ie_time_correction;
   uint8_t ie_is_nack;
   /* Payload MLME */
@@ -103,6 +106,10 @@ struct ieee802154_ies {
 /** Insert various Information Elements **/
 #if WITH_UPA
 int frame80215e_create_ie_header_upa_info(uint8_t *buf, int len,
+    struct ieee802154_ies *ies);
+#endif
+#if HCKIM_NEXT
+int frame80215e_create_ie_header_hnext_packet_type(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #endif
 /* Header IE. ACK/NACK time correction. Used in enhanced ACKs */

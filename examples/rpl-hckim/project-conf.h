@@ -1,6 +1,13 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+/* H-NEXT */
+#define HCKIM_NEXT                                 1
+
+#if HCKIM_NEXT
+#define HCKIM_NEXT_TWO_NODES                       0
+#endif
+
 /*---------------------------------------------------------------------------*/
 /*
  * HCK modifications independent of proposed scheme
@@ -53,8 +60,8 @@
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_78_R_CORNER_U
-//#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
-#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
+#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
+//#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 #define NODE_NUM                                   79
@@ -63,6 +70,13 @@
 #elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
 #define NODE_NUM                                   79
 #elif IOTLAB_SITE == IOTLAB_LILLE_2_CORNER
+#define NODE_NUM                                   2
+#endif
+
+#if HCKIM_NEXT_TWO_NODES
+#undef IOTLAB_SITE
+#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
+#undef NODE_NUM
 #define NODE_NUM                                   2
 #endif
 
@@ -128,12 +142,23 @@
 
 #else /* HCK_RPL_FIXED_TOPOLOGY */
 
+#if HCKIM_NEXT_TWO_NODES
 
-#define APP_RESET_BEFORE_DATA_DELAY                (2 * 60 * CLOCK_SECOND) //(730 * 60 * CLOCK_SECOND)
-#define APP_DATA_START_DELAY                       (3 * 60 * CLOCK_SECOND) //(731 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (15 * 60 * CLOCK_SECOND) //(60 * 60 * CLOCK_SECOND)
-#define APP_PRINT_LOG_DELAY                        (19 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_RESET_BEFORE_DATA_DELAY                (2 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (3 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (15 * 60 * CLOCK_SECOND)
+#define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND)
+
+#else /* HCKIM_NEXT_TWO_NODES */
+
+#define APP_RESET_BEFORE_DATA_DELAY                (65 * 60 * CLOCK_SECOND) //(2 * 60 * CLOCK_SECOND) //(730 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (66 * 60 * CLOCK_SECOND) //(3 * 60 * CLOCK_SECOND) //(731 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) //(15 * 60 * CLOCK_SECOND) //(60 * 60 * CLOCK_SECOND)
+#define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND) //(19 * 60 * CLOCK_SECOND) //APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND) //
+
+#endif /* HCKIM_NEXT_TWO_NODES */
 
 #endif /* HCK_RPL_FIXED_TOPOLOGY */
 

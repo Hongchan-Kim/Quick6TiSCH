@@ -58,6 +58,10 @@
 #include "sys/ctimer.h"
 #include "sys/log.h"
 
+#if HCKIM_NEXT
+#include "net/mac/tsch/tsch.h"
+#endif
+
 #include <limits.h>
 #include <string.h>
 
@@ -292,6 +296,15 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
       LOG_INFO_("NULL");
     }
     LOG_INFO_("\n");
+
+#if HCKIM_NEXT
+    uint64_t ps_asn = tsch_calculate_current_asn();
+    LOG_HNEXT("ps %u | at %llu\n", 
+              (p == NULL) ? 0 : 
+              (rpl_parent_get_ipaddr(p)->u8[14] << 8) + (rpl_parent_get_ipaddr(p)->u8[15]),
+              ps_asn);
+#endif
+
 
     ++rpl_parent_switch_count;
     LOG_HK("ps %u lastP %u |\n", 

@@ -56,6 +56,10 @@
 #include "net/mac/framer/frame802154e-ie.h"
 #endif
 
+#if HCKIM_NEXT
+#include "net/mac/framer/frame802154e-ie.h"
+#endif
+
 #include "sys/log.h"
 #define LOG_MODULE "Frame 15.4"
 #define LOG_LEVEL LOG_LEVEL_FRAMER
@@ -164,6 +168,38 @@ create_frame(int do_create)
         /* HCK: the second parameter must be revised */
         if(frame80215e_create_ie_header_upa_info((uint8_t *)packetbuf_hdrptr() + hdr_len,
                                                                 PACKETBUF_SIZE - hdr_len, &upa_ies) < 0) {
+          return FRAMER_FAILED;
+        }
+        hdr_len_increment += 4;
+      } else {
+        return FRAMER_FAILED;
+      }
+    }
+    hdr_len += hdr_len_increment;
+#endif
+
+#if HCKIM_NEXT
+    int hdr_len_increment = 0;
+    if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA) == 1 
+       && packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) != FRAME802154_BEACONFRAME) {
+      struct ieee802154_ies hnext_ies;
+      memset(&hnext_ies, 0, sizeof(hnext_ies));
+      hnext_ies.ie_hnext_packet_type = 0;
+
+      if(packetbuf_hdralloc(2)) {
+        /* HCK: the second parameter must be revised */
+        if(frame80215e_create_ie_header_list_termination_2((uint8_t *)packetbuf_hdrptr() + hdr_len,
+                                                          PACKETBUF_SIZE - hdr_len, &hnext_ies) < 0) {
+          return FRAMER_FAILED;
+        }
+        hdr_len_increment += 2;
+      } else {
+        return FRAMER_FAILED;
+      }
+      if(packetbuf_hdralloc(4)) {
+        /* HCK: the second parameter must be revised */
+        if(frame80215e_create_ie_header_hnext_packet_type((uint8_t *)packetbuf_hdrptr() + hdr_len,
+                                                                PACKETBUF_SIZE - hdr_len, &hnext_ies) < 0) {
           return FRAMER_FAILED;
         }
         hdr_len_increment += 4;
@@ -307,6 +343,14 @@ parse(void)
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, frame.fcf.ack_required);
 
 #if WITH_UPA
+    if(frame.fcf.ie_list_present) {
+      /* hckim: must be revised */
+      packetbuf_hdrreduce(6); /* 2 for termination, 4 for upa ie */
+      packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, frame.fcf.ie_list_present);
+    }
+#endif
+
+#if HCKIM_NEXT
     if(frame.fcf.ie_list_present) {
       /* hckim: must be revised */
       packetbuf_hdrreduce(6); /* 2 for termination, 4 for upa ie */
