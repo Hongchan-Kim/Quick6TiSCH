@@ -107,6 +107,10 @@ struct tsch_log_t {
 #if HCKIM_NEXT
       uint8_t hnext_packet_type;
       uint8_t asap_ack_len;
+#if HNEXT_OFFSET_BASED_PRIORITIZATION
+      uint8_t hnext_tier;
+      uint8_t hnext_state;
+#endif
 #else
       uint16_t asap_unused_offset_time;
       uint16_t asap_idle_time;
@@ -133,6 +137,10 @@ struct tsch_log_t {
 #if HCKIM_NEXT
       uint8_t hnext_packet_type;
       uint8_t asap_ack_len;
+#if HNEXT_OFFSET_BASED_PRIORITIZATION
+      uint8_t hnext_tier;
+      uint8_t hnext_state;
+#endif
 #else
       uint16_t asap_unused_offset_time;
       uint16_t asap_idle_time;

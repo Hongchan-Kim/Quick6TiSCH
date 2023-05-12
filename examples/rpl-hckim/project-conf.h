@@ -6,6 +6,20 @@
 
 #if HCKIM_NEXT
 #define HCKIM_NEXT_TWO_NODES                       0
+
+#define HNEXT_CCA_OFFSET                           800
+#define HNEXT_TX_OFFSET                            1300 /* 1300 ~ 3100 */
+#define HNEXT_RX_OFFSET_LEFT                       500  /* 800  ~ 1300, 500 margin */
+#define HNEXT_RX_OFFSET_RIGHT                      2300 /* 1300 ~ 3600, 500 margin */
+
+#define HNEXT_OFFSET_GAP                           600
+
+#define HNEXT_OFFSET_BASED_PRIORITIZATION          1
+
+#define HNEXT_POLICY_1                             0 /* UC vs. BC */
+#define HNEXT_POLICY_2                             0 /* One top-tier offset */
+#define HNEXT_POLICY_3                             1 /* Two top-tier offsets */
+
 #endif
 
 /*---------------------------------------------------------------------------*/
@@ -27,13 +41,13 @@
 
 #define HCK_DBG_ALICE_RESCHEDULE_INTERVAL          0
 
-#define HCK_DBG_REGULAR_SLOT_DETAIL                0
-#define HCK_DBG_REGULAR_SLOT_TIMING                (0 && HCK_DBG_REGULAR_SLOT_DETAIL)
+#define HCK_DBG_REGULAR_SLOT_DETAIL                0 //
+#define HCK_DBG_REGULAR_SLOT_TIMING                (0 && HCK_DBG_REGULAR_SLOT_DETAIL) //
 
 #define HCK_GET_NODE_ID_FROM_IPADDR(addr)          ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 
-#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     0
+#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     0 //
 
 #define HCK_RPL_FIXED_TOPOLOGY                     0
 #if HCK_RPL_FIXED_TOPOLOGY
@@ -60,8 +74,8 @@
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_78_R_CORNER_U
-#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
-//#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
+#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER //
+//#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER //
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 #define NODE_NUM                                   79
@@ -75,7 +89,7 @@
 
 #if HCKIM_NEXT_TWO_NODES
 #undef IOTLAB_SITE
-#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
+#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER //
 #undef NODE_NUM
 #define NODE_NUM                                   2
 #endif
@@ -124,8 +138,8 @@
  * Configure App
  */
 #if WITH_IOTLAB
-#define WITH_UPWARD_TRAFFIC                        1
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4)
+#define WITH_UPWARD_TRAFFIC                        1 //
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4) //
 
 #define WITH_DOWNWARD_TRAFFIC                      0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 4)
@@ -146,7 +160,7 @@
 
 #define APP_RESET_BEFORE_DATA_DELAY                (2 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (3 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (15 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (5 * 60 * CLOCK_SECOND)
 #define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND)
 
@@ -315,7 +329,7 @@
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //19 //31 //101 // broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              20 // unicast, should be longer than (2N-2)/3 to provide contention-free links
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling

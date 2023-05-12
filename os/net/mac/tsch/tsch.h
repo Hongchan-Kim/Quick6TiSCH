@@ -291,6 +291,10 @@ extern int32_t max_drift_seen;
 /* The TSCH standard 10ms timeslot timing */
 extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000;
 
+#if HCKIM_NEXT
+extern unsigned long hnext_ka_sync_count;
+#endif
+
 #if WITH_SLA /* Variables */
 extern struct tsch_asn_t sla_triggering_asn;
 extern uint16_t sla_next_timeslot_length;
