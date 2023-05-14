@@ -147,7 +147,7 @@ static int hnext_rx_packet_type = 0; /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
 static int hnext_tx_current_tier = 0; /* 0 ~ 3 */
 static int hnext_rx_current_tier = 0; /* 0 ~ 3 */
-static uint8_t hnext_tx_current_status = 0;
+static uint8_t hnext_tx_current_state = 0;
 #endif
 #endif
 
@@ -1912,26 +1912,26 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           } else {
             hnext_tx_current_tier = 0;
           }
-#elif HNEXT_POLICY_2 || HNEXT_POLICY_3
-          /* First determine current status */
-          hnext_tx_current_status = 0;
+#elif HNEXT_POLICY_2 || HNEXT_POLICY_3 || HNEXT_POLICY_4 || HNEXT_POLICY_5
+          /* First determine current state */
+          hnext_tx_current_state = 0;
 
-          if(tsch_is_coordinator) { /* Coordinator -> final status */
-            hnext_tx_current_status = 4;
+          if(tsch_is_coordinator) { /* Coordinator -> final state */
+            hnext_tx_current_state = 4;
           } else {
-            if(!tsch_is_associated) { /* Before TSCH join (pledge node) -> start status */
-              hnext_tx_current_status = 0;
+            if(!tsch_is_associated) { /* Before TSCH join (pledge node) -> start state */
+              hnext_tx_current_state = 0;
             } else { /* After TSCH join */
-              if(sync_count == 0 && hnext_ka_sync_count == 0) { /* After TSCH association, but before confirming sync -> status 1 */
-                hnext_tx_current_status = 1;
+              if(sync_count == 0 && hnext_ka_sync_count == 0) { /* After TSCH association, but before confirming sync -> state 1 */
+                hnext_tx_current_state = 1;
               } else { /* After confirming sync */
                 if(!tsch_rpl_check_dodag_joined()) { /* After confirming sync, but before RPL join */
-                  hnext_tx_current_status = 2;
+                  hnext_tx_current_state = 2;
                 } else { /* After RPL join */
                   if(!orchestra_parent_knows_us) { /* After RPL join, but before cell allocation */
-                    hnext_tx_current_status = 3;
+                    hnext_tx_current_state = 3;
                   } else { /* After cell allocation */
-                    hnext_tx_current_status = 4;
+                    hnext_tx_current_state = 4;
                   }
                 }
               }
@@ -1939,7 +1939,39 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           }
 #if HNEXT_POLICY_2
           /* assign appropriate tier */
-          if(hnext_tx_current_status == 0) {
+          if(hnext_tx_current_state == 0) {
+            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+            hnext_tx_current_tier = 1;
+          } else if(hnext_tx_current_state == 1) {
+            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+            if(hnext_tx_packet_type == 1
+                      || hnext_tx_packet_type == 2) {
+              hnext_tx_current_tier = 0;
+            } else { /* Includes Dataa */
+              hnext_tx_current_tier = 1;
+            }
+          } else if(hnext_tx_current_state == 2) {
+            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+            if(hnext_tx_packet_type == 2) {
+              hnext_tx_current_tier = 0;
+            } else { /* Includes Dataa */
+              hnext_tx_current_tier = 1;
+            }
+          } else if(hnext_tx_current_state == 3) {
+            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+            if(hnext_tx_packet_type == 5
+                      || hnext_tx_packet_type == 6) {
+              hnext_tx_current_tier = 0;
+            } else { /* Includes Dataa */
+              hnext_tx_current_tier = 1;
+            }
+          } else if(hnext_tx_current_state == 4) {
+            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+            hnext_tx_current_tier = 1;
+          }
+#elif HNEXT_POLICY_3
+          /* assign appropriate tier */
+          if(hnext_tx_current_state == 0) {
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             if(hnext_tx_packet_type == 0 
                       || hnext_tx_packet_type == 2 
@@ -1953,7 +1985,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             } else { /* Includes Dataa */
               hnext_tx_current_tier = 3;
             }
-          } else if(hnext_tx_current_status == 1) {
+          } else if(hnext_tx_current_state == 1) {
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             if(hnext_tx_packet_type == 1
                       || hnext_tx_packet_type == 2) {
@@ -1968,7 +2000,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             } else { /* Includes Dataa */
               hnext_tx_current_tier = 3;
             }
-          } else if(hnext_tx_current_status == 2) {
+          } else if(hnext_tx_current_state == 2) {
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             if(hnext_tx_packet_type == 2) {
               hnext_tx_current_tier = 0;
@@ -1983,7 +2015,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             } else { /* Includes Dataa */
               hnext_tx_current_tier = 3;
             }
-          } else if(hnext_tx_current_status == 3) {
+          } else if(hnext_tx_current_state == 3) {
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             if(hnext_tx_packet_type == 5
                       || hnext_tx_packet_type == 6) {
@@ -1998,7 +2030,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             } else { /* Includes Dataa */
               hnext_tx_current_tier = 3;
             }
-          } else if(hnext_tx_current_status == 4) {
+          } else if(hnext_tx_current_state == 4) {
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             if(hnext_tx_packet_type == 0 
                       || hnext_tx_packet_type == 2
@@ -2013,9 +2045,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               hnext_tx_current_tier = 3;
             }
           }
-#elif HNEXT_POLICY_3
+#elif HNEXT_POLICY_4
           /* assign appropriate tier */
-          if(hnext_tx_current_status == 0) {
+          if(hnext_tx_current_state == 0) {
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             if(hnext_tx_packet_type == 0 
                       || hnext_tx_packet_type == 2 
@@ -2029,7 +2061,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             } else { /* Includes Dataa */
               hnext_tx_current_tier = 3;
             }
-          } else if(hnext_tx_current_status == 1) {
+          } else if(hnext_tx_current_state == 1) {
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             if(hnext_tx_packet_type == 2) {
               hnext_tx_current_tier = 0;
@@ -2045,7 +2077,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             } else { /* Includes Dataa */
               hnext_tx_current_tier = 3;
             }
-          } else if(hnext_tx_current_status == 2) {
+          } else if(hnext_tx_current_state == 2) {
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             if(hnext_tx_packet_type == 2) {
               hnext_tx_current_tier = 0;
@@ -2060,7 +2092,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             } else { /* Includes Dataa */
               hnext_tx_current_tier = 3;
             }
-          } else if(hnext_tx_current_status == 3) {
+          } else if(hnext_tx_current_state == 3) {
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             if(hnext_tx_packet_type == 5
                       || hnext_tx_packet_type == 6) {
@@ -2075,7 +2107,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             } else { /* Includes Dataa */
               hnext_tx_current_tier = 3;
             }
-          } else if(hnext_tx_current_status == 4) {
+          } else if(hnext_tx_current_state == 4) {
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             if(hnext_tx_packet_type == 0 
                       || hnext_tx_packet_type == 2
@@ -2090,8 +2122,56 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               hnext_tx_current_tier = 3;
             }
           }
+#elif HNEXT_POLICY_5
+          /* Urgent packet in terms of retransmissions */
+          if(current_packet->transmissions >= (current_packet->max_transmissions - 1)) {
+            hnext_tx_current_tier = 0;
+          } else {
+            if(hnext_tx_packet_type == 0 || hnext_tx_packet_type == 3) { /* EB, DIO */
+              int hnext_dio_interval_increment = tsch_rpl_callback_dio_interval_increment();
+              if(hnext_dio_interval_increment == 0xFF) {
+                hnext_tx_current_tier = 2;
+              } else {
+                if(hnext_dio_interval_increment <= HNEXT_DIO_INTERVAL_THRESHOLD) {
+                  hnext_tx_current_tier = 1;
+                } else {
+                  hnext_tx_current_tier = 2;
+                }
+              }
+            } else if(hnext_tx_packet_type == 1) { /* KA */
+              if(hnext_tx_current_state == 1) { /* TSCH joined */
+                hnext_tx_current_tier = 1;
+              } else {
+                hnext_tx_current_tier = 3;
+              }
+            } else if(hnext_tx_packet_type == 2) { /* DIS */
+              if(hnext_tx_current_state == 1 || hnext_tx_current_state == 2) { /* TSCH joined or Sync confirmed */
+                hnext_tx_current_tier = 1;
+              } else {
+                hnext_tx_current_tier = 2;
+              }
+            } else if(hnext_tx_packet_type == 4) { /* DIO-U */
+              hnext_tx_current_tier = 3;
+            } else if(hnext_tx_packet_type == 5) { /* DAO */
+              if(hnext_tx_current_state == 3) { /* RPL joined */
+                hnext_tx_current_tier = 1;
+              } else {
+                hnext_tx_current_tier = 3;
+              }
+            } else if(hnext_tx_packet_type == 6) { /* DAOA */
+              if(hnext_tx_current_state == 3) { /* RPL joined */
+                hnext_tx_current_tier = 1;
+              } else {
+                hnext_tx_current_tier = 3;
+              }
+            } else if(hnext_tx_packet_type == 7) { /* Data */
+              hnext_tx_current_tier = 3;
+            } else {
+              hnext_tx_current_tier = 3;
+            }
+          }
 #endif
-#endif /* HNEXT_POLICY_2 || HNEXT_POLICY_3 */
+#endif /* HNEXT_POLICY_3 || HNEXT_POLICY_4 || HNEXT_POLICY_5 */
         } else { /* current_link->slotframe_handle != TSCH_SCHED_COMMON_SF_HANDLE */
           /* assign appropriate tier */
           hnext_tx_current_tier = 9;
@@ -2930,7 +3010,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           log->tx.asap_ack_len = asap_tot_ack_len;
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
           log->tx.hnext_tier = hnext_tx_current_tier;
-          log->tx.hnext_state = hnext_tx_current_status;
+          log->tx.hnext_state = hnext_tx_current_state;
 #endif
 #else
           log->tx.asap_unused_offset_time = RTIMERTICKS_TO_US(current_slot_unused_offset_time);

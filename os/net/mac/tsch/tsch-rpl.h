@@ -48,6 +48,12 @@
 #endif
 
 /********** Functions *********/
+#if HCKIM_NEXT
+#if HNEXT_POLICY_5
+int tsch_rpl_callback_dio_interval_increment(void);
+#endif
+#endif
+
 #if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS
 int tsch_rpl_callback_is_root(void);
 int tsch_rpl_callback_has_no_children(void);

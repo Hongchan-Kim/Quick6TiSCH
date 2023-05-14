@@ -60,6 +60,23 @@
 #define LOG_MODULE "TSCH RPL"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+#if HCKIM_NEXT
+#if HNEXT_POLICY_5
+int
+tsch_rpl_callback_dio_interval_increment()
+{
+  rpl_dag_t *dag;
+  dag = rpl_get_any_dag();
+
+  if(dag != NULL) {
+    return dag->instance->dio_intcurrent - dag->instance->dio_intmin;
+  } else {
+    return 0xFF;
+  }
+}
+#endif
+#endif
+
 /*---------------------------------------------------------------------------*/
 #if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS
 int

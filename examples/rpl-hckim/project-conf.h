@@ -14,11 +14,15 @@
 
 #define HNEXT_OFFSET_GAP                           600
 
-#define HNEXT_OFFSET_BASED_PRIORITIZATION          1
+#define HNEXT_OFFSET_BASED_PRIORITIZATION          0
 
-#define HNEXT_POLICY_1                             0 /* UC vs. BC */
-#define HNEXT_POLICY_2                             0 /* One top-tier offset */
-#define HNEXT_POLICY_3                             1 /* Two top-tier offsets */
+#define HNEXT_POLICY_1                             0 /* Two-tier policy: UC vs. BC */
+#define HNEXT_POLICY_2                             0 /* Two-tier policy: transition-related or not */
+#define HNEXT_POLICY_3                             0 /* Three-tier policy */
+#define HNEXT_POLICY_4                             0 /* Four-tier policy */
+#define HNEXT_POLICY_5                             0 /* Consider link loss and Trickle timer */
+
+#define HNEXT_DIO_INTERVAL_THRESHOLD               1
 
 #endif
 
@@ -41,13 +45,13 @@
 
 #define HCK_DBG_ALICE_RESCHEDULE_INTERVAL          0
 
-#define HCK_DBG_REGULAR_SLOT_DETAIL                0 //
-#define HCK_DBG_REGULAR_SLOT_TIMING                (0 && HCK_DBG_REGULAR_SLOT_DETAIL) //
+#define HCK_DBG_REGULAR_SLOT_DETAIL                0
+#define HCK_DBG_REGULAR_SLOT_TIMING                (0 && HCK_DBG_REGULAR_SLOT_DETAIL)
 
 #define HCK_GET_NODE_ID_FROM_IPADDR(addr)          ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 
-#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     0 //
+#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     0
 
 #define HCK_RPL_FIXED_TOPOLOGY                     0
 #if HCK_RPL_FIXED_TOPOLOGY
@@ -74,8 +78,8 @@
 
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
 //#define IOTLAB_SITE                                IOTLAB_GRENOBLE_78_R_CORNER_U
-#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER //
-//#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER //
+#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
+//#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
 
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 #define NODE_NUM                                   79
@@ -89,7 +93,7 @@
 
 #if HCKIM_NEXT_TWO_NODES
 #undef IOTLAB_SITE
-#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER //
+#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
 #undef NODE_NUM
 #define NODE_NUM                                   2
 #endif
@@ -138,8 +142,8 @@
  * Configure App
  */
 #if WITH_IOTLAB
-#define WITH_UPWARD_TRAFFIC                        1 //
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4) //
+#define WITH_UPWARD_TRAFFIC                        1
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4)
 
 #define WITH_DOWNWARD_TRAFFIC                      0
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 4)
@@ -166,11 +170,11 @@
 
 #else /* HCKIM_NEXT_TWO_NODES */
 
-#define APP_RESET_BEFORE_DATA_DELAY                (65 * 60 * CLOCK_SECOND) //(2 * 60 * CLOCK_SECOND) //(730 * 60 * CLOCK_SECOND)
-#define APP_DATA_START_DELAY                       (66 * 60 * CLOCK_SECOND) //(3 * 60 * CLOCK_SECOND) //(731 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND) //(15 * 60 * CLOCK_SECOND) //(60 * 60 * CLOCK_SECOND)
-#define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND) //(19 * 60 * CLOCK_SECOND) //APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
-#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND) //
+#define APP_RESET_BEFORE_DATA_DELAY                (730 * 60 * CLOCK_SECOND) //(65 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (731 * 60 * CLOCK_SECOND) //(66 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)  //(60 * 60 * CLOCK_SECOND)
+#define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)   //(19 * 60 * CLOCK_SECOND) //APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
+#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND)   //
 
 #endif /* HCKIM_NEXT_TWO_NODES */
 
