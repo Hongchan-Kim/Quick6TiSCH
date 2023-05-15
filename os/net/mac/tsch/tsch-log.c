@@ -119,6 +119,20 @@ tsch_log_process_pending(void)
 #if LOG_HK_ENABLED
 #if HCKIM_NEXT
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
+        printf(", RES T %u %lu %u %u %u %u %u %u %u %u %u %u HK-T",
+              log->tx.hnext_packet_type,
+              log->asn.ls4b,
+              log->link->slotframe_handle,
+              linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
+              log->tx.datalen,
+              log->tx.asap_ack_len,
+              log->tx.mac_tx_status,
+              log->tx.num_tx,
+              log->tx.hnext_collision_count,
+              log->tx.hnext_noack_count,
+              log->tx.hnext_state,
+              log->tx.hnext_tier);
+#else
         printf(", RES T %u %lu %u %u %u %u %u %u %u %u HK-T",
               log->tx.hnext_packet_type,
               log->asn.ls4b,
@@ -128,18 +142,8 @@ tsch_log_process_pending(void)
               log->tx.asap_ack_len,
               log->tx.mac_tx_status,
               log->tx.num_tx,
-              log->tx.hnext_state,
-              log->tx.hnext_tier);
-#else
-        printf(", RES T %u %lu %u %u %u %u %u %u HK-T",
-              log->tx.hnext_packet_type,
-              log->asn.ls4b,
-              log->link->slotframe_handle,
-              linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
-              log->tx.datalen,
-              log->tx.asap_ack_len,
-              log->tx.mac_tx_status,
-              log->tx.num_tx);
+              log->tx.hnext_collision_count,
+              log->tx.hnext_noack_count);
 #endif
 #else
         printf(", RES T %u %u %u %u %u %u %u %u %u HK-T",

@@ -5,6 +5,7 @@
 #define HCKIM_NEXT                                 1
 
 #if HCKIM_NEXT
+#define HNEXT_DBG                                  1
 #define HCKIM_NEXT_TWO_NODES                       0
 
 #define HNEXT_CCA_OFFSET                           800
@@ -14,13 +15,14 @@
 
 #define HNEXT_OFFSET_GAP                           600
 
-#define HNEXT_OFFSET_BASED_PRIORITIZATION          0
+#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_4
 
-#define HNEXT_POLICY_1                             0 /* Two-tier policy: UC vs. BC */
-#define HNEXT_POLICY_2                             0 /* Two-tier policy: transition-related or not */
-#define HNEXT_POLICY_3                             0 /* Three-tier policy */
-#define HNEXT_POLICY_4                             0 /* Four-tier policy */
-#define HNEXT_POLICY_5                             0 /* Consider link loss and Trickle timer */
+#define HNEXT_POLICY_0                             0 /* Baseline */
+#define HNEXT_POLICY_1                             1 /* Transition-related or not */
+#define HNEXT_POLICY_2                             2 /* BC vs. UC */
+#define HNEXT_POLICY_3                             3 /* Comb of 1 and 2 with three tiers */
+#define HNEXT_POLICY_4                             4 /* Comb of 1 and 2 with four tiers */
+#define HNEXT_POLICY_5                             5 /* Consider link loss and Trickle timer */
 
 #define HNEXT_DIO_INTERVAL_THRESHOLD               1
 
@@ -142,7 +144,7 @@
  * Configure App
  */
 #if WITH_IOTLAB
-#define WITH_UPWARD_TRAFFIC                        1
+#define WITH_UPWARD_TRAFFIC                        0
 #define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4)
 
 #define WITH_DOWNWARD_TRAFFIC                      0

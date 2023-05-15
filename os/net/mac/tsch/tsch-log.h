@@ -107,6 +107,8 @@ struct tsch_log_t {
 #if HCKIM_NEXT
       uint8_t hnext_packet_type;
       uint8_t asap_ack_len;
+      uint8_t hnext_collision_count;
+      uint8_t hnext_noack_count;
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
       uint8_t hnext_tier;
       uint8_t hnext_state;
@@ -137,6 +139,8 @@ struct tsch_log_t {
 #if HCKIM_NEXT
       uint8_t hnext_packet_type;
       uint8_t asap_ack_len;
+      uint8_t hnext_collision_count;
+      uint8_t hnext_noack_count;
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
       uint8_t hnext_tier;
       uint8_t hnext_state;

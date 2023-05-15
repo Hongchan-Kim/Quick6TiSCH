@@ -2276,12 +2276,7 @@ tsch_init(void)
 #endif /* TSCH_AUTOSELECT_TIME_SOURCE */
 
 #if HCKIM_NEXT
-  LOG_INFO("hnext %u %u %u %u %u %u\n", HNEXT_OFFSET_BASED_PRIORITIZATION, 
-                                     HNEXT_POLICY_1, 
-                                     HNEXT_POLICY_2, 
-                                     HNEXT_POLICY_3, 
-                                     HNEXT_POLICY_4,
-                                     HNEXT_POLICY_5);
+  LOG_INFO("hnext %u\n", HNEXT_OFFSET_BASED_PRIORITIZATION);
 #endif
 
 

@@ -142,14 +142,44 @@ enum tsch_radio_state_off_cmd {
 };
 
 #if HCKIM_NEXT
-static int hnext_tx_packet_type = 0; /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-static int hnext_rx_packet_type = 0; /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+enum HNEXT_PACKET_TYPE {
+  HNEXT_PACKET_TYPE_EB,    // 0
+  HNEXT_PACKET_TYPE_KA,    // 1
+  HNEXT_PACKET_TYPE_DIS,   // 2
+  HNEXT_PACKET_TYPE_M_DIO, // 3
+  HNEXT_PACKET_TYPE_U_DIO, // 4
+  HNEXT_PACKET_TYPE_DAO,   // 5
+  HNEXT_PACKET_TYPE_DAOA,  // 6
+  HNEXT_PACKET_TYPE_DATA,  // 7
+  HNEXT_PACKET_TYPE_NULL   // 8
+};
+/* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+static enum HNEXT_PACKET_TYPE hnext_tx_packet_type = HNEXT_PACKET_TYPE_NULL;
+static enum HNEXT_PACKET_TYPE hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
+
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
-static int hnext_tx_current_tier = 0; /* 0 ~ 3 */
-static int hnext_rx_current_tier = 0; /* 0 ~ 3 */
-static uint8_t hnext_tx_current_state = 0;
-#endif
-#endif
+enum HNEXT_STATE {
+  HNEXT_STATE_1_NEW_NODE,                                    // 0
+  HNEXT_STATE_2_TSCH_JOINED,                                 // 1
+  HNEXT_STATE_3_TSCH_SYNC_CONFIRMED,                         // 2
+  HNEXT_STATE_4_RPL_JOINED,                                  // 3
+  HNEXT_STATE_5_RPL_CONNECTION_CONFIRMED_CELL_NOT_ALLOCATED, // 4
+  HNEXT_STATE_6_RPL_CONNECTION_NOT_CONFIRMED_CELL_ALLOCATED, // 5
+  HNEXT_STATE_7_RPL_CONNECTION_CONFIRMED_CELL_ALLOCATED      // 6
+};
+static uint8_t hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
+
+enum HNEXT_TIER {
+  HNEXT_TIER_1,   // 0 
+  HNEXT_TIER_2,   // 1
+  HNEXT_TIER_3,   // 2
+  HNEXT_TIER_4,   // 3
+  HNEXT_TIER_NULL // 4
+};
+static enum HNEXT_TIER hnext_tx_current_tier = HNEXT_TIER_NULL;
+static enum HNEXT_TIER hnext_rx_current_tier = HNEXT_TIER_NULL;
+#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+#endif /* HCKIM_NEXT */
 
 /* A ringbuf storing outgoing packets after they were dequeued.
  * Will be processed layer by tsch_tx_process_pending */
@@ -1875,306 +1905,275 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
 #if HCKIM_NEXT
-      hnext_tx_packet_type = 0; /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+      /* First determine packet type regardless of slotframe type */
+      hnext_tx_packet_type = HNEXT_PACKET_TYPE_NULL;
 
       if(((((uint8_t *)(queuebuf_dataptr(current_packet->qb)))[0]) & 7) == FRAME802154_BEACONFRAME) {
-        hnext_tx_packet_type = 0; // EB
+        hnext_tx_packet_type = HNEXT_PACKET_TYPE_EB;
       } else {
         if(current_packet->sent == keepalive_packet_sent) {
-          hnext_tx_packet_type = 1; // KA
+          hnext_tx_packet_type = HNEXT_PACKET_TYPE_KA;
         } else {
           if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
             if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIS)) {
-              hnext_tx_packet_type = 2; // DIS
+              hnext_tx_packet_type = HNEXT_PACKET_TYPE_DIS;
             } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)) {
               if(current_neighbor->is_broadcast) {
-                hnext_tx_packet_type = 3; // m-DIO
+                hnext_tx_packet_type = HNEXT_PACKET_TYPE_M_DIO;
               } else {
-                hnext_tx_packet_type = 4; // u-DIO
+                hnext_tx_packet_type = HNEXT_PACKET_TYPE_U_DIO;
               }
             } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
-              hnext_tx_packet_type = 5; // DAO
+              hnext_tx_packet_type = HNEXT_PACKET_TYPE_DAO;
             } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
-              hnext_tx_packet_type = 6; // DAO-ACK
+              hnext_tx_packet_type = HNEXT_PACKET_TYPE_DAOA;
             }
           } else {
-            hnext_tx_packet_type = 7; // Data
+            hnext_tx_packet_type = HNEXT_PACKET_TYPE_DATA;
           }
         }
-      
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
-        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
 
-#if HNEXT_POLICY_1
+#if HNEXT_OFFSET_BASED_PRIORITIZATION
+        /* Next determine current state */
+        if(tsch_is_coordinator) { /* Coordinator -> final state */
+          hnext_tx_current_state = HNEXT_STATE_7_RPL_CONNECTION_CONFIRMED_CELL_ALLOCATED;
+        } else {
+          if(!tsch_is_associated) { /* Before TSCH join (pledge node) -> start state */
+            hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
+          } else { /* After TSCH join */
+            if(sync_count == 0) {// && hnext_ka_sync_count == 0) { /* After TSCH association, but before confirming sync -> state 1 */
+              hnext_tx_current_state = HNEXT_STATE_2_TSCH_JOINED;
+            } else { /* After confirming sync */
+              if(!tsch_rpl_check_dodag_joined()) { /* After confirming sync, but before RPL join */
+                hnext_tx_current_state = HNEXT_STATE_3_TSCH_SYNC_CONFIRMED;
+              } else { /* After RPL join */
+                int hnext_is_urgent_probing_target_null = tsch_rpl_is_urgent_probing_target_null();
+
+                if(!hnext_is_urgent_probing_target_null && !orchestra_parent_knows_us) {
+                  hnext_tx_current_state = HNEXT_STATE_4_RPL_JOINED;
+                } else if(hnext_is_urgent_probing_target_null && !orchestra_parent_knows_us) {
+                  hnext_tx_current_state = HNEXT_STATE_5_RPL_CONNECTION_CONFIRMED_CELL_NOT_ALLOCATED;
+                } else if(!hnext_is_urgent_probing_target_null && orchestra_parent_knows_us) {
+                  hnext_tx_current_state = HNEXT_STATE_6_RPL_CONNECTION_NOT_CONFIRMED_CELL_ALLOCATED;
+                } else {
+                  hnext_tx_current_state = HNEXT_STATE_7_RPL_CONNECTION_CONFIRMED_CELL_ALLOCATED;
+                }
+              }
+            }
+          }
+        }
+#if HNEXT_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                    "hn1 %u %u", 
+                    hnext_tx_current_state,
+                    hnext_tx_packet_type);
+        );
+#endif
+
+        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_1
+          /* assign appropriate tier */
+          if(hnext_tx_current_state == HNEXT_STATE_1_NEW_NODE) {
+            hnext_tx_current_tier = HNEXT_TIER_2;
+          } else if(hnext_tx_current_state == HNEXT_STATE_2_TSCH_JOINED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_3_TSCH_SYNC_CONFIRMED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_4_RPL_JOINED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_5_RPL_CONNECTION_CONFIRMED_CELL_NOT_ALLOCATED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_6_RPL_CONNECTION_NOT_CONFIRMED_CELL_ALLOCATED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_7_RPL_CONNECTION_CONFIRMED_CELL_ALLOCATED) {
+            hnext_tx_current_tier = HNEXT_TIER_2;
+          }
+#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_2
           /* assign appropriate tier */
           if(do_wait_for_ack) {
-            hnext_tx_current_tier = 1;
+            hnext_tx_current_tier = HNEXT_TIER_2;
           } else {
-            hnext_tx_current_tier = 0;
+            hnext_tx_current_tier = HNEXT_TIER_1;
           }
-#elif HNEXT_POLICY_2 || HNEXT_POLICY_3 || HNEXT_POLICY_4 || HNEXT_POLICY_5
-          /* First determine current state */
-          hnext_tx_current_state = 0;
-
-          if(tsch_is_coordinator) { /* Coordinator -> final state */
-            hnext_tx_current_state = 4;
-          } else {
-            if(!tsch_is_associated) { /* Before TSCH join (pledge node) -> start state */
-              hnext_tx_current_state = 0;
-            } else { /* After TSCH join */
-              if(sync_count == 0 && hnext_ka_sync_count == 0) { /* After TSCH association, but before confirming sync -> state 1 */
-                hnext_tx_current_state = 1;
-              } else { /* After confirming sync */
-                if(!tsch_rpl_check_dodag_joined()) { /* After confirming sync, but before RPL join */
-                  hnext_tx_current_state = 2;
-                } else { /* After RPL join */
-                  if(!orchestra_parent_knows_us) { /* After RPL join, but before cell allocation */
-                    hnext_tx_current_state = 3;
-                  } else { /* After cell allocation */
-                    hnext_tx_current_state = 4;
-                  }
-                }
-              }
-            }
-          }
-#if HNEXT_POLICY_2
+#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_3
           /* assign appropriate tier */
-          if(hnext_tx_current_state == 0) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            hnext_tx_current_tier = 1;
-          } else if(hnext_tx_current_state == 1) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 1
-                      || hnext_tx_packet_type == 2) {
-              hnext_tx_current_tier = 0;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 1;
-            }
-          } else if(hnext_tx_current_state == 2) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 2) {
-              hnext_tx_current_tier = 0;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 1;
-            }
-          } else if(hnext_tx_current_state == 3) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 5
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 0;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 1;
-            }
-          } else if(hnext_tx_current_state == 4) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            hnext_tx_current_tier = 1;
-          }
-#elif HNEXT_POLICY_3
-          /* assign appropriate tier */
-          if(hnext_tx_current_state == 0) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 0 
-                      || hnext_tx_packet_type == 2 
-                      || hnext_tx_packet_type == 3) {
-              hnext_tx_current_tier = 1;
-            } else if(hnext_tx_packet_type == 1 
-                      || hnext_tx_packet_type == 4 
-                      || hnext_tx_packet_type == 5 
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 2;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 3;
-            }
-          } else if(hnext_tx_current_state == 1) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 1
-                      || hnext_tx_packet_type == 2) {
-              hnext_tx_current_tier = 0;
-            } else if(hnext_tx_packet_type == 0 
-                      || hnext_tx_packet_type == 3) {
-              hnext_tx_current_tier = 1;
-            } else if(hnext_tx_packet_type == 4 
-                      || hnext_tx_packet_type == 5 
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 2;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 3;
-            }
-          } else if(hnext_tx_current_state == 2) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 2) {
-              hnext_tx_current_tier = 0;
-            } else if(hnext_tx_packet_type == 0 
-                      || hnext_tx_packet_type == 3) {
-              hnext_tx_current_tier = 1;
-            } else if(hnext_tx_packet_type == 1 
-                      || hnext_tx_packet_type == 4 
-                      || hnext_tx_packet_type == 5 
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 2;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 3;
-            }
-          } else if(hnext_tx_current_state == 3) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 5
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 0;
-            } else if(hnext_tx_packet_type == 0 
-                      || hnext_tx_packet_type == 2
-                      || hnext_tx_packet_type == 3) {
-              hnext_tx_current_tier = 1;
-            } else if(hnext_tx_packet_type == 1 
-                      || hnext_tx_packet_type == 4) {
-              hnext_tx_current_tier = 2;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 3;
-            }
-          } else if(hnext_tx_current_state == 4) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 0 
-                      || hnext_tx_packet_type == 2
-                      || hnext_tx_packet_type == 3) {
-              hnext_tx_current_tier = 1;
-            } else if(hnext_tx_packet_type == 1 
-                      || hnext_tx_packet_type == 4
-                      || hnext_tx_packet_type == 5
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 2;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 3;
-            }
-          }
-#elif HNEXT_POLICY_4
-          /* assign appropriate tier */
-          if(hnext_tx_current_state == 0) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 0 
-                      || hnext_tx_packet_type == 2 
-                      || hnext_tx_packet_type == 3) {
-              hnext_tx_current_tier = 2;
-            } else if(hnext_tx_packet_type == 1 
-                      || hnext_tx_packet_type == 4 
-                      || hnext_tx_packet_type == 5 
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 3;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 3;
-            }
-          } else if(hnext_tx_current_state == 1) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 2) {
-              hnext_tx_current_tier = 0;
-            } else if(hnext_tx_packet_type == 1) {
-              hnext_tx_current_tier = 1;
-            } else if(hnext_tx_packet_type == 0 
-                      || hnext_tx_packet_type == 3) {
-              hnext_tx_current_tier = 2;
-            } else if(hnext_tx_packet_type == 4 
-                      || hnext_tx_packet_type == 5 
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 3;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 3;
-            }
-          } else if(hnext_tx_current_state == 2) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 2) {
-              hnext_tx_current_tier = 0;
-            } else if(hnext_tx_packet_type == 0 
-                      || hnext_tx_packet_type == 3) {
-              hnext_tx_current_tier = 2;
-            } else if(hnext_tx_packet_type == 1 
-                      || hnext_tx_packet_type == 4 
-                      || hnext_tx_packet_type == 5 
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 3;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 3;
-            }
-          } else if(hnext_tx_current_state == 3) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 5
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 1;
-            } else if(hnext_tx_packet_type == 0 
-                      || hnext_tx_packet_type == 2
-                      || hnext_tx_packet_type == 3) {
-              hnext_tx_current_tier = 2;
-            } else if(hnext_tx_packet_type == 1 
-                      || hnext_tx_packet_type == 4) {
-              hnext_tx_current_tier = 3;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 3;
-            }
-          } else if(hnext_tx_current_state == 4) {
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            if(hnext_tx_packet_type == 0 
-                      || hnext_tx_packet_type == 2
-                      || hnext_tx_packet_type == 3) {
-              hnext_tx_current_tier = 2;
-            } else if(hnext_tx_packet_type == 1 
-                      || hnext_tx_packet_type == 4
-                      || hnext_tx_packet_type == 5
-                      || hnext_tx_packet_type == 6) {
-              hnext_tx_current_tier = 3;
-            } else { /* Includes Dataa */
-              hnext_tx_current_tier = 3;
-            }
-          }
-#elif HNEXT_POLICY_5
-          /* Urgent packet in terms of retransmissions */
-          if(current_packet->transmissions >= (current_packet->max_transmissions - 1)) {
-            hnext_tx_current_tier = 0;
-          } else {
-            if(hnext_tx_packet_type == 0 || hnext_tx_packet_type == 3) { /* EB, DIO */
-              int hnext_dio_interval_increment = tsch_rpl_callback_dio_interval_increment();
-              if(hnext_dio_interval_increment == 0xFF) {
-                hnext_tx_current_tier = 2;
-              } else {
-                if(hnext_dio_interval_increment <= HNEXT_DIO_INTERVAL_THRESHOLD) {
-                  hnext_tx_current_tier = 1;
-                } else {
-                  hnext_tx_current_tier = 2;
-                }
-              }
-            } else if(hnext_tx_packet_type == 1) { /* KA */
-              if(hnext_tx_current_state == 1) { /* TSCH joined */
-                hnext_tx_current_tier = 1;
-              } else {
-                hnext_tx_current_tier = 3;
-              }
-            } else if(hnext_tx_packet_type == 2) { /* DIS */
-              if(hnext_tx_current_state == 1 || hnext_tx_current_state == 2) { /* TSCH joined or Sync confirmed */
-                hnext_tx_current_tier = 1;
-              } else {
-                hnext_tx_current_tier = 2;
-              }
-            } else if(hnext_tx_packet_type == 4) { /* DIO-U */
-              hnext_tx_current_tier = 3;
-            } else if(hnext_tx_packet_type == 5) { /* DAO */
-              if(hnext_tx_current_state == 3) { /* RPL joined */
-                hnext_tx_current_tier = 1;
-              } else {
-                hnext_tx_current_tier = 3;
-              }
-            } else if(hnext_tx_packet_type == 6) { /* DAOA */
-              if(hnext_tx_current_state == 3) { /* RPL joined */
-                hnext_tx_current_tier = 1;
-              } else {
-                hnext_tx_current_tier = 3;
-              }
-            } else if(hnext_tx_packet_type == 7) { /* Data */
-              hnext_tx_current_tier = 3;
+          if(hnext_tx_current_state == HNEXT_STATE_1_NEW_NODE) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
             } else {
-              hnext_tx_current_tier = 3;
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_2_TSCH_JOINED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_3_TSCH_SYNC_CONFIRMED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_4_RPL_JOINED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_5_RPL_CONNECTION_CONFIRMED_CELL_NOT_ALLOCATED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_6_RPL_CONNECTION_NOT_CONFIRMED_CELL_ALLOCATED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_7_RPL_CONNECTION_CONFIRMED_CELL_ALLOCATED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            }
+          }
+#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_4
+          /* assign appropriate tier */
+          if(hnext_tx_current_state == HNEXT_STATE_1_NEW_NODE) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_4;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_2_TSCH_JOINED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_4;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_3_TSCH_SYNC_CONFIRMED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
+              hnext_tx_current_tier = HNEXT_TIER_1;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_4;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_4_RPL_JOINED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_4;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_5_RPL_CONNECTION_CONFIRMED_CELL_NOT_ALLOCATED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_4;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_6_RPL_CONNECTION_NOT_CONFIRMED_CELL_ALLOCATED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_2;
+            } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_4;
+            }
+          } else if(hnext_tx_current_state == HNEXT_STATE_7_RPL_CONNECTION_CONFIRMED_CELL_ALLOCATED) {
+            if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB 
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS
+                || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
+              hnext_tx_current_tier = HNEXT_TIER_3;
+            } else {
+              hnext_tx_current_tier = HNEXT_TIER_4;
             }
           }
 #endif
-#endif /* HNEXT_POLICY_3 || HNEXT_POLICY_4 || HNEXT_POLICY_5 */
+
+#if HNEXT_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                      "hn2 %u | %d %d %d %d %d", 
+                      hnext_tx_current_tier,
+                      tsch_is_associated,
+                      sync_count > 0,
+                      tsch_rpl_check_dodag_joined(),
+                      tsch_rpl_is_urgent_probing_target_null(),
+                      orchestra_parent_knows_us);
+          );
+#endif
         } else { /* current_link->slotframe_handle != TSCH_SCHED_COMMON_SF_HANDLE */
           /* assign appropriate tier */
-          hnext_tx_current_tier = 9;
+          hnext_tx_current_tier = HNEXT_TIER_NULL;
         }
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
 
@@ -2183,7 +2182,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         hnext_tx_info = (hnext_tx_packet_type << 8) + hnext_tx_current_tier;
 #else
         hnext_tx_info = (hnext_tx_packet_type << 8) + 0;
-#endif
+#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
 
         frame802154_t hnext_frame;
         int hnext_hdr_len;
@@ -2893,6 +2892,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     current_packet->transmissions++;
     current_packet->ret = mac_tx_status;
 
+#if HCKIM_NEXT
+    if(mac_tx_status == MAC_TX_COLLISION) {
+      current_packet->hnext_collision_count++;
+    } else if(mac_tx_status == MAC_TX_NOACK) {
+      current_packet->hnext_noack_count++;
+    }
+#endif
+
 #if WITH_UPA && UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
     current_packet->upa_sent_in_batch = 0;
 #endif
@@ -3008,6 +3015,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if HCKIM_NEXT
           log->tx.hnext_packet_type = hnext_tx_packet_type;
           log->tx.asap_ack_len = asap_tot_ack_len;
+          log->tx.hnext_collision_count = current_packet->hnext_collision_count;
+          log->tx.hnext_noack_count = current_packet->hnext_noack_count;
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
           log->tx.hnext_tier = hnext_tx_current_tier;
           log->tx.hnext_state = hnext_tx_current_state;
