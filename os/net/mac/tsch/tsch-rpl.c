@@ -61,7 +61,6 @@
 #define LOG_LEVEL LOG_LEVEL_MAC
 
 #if HCKIM_NEXT
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
 /*---------------------------------------------------------------------------*/
 int
 tsch_rpl_is_urgent_probing_target_null()
@@ -76,7 +75,6 @@ tsch_rpl_is_urgent_probing_target_null()
   }
 }
 /*---------------------------------------------------------------------------*/
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
 int
 tsch_rpl_callback_dio_interval_increment()
 {
@@ -89,8 +87,6 @@ tsch_rpl_callback_dio_interval_increment()
     return 0xFF;
   }
 }
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5 */
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
 #endif /* HCKIM_NEXT */
 
 /*---------------------------------------------------------------------------*/

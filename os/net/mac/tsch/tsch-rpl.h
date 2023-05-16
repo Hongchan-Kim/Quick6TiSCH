@@ -49,12 +49,8 @@
 
 /********** Functions *********/
 #if HCKIM_NEXT
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
 int tsch_rpl_is_urgent_probing_target_null(void);
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
 int tsch_rpl_callback_dio_interval_increment(void);
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5 */
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
 #endif /* HCKIM_NEXT */
 
 #if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS

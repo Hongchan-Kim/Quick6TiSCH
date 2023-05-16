@@ -15,14 +15,17 @@
 
 #define HNEXT_OFFSET_GAP                           600
 
-#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_4
+#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_0
 
 #define HNEXT_POLICY_0                             0 /* Baseline */
 #define HNEXT_POLICY_1                             1 /* Transition-related or not */
 #define HNEXT_POLICY_2                             2 /* BC vs. UC */
-#define HNEXT_POLICY_3                             3 /* Comb of 1 and 2 with three tiers */
-#define HNEXT_POLICY_4                             4 /* Comb of 1 and 2 with four tiers */
-#define HNEXT_POLICY_5                             5 /* Consider link loss and Trickle timer */
+#define HNEXT_POLICY_3                             3 /* Policy 1 + consider Trickle timer for DIO/EB - two tiers */
+#define HNEXT_POLICY_4                             4 /* Policy 1 + consider Trickle timer for DIO/EB - three tiers */
+#define HNEXT_POLICY_5                             5 /* Comb of 1 and 2 with three tiers */
+#define HNEXT_POLICY_6                             6 /* Comb of 1 and 2 with four tiers */
+
+#define HNEXT_POLICY_100                           100 /* Random policy */
 
 #define HNEXT_DIO_INTERVAL_THRESHOLD               1
 
