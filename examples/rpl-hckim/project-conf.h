@@ -11,21 +11,48 @@
 #define HNEXT_CCA_OFFSET                           800
 #define HNEXT_TX_OFFSET                            1300 /* 1300 ~ 3100 */
 #define HNEXT_RX_OFFSET_LEFT                       500  /* 800  ~ 1300, 500 margin */
-#define HNEXT_RX_OFFSET_RIGHT                      2300 /* 1300 ~ 3600, 500 margin */
+#define HNEXT_RX_OFFSET_RIGHT                      3300 /* 1300 ~ 3600, 500 margin */
 
 #define HNEXT_OFFSET_GAP                           600
 
-#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_0
+#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_306
 
 #define HNEXT_POLICY_0                             0 /* Baseline */
-#define HNEXT_POLICY_1                             1 /* Transition-related or not */
-#define HNEXT_POLICY_2                             2 /* BC vs. UC */
-#define HNEXT_POLICY_3                             3 /* Policy 1 + consider Trickle timer for DIO/EB - two tiers */
-#define HNEXT_POLICY_4                             4 /* Policy 1 + consider Trickle timer for DIO/EB - three tiers */
-#define HNEXT_POLICY_5                             5 /* Comb of 1 and 2 with three tiers */
-#define HNEXT_POLICY_6                             6 /* Comb of 1 and 2 with four tiers */
+#define HNEXT_POLICY_1                             1 /* Random */
+#define HNEXT_POLICY_2                             2 /* Prioritize transition-related packets */
+#define HNEXT_POLICY_3                             3 /* Prioritize broadcast packets */
+#define HNEXT_POLICY_4                             4 /* Prioritize DIO based on Trickle timer (two-tiers) */
+#define HNEXT_POLICY_5                             5 /* Prioritize DIO based on Trickle timer (three-tiers) */
+#define HNEXT_POLICY_6                             6 /* Policy-2 + Policy-4 */
+#define HNEXT_POLICY_7                             7 /* Policy-2 + Policy-5 */
+#define HNEXT_POLICY_8                             8 /* Policy-2 + Policy-5 */
+#define HNEXT_POLICY_9                             9 /* Policy-2 + Policy-5 */
+#define HNEXT_POLICY_10                            10 /* Policy-2 + Policy-3 */
+#define HNEXT_POLICY_11                            11 /* Policy-2 + Policy-3 */
 
-#define HNEXT_POLICY_100                           100 /* Random policy */
+#define HNEXT_POLICY_100                           100
+#define HNEXT_POLICY_101                           101
+
+#define HNEXT_POLICY_201                           201
+#define HNEXT_POLICY_202                           202
+#define HNEXT_POLICY_203                           203
+#define HNEXT_POLICY_204                           204
+#define HNEXT_POLICY_205                           205
+#define HNEXT_POLICY_206                           206
+#define HNEXT_POLICY_207                           207
+#define HNEXT_POLICY_208                           208
+#define HNEXT_POLICY_209                           209
+#define HNEXT_POLICY_210                           210
+#define HNEXT_POLICY_211                           211
+
+#define HNEXT_POLICY_301                           301
+#define HNEXT_POLICY_302                           302
+#define HNEXT_POLICY_303                           303
+#define HNEXT_POLICY_304                           304
+#define HNEXT_POLICY_305                           305
+#define HNEXT_POLICY_306                           306
+
+#define HNEXT_TEMP                                 0
 
 #define HNEXT_DIO_INTERVAL_THRESHOLD               1
 
@@ -338,7 +365,7 @@
 #define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
 #define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
 #define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //19 //31 //101 // broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        31 //19 //31 //101 // broadcast and default slotframe length, original: 31
 #define ORCHESTRA_CONF_UNICAST_PERIOD              20 // unicast, should be longer than (2N-2)/3 to provide contention-free links
 #define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
 #define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling

@@ -52,6 +52,43 @@
 #include "net/ipv6/uip-ds6-nbr.h"
 #endif
 
+#if HCKIM_NEXT
+enum HNEXT_PACKET_TYPE {
+  HNEXT_PACKET_TYPE_EB,    // 0
+  HNEXT_PACKET_TYPE_KA,    // 1
+  HNEXT_PACKET_TYPE_DIS,   // 2
+  HNEXT_PACKET_TYPE_M_DIO, // 3
+  HNEXT_PACKET_TYPE_U_DIO, // 4
+  HNEXT_PACKET_TYPE_DAO,   // 5
+  HNEXT_PACKET_TYPE_DAOA,  // 6
+  HNEXT_PACKET_TYPE_DATA,  // 7
+  HNEXT_PACKET_TYPE_NULL   // 8
+};
+/* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+//static enum HNEXT_PACKET_TYPE hnext_tx_packet_type = HNEXT_PACKET_TYPE_NULL;
+//static enum HNEXT_PACKET_TYPE hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
+
+enum HNEXT_STATE {
+  HNEXT_STATE_1_NEW_NODE,       // 0
+  HNEXT_STATE_2_TSCH_JOINED,    // 1
+  HNEXT_STATE_3_RPL_JOINED,     // 2
+  HNEXT_STATE_4_CELL_ALLOCATED, // 3
+};
+//static uint8_t hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
+
+#if HNEXT_OFFSET_BASED_PRIORITIZATION
+enum HNEXT_TIER {
+  HNEXT_TIER_1,   // 0 
+  HNEXT_TIER_2,   // 1
+  HNEXT_TIER_3,   // 2
+  HNEXT_TIER_4,   // 3
+  HNEXT_TIER_NULL // 4
+};
+//static enum HNEXT_TIER hnext_tx_current_tier = HNEXT_TIER_NULL;
+//static enum HNEXT_TIER hnext_rx_current_tier = HNEXT_TIER_NULL;
+#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+#endif /* HCKIM_NEXT */
+
 /********** Data types **********/
 
 /** \brief 802.15.4e link types. LINK_TYPE_ADVERTISING_ONLY is an extra one: for EB-only links. */
@@ -112,6 +149,10 @@ struct tsch_packet {
   uint8_t tsch_sync_ie_offset; /* Offset within the frame used for quick update of EB ASN and join priority */
 
 #if HCKIM_NEXT
+  uint8_t hnext_packet_type;
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_100 || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_101
+  uint8_t hnext_tier;
+#endif
   uint8_t hnext_collision_count;
   uint8_t hnext_noack_count;
 #endif

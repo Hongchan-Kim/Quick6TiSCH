@@ -57,6 +57,11 @@
 #include "net/nbr-table.h"
 #include <string.h>
 
+#if HCKIM_NEXT
+#include "net/ipv6/uip-icmp6.h"
+#include "net/routing/rpl-classic/rpl-private.h"
+#endif
+
 #if WITH_OST /* OST: Include header files */
 #include "node-info.h"
 #include "net/ipv6/uip-ds6-route.h"
@@ -502,6 +507,39 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             p->transmissions = 0;
             p->max_transmissions = max_transmissions;
 #if HCKIM_NEXT
+            uint8_t hnext_is_broadcast = (linkaddr_cmp(addr, &tsch_eb_address)
+                                        || linkaddr_cmp(addr, &tsch_broadcast_address));
+
+            uint8_t hnext_current_packet_type = HNEXT_PACKET_TYPE_NULL;
+            if(((((uint8_t *)(queuebuf_dataptr(p->qb)))[0]) & 7) == FRAME802154_BEACONFRAME) {
+              hnext_current_packet_type = HNEXT_PACKET_TYPE_EB;
+            } else {
+              if(p->sent == keepalive_packet_sent) {
+                hnext_current_packet_type = HNEXT_PACKET_TYPE_KA;
+              } else {
+                if(queuebuf_attr(p->qb, PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+                  if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIS)) {
+                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DIS;
+                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)) {
+                    if(hnext_is_broadcast) {
+                      hnext_current_packet_type = HNEXT_PACKET_TYPE_M_DIO;
+                    } else {
+                      hnext_current_packet_type = HNEXT_PACKET_TYPE_U_DIO;
+                    }
+                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
+                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DAO;
+                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
+                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DAOA;
+                  }
+                } else {
+                  hnext_current_packet_type = HNEXT_PACKET_TYPE_DATA;
+                }
+              }
+            }
+            p->hnext_packet_type = hnext_current_packet_type;
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_100 || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_101
+            p->hnext_tier = 0;
+#endif
             p->hnext_noack_count = 0;
             p->hnext_collision_count = 0;
 #endif
@@ -704,8 +742,22 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
       /* Failures on dedicated (== non-shared) leave the backoff
        * window nor exponent unchanged */
       if(is_shared_link) {
+
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_100 || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_101
+        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+          if(p->hnext_tier >= 2 && mac_tx_status == MAC_TX_COLLISION) {
+          } else {
+            /* Shared link: increment backoff exponent, pick a new window */
+            tsch_queue_backoff_inc(n);
+          }
+        } else {
+          /* Shared link: increment backoff exponent, pick a new window */
+          tsch_queue_backoff_inc(n);
+        }
+#else
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n);
+#endif
       }
     }
   }
