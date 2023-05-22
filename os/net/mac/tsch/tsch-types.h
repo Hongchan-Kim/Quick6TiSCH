@@ -150,11 +150,10 @@ struct tsch_packet {
 
 #if HCKIM_NEXT
   uint8_t hnext_packet_type;
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_100 || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_101
   uint8_t hnext_tier;
-#endif
   uint8_t hnext_collision_count;
   uint8_t hnext_noack_count;
+  uint8_t hnext_sent_at_bc_asn;
 #endif
 
 #if WITH_SLA

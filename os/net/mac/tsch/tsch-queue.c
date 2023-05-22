@@ -537,7 +537,10 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
               }
             }
             p->hnext_packet_type = hnext_current_packet_type;
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_100 || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_101
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_100 \
+    || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_101 \
+    || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_504
+            p->hnext_sent_at_bc_asn = 0;
             p->hnext_tier = 0;
 #endif
             p->hnext_noack_count = 0;
@@ -730,6 +733,15 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
         tsch_queue_backoff_reset(n);
       }
     }
+#if HNEXT_BC_BACKOFF
+    else { // broadcast neirhbor
+      if(is_shared_link || tsch_queue_is_empty(n)) {
+        /* If this is a shared link, reset backoff on success.
+         * Otherwise, do so only is the queue is empty */
+        tsch_queue_backoff_reset(n);
+      }
+    }
+#endif
   } else {
     /* Failed transmission */
     if(p->transmissions >= p->max_transmissions) {
@@ -743,13 +755,24 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
        * window nor exponent unchanged */
       if(is_shared_link) {
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_100 || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_101
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_100 \
+    || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_101 \
+    || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_504
         if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_504
+          if((p->hnext_sent_at_bc_asn == 1 && p->hnext_tier >= HNEXT_TIER_3 && mac_tx_status == MAC_TX_COLLISION)
+            || (p->hnext_sent_at_bc_asn == 0 && p->hnext_tier >= HNEXT_TIER_4 && mac_tx_status == MAC_TX_COLLISION)) {
+          } else {
+            /* Shared link: increment backoff exponent, pick a new window */
+            tsch_queue_backoff_inc(n);
+          }
+#else
           if(p->hnext_tier >= 2 && mac_tx_status == MAC_TX_COLLISION) {
           } else {
             /* Shared link: increment backoff exponent, pick a new window */
             tsch_queue_backoff_inc(n);
           }
+#endif
         } else {
           /* Shared link: increment backoff exponent, pick a new window */
           tsch_queue_backoff_inc(n);
@@ -760,6 +783,38 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 #endif
       }
     }
+#if HNEXT_BC_BACKOFF
+    else { // broadcast neighbor
+      if(is_shared_link) {
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_100 \
+    || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_101 \
+    || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_504
+        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_504
+          if((p->hnext_sent_at_bc_asn == 1 && p->hnext_tier >= HNEXT_TIER_3 && mac_tx_status == MAC_TX_COLLISION)
+            || (p->hnext_sent_at_bc_asn == 0 && p->hnext_tier >= HNEXT_TIER_4 && mac_tx_status == MAC_TX_COLLISION)) {
+          } else {
+            /* Shared link: increment backoff exponent, pick a new window */
+            tsch_queue_backoff_inc(n);
+          }
+#else
+          if(p->hnext_tier >= 2 && mac_tx_status == MAC_TX_COLLISION) {
+          } else {
+            /* Shared link: increment backoff exponent, pick a new window */
+            tsch_queue_backoff_inc(n);
+          }
+#endif
+        } else {
+          /* Shared link: increment backoff exponent, pick a new window */
+          tsch_queue_backoff_inc(n);
+        }
+#else
+        /* Shared link: increment backoff exponent, pick a new window */
+        tsch_queue_backoff_inc(n);
+#endif
+      }
+    }
+#endif
   }
 
   return in_queue;

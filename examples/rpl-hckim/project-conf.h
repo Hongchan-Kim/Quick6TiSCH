@@ -11,11 +11,15 @@
 #define HNEXT_CCA_OFFSET                           800
 #define HNEXT_TX_OFFSET                            1300 /* 1300 ~ 3100 */
 #define HNEXT_RX_OFFSET_LEFT                       500  /* 800  ~ 1300, 500 margin */
-#define HNEXT_RX_OFFSET_RIGHT                      3300 /* 1300 ~ 3600, 500 margin */
+#define HNEXT_RX_OFFSET_RIGHT                      2900 /* 1300 ~ 4200, 500 margin */
 
 #define HNEXT_OFFSET_GAP                           600
 
-#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_306
+#define HNEXT_MORE_CCA_TEMP                        0
+#define HNEXT_BC_BACKOFF                           1 /* Need to distinguish EB/broadcast nbrs */
+#define HNEXT_BC_ASN_MOD                           2
+
+#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_503
 
 #define HNEXT_POLICY_0                             0 /* Baseline */
 #define HNEXT_POLICY_1                             1 /* Random */
@@ -52,7 +56,15 @@
 #define HNEXT_POLICY_305                           305
 #define HNEXT_POLICY_306                           306
 
-#define HNEXT_TEMP                                 0
+#define HNEXT_POLICY_401                           401
+#define HNEXT_POLICY_402                           402
+#define HNEXT_POLICY_403                           403
+
+#define HNEXT_POLICY_501                           501
+#define HNEXT_POLICY_502                           502
+#define HNEXT_POLICY_503                           503
+#define HNEXT_POLICY_504                           504
+
 
 #define HNEXT_DIO_INTERVAL_THRESHOLD               1
 
