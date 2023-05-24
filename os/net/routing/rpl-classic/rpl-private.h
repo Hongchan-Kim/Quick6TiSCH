@@ -77,6 +77,11 @@ extern uint8_t fixed_parent_id[NODE_NUM];
 #define RPL_CODE_DIO                   0x01   /* DAG Information Option */
 #define RPL_CODE_DAO                   0x02   /* Destination Advertisement Option */
 #define RPL_CODE_DAO_ACK               0x03   /* DAO acknowledgment */
+
+#if HCKIM_NEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+#define RPL_CODE_NO_PATH_DAO           0x04   /* No-path DAO*/
+#endif
+
 #define RPL_CODE_SEC_DIS               0x80   /* Secure DIS */
 #define RPL_CODE_SEC_DIO               0x81   /* Secure DIO */
 #define RPL_CODE_SEC_DAO               0x82   /* Secure DAO */

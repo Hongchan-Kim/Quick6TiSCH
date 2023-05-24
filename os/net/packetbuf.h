@@ -245,10 +245,6 @@ enum {
   PACKETBUF_ATTR_FRAME_COUNTER_BYTES_2_3,
 #endif /* LLSEC802154_USES_FRAME_COUNTER */
 
-#if HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
-  PACKETBUF_ATTR_RPL_NO_PATH_DAO,
-#endif
-
   /* Scope 2 attributes: used between end-to-end nodes. */
   /* These must be last */
   PACKETBUF_ADDR_SENDER,

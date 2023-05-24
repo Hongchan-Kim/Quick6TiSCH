@@ -12,61 +12,24 @@
 #define HNEXT_TX_OFFSET                            1300 /* 1300 ~ 3100 */
 #define HNEXT_RX_OFFSET_LEFT                       500  /* 800  ~ 1300, 500 margin */
 #define HNEXT_RX_OFFSET_RIGHT                      2900 /* 1300 ~ 4200, 500 margin */
-
 #define HNEXT_OFFSET_GAP                           600
 
-#define HNEXT_MORE_CCA_TEMP                        0
-#define HNEXT_BC_BACKOFF                           1 /* Need to distinguish EB/broadcast nbrs */
-#define HNEXT_BC_ASN_MOD                           2
-
-#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_503
+#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_5
 
 #define HNEXT_POLICY_0                             0 /* Baseline */
 #define HNEXT_POLICY_1                             1 /* Random */
-#define HNEXT_POLICY_2                             2 /* Prioritize transition-related packets */
-#define HNEXT_POLICY_3                             3 /* Prioritize broadcast packets */
-#define HNEXT_POLICY_4                             4 /* Prioritize DIO based on Trickle timer (two-tiers) */
-#define HNEXT_POLICY_5                             5 /* Prioritize DIO based on Trickle timer (three-tiers) */
-#define HNEXT_POLICY_6                             6 /* Policy-2 + Policy-4 */
-#define HNEXT_POLICY_7                             7 /* Policy-2 + Policy-5 */
-#define HNEXT_POLICY_8                             8 /* Policy-2 + Policy-5 */
-#define HNEXT_POLICY_9                             9 /* Policy-2 + Policy-5 */
-#define HNEXT_POLICY_10                            10 /* Policy-2 + Policy-3 */
-#define HNEXT_POLICY_11                            11 /* Policy-2 + Policy-3 */
+#define HNEXT_POLICY_2                             2 /* Prioritize unicast */
+#define HNEXT_POLICY_3                             3 /* Prioritize broadcast */
+#define HNEXT_POLICY_4                             4 /* Explicitely separated logical channel */
+#define HNEXT_POLICY_5                             5 /* Differentiate N-DAO from DAO */
 
-#define HNEXT_POLICY_100                           100
-#define HNEXT_POLICY_101                           101
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_4 \
+    || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
+#define HNEXT_TEMP_SENT_OK_CHECK                   1
+#endif
 
-#define HNEXT_POLICY_201                           201
-#define HNEXT_POLICY_202                           202
-#define HNEXT_POLICY_203                           203
-#define HNEXT_POLICY_204                           204
-#define HNEXT_POLICY_205                           205
-#define HNEXT_POLICY_206                           206
-#define HNEXT_POLICY_207                           207
-#define HNEXT_POLICY_208                           208
-#define HNEXT_POLICY_209                           209
-#define HNEXT_POLICY_210                           210
-#define HNEXT_POLICY_211                           211
-
-#define HNEXT_POLICY_301                           301
-#define HNEXT_POLICY_302                           302
-#define HNEXT_POLICY_303                           303
-#define HNEXT_POLICY_304                           304
-#define HNEXT_POLICY_305                           305
-#define HNEXT_POLICY_306                           306
-
-#define HNEXT_POLICY_401                           401
-#define HNEXT_POLICY_402                           402
-#define HNEXT_POLICY_403                           403
-
-#define HNEXT_POLICY_501                           501
-#define HNEXT_POLICY_502                           502
-#define HNEXT_POLICY_503                           503
-#define HNEXT_POLICY_504                           504
-
-
-#define HNEXT_DIO_INTERVAL_THRESHOLD               1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF            1
+#define HNEXT_TEMP_BC_BACKOFF                      0 /* Need to distinguish EB/broadcast nbrs */
 
 #endif
 

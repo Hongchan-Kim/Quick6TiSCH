@@ -132,6 +132,9 @@ static uip_mcast6_route_t *mcast_group;
 UIP_ICMP6_HANDLER(dis_handler, ICMP6_RPL, RPL_CODE_DIS, dis_input);
 UIP_ICMP6_HANDLER(dio_handler, ICMP6_RPL, RPL_CODE_DIO, dio_input);
 UIP_ICMP6_HANDLER(dao_handler, ICMP6_RPL, RPL_CODE_DAO, dao_input);
+#if HCKIM_NEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+UIP_ICMP6_HANDLER(dao_no_path_handler, ICMP6_RPL, RPL_CODE_NO_PATH_DAO, dao_input);
+#endif
 UIP_ICMP6_HANDLER(dao_ack_handler, ICMP6_RPL, RPL_CODE_DAO_ACK, dao_ack_input);
 /*---------------------------------------------------------------------------*/
 
@@ -916,8 +919,13 @@ dao_input_storing(void)
 
         buffer = UIP_ICMP_PAYLOAD;
         buffer[3] = out_seq; /* add an outgoing seq no before fwd */
+#if HCKIM_NEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+        uip_icmp6_send(rpl_parent_get_ipaddr(dag->preferred_parent),
+                       ICMP6_RPL, RPL_CODE_NO_PATH_DAO, buffer_length);
+#else
         uip_icmp6_send(rpl_parent_get_ipaddr(dag->preferred_parent),
                        ICMP6_RPL, RPL_CODE_DAO, buffer_length);
+#endif
       }
     }
     /* independent if we remove or not - ACK the request */
@@ -1377,14 +1385,6 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   buffer[pos++] = 0; /* path seq - ignored */
   buffer[pos++] = lifetime;
 
-#if HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
-  if(lifetime != RPL_ZERO_LIFETIME) {
-    packetbuf_set_attr(PACKETBUF_ATTR_RPL_NO_PATH_DAO, 0);
-  } else {
-    packetbuf_set_attr(PACKETBUF_ATTR_RPL_NO_PATH_DAO, 1);
-  }
-#endif
-
   if(instance->mop != RPL_MOP_NON_STORING) {
     /* Send DAO to parent */
     dest_ipaddr = parent_ipaddr;
@@ -1417,7 +1417,16 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   }
 
   if(dest_ipaddr != NULL) {
+
+#if HCKIM_NEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+    if(lifetime != RPL_ZERO_LIFETIME) {
+      uip_icmp6_send(dest_ipaddr, ICMP6_RPL, RPL_CODE_DAO, pos);
+    } else {
+      uip_icmp6_send(dest_ipaddr, ICMP6_RPL, RPL_CODE_NO_PATH_DAO, pos);
+    }
+#else
     uip_icmp6_send(dest_ipaddr, ICMP6_RPL, RPL_CODE_DAO, pos);
+#endif
   }
 }
 /*---------------------------------------------------------------------------*/
@@ -1555,6 +1564,9 @@ rpl_icmp6_register_handlers()
   uip_icmp6_register_input_handler(&dis_handler);
   uip_icmp6_register_input_handler(&dio_handler);
   uip_icmp6_register_input_handler(&dao_handler);
+#if HCKIM_NEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+  uip_icmp6_register_input_handler(&dao_no_path_handler);
+#endif
   uip_icmp6_register_input_handler(&dao_ack_handler);
 }
 /*---------------------------------------------------------------------------*/
