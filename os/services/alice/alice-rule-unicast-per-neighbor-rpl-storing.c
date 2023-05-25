@@ -482,6 +482,11 @@ child_added(const linkaddr_t *linkaddr)
 #endif
 
   alice_schedule_unicast_slotframe();
+
+#if HCK_MOD_TSCH_PACKET_REBASE
+  struct tsch_neighbor *child_nbr = tsch_queue_get_nbr(linkaddr);
+  tsch_queue_change_attr_of_packets_in_queue_rebase(child_nbr, ALICE_UNICAST_SF_HANDLE, 0);
+#endif
 }
 /*---------------------------------------------------------------------------*/
 static void

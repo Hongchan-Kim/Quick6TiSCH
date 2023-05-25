@@ -147,24 +147,18 @@ static enum HNEXT_PACKET_TYPE hnext_tx_packet_type = HNEXT_PACKET_TYPE_NULL;
 static enum HNEXT_PACKET_TYPE hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
 static enum HNEXT_STATE hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
-static enum HNEXT_OFFSET hnext_tx_current_offset = HNEXT_OFFSET_NULL;
-static enum HNEXT_OFFSET hnext_rx_current_offset = HNEXT_OFFSET_NULL;
-
-#if HNEXT_TEMP_SENT_OK_CHECK
 static uint8_t hnext_sent_ok_eb;
 static uint8_t hnext_sent_ok_ka;
 static uint8_t hnext_sent_ok_dis;
 static uint8_t hnext_sent_ok_m_dio;
 static uint8_t hnext_sent_ok_u_dio;
 static uint8_t hnext_sent_ok_dao;
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
 static uint8_t hnext_sent_ok_np_dao;
-#endif
 static uint8_t hnext_sent_ok_daoa;
 
-#endif
-
+#if HNEXT_OFFSET_BASED_PRIORITIZATION
+static enum HNEXT_OFFSET hnext_tx_current_offset = HNEXT_OFFSET_NULL;
+static enum HNEXT_OFFSET hnext_rx_current_offset = HNEXT_OFFSET_NULL;
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
 #endif /* HCKIM_NEXT */
 
@@ -1914,10 +1908,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               }
             } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
               hnext_tx_packet_type = HNEXT_PACKET_TYPE_DAO;
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
             } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)) {
               hnext_tx_packet_type = HNEXT_PACKET_TYPE_NP_DAO;
-#endif
             } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
               hnext_tx_packet_type = HNEXT_PACKET_TYPE_DAOA;
             }
@@ -2003,89 +1995,93 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           }
 #elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_4
           if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB) {
-            if(!hnext_sent_ok_eb) {
-              hnext_tx_current_offset = 0;
+            if(hnext_sent_ok_eb <= 0) {
+              hnext_tx_current_offset = HNEXT_OFFSET_0;
             } else {
-              hnext_tx_current_offset = 4;
+              hnext_tx_current_offset = HNEXT_OFFSET_4;
             }
           } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
-            if(!hnext_sent_ok_m_dio) {
-              hnext_tx_current_offset = 0;
+            if(hnext_sent_ok_m_dio <= 0) {
+              hnext_tx_current_offset = HNEXT_OFFSET_0;
             } else {
-              hnext_tx_current_offset = 4;
+              hnext_tx_current_offset = HNEXT_OFFSET_4;
             }
           } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
-            if(!hnext_sent_ok_dis) {
-              hnext_tx_current_offset = 0;
+            if(hnext_sent_ok_dis <= 0) {
+              hnext_tx_current_offset = HNEXT_OFFSET_0;
             } else {
-              hnext_tx_current_offset = 4;
+              hnext_tx_current_offset = HNEXT_OFFSET_4;
             }
           } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
-            if(!hnext_sent_ok_dao) {
-              hnext_tx_current_offset = 1;
+            //if(hnext_sent_ok_dao <= 0) {
+            if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
+              hnext_tx_current_offset = HNEXT_OFFSET_1;
             } else {
-              hnext_tx_current_offset = 3;
+              hnext_tx_current_offset = HNEXT_OFFSET_3;
             }
           } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA) {
-            if(!hnext_sent_ok_ka) {
-              hnext_tx_current_offset = 2;
+            //if(hnext_sent_ok_ka <= 0) {
+            if(sync_count == 0) {
+              hnext_tx_current_offset = HNEXT_OFFSET_2;
             } else {
-              hnext_tx_current_offset = 3;
+              hnext_tx_current_offset = HNEXT_OFFSET_3;
             }
           } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO) {
-            if(!hnext_sent_ok_u_dio) {
-              hnext_tx_current_offset = 2;
+            //if(hnext_sent_ok_u_dio <= 0) {
+            if(!tsch_rpl_is_urgent_probing_target_null()) {
+              hnext_tx_current_offset = HNEXT_OFFSET_2;
             } else {
-              hnext_tx_current_offset = 3;
+              hnext_tx_current_offset = HNEXT_OFFSET_3;
             }
+          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAOA) {
+            hnext_tx_current_offset = HNEXT_OFFSET_3;
           } else {
-              hnext_tx_current_offset = 3;
+            hnext_tx_current_offset = HNEXT_OFFSET_3;
           }
 #elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
           if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB) {
-            if(!hnext_sent_ok_eb) {
-              hnext_tx_current_offset = 0;
+            if(hnext_sent_ok_eb <= 1) {
+              hnext_tx_current_offset = HNEXT_OFFSET_0;
             } else {
-              hnext_tx_current_offset = 4;
+              hnext_tx_current_offset = HNEXT_OFFSET_4;
             }
           } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
-            if(!hnext_sent_ok_m_dio) {
-              hnext_tx_current_offset = 0;
+            if(hnext_sent_ok_m_dio <= 1) {
+              hnext_tx_current_offset = HNEXT_OFFSET_0;
             } else {
-              hnext_tx_current_offset = 4;
+              hnext_tx_current_offset = HNEXT_OFFSET_4;
             }
           } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
-            if(!hnext_sent_ok_dis) {
-              hnext_tx_current_offset = 0;
+            if(hnext_sent_ok_dis <= 1) {
+              hnext_tx_current_offset = HNEXT_OFFSET_0;
             } else {
-              hnext_tx_current_offset = 4;
+              hnext_tx_current_offset = HNEXT_OFFSET_4;
             }
           } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
-            if(!hnext_sent_ok_dao) {
-              hnext_tx_current_offset = 1;
+            //if(hnext_sent_ok_dao <= 0) {
+            if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
+              hnext_tx_current_offset = HNEXT_OFFSET_1;
             } else {
-              hnext_tx_current_offset = 3;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_NP_DAO) {
-            if(!hnext_sent_ok_np_dao) {
-              hnext_tx_current_offset = 2;
-            } else {
-              hnext_tx_current_offset = 3;
+              hnext_tx_current_offset = HNEXT_OFFSET_3;
             }
           } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA) {
-            if(!hnext_sent_ok_ka) {
-              hnext_tx_current_offset = 1;
+            //if(hnext_sent_ok_ka <= 0) {
+            if(sync_count == 0) {
+              hnext_tx_current_offset = HNEXT_OFFSET_2;
             } else {
-              hnext_tx_current_offset = 3;
+              hnext_tx_current_offset = HNEXT_OFFSET_3;
             }
           } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO) {
-            if(!hnext_sent_ok_u_dio) {
-              hnext_tx_current_offset = 2;
+            //if(hnext_sent_ok_u_dio <= 0) {
+            if(!tsch_rpl_is_urgent_probing_target_null()) {
+              hnext_tx_current_offset = HNEXT_OFFSET_2;
             } else {
-              hnext_tx_current_offset = 3;
+              hnext_tx_current_offset = HNEXT_OFFSET_3;
             }
+          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAOA) {
+            hnext_tx_current_offset = HNEXT_OFFSET_3;
           } else {
-              hnext_tx_current_offset = 3;
+            hnext_tx_current_offset = HNEXT_OFFSET_3;
           }
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION == POLICY */
 
@@ -2368,11 +2364,131 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         current_slot_unused_offset_start = RTIMER_NOW();
 
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_TEMP_ADDITIONAL_CCA
+        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+          if(hnext_tx_current_offset == HNEXT_OFFSET_3) {
+            /* delay before CCA */
+            TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
+                                    US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
+                                    + HNEXT_OFFSET_1 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP), "cca31");
+
+            tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+
+#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
+            static int cca_31_status = 0;
+            cca_31_status = cca_status;
+#endif
+
+            /* CCA */
+            RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
+                              current_slot_start, 
+                              US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
+                              + HNEXT_OFFSET_1 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP)
+                              + tsch_timing[tsch_ts_cca]);
+
+#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
+            if(cca_31_status == 1 && cca_status == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                  "hnext cca 31"));
+            }
+#endif
+
+
+          } else if(hnext_tx_current_offset == HNEXT_OFFSET_4) {
+            /* delay before CCA */
+            TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
+                                    US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
+                                    + HNEXT_OFFSET_2 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP), "cca42");
+
+            tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+
+#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
+            static int cca_42_status = 0;
+            cca_42_status = cca_status;
+#endif
+
+            /* CCA */
+            RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
+                              current_slot_start, 
+                              US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
+                              + HNEXT_OFFSET_2 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP)
+                              + tsch_timing[tsch_ts_cca]);
+
+#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
+            if(cca_42_status == 1 && cca_status == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                  "hnext cca 42"));
+            }
+#endif
+
+          } else if(hnext_tx_current_offset == HNEXT_OFFSET_5) {
+            /* delay before CCA */
+            TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
+                                    US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
+                                    + HNEXT_OFFSET_1 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP), "cca51");
+
+            tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+
+#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
+            static int cca_51_status = 0;
+            cca_51_status = cca_status;
+#endif
+
+            /* CCA */
+            RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
+                              current_slot_start, 
+                              US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
+                              + HNEXT_OFFSET_1 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP)
+                              + tsch_timing[tsch_ts_cca]);
+
+#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
+            if(cca_51_status == 1 && cca_status == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                  "hnext cca 51"));
+            }
+#endif
+
+            /* delay before CCA */
+            TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
+                                    US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
+                                    + HNEXT_OFFSET_3 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP), "cca53");
+
+            tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+
+#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
+            static int cca_53_status = 0;
+            cca_53_status = cca_status;
+#endif
+
+            /* CCA */
+            RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
+                              current_slot_start, 
+                              US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
+                              + HNEXT_OFFSET_3 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP)
+                              + tsch_timing[tsch_ts_cca]);
+
+#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
+            if(cca_53_status == 1 && cca_status == 0) {
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                  "hnext cca 53"));
+            }
+#endif
+
+          }
+        }
+#endif
+#endif
+
+#if HNEXT_OFFSET_BASED_PRIORITIZATION
         if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
           /* delay before CCA */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
                                   US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
-                                  + hnext_tx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP), "cca");
+                                  + hnext_tx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP), "cca-h");
           TSCH_DEBUG_TX_EVENT();
 
         } else {
@@ -2782,6 +2898,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                   }
                   tsch_stats_on_time_synchronization(eack_time_correction);
                   is_drift_correction_used = 1;
+#if HCK_MOD_TSCH_SYNC_COUNT
+                  sync_count++;
+#endif
                   tsch_timesync_update(current_neighbor, since_last_timesync, drift_correction);
                   /* Keep track of sync time */
                   last_sync_asn = tsch_current_asn;
@@ -2842,37 +2961,33 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     current_packet->ret = mac_tx_status;
 
 #if HCKIM_NEXT
-
-#if HNEXT_TEMP_SENT_OK_CHECK
     if(current_packet->ret == MAC_TX_OK) {
       if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB) {
-        hnext_sent_ok_eb = 1;
+        hnext_sent_ok_eb += 1;
       } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA) {
         if(current_neighbor != NULL && current_neighbor->is_time_source) {
-          hnext_sent_ok_ka = 1;
+          hnext_sent_ok_ka += 1;
         }
       } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
-        hnext_sent_ok_dis = 1;
+        hnext_sent_ok_dis += 1;
       } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
-        hnext_sent_ok_m_dio = 1;
+        hnext_sent_ok_m_dio += 1;
       } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO) {
-        hnext_sent_ok_u_dio = 1;
+        hnext_sent_ok_u_dio += 1;
       } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
         if(current_neighbor != NULL && current_neighbor->is_time_source) {
-          hnext_sent_ok_dao = 1;
+          hnext_sent_ok_dao += 1;
         }
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
       } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_NP_DAO) {
-          hnext_sent_ok_np_dao = 1;
-#endif
+          hnext_sent_ok_np_dao += 1;
       } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAOA) {
-        hnext_sent_ok_daoa = 1;
+        hnext_sent_ok_daoa += 1;
       }
     }
-#endif
 
-#if HNEXT_TEMP_DEFFERING_NO_BACKOFF
-    if(current_packet->ret == MAC_TX_COLLISION) {
+#if HNEXT_TEMP_DEFFERING_NO_BACKOFF_TRANS_CNT
+    if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
+      && current_packet->ret == MAC_TX_COLLISION) {
       current_packet->transmissions--;
       current_packet->hnext_deferring_count++;
     }
@@ -5841,8 +5956,10 @@ ost_donothing:
             && current_link->link_options & LINK_OPTION_SHARED) {
           /* Decrement the backoff window for all neighbors able to transmit over
           * this Tx, Shared link. */
-#if HNEXT_TEMP_DEFFERING_NO_BACKOFF
-          if(current_packet->ret != MAC_TX_COLLISION) {
+#if HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_DEC
+          if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
+            && current_packet->ret == MAC_TX_COLLISION) {
+          } else {
             tsch_queue_update_all_backoff_windows(&current_link->addr);
           }
 #else

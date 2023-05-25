@@ -14,21 +14,23 @@
 #define HNEXT_RX_OFFSET_RIGHT                      2900 /* 1300 ~ 4200, 500 margin */
 #define HNEXT_OFFSET_GAP                           600
 
-#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_5
+#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_1
 
 #define HNEXT_POLICY_0                             0 /* Baseline */
 #define HNEXT_POLICY_1                             1 /* Random */
 #define HNEXT_POLICY_2                             2 /* Prioritize unicast */
 #define HNEXT_POLICY_3                             3 /* Prioritize broadcast */
 #define HNEXT_POLICY_4                             4 /* Explicitely separated logical channel */
-#define HNEXT_POLICY_5                             5 /* Differentiate N-DAO from DAO */
+#define HNEXT_POLICY_5                             5 /* Explicitely separated logical channel */
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_4 \
-    || HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
-#define HNEXT_TEMP_SENT_OK_CHECK                   1
-#endif
+#define HCK_MOD_TSCH_SYNC_COUNT                    1
+#define HCK_MOD_TSCH_PACKET_REBASE                 1
 
-#define HNEXT_TEMP_DEFFERING_NO_BACKOFF            1
+#define HNEXT_TEMP_ADDITIONAL_CCA_DBG              0
+#define HNEXT_TEMP_ADDITIONAL_CCA                  1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_TRANS_CNT  1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC     1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_DEC     1
 #define HNEXT_TEMP_BC_BACKOFF                      0 /* Need to distinguish EB/broadcast nbrs */
 
 #endif

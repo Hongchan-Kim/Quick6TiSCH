@@ -99,6 +99,49 @@ static struct ctimer ost_select_N_timer;
 #endif
 
 /*---------------------------------------------------------------------------*/
+#if HCK_MOD_TSCH_PACKET_REBASE
+void
+tsch_queue_change_attr_of_packets_in_queue_rebase(struct tsch_neighbor *target_nbr, 
+                                           uint16_t sf_handle, uint16_t timeslot)
+{
+  if(target_nbr == NULL) {
+    /* we do not have packets to change */
+    return;
+  }
+
+  int16_t get_index = 0;
+  uint8_t num_elements = 0;
+
+  if(!tsch_is_locked()) {
+
+    if(sf_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
+      tsch_queue_backoff_reset(target_nbr);
+    }
+
+    get_index = ringbufindex_peek_get(&target_nbr->tx_ringbuf);
+    num_elements = ringbufindex_elements(&target_nbr->tx_ringbuf);
+
+    if(get_index == -1) {
+      return;
+    }
+    
+    uint8_t i;
+    for(i = get_index; i < get_index + num_elements; i++) {
+      int16_t index;
+
+      if(i >= ringbufindex_size(&target_nbr->tx_ringbuf)) { /* default size: 16 */
+        index = i - ringbufindex_size(&target_nbr->tx_ringbuf);
+      } else {
+        index = i;  
+      }
+
+      queuebuf_update_attr(target_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME, sf_handle);
+      queuebuf_update_attr(target_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
+    }
+  }
+}
+#endif
+/*---------------------------------------------------------------------------*/
 #if HCK_ORCHESTRA_PACKET_OFFLOADING
 void
 tsch_queue_change_attr_of_packets_in_queue(const struct tsch_neighbor *target_nbr, 
@@ -528,10 +571,8 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
                     }
                   } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
                     hnext_current_packet_type = HNEXT_PACKET_TYPE_DAO;
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
                   } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)) {
                     hnext_current_packet_type = HNEXT_PACKET_TYPE_NP_DAO;
-#endif
                   } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
                     hnext_current_packet_type = HNEXT_PACKET_TYPE_DAOA;
                   }
@@ -545,9 +586,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             p->hnext_collision_count = 0;
             p->hnext_noack_count = 0;
             p->hnext_sent_at_bc_asn = 0;
-#if HNEXT_TEMP_DEFFERING_NO_BACKOFF
             p->hnext_deferring_count = 0;
-#endif
 #endif
             /* Add to ringbuf (actual add committed through atomic operation) */
             n->tx_array[put_index] = p;
@@ -757,8 +796,10 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
       /* Failures on dedicated (== non-shared) leave the backoff
        * window nor exponent unchanged */
       if(is_shared_link) {
-#if HNEXT_TEMP_DEFFERING_NO_BACKOFF
-        if(mac_tx_status != MAC_TX_COLLISION) {
+#if HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC
+        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
+          && current_packet->ret == MAC_TX_COLLISION) {
+        } else {
           /* Shared link: increment backoff exponent, pick a new window */
           tsch_queue_backoff_inc(n);
         }

@@ -94,6 +94,10 @@ orchestra_packet_sent(int mac_status)
       LOG_HNEXT("opku %u | at %llu\n", orchestra_parent_knows_us, orchestra_one_parent_knows_us_asn);
 #endif
 
+#if HCK_MOD_TSCH_PACKET_REBASE
+      struct tsch_neighbor *orchestra_parent_nbr = tsch_queue_get_nbr(&orchestra_parent_linkaddr);
+      tsch_queue_change_attr_of_packets_in_queue_rebase(orchestra_parent_nbr, ALICE_UNICAST_SF_HANDLE, 0);
+#endif
     }
   }
 }

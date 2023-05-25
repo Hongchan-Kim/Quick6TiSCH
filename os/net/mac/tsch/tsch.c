@@ -71,10 +71,6 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
-#if HCKIM_NEXT
-unsigned long hnext_ka_sync_count;
-#endif
-
 #if HCK_ASAP_EVAL_01_SLA_REAL_TIME
 static uint8_t hck_asap_eval_01_sla_real_time_skip_det = 1;
 #endif
@@ -1267,12 +1263,6 @@ keepalive_packet_sent(void *ptr, int status, int transmissions)
 
   LOG_HK("ka_tx %lu |\n", tsch_ka_packet_transmission_count);
 
-#if HCKIM_NEXT
-  if(status == MAC_TX_OK) {
-    hnext_ka_sync_count++;
-  }
-#endif
-
   /* We got no ack, try to resynchronize */
   if(status == MAC_TX_NOACK) {
     schedule_next_keepalive = !resynchronize(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
@@ -1894,10 +1884,6 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
       sync_count = 0;
       min_drift_seen = 0;
       max_drift_seen = 0;
-
-#if HCKIM_NEXT
-      hnext_ka_sync_count = 0;
-#endif
 
       /* Start sending keep-alives now that tsch_is_associated is set */
       tsch_schedule_keepalive(0);

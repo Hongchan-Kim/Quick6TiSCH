@@ -151,9 +151,7 @@ struct tsch_packet {
   uint8_t hnext_collision_count;
   uint8_t hnext_noack_count;
   uint8_t hnext_sent_at_bc_asn;
-#if HNEXT_TEMP_DEFFERING_NO_BACKOFF
   uint8_t hnext_deferring_count;
-#endif
 #endif
 
 #if WITH_SLA

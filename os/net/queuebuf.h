@@ -117,7 +117,7 @@ void queuebuf_debug_print(void);
 
 int queuebuf_numfree(void);
 
-#if HCK_ORCHESTRA_PACKET_OFFLOADING
+#if HCK_MOD_TSCH_PACKET_REBASE || HCK_ORCHESTRA_PACKET_OFFLOADING
 void queuebuf_update_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val);
 #endif
 #if WITH_OST
