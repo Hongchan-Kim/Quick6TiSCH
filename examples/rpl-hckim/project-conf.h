@@ -20,11 +20,13 @@
 #define HNEXT_POLICY_1                             1 /* Random */
 #define HNEXT_POLICY_2                             2 /* Prioritize unicast */
 #define HNEXT_POLICY_3                             3 /* Prioritize broadcast */
-#define HNEXT_POLICY_4                             4 /* Explicitely separated logical channel */
 #define HNEXT_POLICY_5                             5 /* Explicitely separated logical channel */
+#define HNEXT_POLICY_6                             6 /* Explicitely separated logical channel */
 
 #define HCK_MOD_TSCH_SYNC_COUNT                    1
 #define HCK_MOD_TSCH_PACKET_REBASE                 1
+
+#define HNEXT_TEMP_PACKET_SELECTION                0
 
 #define HNEXT_TEMP_ADDITIONAL_CCA_DBG              0
 #define HNEXT_TEMP_ADDITIONAL_CCA                  1

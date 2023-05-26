@@ -797,8 +797,8 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
        * window nor exponent unchanged */
       if(is_shared_link) {
 #if HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC
-        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
-          && current_packet->ret == MAC_TX_COLLISION) {
+        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
+          && mac_tx_status == MAC_TX_COLLISION) {
         } else {
           /* Shared link: increment backoff exponent, pick a new window */
           tsch_queue_backoff_inc(n);
@@ -1109,6 +1109,32 @@ tsch_queue_get_packet_for_dest_addr(const linkaddr_t *addr, struct tsch_link *li
   }
   return NULL;
 }
+/*---------------------------------------------------------------------------*/
+#if HNEXT_TEMP_PACKET_SELECTION
+struct tsch_packet *
+hnext_tsch_queue_get_best_packet(struct tsch_neighbor **n, struct tsch_link *link)
+{
+  if(!tsch_is_locked()) {
+    struct tsch_neighbor *curr_nbr = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
+    struct tsch_packet *p = NULL;
+    while(curr_nbr != NULL) {
+      if((linkaddr_cmp(tsch_queue_get_nbr_address(curr_nbr), &tsch_broadcast_address))
+          || (!curr_nbr->is_broadcast && curr_nbr->tx_links_count == 0)) {
+        /* Only look up for non-broadcast neighbors we do not have a tx link to */
+        p = tsch_queue_get_packet_for_nbr(curr_nbr, link);
+        if(p != NULL) {
+          if(n != NULL) {
+            *n = curr_nbr;
+          }
+          return p;
+        }
+      }
+      curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+    }
+  }
+  return NULL;
+}
+#endif
 /*---------------------------------------------------------------------------*/
 /* Returns the head packet of any neighbor queue with zero backoff counter.
  * Writes pointer to the neighbor in *n */

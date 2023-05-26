@@ -143,6 +143,8 @@ enum tsch_radio_state_off_cmd {
 };
 
 #if HCKIM_NEXT
+static enum HNEXT_OFFSET hnext_current_offset_policy[HNEXT_PACKET_TYPE_NULL];
+
 static enum HNEXT_PACKET_TYPE hnext_tx_packet_type = HNEXT_PACKET_TYPE_NULL;
 static enum HNEXT_PACKET_TYPE hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
 static enum HNEXT_STATE hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
@@ -1557,6 +1559,24 @@ tsch_schedule_slot_operation(struct rtimer *tm, rtimer_clock_t ref_time, rtimer_
     } \
   } while(0);
 /*---------------------------------------------------------------------------*/
+#if HNEXT_TEMP_PACKET_SELECTION
+static struct tsch_packet *
+hnext_get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **target_neighbor)
+{
+  struct tsch_packet *p = NULL;
+  struct tsch_neighbor *n = NULL;
+
+  p = hnext_tsch_queue_get_best_packet(&n, link);
+
+  /* return nbr (by reference) */
+  if(target_neighbor != NULL) {
+    *target_neighbor = n;
+  }
+
+  return p;
+}
+#endif
+/*---------------------------------------------------------------------------*/
 /* Get EB, broadcast or unicast packet to be sent, and target neighbor. */
 static struct tsch_packet *
 get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **target_neighbor)
@@ -1888,203 +1908,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
 #if HCKIM_NEXT
-      /* First determine packet type regardless of slotframe type */
-      hnext_tx_packet_type = HNEXT_PACKET_TYPE_NULL;
-
-      if(((((uint8_t *)(queuebuf_dataptr(current_packet->qb)))[0]) & 7) == FRAME802154_BEACONFRAME) {
-        hnext_tx_packet_type = HNEXT_PACKET_TYPE_EB;
-      } else {
-        if(current_packet->sent == keepalive_packet_sent) {
-          hnext_tx_packet_type = HNEXT_PACKET_TYPE_KA;
-        } else {
-          if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-            if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIS)) {
-              hnext_tx_packet_type = HNEXT_PACKET_TYPE_DIS;
-            } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)) {
-              if(current_neighbor->is_broadcast) {
-                hnext_tx_packet_type = HNEXT_PACKET_TYPE_M_DIO;
-              } else {
-                hnext_tx_packet_type = HNEXT_PACKET_TYPE_U_DIO;
-              }
-            } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
-              hnext_tx_packet_type = HNEXT_PACKET_TYPE_DAO;
-            } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)) {
-              hnext_tx_packet_type = HNEXT_PACKET_TYPE_NP_DAO;
-            } else if(queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
-              hnext_tx_packet_type = HNEXT_PACKET_TYPE_DAOA;
-            }
-          } else {
-            hnext_tx_packet_type = HNEXT_PACKET_TYPE_DATA;
-          }
-        }
-
-        /* Next determine current state */
-        if(tsch_is_coordinator) { /* Coordinator -> final state */
-          hnext_tx_current_state = HNEXT_STATE_4_CELL_ALLOCATED;
-        } else { /* Non-coordinator */
-          if(!tsch_is_associated) { /* Before TSCH join (pledge node) -> start state */
-            hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
-          } else { /* After TSCH join */
-            if(!tsch_rpl_check_dodag_joined()) { /* Before RPL join */
-              hnext_tx_current_state = HNEXT_STATE_2_TSCH_JOINED;
-            } else { /* After RPL join */
-              if(!orchestra_parent_knows_us) { /* Before cell allocation */
-                hnext_tx_current_state = HNEXT_STATE_3_RPL_JOINED;
-              } else { /* After cell allocation */
-                hnext_tx_current_state = HNEXT_STATE_4_CELL_ALLOCATED;
-              }
-            }
-          }
-        }
-
+      hnext_tx_packet_type = current_packet->hnext_packet_type;
+      if(hnext_tx_packet_type != HNEXT_PACKET_TYPE_EB) {
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
         if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_1
-          hnext_tx_current_offset = random_rand() % 5;
-#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_2 /* Prioritize unicast */
-          if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB
-            || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO
-            || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
-            hnext_tx_current_offset = 3 + random_rand() % 2;
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
-            if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
-              hnext_tx_current_offset = 0 + random_rand() % 2;
-            } else {
-              hnext_tx_current_offset = 1 + random_rand() % 2;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA) {
-            if(sync_count == 0) {
-              hnext_tx_current_offset = 0 + random_rand() % 2;
-            } else {
-              hnext_tx_current_offset = 1 + random_rand() % 2;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO) {
-            if(!tsch_rpl_is_urgent_probing_target_null()) {
-              hnext_tx_current_offset = 0 + random_rand() % 2;
-            } else {
-              hnext_tx_current_offset = 1 + random_rand() % 2;
-            }
-          } else {
-            hnext_tx_current_offset = 1 + random_rand() % 2;
-          }
-#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_3 /* Prioritize broadcast */
-          if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB
-            || hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO
-            || hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
-            hnext_tx_current_offset = 0 + random_rand() % 2;
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
-            if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
-              hnext_tx_current_offset = 2 + random_rand() % 2;
-            } else {
-              hnext_tx_current_offset = 3 + random_rand() % 2;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA) {
-            if(sync_count == 0) {
-              hnext_tx_current_offset = 2 + random_rand() % 2;
-            } else {
-              hnext_tx_current_offset = 3 + random_rand() % 2;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO) {
-            if(!tsch_rpl_is_urgent_probing_target_null()) {
-              hnext_tx_current_offset = 2 + random_rand() % 2;
-            } else {
-              hnext_tx_current_offset = 3 + random_rand() % 2;
-            }
-          } else {
-              hnext_tx_current_offset = 3 + random_rand() % 2;
-          }
-#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_4
-          if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB) {
-            if(hnext_sent_ok_eb <= 0) {
-              hnext_tx_current_offset = HNEXT_OFFSET_0;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_4;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
-            if(hnext_sent_ok_m_dio <= 0) {
-              hnext_tx_current_offset = HNEXT_OFFSET_0;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_4;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
-            if(hnext_sent_ok_dis <= 0) {
-              hnext_tx_current_offset = HNEXT_OFFSET_0;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_4;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
-            //if(hnext_sent_ok_dao <= 0) {
-            if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
-              hnext_tx_current_offset = HNEXT_OFFSET_1;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_3;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA) {
-            //if(hnext_sent_ok_ka <= 0) {
-            if(sync_count == 0) {
-              hnext_tx_current_offset = HNEXT_OFFSET_2;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_3;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO) {
-            //if(hnext_sent_ok_u_dio <= 0) {
-            if(!tsch_rpl_is_urgent_probing_target_null()) {
-              hnext_tx_current_offset = HNEXT_OFFSET_2;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_3;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAOA) {
-            hnext_tx_current_offset = HNEXT_OFFSET_3;
-          } else {
-            hnext_tx_current_offset = HNEXT_OFFSET_3;
-          }
-#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
-          if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB) {
-            if(hnext_sent_ok_eb <= 1) {
-              hnext_tx_current_offset = HNEXT_OFFSET_0;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_4;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_M_DIO) {
-            if(hnext_sent_ok_m_dio <= 1) {
-              hnext_tx_current_offset = HNEXT_OFFSET_0;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_4;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DIS) {
-            if(hnext_sent_ok_dis <= 1) {
-              hnext_tx_current_offset = HNEXT_OFFSET_0;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_4;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAO) {
-            //if(hnext_sent_ok_dao <= 0) {
-            if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
-              hnext_tx_current_offset = HNEXT_OFFSET_1;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_3;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA) {
-            //if(hnext_sent_ok_ka <= 0) {
-            if(sync_count == 0) {
-              hnext_tx_current_offset = HNEXT_OFFSET_2;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_3;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_U_DIO) {
-            //if(hnext_sent_ok_u_dio <= 0) {
-            if(!tsch_rpl_is_urgent_probing_target_null()) {
-              hnext_tx_current_offset = HNEXT_OFFSET_2;
-            } else {
-              hnext_tx_current_offset = HNEXT_OFFSET_3;
-            }
-          } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_DAOA) {
-            hnext_tx_current_offset = HNEXT_OFFSET_3;
-          } else {
-            hnext_tx_current_offset = HNEXT_OFFSET_3;
-          }
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION == POLICY */
-
+          hnext_tx_current_offset = hnext_current_offset_policy[hnext_tx_packet_type];
 #if HNEXT_DBG
           TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),
@@ -2098,15 +1926,13 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                       !tsch_rpl_is_urgent_probing_target_null(),
                       tsch_rpl_callback_dio_interval_increment());
           );
-#endif
-
-        } else { /* current_link->slotframe_handle != TSCH_SCHED_COMMON_SF_HANDLE */
-          /* assign appropriate tier */
+#endif /* HNEXT_DBG */
+        } else {
           hnext_tx_current_offset = HNEXT_OFFSET_NULL;
         }
 #else /* HNEXT_OFFSET_BASED_PRIORITIZATION */
-#if HNEXT_DBG
         if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+#if HNEXT_DBG
           TSCH_LOG_ADD(tsch_log_message,
                   snprintf(log->message, sizeof(log->message),
                       "hn %u %u x | %d %d | %d %d %d", 
@@ -2118,14 +1944,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                       !tsch_rpl_is_urgent_probing_target_null(),
                       tsch_rpl_callback_dio_interval_increment());
           );
+#endif /* HNEXT_DBG */
         }
-#endif
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
 
         uint16_t hnext_tx_info = 0;
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
         hnext_tx_info = (hnext_tx_packet_type << 8) + hnext_tx_current_offset;
-#else
+#else /* HNEXT_OFFSET_BASED_PRIORITIZATION */
         hnext_tx_info = (hnext_tx_packet_type << 8) + 0;
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
 
@@ -2135,7 +1961,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         ((uint8_t *)(packet))[hnext_hdr_len + 2] = (uint8_t)(hnext_tx_info & 0xFF);
         ((uint8_t *)(packet))[hnext_hdr_len + 3] = (uint8_t)((hnext_tx_info >> 8) & 0xFF);
       }
-#endif
+#endif /* HCKIM_NEXT */
 
 #if WITH_UPA
       upa_link_requested = 0;
@@ -2961,7 +2787,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     current_packet->ret = mac_tx_status;
 
 #if HCKIM_NEXT
-    if(current_packet->ret == MAC_TX_OK) {
+    if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
+      && current_packet->ret == MAC_TX_OK) {
       if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB) {
         hnext_sent_ok_eb += 1;
       } else if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_KA) {
@@ -3923,7 +3750,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
 #if HCKIM_NEXT /* Needs to be modified for 6TiSCH-MC */
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            hnext_rx_packet_type = 0;
+            hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
 
             int hnext_rx_info = 0;
 
@@ -3941,13 +3768,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
                 hnext_rx_current_offset = (uint8_t)(hnext_rx_info & 0xFF);
               } else {
-                hnext_rx_current_offset = 9;
-               
+                hnext_rx_current_offset = HNEXT_OFFSET_NULL;
               }
-#endif
-
+#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
             }
-#endif
 
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
             if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
@@ -3957,7 +3781,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                                + US_TO_RTIMERTICKS(HNEXT_TX_OFFSET)  
                                + hnext_rx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP);
             }
-#endif
+#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+#endif /* HCKIM_NEXT */
+
             estimated_drift = RTIMER_CLOCK_DIFF(expected_rx_time, rx_start_time);
             tsch_stats_on_time_synchronization(estimated_drift);
 
@@ -5237,8 +5063,103 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
       }
 #else
+
+#if HCKIM_NEXT
+      /* First determine current state */
+      if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+        if(tsch_is_coordinator) { /* Coordinator -> final state */
+          hnext_tx_current_state = HNEXT_STATE_4_CELL_ALLOCATED;
+        } else { /* Non-coordinator */
+          if(!tsch_is_associated) { /* Before TSCH join (pledge node) -> start state */
+            hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
+          } else { /* After TSCH join */
+            if(!tsch_rpl_check_dodag_joined()) { /* Before RPL join */
+              hnext_tx_current_state = HNEXT_STATE_2_TSCH_JOINED;
+            } else { /* After RPL join */
+              if(!orchestra_parent_knows_us) { /* Before cell allocation */
+                hnext_tx_current_state = HNEXT_STATE_3_RPL_JOINED;
+              } else { /* After cell allocation */
+                hnext_tx_current_state = HNEXT_STATE_4_CELL_ALLOCATED;
+              }
+            }
+          }
+        }
+      }
+
+#if HNEXT_OFFSET_BASED_PRIORITIZATION
+      /* Next determine offset for each packet */
+      if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_1
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = random_rand() % 5;
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_KA] = random_rand() % 5;
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DIS] = random_rand() % 5;
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_M_DIO] = random_rand() % 5;
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_U_DIO] = random_rand() % 5;
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAO] = random_rand() % 5;
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_NP_DAO] = random_rand() % 5;
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAOA] = random_rand() % 5;
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DATA] = random_rand() % 5;
+#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
+        /* HNEXT_PACKET_TYPE_EB */
+        if(hnext_sent_ok_eb <= 1) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_5;
+        }
+        /* HNEXT_PACKET_TYPE_KA */
+        if(sync_count == 0) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
+        }
+        /* HNEXT_PACKET_TYPE_DIS */
+        if(hnext_sent_ok_dis <= 1) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_5;
+        }
+        /* HNEXT_PACKET_TYPE_M_DIO */
+        if(hnext_sent_ok_m_dio <= 1) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_5;
+        }
+        /* HNEXT_PACKET_TYPE_U_DIO */
+        if(!tsch_rpl_is_urgent_probing_target_null()) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+        }
+        /* HNEXT_PACKET_TYPE_DAO */
+        if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
+        }
+        /* HNEXT_PACKET_TYPE_NP_DAO */
+        hnext_current_offset_policy[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_4;
+        /* HNEXT_PACKET_TYPE_DAOA */
+        hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
+        /* HNEXT_PACKET_TYPE_DAOA */
+        hnext_current_offset_policy[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
+#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_X */
+      }
+#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+#endif /* HCKIM_NEXT */
+
+#if HNEXT_TEMP_PACKET_SELECTION
+      if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+        /* Get a packet ready to be sent */
+        current_packet = hnext_get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+      } else {
+        /* Get a packet ready to be sent */
+        current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+      }
+#else /* HNEXT_TEMP_PACKET_SELECTION */
       /* Get a packet ready to be sent */
       current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+#endif /* HNEXT_TEMP_PACKET_SELECTION */
+
 #endif
 
 #if HCK_APPLY_LATEST_CONTIKI
