@@ -143,8 +143,6 @@ enum tsch_radio_state_off_cmd {
 };
 
 #if HCKIM_NEXT
-static enum HNEXT_OFFSET hnext_current_offset_policy[HNEXT_PACKET_TYPE_NULL];
-
 static enum HNEXT_PACKET_TYPE hnext_tx_packet_type = HNEXT_PACKET_TYPE_NULL;
 static enum HNEXT_PACKET_TYPE hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
 static enum HNEXT_STATE hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
@@ -159,6 +157,7 @@ static uint8_t hnext_sent_ok_np_dao;
 static uint8_t hnext_sent_ok_daoa;
 
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
+enum HNEXT_OFFSET hnext_current_offset_policy[HNEXT_PACKET_TYPE_NULL];
 static enum HNEXT_OFFSET hnext_tx_current_offset = HNEXT_OFFSET_NULL;
 static enum HNEXT_OFFSET hnext_rx_current_offset = HNEXT_OFFSET_NULL;
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
@@ -1558,24 +1557,6 @@ tsch_schedule_slot_operation(struct rtimer *tm, rtimer_clock_t ref_time, rtimer_
       RTIMER_BUSYWAIT_UNTIL_ABS(0, ref_time, offset); \
     } \
   } while(0);
-/*---------------------------------------------------------------------------*/
-#if HNEXT_TEMP_PACKET_SELECTION
-static struct tsch_packet *
-hnext_get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **target_neighbor)
-{
-  struct tsch_packet *p = NULL;
-  struct tsch_neighbor *n = NULL;
-
-  p = hnext_tsch_queue_get_best_packet(&n, link);
-
-  /* return nbr (by reference) */
-  if(target_neighbor != NULL) {
-    *target_neighbor = n;
-  }
-
-  return p;
-}
-#endif
 /*---------------------------------------------------------------------------*/
 /* Get EB, broadcast or unicast packet to be sent, and target neighbor. */
 static struct tsch_packet *
@@ -3759,10 +3740,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 struct ieee802154_ies hnext_ies;
                 frame802154e_parse_information_elements(frame.payload, frame.payload_len, &hnext_ies);
                 hnext_rx_info = (int)hnext_ies.ie_hnext_packet_type;
+                hnext_rx_packet_type = (uint8_t)((hnext_rx_info >> 8) & 0xFF);
               } else {
                 hnext_rx_info = 0;
+                hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
               }
-              hnext_rx_packet_type = (uint8_t)((hnext_rx_info >> 8) & 0xFF);
 
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
               if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
@@ -5142,6 +5124,63 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
         /* HNEXT_PACKET_TYPE_DAOA */
         hnext_current_offset_policy[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
+#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_6
+        /* HNEXT_PACKET_TYPE_EB */
+        if(hnext_sent_ok_eb <= 1) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_5;
+        }
+        /* HNEXT_PACKET_TYPE_KA */
+        if(sync_count == 0) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
+        }
+        /* HNEXT_PACKET_TYPE_DIS */
+        if(hnext_sent_ok_dis <= 1) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_5;
+        }
+        /* HNEXT_PACKET_TYPE_M_DIO */
+        if(hnext_sent_ok_m_dio <= 1) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_5;
+        }
+        /* HNEXT_PACKET_TYPE_U_DIO */
+        if(!tsch_rpl_is_urgent_probing_target_null()) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+        }
+        /* HNEXT_PACKET_TYPE_DAO */
+        if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
+        } else {
+          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
+        }
+        /* HNEXT_PACKET_TYPE_NP_DAO */
+        hnext_current_offset_policy[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_4;
+        /* HNEXT_PACKET_TYPE_DAOA */
+        hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
+        /* HNEXT_PACKET_TYPE_DAOA */
+        hnext_current_offset_policy[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
+
+        /* Check differing count of the first packet of n_broadcast */
+        int16_t hnext_n_broadcast_get_index = ringbufindex_peek_get(&n_broadcast->tx_ringbuf);
+        if(hnext_n_broadcast_get_index != -1) {
+          uint8_t hnext_packet_type_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->hnext_packet_type;
+          uint8_t hnext_differing_count_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->hnext_deferring_count;
+          uint8_t hnext_max_transmissions_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->max_transmissions;
+          
+          if(hnext_differing_count_of_first_bcasat_packet > hnext_max_transmissions_of_first_bcasat_packet / 2) {
+            hnext_current_offset_policy[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_3;
+          } else if(hnext_differing_count_of_first_bcasat_packet > hnext_max_transmissions_of_first_bcasat_packet) {
+            hnext_current_offset_policy[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_0;
+          }
+        }
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_X */
       }
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
@@ -5150,7 +5189,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if HNEXT_TEMP_PACKET_SELECTION
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
         /* Get a packet ready to be sent */
-        current_packet = hnext_get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+        current_packet = hnext_tsch_queue_get_best_packet_and_nbr(current_link, &current_neighbor);
       } else {
         /* Get a packet ready to be sent */
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);

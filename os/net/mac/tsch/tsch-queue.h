@@ -49,6 +49,11 @@
 
 /***** External Variables *****/
 
+#if HNEXT_TEMP_PACKET_SELECTION
+struct tsch_packet * hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_neighbor **n);
+struct tsch_packet * hnext_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p);
+#endif
+
 /* Broadcast and EB virtual neighbors */
 extern struct tsch_neighbor *n_broadcast;
 extern struct tsch_neighbor *n_eb;

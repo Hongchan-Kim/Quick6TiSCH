@@ -653,6 +653,72 @@ tsch_queue_nbr_packet_count(const struct tsch_neighbor *n)
   return -1;
 }
 /*---------------------------------------------------------------------------*/
+#if HNEXT_TEMP_PACKET_SELECTION
+/* Remove specific packet from a neighbor queue */
+struct tsch_packet *
+hnext_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p)
+{
+  if(!tsch_is_locked()) {
+    if(n != NULL) {
+      /* Get and remove packet from ringbuf (remove committed through an atomic operation */
+      int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf); /* Do not remove packet here */
+      if(get_index != -1) {
+        /* First find matched index */
+        int16_t matched_index = -1;
+        int16_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
+        uint8_t i;
+        for(i = get_index; i < get_index + num_elements; i++) {
+          int16_t temp_index;
+          if(i >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
+            temp_index = i - ringbufindex_size(&n->tx_ringbuf);
+          } else {
+            temp_index = i;  
+          }
+          if(p == n->tx_array[temp_index]) {
+            matched_index = temp_index;
+            break;
+          }
+        }
+        /* Second remove packet */
+        if(matched_index != -1) {
+          struct tsch_packet *matched_p = n->tx_array[matched_index];
+          if(matched_index == get_index) { /* There are no packets to shift */
+            ringbufindex_get(&n->tx_ringbuf);
+            return matched_p;
+          } else {
+            int16_t gap_of_index = matched_index > get_index ? 
+                                   matched_index - get_index : 
+                                   matched_index + ringbufindex_size(&n->tx_ringbuf) - get_index;
+            for(i = get_index + gap_of_index - 1; i >= get_index; i--) {
+              int16_t src_index;
+              if(i >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
+                src_index = i - ringbufindex_size(&n->tx_ringbuf);
+              } else {
+                src_index = i;  
+              }
+              int16_t dest_index;
+              if(i + 1 >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
+                dest_index = i + 1 - ringbufindex_size(&n->tx_ringbuf);
+              } else {
+                dest_index = i + 1;  
+              }
+              n->tx_array[dest_index] = n->tx_array[src_index];
+            }
+            ringbufindex_shift_get_ptr(&n->tx_ringbuf, 1);
+            return matched_p;
+          }
+        } else {
+          return NULL;
+        }
+      } else {
+        return NULL;
+      }
+    }
+  }
+  return NULL;
+}
+#endif /* HNEXT_TEMP_PACKET_SELECTION */
+/*---------------------------------------------------------------------------*/
 /* Remove first packet from a neighbor queue */
 struct tsch_packet *
 tsch_queue_remove_packet_from_queue(struct tsch_neighbor *n)
@@ -764,7 +830,11 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 
   if(mac_tx_status == MAC_TX_OK) {
     /* Successful transmission */
+#if HNEXT_TEMP_PACKET_SELECTION == HNEXT_TEMP_PACKET_SELECTION_2
+    hnext_tsch_queue_remove_specific_packet_from_queue(n, p);
+#else
     tsch_queue_remove_packet_from_queue(n);
+#endif
     in_queue = 0;
 
     /* Update CSMA state in the unicast case */
@@ -788,7 +858,11 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
     /* Failed transmission */
     if(p->transmissions >= p->max_transmissions) {
       /* Drop packet */
+#if HNEXT_TEMP_PACKET_SELECTION == HNEXT_TEMP_PACKET_SELECTION_2
+      hnext_tsch_queue_remove_specific_packet_from_queue(n, p);
+#else
       tsch_queue_remove_packet_from_queue(n);
+#endif
       in_queue = 0;
     }
     /* Update CSMA state in the unicast case */
@@ -1112,27 +1186,135 @@ tsch_queue_get_packet_for_dest_addr(const linkaddr_t *addr, struct tsch_link *li
 /*---------------------------------------------------------------------------*/
 #if HNEXT_TEMP_PACKET_SELECTION
 struct tsch_packet *
-hnext_tsch_queue_get_best_packet(struct tsch_neighbor **n, struct tsch_link *link)
+hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_neighbor **n)
 {
+#if HNEXT_TEMP_PACKET_SELECTION == HNEXT_TEMP_PACKET_SELECTION_1
   if(!tsch_is_locked()) {
+    struct tsch_neighbor *best_nbr = NULL;
+    struct tsch_packet *best_p = NULL;
+    enum HNEXT_OFFSET hnext_best_offset = HNEXT_OFFSET_NULL;
+
     struct tsch_neighbor *curr_nbr = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
-    struct tsch_packet *p = NULL;
+    struct tsch_packet *curr_p = NULL;
+    enum HNEXT_OFFSET hnext_curr_offset = HNEXT_OFFSET_NULL;
+
     while(curr_nbr != NULL) {
-      if((linkaddr_cmp(tsch_queue_get_nbr_address(curr_nbr), &tsch_broadcast_address))
-          || (!curr_nbr->is_broadcast && curr_nbr->tx_links_count == 0)) {
-        /* Only look up for non-broadcast neighbors we do not have a tx link to */
-        p = tsch_queue_get_packet_for_nbr(curr_nbr, link);
-        if(p != NULL) {
-          if(n != NULL) {
-            *n = curr_nbr;
+      if((linkaddr_cmp(tsch_queue_get_nbr_address(curr_nbr), &tsch_broadcast_address)) // bcast nbr
+          || (!curr_nbr->is_broadcast && curr_nbr->tx_links_count == 0)) { // ucast nbr using cssf
+
+        int16_t get_index = ringbufindex_peek_get(&curr_nbr->tx_ringbuf);
+        if(get_index != -1 && tsch_queue_backoff_expired(curr_nbr)) {
+
+          int packet_attr_slotframe = queuebuf_attr(curr_nbr->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
+          int packet_attr_timeslot = queuebuf_attr(curr_nbr->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
+          int packet_attr_channel_offset = queuebuf_attr(curr_nbr->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
+
+          if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
+            curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+            continue;
           }
-          return p;
+          if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
+            curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+            continue;
+          }
+          if(packet_attr_channel_offset != link->channel_offset) { 
+            curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+            continue;
+          }
+
+          curr_p = curr_nbr->tx_array[get_index];
+
+          if(best_nbr == NULL && best_p == NULL) {
+            best_nbr = curr_nbr;
+            best_p = curr_p;
+            hnext_best_offset = hnext_current_offset_policy[curr_p->hnext_packet_type];
+          } else {
+            hnext_curr_offset = hnext_current_offset_policy[curr_p->hnext_packet_type];
+            if(hnext_curr_offset < hnext_best_offset) {
+              best_nbr = curr_nbr;
+              best_p = curr_p;
+              hnext_best_offset = hnext_curr_offset;
+            }
+          }
         }
       }
       curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
     }
+
+    *n = best_nbr;
+    return best_p;
   }
   return NULL;
+
+#elif HNEXT_TEMP_PACKET_SELECTION == HNEXT_TEMP_PACKET_SELECTION_2
+
+  if(!tsch_is_locked()) {
+    struct tsch_neighbor *best_nbr = NULL;
+    struct tsch_packet *best_p = NULL;
+    enum HNEXT_OFFSET hnext_best_offset = HNEXT_OFFSET_NULL;
+
+    struct tsch_neighbor *curr_nbr = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
+    struct tsch_packet *curr_p = NULL;
+    enum HNEXT_OFFSET hnext_curr_offset = HNEXT_OFFSET_NULL;
+
+    while(curr_nbr != NULL) {
+      if((linkaddr_cmp(tsch_queue_get_nbr_address(curr_nbr), &tsch_broadcast_address)) // bcast nbr
+          || (!curr_nbr->is_broadcast && curr_nbr->tx_links_count == 0)) { // ucast nbr using cssf
+
+        int16_t get_index = ringbufindex_peek_get(&curr_nbr->tx_ringbuf);
+        if(get_index != -1 && tsch_queue_backoff_expired(curr_nbr)) {
+          int16_t num_elements = ringbufindex_elements(&curr_nbr->tx_ringbuf);
+          uint8_t i;
+          for(i = get_index; i < get_index + num_elements; i++) {
+            int16_t temp_index;
+            if(i >= ringbufindex_size(&curr_nbr->tx_ringbuf)) { /* default size: 16 */
+              temp_index = i - ringbufindex_size(&curr_nbr->tx_ringbuf);
+            } else {
+              temp_index = i;  
+            }
+
+            int packet_attr_slotframe = queuebuf_attr(curr_nbr->tx_array[temp_index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
+            int packet_attr_timeslot = queuebuf_attr(curr_nbr->tx_array[temp_index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
+            int packet_attr_channel_offset = queuebuf_attr(curr_nbr->tx_array[temp_index]->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
+
+            if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
+              curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+              continue;
+            }
+            if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
+              curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+              continue;
+            }
+            if(packet_attr_channel_offset != link->channel_offset) { 
+              curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+              continue;
+            }
+
+            curr_p = curr_nbr->tx_array[temp_index];
+
+            if(best_nbr == NULL && best_p == NULL) {
+              best_nbr = curr_nbr;
+              best_p = curr_p;
+              hnext_best_offset = hnext_current_offset_policy[curr_p->hnext_packet_type];
+            } else {
+              hnext_curr_offset = hnext_current_offset_policy[curr_p->hnext_packet_type];
+              if(hnext_curr_offset < hnext_best_offset) {
+                best_nbr = curr_nbr;
+                best_p = curr_p;
+                hnext_best_offset = hnext_curr_offset;
+              }
+            }
+          }
+        }
+      }
+      curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+    }
+
+    *n = best_nbr;
+    return best_p;
+  }
+  return NULL;
+#endif /* HNEXT_TEMP_PACKET_SELECTION */
 }
 #endif
 /*---------------------------------------------------------------------------*/

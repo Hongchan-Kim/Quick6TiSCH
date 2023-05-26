@@ -14,19 +14,18 @@
 #define HNEXT_RX_OFFSET_RIGHT                      2900 /* 1300 ~ 4200, 500 margin */
 #define HNEXT_OFFSET_GAP                           600
 
-#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_1
+#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_6
 
 #define HNEXT_POLICY_0                             0 /* Baseline */
 #define HNEXT_POLICY_1                             1 /* Random */
-#define HNEXT_POLICY_2                             2 /* Prioritize unicast */
-#define HNEXT_POLICY_3                             3 /* Prioritize broadcast */
 #define HNEXT_POLICY_5                             5 /* Explicitely separated logical channel */
 #define HNEXT_POLICY_6                             6 /* Explicitely separated logical channel */
 
-#define HCK_MOD_TSCH_SYNC_COUNT                    1
-#define HCK_MOD_TSCH_PACKET_REBASE                 1
+#define HNEXT_TEMP_PACKET_SELECTION                HNEXT_TEMP_PACKET_SELECTION_2
 
-#define HNEXT_TEMP_PACKET_SELECTION                0
+#define HNEXT_TEMP_PACKET_SELECTION_0              0
+#define HNEXT_TEMP_PACKET_SELECTION_1              1
+#define HNEXT_TEMP_PACKET_SELECTION_2              2
 
 #define HNEXT_TEMP_ADDITIONAL_CCA_DBG              0
 #define HNEXT_TEMP_ADDITIONAL_CCA                  1
@@ -34,6 +33,9 @@
 #define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC     1
 #define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_DEC     1
 #define HNEXT_TEMP_BC_BACKOFF                      0 /* Need to distinguish EB/broadcast nbrs */
+
+#define HCK_MOD_TSCH_SYNC_COUNT                    1
+#define HCK_MOD_TSCH_PACKET_REBASE                 1
 
 #endif
 
