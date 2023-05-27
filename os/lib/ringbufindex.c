@@ -45,7 +45,7 @@
 #include <string.h>
 #include "lib/ringbufindex.h"
 
-#if HNEXT_TEMP_PACKET_SELECTION || WITH_UPA
+#if HNEXT_PACKET_SELECTION || WITH_UPA
 /* Shift get_ptr of ring buffer */
 int
 ringbufindex_shift_get_ptr(struct ringbufindex *r, int shift)

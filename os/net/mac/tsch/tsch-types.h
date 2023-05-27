@@ -73,7 +73,6 @@ enum HNEXT_STATE {
   HNEXT_STATE_4_CELL_ALLOCATED, // 3
 };
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
 enum HNEXT_OFFSET {
   HNEXT_OFFSET_0,   // 0 
   HNEXT_OFFSET_1,   // 1
@@ -83,7 +82,6 @@ enum HNEXT_OFFSET {
   HNEXT_OFFSET_5,   // 5
   HNEXT_OFFSET_NULL // 6
 };
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
 #endif /* HCKIM_NEXT */
 
 /********** Data types **********/

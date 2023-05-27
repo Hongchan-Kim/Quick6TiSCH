@@ -159,8 +159,8 @@ static uint8_t hnext_sent_ok_dao;
 static uint8_t hnext_sent_ok_np_dao;
 static uint8_t hnext_sent_ok_daoa;
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
 enum HNEXT_OFFSET hnext_current_offset_policy[HNEXT_PACKET_TYPE_NULL];
+#if HNEXT_OFFSET_BASED_PRIORITIZATION
 static enum HNEXT_OFFSET hnext_tx_current_offset = HNEXT_OFFSET_NULL;
 static enum HNEXT_OFFSET hnext_rx_current_offset = HNEXT_OFFSET_NULL;
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
@@ -5198,7 +5198,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
 #endif /* HCKIM_NEXT */
 
-#if HNEXT_TEMP_PACKET_SELECTION
+#if HNEXT_PACKET_SELECTION
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
         /* Get a packet ready to be sent */
         current_packet = hnext_tsch_queue_get_best_packet_and_nbr(current_link, &current_neighbor);
@@ -5206,10 +5206,10 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         /* Get a packet ready to be sent */
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
-#else /* HNEXT_TEMP_PACKET_SELECTION */
+#else /* HNEXT_PACKET_SELECTION */
       /* Get a packet ready to be sent */
       current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
-#endif /* HNEXT_TEMP_PACKET_SELECTION */
+#endif /* HNEXT_PACKET_SELECTION */
 
 #endif
 
