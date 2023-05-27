@@ -14,18 +14,22 @@
 #define HNEXT_RX_OFFSET_RIGHT                      2900 /* 1300 ~ 4200, 500 margin */
 #define HNEXT_OFFSET_GAP                           600
 
-#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_6
+#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_0
 
 #define HNEXT_POLICY_0                             0 /* Baseline */
 #define HNEXT_POLICY_1                             1 /* Random */
-#define HNEXT_POLICY_5                             5 /* Explicitely separated logical channel */
-#define HNEXT_POLICY_6                             6 /* Explicitely separated logical channel */
+#define HNEXT_POLICY_2                             2 /* Explicitely separated logical channel */
+#define HNEXT_POLICY_3                             3 /* Explicitely separated logical channel */
 
 #define HNEXT_TEMP_PACKET_SELECTION                HNEXT_TEMP_PACKET_SELECTION_2
 
 #define HNEXT_TEMP_PACKET_SELECTION_0              0
 #define HNEXT_TEMP_PACKET_SELECTION_1              1
 #define HNEXT_TEMP_PACKET_SELECTION_2              2
+
+#define HNEXT_TEMP_PACKET_SELECTION_2_DBG_1        0
+#define HNEXT_TEMP_PACKET_SELECTION_2_FIX_1        1
+#define HNEXT_TEMP_PACKET_SELECTION_2_FIX_2        1
 
 #define HNEXT_TEMP_ADDITIONAL_CCA_DBG              0
 #define HNEXT_TEMP_ADDITIONAL_CCA                  1

@@ -119,7 +119,7 @@ tsch_log_process_pending(void)
 #if LOG_HK_ENABLED
 #if HCKIM_NEXT
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
-        printf(", RES T %u %lu %u %u %u %u %u %u %u %u %u %u HK-T",
+        printf(", RES T %u %lu %u %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
               log->tx.hnext_packet_type,
               log->asn.ls4b,
               log->link->slotframe_handle,
@@ -130,10 +130,14 @@ tsch_log_process_pending(void)
               log->tx.num_tx,
               log->tx.hnext_collision_count,
               log->tx.hnext_noack_count,
+              log->tx.hnext_backoff_exponent_before,
+              log->tx.hnext_backoff_window_before,
+              log->tx.hnext_backoff_exponent_after,
+              log->tx.hnext_backoff_window_after,
               log->tx.hnext_state,
               log->tx.hnext_tier);
 #else
-        printf(", RES T %u %lu %u %u %u %u %u %u %u %u HK-T",
+        printf(", RES T %u %lu %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
               log->tx.hnext_packet_type,
               log->asn.ls4b,
               log->link->slotframe_handle,
@@ -143,7 +147,11 @@ tsch_log_process_pending(void)
               log->tx.mac_tx_status,
               log->tx.num_tx,
               log->tx.hnext_collision_count,
-              log->tx.hnext_noack_count);
+              log->tx.hnext_noack_count,
+              log->tx.hnext_backoff_exponent_before,
+              log->tx.hnext_backoff_window_before,
+              log->tx.hnext_backoff_exponent_after,
+              log->tx.hnext_backoff_window_after);
 #endif
 #else
         printf(", RES T %u %u %u %u %u %u %u %u %u HK-T",

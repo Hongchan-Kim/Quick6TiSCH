@@ -109,6 +109,10 @@ struct tsch_log_t {
       uint8_t asap_ack_len;
       uint8_t hnext_collision_count;
       uint8_t hnext_noack_count;
+      uint8_t hnext_backoff_exponent_before;
+      uint8_t hnext_backoff_window_before;
+      uint8_t hnext_backoff_exponent_after;
+      uint8_t hnext_backoff_window_after;
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
       uint8_t hnext_tier;
       uint8_t hnext_state;
@@ -141,6 +145,10 @@ struct tsch_log_t {
       uint8_t asap_ack_len;
       uint8_t hnext_collision_count;
       uint8_t hnext_noack_count;
+      uint8_t hnext_backoff_exponent_before;
+      uint8_t hnext_backoff_window_before;
+      uint8_t hnext_backoff_exponent_after;
+      uint8_t hnext_backoff_window_after;
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
       uint8_t hnext_tier;
       uint8_t hnext_state;

@@ -143,6 +143,9 @@ enum tsch_radio_state_off_cmd {
 };
 
 #if HCKIM_NEXT
+static uint8_t hnext_tx_backoff_exponent_before;
+static uint8_t hnext_tx_backoff_window_before;
+
 static enum HNEXT_PACKET_TYPE hnext_tx_packet_type = HNEXT_PACKET_TYPE_NULL;
 static enum HNEXT_PACKET_TYPE hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
 static enum HNEXT_STATE hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
@@ -2867,6 +2870,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     }
 #endif /* WITH_A3 */
 
+#if HCKIM_NEXT
+    hnext_tx_backoff_exponent_before = current_neighbor->backoff_exponent;
+    hnext_tx_backoff_window_before = current_neighbor->backoff_window;
+#endif
+
     /* Post TX: Update neighbor queue state */
     in_queue = tsch_queue_packet_sent(current_neighbor, current_packet, current_link, mac_tx_status);
 
@@ -2925,6 +2933,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           log->tx.asap_ack_len = asap_tot_ack_len;
           log->tx.hnext_collision_count = current_packet->hnext_collision_count;
           log->tx.hnext_noack_count = current_packet->hnext_noack_count;
+          log->tx.hnext_backoff_exponent_before = hnext_tx_backoff_exponent_before;
+          log->tx.hnext_backoff_window_before = hnext_tx_backoff_window_before;
+          log->tx.hnext_backoff_exponent_after = current_neighbor->backoff_exponent;
+          log->tx.hnext_backoff_window_after = current_neighbor->backoff_window;
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
           log->tx.hnext_tier = hnext_tx_current_offset;
           log->tx.hnext_state = hnext_tx_current_state;
@@ -5081,7 +5093,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           hnext_current_offset_policy[HNEXT_PACKET_TYPE_NP_DAO] = random_rand() % 5;
           hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAOA] = random_rand() % 5;
           hnext_current_offset_policy[HNEXT_PACKET_TYPE_DATA] = random_rand() % 5;
-#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_5
+#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_2
         /* HNEXT_PACKET_TYPE_EB */
         if(hnext_sent_ok_eb <= 1) {
           hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
@@ -5124,7 +5136,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
         /* HNEXT_PACKET_TYPE_DAOA */
         hnext_current_offset_policy[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
-#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_6
+#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_3
         /* HNEXT_PACKET_TYPE_EB */
         if(hnext_sent_ok_eb <= 1) {
           hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
@@ -5175,10 +5187,10 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           uint8_t hnext_differing_count_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->hnext_deferring_count;
           uint8_t hnext_max_transmissions_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->max_transmissions;
           
-          if(hnext_differing_count_of_first_bcasat_packet > hnext_max_transmissions_of_first_bcasat_packet / 2) {
-            hnext_current_offset_policy[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_3;
-          } else if(hnext_differing_count_of_first_bcasat_packet > hnext_max_transmissions_of_first_bcasat_packet) {
+          if(hnext_differing_count_of_first_bcasat_packet > hnext_max_transmissions_of_first_bcasat_packet) {
             hnext_current_offset_policy[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_0;
+          } else if(hnext_differing_count_of_first_bcasat_packet > hnext_max_transmissions_of_first_bcasat_packet / 2) {
+            hnext_current_offset_policy[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_3;
           }
         }
 #endif /* HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_X */

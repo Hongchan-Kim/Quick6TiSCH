@@ -655,18 +655,31 @@ tsch_queue_nbr_packet_count(const struct tsch_neighbor *n)
 /*---------------------------------------------------------------------------*/
 #if HNEXT_TEMP_PACKET_SELECTION
 /* Remove specific packet from a neighbor queue */
-struct tsch_packet *
+static struct tsch_packet *
 hnext_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p)
 {
   if(!tsch_is_locked()) {
     if(n != NULL) {
+
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+        printf("khc_d_n %u %d %d\n", 
+                HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(n)),
+                ringbufindex_peek_get(&n->tx_ringbuf),
+                ringbufindex_elements(&n->tx_ringbuf));
+#endif
+
+
       /* Get and remove packet from ringbuf (remove committed through an atomic operation */
       int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf); /* Do not remove packet here */
       if(get_index != -1) {
-        /* First find matched index */
+        /* First, find matched ringbufindex */
         int16_t matched_index = -1;
         int16_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
+#if HNEXT_TEMP_PACKET_SELECTION_2_FIX_2
+        int i;
+#else
         uint8_t i;
+#endif
         for(i = get_index; i < get_index + num_elements; i++) {
           int16_t temp_index;
           if(i >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
@@ -679,16 +692,35 @@ hnext_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, stru
             break;
           }
         }
-        /* Second remove packet */
+
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+            printf("khc_d_p %d %d %d\n", 
+                    matched_index,
+                    n->tx_array[matched_index]->hnext_packet_type,
+                    hnext_current_offset_policy[n->tx_array[matched_index]->hnext_packet_type]);
+#endif
+
+        /* Second, remove the matched packet and shift ringbufindex/ringbuf */
         if(matched_index != -1) {
           struct tsch_packet *matched_p = n->tx_array[matched_index];
           if(matched_index == get_index) { /* There are no packets to shift */
             ringbufindex_get(&n->tx_ringbuf);
+
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+        printf("khc_d_r_1 %u %d %d\n", 
+                HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(n)),
+                ringbufindex_peek_get(&n->tx_ringbuf),
+                ringbufindex_elements(&n->tx_ringbuf));
+#endif
+
             return matched_p;
           } else {
             int16_t gap_of_index = matched_index > get_index ? 
                                    matched_index - get_index : 
                                    matched_index + ringbufindex_size(&n->tx_ringbuf) - get_index;
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+            printf("khc-1 %u %u %u\n", get_index, gap_of_index, get_index + gap_of_index - 1);
+#endif
             for(i = get_index + gap_of_index - 1; i >= get_index; i--) {
               int16_t src_index;
               if(i >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
@@ -697,14 +729,30 @@ hnext_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, stru
                 src_index = i;  
               }
               int16_t dest_index;
-              if(i + 1 >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
-                dest_index = i + 1 - ringbufindex_size(&n->tx_ringbuf);
+              if((i + 1) >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
+                dest_index = (i + 1) - ringbufindex_size(&n->tx_ringbuf);
               } else {
-                dest_index = i + 1;  
+                dest_index = (i + 1);
               }
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+              printf("khc-1-1 %u %d %d\n", i, src_index, dest_index);
+#endif
+
               n->tx_array[dest_index] = n->tx_array[src_index];
             }
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+            printf("khc-2\n");
+#endif
             ringbufindex_shift_get_ptr(&n->tx_ringbuf, 1);
+
+
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+        printf("khc_d_r_2 %u %d %d\n", 
+                HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(n)),
+                ringbufindex_peek_get(&n->tx_ringbuf),
+                ringbufindex_elements(&n->tx_ringbuf));
+#endif
+
             return matched_p;
           }
         } else {
@@ -1249,6 +1297,11 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
 #elif HNEXT_TEMP_PACKET_SELECTION == HNEXT_TEMP_PACKET_SELECTION_2
 
   if(!tsch_is_locked()) {
+
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+    int16_t best_index = -1;
+#endif
+
     struct tsch_neighbor *best_nbr = NULL;
     struct tsch_packet *best_p = NULL;
     enum HNEXT_OFFSET hnext_best_offset = HNEXT_OFFSET_NULL;
@@ -1260,6 +1313,15 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
     while(curr_nbr != NULL) {
       if((linkaddr_cmp(tsch_queue_get_nbr_address(curr_nbr), &tsch_broadcast_address)) // bcast nbr
           || (!curr_nbr->is_broadcast && curr_nbr->tx_links_count == 0)) { // ucast nbr using cssf
+
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+        printf("khc_g_n %u %u %u %d %d\n", 
+                HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(curr_nbr)),
+                curr_nbr->backoff_exponent,
+                curr_nbr->backoff_window,
+                ringbufindex_peek_get(&curr_nbr->tx_ringbuf),
+                ringbufindex_elements(&curr_nbr->tx_ringbuf));
+#endif
 
         int16_t get_index = ringbufindex_peek_get(&curr_nbr->tx_ringbuf);
         if(get_index != -1 && tsch_queue_backoff_expired(curr_nbr)) {
@@ -1277,28 +1339,55 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
             int packet_attr_timeslot = queuebuf_attr(curr_nbr->tx_array[temp_index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
             int packet_attr_channel_offset = queuebuf_attr(curr_nbr->tx_array[temp_index]->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
 
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+            printf("khc_g_p %d %d %d %d %d %d\n", 
+                    temp_index,
+                    curr_nbr->tx_array[temp_index]->hnext_packet_type,
+                    hnext_current_offset_policy[curr_nbr->tx_array[temp_index]->hnext_packet_type],
+                    packet_attr_slotframe,
+                    packet_attr_timeslot,
+                    packet_attr_channel_offset);
+#endif
+
+
             if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
+#if !HNEXT_TEMP_PACKET_SELECTION_2_FIX_1
               curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+#endif
               continue;
             }
             if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
+#if !HNEXT_TEMP_PACKET_SELECTION_2_FIX_1
               curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+#endif
               continue;
             }
             if(packet_attr_channel_offset != link->channel_offset) { 
+#if !HNEXT_TEMP_PACKET_SELECTION_2_FIX_1
               curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
+#endif
               continue;
             }
 
             curr_p = curr_nbr->tx_array[temp_index];
 
             if(best_nbr == NULL && best_p == NULL) {
+
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+              best_index = temp_index;
+#endif
+
               best_nbr = curr_nbr;
               best_p = curr_p;
               hnext_best_offset = hnext_current_offset_policy[curr_p->hnext_packet_type];
             } else {
               hnext_curr_offset = hnext_current_offset_policy[curr_p->hnext_packet_type];
               if(hnext_curr_offset < hnext_best_offset) {
+
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+                best_index = temp_index;
+#endif
+
                 best_nbr = curr_nbr;
                 best_p = curr_p;
                 hnext_best_offset = hnext_curr_offset;
@@ -1309,6 +1398,19 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
       }
       curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
     }
+
+#if HNEXT_TEMP_PACKET_SELECTION_2_DBG_1
+    if(best_nbr != NULL && best_p != NULL && best_index != -1) {
+      printf("khc_g_b %u %d %d %d\n", 
+              HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(best_nbr)),
+              best_index,
+              best_nbr->tx_array[best_index]->hnext_packet_type,
+              hnext_current_offset_policy[best_nbr->tx_array[best_index]->hnext_packet_type]);
+    } else {
+      printf("khc_b NULL\n");
+
+    }
+#endif
 
     *n = best_nbr;
     return best_p;
