@@ -23,8 +23,7 @@
 
 #define HNEXT_PACKET_SELECTION                     1
 
-#define HNEXT_TEMP_ADDITIONAL_CCA_DBG              0
-#define HNEXT_TEMP_ADDITIONAL_CCA                  1
+#define HNEXT_ADDITIONAL_CCA                       1
 #define HNEXT_TEMP_DEFFERING_NO_BACKOFF_TRANS_CNT  1
 #define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC     1
 #define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_DEC     1

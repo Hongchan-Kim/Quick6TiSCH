@@ -2174,7 +2174,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         current_slot_unused_offset_start = RTIMER_NOW();
 
 #if HNEXT_OFFSET_BASED_PRIORITIZATION
-#if HNEXT_TEMP_ADDITIONAL_CCA
+#if HNEXT_ADDITIONAL_CCA
         if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
           if(hnext_tx_current_offset == HNEXT_OFFSET_3) {
             /* delay before CCA */
@@ -2184,26 +2184,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
             tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
 
-#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
-            static int cca_31_status = 0;
-            cca_31_status = cca_status;
-#endif
-
             /* CCA */
             RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
                               current_slot_start, 
                               US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
                               + HNEXT_OFFSET_1 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP)
                               + tsch_timing[tsch_ts_cca]);
-
-#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
-            if(cca_31_status == 1 && cca_status == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                  "hnext cca 31"));
-            }
-#endif
-
 
           } else if(hnext_tx_current_offset == HNEXT_OFFSET_4) {
             /* delay before CCA */
@@ -2213,25 +2199,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
             tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
 
-#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
-            static int cca_42_status = 0;
-            cca_42_status = cca_status;
-#endif
-
             /* CCA */
             RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
                               current_slot_start, 
                               US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
                               + HNEXT_OFFSET_2 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP)
                               + tsch_timing[tsch_ts_cca]);
-
-#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
-            if(cca_42_status == 1 && cca_status == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                  "hnext cca 42"));
-            }
-#endif
 
           } else if(hnext_tx_current_offset == HNEXT_OFFSET_5) {
             /* delay before CCA */
@@ -2241,25 +2214,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
             tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
 
-#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
-            static int cca_51_status = 0;
-            cca_51_status = cca_status;
-#endif
-
             /* CCA */
             RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
                               current_slot_start, 
                               US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
                               + HNEXT_OFFSET_1 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP)
                               + tsch_timing[tsch_ts_cca]);
-
-#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
-            if(cca_51_status == 1 && cca_status == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                  "hnext cca 51"));
-            }
-#endif
 
             /* delay before CCA */
             TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
@@ -2268,26 +2228,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
             tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
 
-#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
-            static int cca_53_status = 0;
-            cca_53_status = cca_status;
-#endif
-
             /* CCA */
             RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
                               current_slot_start, 
                               US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
                               + HNEXT_OFFSET_3 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP)
                               + tsch_timing[tsch_ts_cca]);
-
-#if HNEXT_TEMP_ADDITIONAL_CCA_DBG
-            if(cca_53_status == 1 && cca_status == 0) {
-              TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                  "hnext cca 53"));
-            }
-#endif
-
           }
         }
 #endif
