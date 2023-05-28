@@ -1232,9 +1232,17 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
             if(best_nbr == NULL && best_p == NULL) {
               best_nbr = curr_nbr;
               best_p = curr_p;
-              hnext_best_offset = hnext_offset_assignment_parent[curr_p->hnext_packet_type];
+              if(curr_nbr->is_time_source) {
+                hnext_best_offset = hnext_offset_assignment_parent[curr_p->hnext_packet_type];
+              } else {
+                hnext_best_offset = hnext_offset_assignment_others[curr_p->hnext_packet_type];
+              }
             } else {
-              hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hnext_packet_type];
+              if(curr_nbr->is_time_source) {
+                hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hnext_packet_type];
+              } else {
+                hnext_best_offset = hnext_offset_assignment_others[curr_p->hnext_packet_type];
+              }
               if(hnext_curr_offset < hnext_best_offset) {
                 best_nbr = curr_nbr;
                 best_p = curr_p;

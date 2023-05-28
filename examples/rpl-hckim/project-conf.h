@@ -21,12 +21,12 @@
 #define HNEXT_ADDITIONAL_CCA                       1
 
 /* Offset assignment policy */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY             HNEXT_OFFSET_ASSIGNMENT_POLICY_3
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY             HNEXT_OFFSET_ASSIGNMENT_POLICY_101
 #define HNEXT_OFFSET_ASSIGNMENT_POLICY_0           0 /* Baseline */
 #define HNEXT_OFFSET_ASSIGNMENT_POLICY_1           1 /* Random */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_2           2 /* Explicitely separated logical channel */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_3           3 /* Explicitely separated logical channel */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_4           4
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY_2           2 /* BC first */
+
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY_101         101 /* Explicitely separated logical channel */
 
 /* Offset escalation policy for postponed packets */
 #define HNEXT_OFFSET_ESCALATION                    1
