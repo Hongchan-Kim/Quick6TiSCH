@@ -8,31 +8,69 @@
 #define HNEXT_DBG                                  1
 #define HCKIM_NEXT_TWO_NODES                       0
 
+/* Modification of Contiki-NG */
+#define HCK_MOD_TSCH_SYNC_COUNT                    1
+#define HCK_MOD_TSCH_PACKET_REBASE                 1
+
+/* Always applied offset differentiation - up to six offsets  */
 #define HNEXT_CCA_OFFSET                           800
 #define HNEXT_TX_OFFSET                            1300 /* 1300 ~ 3100 */
 #define HNEXT_RX_OFFSET_LEFT                       500  /* 800  ~ 1300, 500 margin */
 #define HNEXT_RX_OFFSET_RIGHT                      2900 /* 1300 ~ 4200, 500 margin */
 #define HNEXT_OFFSET_GAP                           600
+#define HNEXT_ADDITIONAL_CCA                       1
 
-#define HNEXT_OFFSET_BASED_PRIORITIZATION          HNEXT_POLICY_0
+/* Offset assignment policy */
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY             HNEXT_OFFSET_ASSIGNMENT_POLICY_3
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY_0           0 /* Baseline */
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY_1           1 /* Random */
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY_2           2 /* Explicitely separated logical channel */
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY_3           3 /* Explicitely separated logical channel */
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY_4           4
 
-#define HNEXT_POLICY_0                             0 /* Baseline */
-#define HNEXT_POLICY_1                             1 /* Random */
-#define HNEXT_POLICY_2                             2 /* Explicitely separated logical channel */
-#define HNEXT_POLICY_3                             3 /* Explicitely separated logical channel */
+/* Offset escalation policy for postponed packets */
+#define HNEXT_OFFSET_ESCALATION                    1
 
+/* Offset-based packet selection policy */
 #define HNEXT_PACKET_SELECTION                     1
 
-#define HNEXT_ADDITIONAL_CCA                       1
-#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_TRANS_CNT  1
-#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC     1
-#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_DEC     1
+/* Backoff policy for postponed packets */
+#define HNEXT_TEMP_RANDOM_RX                       1
+#define HNEXT_POSTPONED_BACKOFF_POLICY             HNEXT_POSTPONED_BACKOFF_POLICY_0
+#define HNEXT_POSTPONED_BACKOFF_POLICY_0           0
+#define HNEXT_POSTPONED_BACKOFF_POLICY_1           1
+#define HNEXT_POSTPONED_BACKOFF_POLICY_2           2
+#define HNEXT_POSTPONED_BACKOFF_POLICY_3           3
+
 #define HNEXT_TEMP_BC_BACKOFF                      0 /* Need to distinguish EB/broadcast nbrs */
 
-#define HCK_MOD_TSCH_SYNC_COUNT                    1
-#define HCK_MOD_TSCH_PACKET_REBASE                 1
+#if HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_0
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_DEC     0
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_TRANS_CNT  0
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC     0
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_SET     0
 
-#endif
+#elif HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_DEC     1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_TRANS_CNT  1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC     0
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_SET     0
+
+#elif HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_2
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_DEC     1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_TRANS_CNT  1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC     1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_SET     0
+
+#elif HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_3
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_DEC     1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_TRANS_CNT  1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC     1
+#define HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_SET     1
+
+#endif /* HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_X */
+
+#endif /* HCKIM_NEXT */
 
 /*---------------------------------------------------------------------------*/
 /*

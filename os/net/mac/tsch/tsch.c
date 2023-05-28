@@ -2262,7 +2262,7 @@ tsch_init(void)
 #endif /* TSCH_AUTOSELECT_TIME_SOURCE */
 
 #if HCKIM_NEXT
-  LOG_INFO("hnext %u\n", HNEXT_OFFSET_BASED_PRIORITIZATION);
+  LOG_INFO("hnext %u\n", HNEXT_OFFSET_ASSIGNMENT_POLICY);
 #endif
 
 

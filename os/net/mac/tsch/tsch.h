@@ -67,7 +67,7 @@ frequency hopping for enhanced reliability.
 
 #if HCKIM_NEXT
 void keepalive_packet_sent(void *ptr, int status, int transmissions);
-extern enum HNEXT_OFFSET hnext_current_offset_policy[HNEXT_PACKET_TYPE_NULL];
+extern enum HNEXT_OFFSET hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NULL];
 #endif
 
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP

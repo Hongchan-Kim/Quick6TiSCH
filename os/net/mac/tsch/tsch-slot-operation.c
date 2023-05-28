@@ -159,11 +159,14 @@ static uint8_t hnext_sent_ok_dao;
 static uint8_t hnext_sent_ok_np_dao;
 static uint8_t hnext_sent_ok_daoa;
 
-enum HNEXT_OFFSET hnext_current_offset_policy[HNEXT_PACKET_TYPE_NULL];
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+enum HNEXT_OFFSET hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NULL];
+
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
 static enum HNEXT_OFFSET hnext_tx_current_offset = HNEXT_OFFSET_NULL;
 static enum HNEXT_OFFSET hnext_rx_current_offset = HNEXT_OFFSET_NULL;
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+
 #endif /* HCKIM_NEXT */
 
 
@@ -1893,51 +1896,22 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
 #if HCKIM_NEXT
       hnext_tx_packet_type = current_packet->hnext_packet_type;
+
       if(hnext_tx_packet_type != HNEXT_PACKET_TYPE_EB) {
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
         if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-          hnext_tx_current_offset = hnext_current_offset_policy[hnext_tx_packet_type];
-#if HNEXT_DBG
-          TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                      "hn %u %u %u | %d %d | %d %d %d", 
-                      hnext_tx_current_state,
-                      hnext_tx_packet_type,
-                      hnext_tx_current_offset, //
-                      tsch_rpl_check_dodag_joined(),
-                      orchestra_parent_knows_us, //
-                      sync_count == 0,
-                      !tsch_rpl_is_urgent_probing_target_null(),
-                      tsch_rpl_callback_dio_interval_increment());
-          );
-#endif /* HNEXT_DBG */
+          hnext_tx_current_offset = hnext_offset_assignment_parent[hnext_tx_packet_type];
         } else {
           hnext_tx_current_offset = HNEXT_OFFSET_NULL;
         }
-#else /* HNEXT_OFFSET_BASED_PRIORITIZATION */
-        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-#if HNEXT_DBG
-          TSCH_LOG_ADD(tsch_log_message,
-                  snprintf(log->message, sizeof(log->message),
-                      "hn %u %u x | %d %d | %d %d %d", 
-                      hnext_tx_current_state,
-                      hnext_tx_packet_type,
-                      tsch_rpl_check_dodag_joined(),
-                      orchestra_parent_knows_us,
-                      sync_count == 0,
-                      !tsch_rpl_is_urgent_probing_target_null(),
-                      tsch_rpl_callback_dio_interval_increment());
-          );
-#endif /* HNEXT_DBG */
-        }
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 
         uint16_t hnext_tx_info = 0;
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
         hnext_tx_info = (hnext_tx_packet_type << 8) + hnext_tx_current_offset;
-#else /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
         hnext_tx_info = (hnext_tx_packet_type << 8) + 0;
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 
         frame802154_t hnext_frame;
         int hnext_hdr_len;
@@ -2173,7 +2147,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
         current_slot_unused_offset_start = RTIMER_NOW();
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
 #if HNEXT_ADDITIONAL_CCA
         if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
           if(hnext_tx_current_offset == HNEXT_OFFSET_3) {
@@ -2236,15 +2210,13 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                               + tsch_timing[tsch_ts_cca]);
           }
         }
-#endif
-#endif
+#endif /* HNEXT_ADDITIONAL_CCA */
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
         if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
           /* delay before CCA */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
                                   US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
-                                  + hnext_tx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP), "cca-h");
+                                  + hnext_tx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP), "ccaHN");
           TSCH_DEBUG_TX_EVENT();
 
         } else {
@@ -2252,11 +2224,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
           TSCH_DEBUG_TX_EVENT();
         }
-#else
+#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
         /* delay before CCA */
         TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
         TSCH_DEBUG_TX_EVENT();
-#endif
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 
         current_slot_unused_offset_end = RTIMER_NOW();
         current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
@@ -2341,7 +2313,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         }
 #else /* WITH_UPA && UPA_TRIPLE_CCA */
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
         if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
           /* CCA */
           RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
@@ -2357,12 +2329,15 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                             current_slot_start, tsch_timing[tsch_ts_cca_offset] + tsch_timing[tsch_ts_cca]);
           TSCH_DEBUG_TX_EVENT();
         }
-#else
+
+#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
         /* CCA */
         RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
                            current_slot_start, tsch_timing[tsch_ts_cca_offset] + tsch_timing[tsch_ts_cca]);
         TSCH_DEBUG_TX_EVENT();
-#endif
+
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+
 #endif /* WITH_UPA && UPA_TRIPLE_CCA */
 
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegTx5: after CCA */
@@ -2378,23 +2353,25 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         {
           current_slot_unused_offset_start = RTIMER_NOW();
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
           if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
             /* delay before TX */
             TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
                                     US_TO_RTIMERTICKS(HNEXT_TX_OFFSET)
                                     + hnext_tx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP) 
                                     - RADIO_DELAY_BEFORE_TX, 
-                                    "TxBeforeTx");
+                                    "TxBeforeTxHN");
 
           } else {
             /* delay before TX */
             TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
           }
-#else
+
+#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
           /* delay before TX */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
-#endif
+
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 
           current_slot_unused_offset_end = RTIMER_NOW();
           current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
@@ -2414,7 +2391,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
           tx_count++;
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
           if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
             /* Save tx timestamp */
             tx_start_time = current_slot_start + US_TO_RTIMERTICKS(HNEXT_TX_OFFSET) 
@@ -2422,12 +2399,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           } else {
             /* Save tx timestamp */
             tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
-           
           }
-#else
+
+#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
           /* Save tx timestamp */
           tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
-#endif
+
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+
           /* calculate TX duration based on sent packet len */
           tx_duration = TSCH_PACKET_DURATION(packet_len);
           /* limit tx_time to its max value */
@@ -2467,23 +2446,26 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
               current_slot_unused_offset_start = RTIMER_NOW();
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
               if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
                 /* Unicast: wait for ack after tx: sleep until ack time */
                 TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
                     US_TO_RTIMERTICKS(HNEXT_TX_OFFSET) 
                     + hnext_tx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP) 
-                    + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
+                    + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAckHN");
               } else {
                 /* Unicast: wait for ack after tx: sleep until ack time */
                 TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
                     tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
               }
-#else
+
+#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
               /* Unicast: wait for ack after tx: sleep until ack time */
               TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
                   tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
-#endif
+
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+
               current_slot_unused_offset_end = RTIMER_NOW();
               current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
 
@@ -2883,17 +2865,17 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           log->tx.hnext_backoff_window_before = hnext_tx_backoff_window_before;
           log->tx.hnext_backoff_exponent_after = current_neighbor->backoff_exponent;
           log->tx.hnext_backoff_window_after = current_neighbor->backoff_window;
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
           log->tx.hnext_tier = hnext_tx_current_offset;
           log->tx.hnext_state = hnext_tx_current_state;
-#endif
-#else
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#else /* HCKIM_NEXT */
           log->tx.asap_unused_offset_time = RTIMERTICKS_TO_US(current_slot_unused_offset_time);
           log->tx.asap_idle_time = RTIMERTICKS_TO_US(current_slot_idle_time);
           log->tx.asap_curr_slot_len = tsch_timing_us[tsch_ts_timeslot_length];
           log->tx.asap_num_of_slots_until_idle_time = current_slot_passed_slots;
           log->tx.asap_ack_len = asap_tot_ack_len;
-#endif
+#endif /* HCKIM_NEXT */
       );
 #if WITH_UPA
     }
@@ -3449,22 +3431,24 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
     current_slot_unused_offset_start = RTIMER_NOW();
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
     if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
       /* Wait before starting to listen */
       TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
                               US_TO_RTIMERTICKS(HNEXT_TX_OFFSET) 
                               - US_TO_RTIMERTICKS(HNEXT_RX_OFFSET_LEFT)
                               - RADIO_DELAY_BEFORE_RX, 
-                              "RxBeforeListen");
+                              "RxBeforeListenHN");
     } else {
       /* Wait before starting to listen */
       TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
     }
-#else
+
+#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
     /* Wait before starting to listen */
     TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
-#endif
+
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 
     current_slot_unused_offset_end = RTIMER_NOW();
     current_slot_unused_offset_time += RTIMER_CLOCK_DIFF(current_slot_unused_offset_end, current_slot_unused_offset_start);
@@ -3501,7 +3485,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       regular_slot_timestamp_rx[3] = RTIMER_NOW();
 #endif
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
         /* Check if receiving within guard time */
         RTIMER_BUSYWAIT_UNTIL_ABS((packet_seen = (NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet())),
@@ -3512,11 +3496,14 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         RTIMER_BUSYWAIT_UNTIL_ABS((packet_seen = (NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet())),
             current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + RADIO_DELAY_BEFORE_DETECT);
       }
-#else
+
+#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
       /* Check if receiving within guard time */
       RTIMER_BUSYWAIT_UNTIL_ABS((packet_seen = (NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet())),
           current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + RADIO_DELAY_BEFORE_DETECT);
-#endif
+
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+
     }
     if(!packet_seen) {
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegRx4: no packet seen */
@@ -3558,7 +3545,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       regular_slot_timestamp_rx[3] = rx_start_time;
 #endif
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
         /* Wait until packet is received, turn radio off */
         RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
@@ -3571,11 +3558,14 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
             current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]);
       }
-#else
+
+#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
       /* Wait until packet is received, turn radio off */
       RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
           current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]);
-#endif
+
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+
       TSCH_DEBUG_RX_EVENT();
 
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegRx4: rx end time, before tsch_radio_off() */
@@ -3704,24 +3694,24 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
               }
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
               if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
                 hnext_rx_current_offset = (uint8_t)(hnext_rx_info & 0xFF);
               } else {
                 hnext_rx_current_offset = HNEXT_OFFSET_NULL;
               }
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
             }
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
             if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-              /* originally */
-              //expected_rx_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
+              // modify expected_rx_time
+              // originally: expected_rx_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
               expected_rx_time = current_slot_start
                                + US_TO_RTIMERTICKS(HNEXT_TX_OFFSET)  
                                + hnext_rx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP);
             }
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 #endif /* HCKIM_NEXT */
 
             estimated_drift = RTIMER_CLOCK_DIFF(expected_rx_time, rx_start_time);
@@ -4144,10 +4134,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if HCKIM_NEXT
               log->rx.hnext_packet_type = hnext_rx_packet_type;
               log->rx.asap_ack_len = asap_tot_ack_len;
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
               log->rx.hnext_tier = hnext_rx_current_offset;
-#endif
-#else
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#else /* HCKIM_NEXT */
 #if WITH_UPA
               log->rx.asap_unused_offset_time = upa_link_scheduled == 0 ? RTIMERTICKS_TO_US(current_slot_unused_offset_time) : 0;
               log->rx.asap_idle_time = upa_link_scheduled == 0 ? RTIMERTICKS_TO_US(current_slot_idle_time) : 0;
@@ -4161,7 +4151,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.asap_num_of_slots_until_idle_time = current_slot_passed_slots;
               log->rx.asap_ack_len = asap_tot_ack_len;
 #endif
-#endif
+#endif /* HCKIM_NEXT */
             );
 
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
@@ -5026,106 +5016,107 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         }
       }
 
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
       /* Next determine offset for each packet */
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-#if HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_1
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = random_rand() % 5;
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_KA] = random_rand() % 5;
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DIS] = random_rand() % 5;
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_M_DIO] = random_rand() % 5;
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_U_DIO] = random_rand() % 5;
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAO] = random_rand() % 5;
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_NP_DAO] = random_rand() % 5;
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAOA] = random_rand() % 5;
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DATA] = random_rand() % 5;
-#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_2
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_1
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = random_rand() % 5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = random_rand() % 5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = random_rand() % 5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = random_rand() % 5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = random_rand() % 5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = random_rand() % 5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NP_DAO] = random_rand() % 5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAOA] = random_rand() % 5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DATA] = random_rand() % 5;
+#elif HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_2
         /* HNEXT_PACKET_TYPE_EB */
         if(hnext_sent_ok_eb <= 1) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_5;
         }
         /* HNEXT_PACKET_TYPE_KA */
         if(sync_count == 0) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
         }
         /* HNEXT_PACKET_TYPE_DIS */
         if(hnext_sent_ok_dis <= 1) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_5;
         }
         /* HNEXT_PACKET_TYPE_M_DIO */
         if(hnext_sent_ok_m_dio <= 1) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_5;
         }
         /* HNEXT_PACKET_TYPE_U_DIO */
         if(!tsch_rpl_is_urgent_probing_target_null()) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
         }
         /* HNEXT_PACKET_TYPE_DAO */
         if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
         }
         /* HNEXT_PACKET_TYPE_NP_DAO */
-        hnext_current_offset_policy[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_4;
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_4;
         /* HNEXT_PACKET_TYPE_DAOA */
-        hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
         /* HNEXT_PACKET_TYPE_DAOA */
-        hnext_current_offset_policy[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
-#elif HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_3
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
+#elif HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_3
         /* HNEXT_PACKET_TYPE_EB */
         if(hnext_sent_ok_eb <= 1) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_5;
         }
         /* HNEXT_PACKET_TYPE_KA */
         if(sync_count == 0) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
         }
         /* HNEXT_PACKET_TYPE_DIS */
         if(hnext_sent_ok_dis <= 1) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_5;
         }
         /* HNEXT_PACKET_TYPE_M_DIO */
         if(hnext_sent_ok_m_dio <= 1) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_5;
         }
         /* HNEXT_PACKET_TYPE_U_DIO */
         if(!tsch_rpl_is_urgent_probing_target_null()) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
         }
         /* HNEXT_PACKET_TYPE_DAO */
         if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
         } else {
-          hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
         }
         /* HNEXT_PACKET_TYPE_NP_DAO */
-        hnext_current_offset_policy[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_4;
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_4;
         /* HNEXT_PACKET_TYPE_DAOA */
-        hnext_current_offset_policy[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
         /* HNEXT_PACKET_TYPE_DAOA */
-        hnext_current_offset_policy[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
 
+#if HNEXT_OFFSET_ESCALATION
         /* Check differing count of the first packet of n_broadcast */
         int16_t hnext_n_broadcast_get_index = ringbufindex_peek_get(&n_broadcast->tx_ringbuf);
         if(hnext_n_broadcast_get_index != -1) {
@@ -5134,14 +5125,46 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           uint8_t hnext_max_transmissions_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->max_transmissions;
           
           if(hnext_differing_count_of_first_bcasat_packet > hnext_max_transmissions_of_first_bcasat_packet) {
-            hnext_current_offset_policy[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_0;
+            hnext_offset_assignment_parent[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_0;
           } else if(hnext_differing_count_of_first_bcasat_packet > hnext_max_transmissions_of_first_bcasat_packet / 2) {
-            hnext_current_offset_policy[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_3;
+            hnext_offset_assignment_parent[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_3;
           }
         }
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION == HNEXT_POLICY_X */
+#endif /* HNEXT_OFFSET_ESCALATION */
+#elif HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_4
+        /* HNEXT_PACKET_TYPE_EB */
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
+        /* HNEXT_PACKET_TYPE_KA */
+        if(sync_count == 0) {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
+        } else {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
+        }
+        /* HNEXT_PACKET_TYPE_DIS */
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
+        /* HNEXT_PACKET_TYPE_M_DIO */
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
+        /* HNEXT_PACKET_TYPE_U_DIO */
+        if(!tsch_rpl_is_urgent_probing_target_null()) {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+        } else {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+        }
+        /* HNEXT_PACKET_TYPE_DAO */
+        if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
+        } else {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
+        }
+        /* HNEXT_PACKET_TYPE_NP_DAO */
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_4;
+        /* HNEXT_PACKET_TYPE_DAOA */
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
+        /* HNEXT_PACKET_TYPE_DAOA */
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_X */
       }
-#endif /* HNEXT_OFFSET_BASED_PRIORITIZATION */
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 #endif /* HCKIM_NEXT */
 
 #if HNEXT_PACKET_SELECTION
@@ -5282,6 +5305,13 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       } else if(current_packet == NULL && current_link->link_options & LINK_OPTION_RX) {
         regular_slot_is_rx = 1;
         regular_slot_is_tx = 0;
+      }
+#endif
+
+#if HNEXT_PACKET_SELECTION
+      int random_rx_value = random_rand() % 10;
+      if(random_rx_value < 3) {
+        current_packet = NULL;
       }
 #endif
 

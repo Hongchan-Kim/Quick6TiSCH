@@ -113,17 +113,17 @@ struct tsch_log_t {
       uint8_t hnext_backoff_window_before;
       uint8_t hnext_backoff_exponent_after;
       uint8_t hnext_backoff_window_after;
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
       uint8_t hnext_tier;
       uint8_t hnext_state;
-#endif
-#else
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#else /* HCKIM_NEXT */
       uint16_t asap_unused_offset_time;
       uint16_t asap_idle_time;
       uint16_t asap_curr_slot_len;
       uint8_t asap_num_of_slots_until_idle_time;
       uint8_t asap_ack_len;
-#endif
+#endif /* HCKIM_NEXT */
     } tx;
     struct {
       linkaddr_t  src;
@@ -149,17 +149,17 @@ struct tsch_log_t {
       uint8_t hnext_backoff_window_before;
       uint8_t hnext_backoff_exponent_after;
       uint8_t hnext_backoff_window_after;
-#if HNEXT_OFFSET_BASED_PRIORITIZATION
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY
       uint8_t hnext_tier;
       uint8_t hnext_state;
-#endif
-#else
+#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#else /* HCKIM_NEXT */
       uint16_t asap_unused_offset_time;
       uint16_t asap_idle_time;
       uint16_t asap_curr_slot_len;
       uint8_t asap_num_of_slots_until_idle_time;
       uint8_t asap_ack_len;
-#endif
+#endif /* HCKIM_NEXT */
     } rx;
 #if WITH_UPA
     struct {
