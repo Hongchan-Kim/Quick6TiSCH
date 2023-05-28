@@ -203,7 +203,11 @@ void tsch_queue_backoff_reset(struct tsch_neighbor *n);
  * \brief Increment backoff exponent of a given neighbor queue, pick a new window
  * \param n The neighbor queue
  */
+#if HCKIM_NEXT
+void tsch_queue_backoff_inc(struct tsch_neighbor *n, struct tsch_link *l, int status);
+#else
 void tsch_queue_backoff_inc(struct tsch_neighbor *n);
+#endif
 /**
  * \brief Decrement backoff window for the queue(s) able to Tx to a given address
  * \param dest_addr The target address, &tsch_broadcast_address for broadcast

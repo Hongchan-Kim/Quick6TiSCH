@@ -870,13 +870,9 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
       /* Failures on dedicated (== non-shared) leave the backoff
        * window nor exponent unchanged */
       if(is_shared_link) {
-#if HNEXT_TEMP_DEFFERING_NO_BACKOFF_BE_INC
-        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
-          && mac_tx_status == MAC_TX_COLLISION) {
-        } else {
-          /* Shared link: increment backoff exponent, pick a new window */
-          tsch_queue_backoff_inc(n);
-        }
+#if HCKIM_NEXT
+        /* Shared link: increment backoff exponent, pick a new window */
+        tsch_queue_backoff_inc(n, link, mac_tx_status);
 #else
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n);
@@ -886,8 +882,13 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 #if HNEXT_TEMP_BC_BACKOFF
     else { // broadcast neighbor
       if(is_shared_link) {
+#if HCKIM_NEXT
+        /* Shared link: increment backoff exponent, pick a new window */
+        tsch_queue_backoff_inc(n, link, mac_tx_status);
+#else
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n);
+#endif
       }
     }
 #endif
@@ -1302,11 +1303,39 @@ tsch_queue_backoff_reset(struct tsch_neighbor *n)
 }
 /*---------------------------------------------------------------------------*/
 /* Increment backoff exponent, pick a new window */
+#if HCKIM_NEXT
+void
+tsch_queue_backoff_inc(struct tsch_neighbor *n, struct tsch_link *link, int status)
+#else
 void
 tsch_queue_backoff_inc(struct tsch_neighbor *n)
+#endif
 {
+#if HNEXT_TEMP_POSTPONED_BACKOFF_NO_BE_INC
+  if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
+    && status == MAC_TX_COLLISION) {
+  } else {
+    /* Increment exponent */
+    n->backoff_exponent = MIN(n->backoff_exponent + 1, TSCH_MAC_MAX_BE);
+  }
+#else
   /* Increment exponent */
   n->backoff_exponent = MIN(n->backoff_exponent + 1, TSCH_MAC_MAX_BE);
+#endif
+
+#if HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_SET
+  if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
+    && status == MAC_TX_COLLISION) {
+  } else {
+    /* Pick a window (number of shared slots to skip). Ignore least significant
+    * few bits, which, on some embedded implementations of rand (e.g. msp430-libc),
+    * are known to have poor pseudo-random properties. */
+    n->backoff_window = (random_rand() >> 6) % (1 << n->backoff_exponent);
+    /* Add one to the window as we will decrement it at the end of the current slot
+    * through tsch_queue_update_all_backoff_windows */
+    n->backoff_window++;
+  }
+#else
   /* Pick a window (number of shared slots to skip). Ignore least significant
    * few bits, which, on some embedded implementations of rand (e.g. msp430-libc),
    * are known to have poor pseudo-random properties. */
@@ -1314,6 +1343,7 @@ tsch_queue_backoff_inc(struct tsch_neighbor *n)
   /* Add one to the window as we will decrement it at the end of the current slot
    * through tsch_queue_update_all_backoff_windows */
   n->backoff_window++;
+#endif
 }
 /*---------------------------------------------------------------------------*/
 /* Decrement backoff window for all queues directed at dest_addr */

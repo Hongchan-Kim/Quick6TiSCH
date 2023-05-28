@@ -2729,7 +2729,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       }
     }
 
-#if HNEXT_TEMP_DEFFERING_NO_BACKOFF_TRANS_CNT
+#if HNEXT_TEMP_POSTPONED_BACKOFF_NO_TRANS_CNT
     if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
       && current_packet->ret == MAC_TX_COLLISION) {
       current_packet->transmissions--;
@@ -5025,7 +5025,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       /* Next determine offset for each packet */
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
 
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_1
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_1 /* Random */
           hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = random_rand() % 5;
           hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = random_rand() % 5;
           hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = random_rand() % 5;
@@ -5046,121 +5046,148 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAOA] = random_rand() % 5;
           hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DATA] = random_rand() % 5;
 
-#elif HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_2
-        /* HNEXT_PACKET_TYPE_EB */
-        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
-        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
-        /* HNEXT_PACKET_TYPE_KA */
-        if(sync_count == 0) {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
-        } else {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
-        }
-        /* HNEXT_PACKET_TYPE_DIS */
-        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
-        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
-        /* HNEXT_PACKET_TYPE_M_DIO */
-        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
-        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
-        /* HNEXT_PACKET_TYPE_U_DIO */
-        if(!tsch_rpl_is_urgent_probing_target_null()) {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_3;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_3;
-        } else {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
-        }
-        /* HNEXT_PACKET_TYPE_DAO */
-        if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
-        } else {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
-        }
-        /* HNEXT_PACKET_TYPE_NP_DAO */
-        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_4;
-        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_3;
-        /* HNEXT_PACKET_TYPE_DAOA */
-        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
-        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
-        /* HNEXT_PACKET_TYPE_DATA */
-        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
-        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
-
-#elif HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_101
+#elif HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_2 /* BC / UC / BC / UC */
         /* HNEXT_PACKET_TYPE_EB */
         if(hnext_sent_ok_eb <= 1) {
           hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
           hnext_offset_assignment_others[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
         } else {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_5;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_2;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_2;
         }
         /* HNEXT_PACKET_TYPE_KA */
         if(sync_count == 0) {
           hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
         } else {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_3;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_3;
         }
         /* HNEXT_PACKET_TYPE_DIS */
         if(hnext_sent_ok_dis <= 1) {
           hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
           hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
         } else {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_5;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_2;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_2;
         }
         /* HNEXT_PACKET_TYPE_M_DIO */
         if(hnext_sent_ok_m_dio <= 1) {
           hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
           hnext_offset_assignment_others[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
         } else {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_5;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_5;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_2;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_2;
         }
         /* HNEXT_PACKET_TYPE_U_DIO */
         if(!tsch_rpl_is_urgent_probing_target_null()) {
           hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_3;
           hnext_offset_assignment_others[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_3;
         } else {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_3;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_3;
         }
         /* HNEXT_PACKET_TYPE_DAO */
         if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
           hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
         } else {
-          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
-          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_4;
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_3;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_3;
         }
         /* HNEXT_PACKET_TYPE_NP_DAO */
-        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_4;
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_3;
         hnext_offset_assignment_others[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_3;
         /* HNEXT_PACKET_TYPE_DAOA */
-        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
-        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_4;
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_3;
+        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_3;
         /* HNEXT_PACKET_TYPE_DATA */
-        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
-        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_4;
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_3;
+        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_3;
 
 #if HNEXT_OFFSET_ESCALATION
-        /* Check differing count of the first packet of n_broadcast */
+        /* Check postponed count of the first packet of n_broadcast */
         int16_t hnext_n_broadcast_get_index = ringbufindex_peek_get(&n_broadcast->tx_ringbuf);
         if(hnext_n_broadcast_get_index != -1) {
           uint8_t hnext_packet_type_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->hnext_packet_type;
-          uint8_t hnext_differing_count_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->hnext_deferring_count;
+          uint8_t hnext_postponed_count_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->hnext_deferring_count;
           uint8_t hnext_max_transmissions_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->max_transmissions;
           
-          if(hnext_differing_count_of_first_bcasat_packet > hnext_max_transmissions_of_first_bcasat_packet) {
+          if(hnext_postponed_count_of_first_bcasat_packet >= (hnext_max_transmissions_of_first_bcasat_packet - 1)) {
             hnext_offset_assignment_parent[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_0;
-          } else if(hnext_differing_count_of_first_bcasat_packet > hnext_max_transmissions_of_first_bcasat_packet / 2) {
-            hnext_offset_assignment_parent[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_3;
+          }
+        }
+#endif /* HNEXT_OFFSET_ESCALATION */
+
+#elif HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_3 /* BC / UC / UC/ BC */
+        /* HNEXT_PACKET_TYPE_EB */
+        if(hnext_sent_ok_eb <= 1) {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_0;
+        } else {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_3;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_EB] = HNEXT_OFFSET_3;
+        }
+        /* HNEXT_PACKET_TYPE_KA */
+        if(sync_count == 0) {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_1;
+        } else {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_2;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_KA] = HNEXT_OFFSET_2;
+        }
+        /* HNEXT_PACKET_TYPE_DIS */
+        if(hnext_sent_ok_dis <= 1) {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_0;
+        } else {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_3;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DIS] = HNEXT_OFFSET_3;
+        }
+        /* HNEXT_PACKET_TYPE_M_DIO */
+        if(hnext_sent_ok_m_dio <= 1) {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_0;
+        } else {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_3;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_3;
+        }
+        /* HNEXT_PACKET_TYPE_U_DIO */
+        if(!tsch_rpl_is_urgent_probing_target_null()) {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_2;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_2;
+        } else {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_2;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_2;
+        }
+        /* HNEXT_PACKET_TYPE_DAO */
+        if(hnext_tx_current_state == HNEXT_STATE_3_RPL_JOINED) {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_1;
+        } else {
+          hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_2;
+          hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAO] = HNEXT_OFFSET_2;
+        }
+        /* HNEXT_PACKET_TYPE_NP_DAO */
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_2;
+        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_2;
+        /* HNEXT_PACKET_TYPE_DAOA */
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_2;
+        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DAOA] = HNEXT_OFFSET_2;
+        /* HNEXT_PACKET_TYPE_DATA */
+        hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_2;
+        hnext_offset_assignment_others[HNEXT_PACKET_TYPE_DATA] = HNEXT_OFFSET_2;
+
+#if HNEXT_OFFSET_ESCALATION
+        /* Check postponed count of the first packet of n_broadcast */
+        int16_t hnext_n_broadcast_get_index = ringbufindex_peek_get(&n_broadcast->tx_ringbuf);
+        if(hnext_n_broadcast_get_index != -1) {
+          uint8_t hnext_packet_type_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->hnext_packet_type;
+          uint8_t hnext_postponed_count_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->hnext_deferring_count;
+          uint8_t hnext_max_transmissions_of_first_bcasat_packet = n_broadcast->tx_array[hnext_n_broadcast_get_index]->max_transmissions;
+          
+          if(hnext_postponed_count_of_first_bcasat_packet >= (hnext_max_transmissions_of_first_bcasat_packet - 1)) {
+            hnext_offset_assignment_parent[hnext_packet_type_of_first_bcasat_packet] = HNEXT_OFFSET_0;
           }
         }
 #endif /* HNEXT_OFFSET_ESCALATION */
@@ -5311,7 +5338,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
 #endif
 
-#if HNEXT_PACKET_SELECTION
+#if HNEXT_TEMP_RANDOM_RX
       int random_rx_value = random_rand() % 10;
       if(random_rx_value < 3) {
         current_packet = NULL;
@@ -5907,7 +5934,7 @@ ost_donothing:
             && current_link->link_options & LINK_OPTION_SHARED) {
           /* Decrement the backoff window for all neighbors able to transmit over
           * this Tx, Shared link. */
-#if HNEXT_TEMP_DEFFERING_NO_BACKOFF_BC_DEC
+#if HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_DEC
           if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
             && current_packet->ret == MAC_TX_COLLISION) {
           } else {
