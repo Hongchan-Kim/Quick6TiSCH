@@ -108,13 +108,14 @@ struct tsch_log_t {
       uint8_t hnext_packet_type;
       uint8_t asap_ack_len;
       uint8_t hnext_collision_count;
+      uint8_t hnext_postponed_count;
       uint8_t hnext_noack_count;
       uint8_t hnext_backoff_exponent_before;
       uint8_t hnext_backoff_window_before;
       uint8_t hnext_backoff_exponent_after;
       uint8_t hnext_backoff_window_after;
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
-      uint8_t hnext_tier;
+      uint8_t hnext_offset;
       uint8_t hnext_state;
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 #else /* HCKIM_NEXT */
@@ -144,13 +145,14 @@ struct tsch_log_t {
       uint8_t hnext_packet_type;
       uint8_t asap_ack_len;
       uint8_t hnext_collision_count;
+      uint8_t hnext_postponed_count;
       uint8_t hnext_noack_count;
       uint8_t hnext_backoff_exponent_before;
       uint8_t hnext_backoff_window_before;
       uint8_t hnext_backoff_exponent_after;
       uint8_t hnext_backoff_window_after;
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
-      uint8_t hnext_tier;
+      uint8_t hnext_offset;
       uint8_t hnext_state;
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 #else /* HCKIM_NEXT */

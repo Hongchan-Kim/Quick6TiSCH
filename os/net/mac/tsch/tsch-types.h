@@ -145,11 +145,11 @@ struct tsch_packet {
 
 #if HCKIM_NEXT
   uint8_t hnext_packet_type;
-  uint8_t hnext_tier;
+  uint8_t hnext_offset;
   uint8_t hnext_collision_count;
   uint8_t hnext_noack_count;
   uint8_t hnext_sent_at_bc_asn;
-  uint8_t hnext_deferring_count;
+  uint8_t hnext_postponed_count;
 #endif
 
 #if WITH_SLA
