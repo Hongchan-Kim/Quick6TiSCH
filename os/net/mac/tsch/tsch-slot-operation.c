@@ -61,6 +61,24 @@
 #include "lib/random.h"
 #endif
 
+#if RGB
+#include "net/routing/rpl-classic/rpl.h"
+#include "net/routing/rpl-classic/rpl-private.h"
+uint8_t TRGB_operation = 0;
+
+uint8_t
+hash_for_RGB(uint8_t value)
+{
+  uint8_t a = value;
+  a = (a ^ 61) ^ (a >> 16);
+  a = a + (a << 3);
+  a = a ^ (a >> 4);
+  a = a * 0x27d4eb2d;
+  a = a ^ (a >> 15);
+  return (uint8_t)(a % (uint8_t)(tsch_hopping_sequence_length.val -1)) + 1;
+}           
+#endif
+
 #if WITH_A3
 #include "net/routing/rpl-classic/rpl-private.h"
 #include "net/ipv6/uip-ds6-nbr.h"
@@ -1571,6 +1589,9 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
 {
   struct tsch_packet *p = NULL;
   struct tsch_neighbor *n = NULL;
+#if RGB
+  TRGB_operation = 0;
+#endif
 
   /* Is this a Tx link? */
   if(link->link_options & LINK_OPTION_TX) {
@@ -5575,11 +5596,115 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           /* Hop channel */
           tsch_current_channel_offset = tsch_get_channel_offset(current_link, current_packet);
           tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
+#if RGB
+          if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE){
+            // calulcate ASFC
+            struct tsch_slotframe *cs_sf = tsch_schedule_get_slotframe_by_handle(TSCH_SCHED_COMMON_SF_HANDLE);
+            struct tsch_asn_t temp;
+            TSCH_ASN_COPY(temp, tsch_current_asn);
+            uint16_t mod = TSCH_ASN_MOD(tsch_current_asn, cs_sf->size);
+            TSCH_ASN_DEC(temp, mod);
+            uint8_t ASFC = TSCH_ASN_DIVISION(temp, cs_sf->size);
+
+            tsch_current_channel = tsch_hopping_sequence[0]; // for R operation chhanel
+
+            rpl_dag_t *dag = rpl_get_any_dag();
+            rpl_instance_t *instance = rpl_get_default_instance();
+            uint8_t isJRC = 0;
+            if(instance != NULL && instance->current_dag != NULL) {
+              uint16_t min_hoprankinc = instance->min_hoprankinc;
+              uint16_t rank = (uint16_t)instance->current_dag->rank;
+              if(min_hoprankinc == rank) {
+                 if(TRGB_operation == 1 || TRGB_operation == 2 ){
+                  tsch_current_channel = tsch_hopping_sequence[hash_for_RGB(1 + ASFC)]; // JRC [0, own]
+                  isJRC = 1;
+#if RGB_debug
+                      TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "TRGB_op 1 or 2, JRC op %u", TRGB_operation));
+#endif
+                 }
+              }
+            } 
+            if(isJRC == 0){
+              if(TRGB_operation == 1){ // G,B receive
+                if(instance != NULL 
+                  && instance->current_dag != NULL 
+                  && instance->current_dag->preferred_parent != NULL){
+                  // parent
+                  tsch_current_channel = tsch_hopping_sequence[hash_for_RGB(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(instance->current_dag->preferred_parent)) + ASFC)]; 
+#if RGB_debug
+                      TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "TRGB_op 1 p %u", HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(instance->current_dag->preferred_parent))));
+#endif
+                }else{
+                  TRGB_operation = 3;
+#if RGB_debug
+                      TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "TRGB_op 1 but no parent"));
+#endif
+                } 
+               
+              }else if(TRGB_operation == 2){ // G,B transmit
+                if(instance != NULL 
+                  && instance->current_dag != NULL 
+                  && instance->current_dag->preferred_parent != NULL) {
+                  if(linkaddr_cmp(queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER),
+                          rpl_get_parent_lladdr(instance->current_dag->preferred_parent))) { // current packet is for parent
+                      if(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(instance->current_dag->preferred_parent)) == 1){ // parent is JRC
+                        // parent
+                        tsch_current_channel = tsch_hopping_sequence[hash_for_RGB(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(instance->current_dag->preferred_parent)) + ASFC)]; 
+                        
+#if RGB_debug
+                      TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "TRGB_op 2, parent is JRC"));
+#endif                      
+                      }else{
+                        // grandpa
+                        tsch_current_channel = tsch_hopping_sequence[hash_for_RGB( dag->preferred_parent->gparent_id + ASFC)]; 
+#if RGB_debug
+                      TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "TRGB_op 2, parent isn't JRC gp %u",dag->preferred_parent->gparent_id));
+#endif
+                      }
+                    } else { // not for parent
+                      // own
+                      tsch_current_channel = tsch_hopping_sequence[hash_for_RGB(HCK_GET_NODE_ID_FROM_LINKADDR(&linkaddr_node_addr) + ASFC)];   
+                      
+#if RGB_debug
+                      TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "TRGB_op 2, not for parent"));
+#endif
+                    }
+                }else{
+                  TRGB_operation = 3;
+#if RGB_debug
+                      TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "TRGB_op 2 but no parent"));
+#endif
+                }
+              }
+            }
+          }
+#endif
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
           is_burst_slot = 0;
 #endif
         }
 
+#if RGB
+      uint8_t skip_slot = 0;
+      if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE && TRGB_operation == 3){
+        skip_slot = 1;
+      }
+      if(!skip_slot){
+#endif
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegC0: before RADIO.set_channel() */
         regular_slot_timestamp_common[0] = RTIMER_NOW();
 #endif
@@ -5601,16 +5726,43 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           * 3. post tx callback
           **/
           static struct pt slot_tx_pt;
+#if RGB_debug
+          if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE){
+                      TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "tsch_tx_slot"));
+          }
+#endif
           PT_SPAWN(&slot_operation_pt, &slot_tx_pt, tsch_tx_slot(&slot_tx_pt, t));
         } else {
           /* Listen */
           static struct pt slot_rx_pt;
+#if RGB_debug
+          if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE){
+                      TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                        "tsch_rx_slot"));
+          }
+#endif
           PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
         }
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
         if(is_burst_slot) {
           is_burst_slot = 0;
         }
+#endif
+#if RGB
+      }
+#if RGB_debug
+      else{
+        TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "Skip tx or rx slot"));
+      }
+#endif
+      if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE){
+        TRGB_operation = 0;
+      }
 #endif
       } else {
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION

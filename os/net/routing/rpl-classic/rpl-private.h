@@ -78,7 +78,7 @@ extern uint8_t fixed_parent_id[NODE_NUM];
 #define RPL_CODE_DAO                   0x02   /* Destination Advertisement Option */
 #define RPL_CODE_DAO_ACK               0x03   /* DAO acknowledgment */
 
-#if HCKIM_NEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+#if HCKIM_NEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT || RGB
 #define RPL_CODE_NO_PATH_DAO           0x04   /* No-path DAO*/
 #endif
 
@@ -252,6 +252,9 @@ struct rpl_dio {
   rpl_prefix_t prefix_info;
   struct rpl_metric_container mc;
   uint8_t hop_distance; /* hckim to measure hop distance accurately */
+#if RGB
+  int8_t gparent_id;
+#endif
 };
 typedef struct rpl_dio rpl_dio_t;
 

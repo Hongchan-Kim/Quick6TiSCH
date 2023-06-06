@@ -1,6 +1,12 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
+/* jhShin TRGB implementation*/
+#define RGB                                        0
+#if RGB
+#define RGB_debug                                  1
+#endif
+
 /* H-NEXT */
 #define HCKIM_NEXT                                 1
 

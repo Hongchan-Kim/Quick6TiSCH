@@ -149,6 +149,9 @@ struct rpl_parent {
   uint8_t dtsn;
   uint8_t flags;
   uint8_t hop_distance; /* hckim to measure hop distance accurately */
+#if RGB
+  int8_t gparent_id;
+#endif
 };
 typedef struct rpl_parent rpl_parent_t;
 /*---------------------------------------------------------------------------*/

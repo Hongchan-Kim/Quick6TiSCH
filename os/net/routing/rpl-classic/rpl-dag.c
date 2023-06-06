@@ -312,6 +312,10 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
           (p == NULL) ? 0 : 
           (rpl_parent_get_ipaddr(p)->u8[14] << 8) + (rpl_parent_get_ipaddr(p)->u8[15]));
 
+#if RGB_debug
+    LOG_INFO("Grandparent id is %u\n", p->gparent_id);
+#endif
+
 #ifdef RPL_CALLBACK_PARENT_SWITCH
     RPL_CALLBACK_PARENT_SWITCH(dag->preferred_parent, p);
 #endif /* RPL_CALLBACK_PARENT_SWITCH */
@@ -793,6 +797,9 @@ rpl_add_parent(rpl_dag_t *dag, rpl_dio_t *dio, uip_ipaddr_t *addr)
       p->dag = dag;
       p->rank = dio->rank;
       p->hop_distance = dio->hop_distance; /* hckim to measure hop distance accurately */
+#if RGB
+      p->gparent_id = dio->gparent_id;
+#endif
       p->dtsn = dio->dtsn;
 #if RPL_WITH_MC
       memcpy(&p->mc, &dio->mc, sizeof(p->mc));
@@ -1353,6 +1360,9 @@ rpl_add_dag(uip_ipaddr_t *from, rpl_dio_t *dio)
   }
   p->rank = dio->rank;
   p->hop_distance = dio->hop_distance; /* hckim to measure hop distance accurately */
+#if RGB
+  p->gparent_id = dio->gparent_id;
+#endif
 
   /* Determine the objective function by using the
      objective code point of the DIO. */
@@ -1730,7 +1740,9 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
   }
   p->rank = dio->rank;
   p->hop_distance = dio->hop_distance; /* hckim to measure hop distance accurately */
-
+#if RGB
+  p->gparent_id = dio->gparent_id;
+#endif
   if(dio->rank == RPL_INFINITE_RANK && p == dag->preferred_parent) {
     /* Our preferred parent advertised an infinite rank, reset DIO timer */
     rpl_reset_dio_timer(instance);
