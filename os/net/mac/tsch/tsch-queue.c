@@ -845,7 +845,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
         tsch_queue_backoff_reset(n);
       }
     }
-#if HNEXT_TEMP_BCAST_BACKOFF
+#if HNEXT_BCAST_BACKOFF
     else { // broadcast neirhbor
       if(is_shared_link || tsch_queue_is_empty(n)) {
         /* If this is a shared link, reset backoff on success.
@@ -879,7 +879,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 #endif
       }
     }
-#if HNEXT_TEMP_BCAST_BACKOFF
+#if HNEXT_BCAST_BACKOFF
     else { // broadcast neighbor
       if(is_shared_link) {
 #if HCKIM_NEXT
@@ -1228,7 +1228,7 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
               continue;
             }
 
-#if HNEXT_OFFSET_ESCALATION == HNEXT_OFFSET_ESCALATION_POLICY_2
+#if HNEXT_OFFSET_ESCALATION_POLICY == HNEXT_OFFSET_ESCALATION_POLICY_2
             curr_p = curr_nbr->tx_array[temp_index];
 
             if(curr_nbr->is_time_source) {
@@ -1256,6 +1256,41 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
                 hnext_best_offset = hnext_curr_offset;
               }
             }
+
+#elif HNEXT_OFFSET_ESCALATION_POLICY == HNEXT_OFFSET_ESCALATION_POLICY_3
+
+            curr_p = curr_nbr->tx_array[temp_index];
+
+            if(curr_nbr->is_time_source) {
+              hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hnext_packet_type];
+            } else {
+              hnext_curr_offset = hnext_offset_assignment_others[curr_p->hnext_packet_type];
+            }
+
+            if(curr_nbr == n_broadcast) {
+              if(curr_p->hnext_postponed_count >= (curr_p->max_transmissions - 1)) {
+                hnext_curr_offset = HNEXT_OFFSET_0;
+              }
+            } else {
+              if(curr_p->hnext_postponed_count >= (curr_p->max_transmissions - 1)) {
+                hnext_curr_offset = HNEXT_OFFSET_1;
+              }
+            }
+
+            curr_p->hnext_offset = hnext_curr_offset; /* Update metadat!!! */
+
+            if(best_nbr == NULL && best_p == NULL) {
+              best_nbr = curr_nbr;
+              best_p = curr_p;
+              hnext_best_offset = hnext_curr_offset;
+            } else {
+              if(hnext_curr_offset < hnext_best_offset) {
+                best_nbr = curr_nbr;
+                best_p = curr_p;
+                hnext_best_offset = hnext_curr_offset;
+              }
+            }
+
 
 #else
             curr_p = curr_nbr->tx_array[temp_index];
@@ -1350,7 +1385,7 @@ tsch_queue_backoff_inc(struct tsch_neighbor *n)
     n->backoff_exponent = MIN(n->backoff_exponent + 1, TSCH_MAC_MAX_BE);
   }
 #else
-#if HNEXT_TEMP_BCAST_BACKOFF
+#if HNEXT_BCAST_BACKOFF
   if(n == n_broadcast) {
     /* Increment exponent */
     n->backoff_exponent = MIN(n->backoff_exponent + 1, HNEXT_TSCH_MAC_BCAST_MAX_BE);
