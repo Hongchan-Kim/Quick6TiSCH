@@ -457,7 +457,7 @@ queuebuf_attr(struct queuebuf *b, uint8_t type)
   return buframptr->attrs[type].val;
 }
 /*---------------------------------------------------------------------------*/
-#if HCK_MOD_TSCH_PACKET_REBASE || HCK_ORCHESTRA_PACKET_OFFLOADING || RGB
+#if HCK_MOD_TSCH_PACKET_REBASE || HCK_ORCHESTRA_PACKET_OFFLOADING || WITH_TRGB
 void
 queuebuf_update_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val)
 {

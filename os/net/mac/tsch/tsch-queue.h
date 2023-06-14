@@ -187,8 +187,9 @@ struct tsch_packet *tsch_queue_get_packet_for_dest_addr(const linkaddr_t *addr, 
  * \param link The link to be used for Tx
  * \return The packet if any, else NULL
  */
-#if RGB
-struct tsch_packet *tsch_queue_get_packet_for_RGB(struct tsch_neighbor **n, struct tsch_link *link, int RGB_n, uint8_t current_hop);
+#if WITH_TRGB
+struct tsch_packet *tsch_queue_get_packet_for_TRGB(struct tsch_neighbor **n, struct tsch_link *link, 
+                                                    int RGB_n, uint8_t current_hop);
 #endif
 struct tsch_packet *tsch_queue_get_unicast_packet_for_any(struct tsch_neighbor **n, struct tsch_link *link);
 /**

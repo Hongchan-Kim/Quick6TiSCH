@@ -391,9 +391,9 @@ dio_input(void)
 
   dio.dtsn = buffer[i++];
   /* two reserved bytes */
-#if RGB
+#if WITH_TRGB
   dio.gparent_id = buffer[i++];
-#if RGB_debug
+#if TRGB_DBG
   LOG_INFO("dio Grandparent id is %d\n", dio.gparent_id);
 #endif
 #else
@@ -592,21 +592,21 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
   }
 
   /* reserved 2 bytes */
-#if RGB
+#if WITH_TRGB
   if(dag->rank == ROOT_RANK(instance)) {
     buffer[pos++] = 1;
-#if RGB_debug
-      LOG_INFO("Output Grandparent id is 1\n");
+#if TRGB_DBG
+    LOG_INFO("Output Grandparent id is 1\n");
 #endif
   } else {
-    if(dag->preferred_parent != NULL){
+    if(dag->preferred_parent != NULL) {
       buffer[pos++] = HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(dag->preferred_parent));
-#if RGB_debug
+#if TRGB_DBG
       LOG_INFO("Output Grandparent id is %d\n",HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(dag->preferred_parent)));
 #endif
-    }else{
+    } else {
       buffer[pos++] = 0;
-#if RGB_debug
+#if TRGB_DBG
       LOG_INFO("Output Grandparent id is 0\n");
 #endif
     }
@@ -1446,7 +1446,7 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
 
   if(dest_ipaddr != NULL) {
 
-#if HCKIM_NEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT || RGB
+#if HCKIM_NEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT || WITH_TRGB
     if(lifetime != RPL_ZERO_LIFETIME) {
       uip_icmp6_send(dest_ipaddr, ICMP6_RPL, RPL_CODE_DAO, pos);
     } else {

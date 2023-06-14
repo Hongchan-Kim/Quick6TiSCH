@@ -57,7 +57,7 @@
 #include "net/nbr-table.h"
 #include <string.h>
 
-#if RGB
+#if WITH_TRGB
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
 #include "net/routing/rpl-classic/rpl.h"
@@ -1358,10 +1358,11 @@ tsch_queue_get_unicast_packet_for_any(struct tsch_neighbor **n, struct tsch_link
   }
   return NULL;
 }
-#if RGB
 /*---------------------------------------------------------------------------*/
+#if WITH_TRGB
 struct tsch_packet *
-tsch_queue_get_packet_for_RGB(struct tsch_neighbor **n, struct tsch_link *link, int RGB_n, uint8_t current_hop)
+tsch_queue_get_packet_for_TRGB(struct tsch_neighbor **n, struct tsch_link *link, 
+                              int RGB_n, uint8_t current_hop)
 {
   int16_t get_index = 0;
   uint8_t num_elements = 0;
@@ -1370,57 +1371,56 @@ tsch_queue_get_packet_for_RGB(struct tsch_neighbor **n, struct tsch_link *link, 
     struct tsch_neighbor *curr_nbr = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
     struct tsch_packet *p = NULL;
     while(curr_nbr != NULL) {
-        get_index = ringbufindex_peek_get(&curr_nbr->tx_ringbuf);
-        num_elements = ringbufindex_elements(&curr_nbr->tx_ringbuf);
-        if( !(get_index == -1) ){
-          uint8_t i;
-          for(i = get_index; i < get_index + num_elements; i++) {
-            int16_t index;
-            if(i >= ringbufindex_size(&curr_nbr->tx_ringbuf)) { /* default size: 16 */
-              index = i - ringbufindex_size(&curr_nbr->tx_ringbuf);
-            } else {
-              index = i;  
-            }               
-            if( RGB_n == 0){ // R
-              packetbuf_attr_t packet_attr = queuebuf_attr(curr_nbr->tx_array[index]->qb, PACKETBUF_ATTR_CHANNEL);
-              if( packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIO) 
-                || packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIS) 
-                || packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK) 
-                || packet_attr == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)
-                || ((packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIO)) && !curr_nbr->is_broadcast)
-                ){
-                p = curr_nbr->tx_array[index];
-                if( p!= NULL){
-                  if(n != NULL) {
+      get_index = ringbufindex_peek_get(&curr_nbr->tx_ringbuf);
+      num_elements = ringbufindex_elements(&curr_nbr->tx_ringbuf);
+      if(get_index != -1) {
+        uint8_t i;
+        for(i = get_index; i < get_index + num_elements; i++) {
+          int16_t index;
+          if(i >= ringbufindex_size(&curr_nbr->tx_ringbuf)) { /* default size: 16 */
+            index = i - ringbufindex_size(&curr_nbr->tx_ringbuf);
+          } else {
+            index = i;
+          }
+          if(RGB_n == 0) { // R
+            packetbuf_attr_t packet_attr = queuebuf_attr(curr_nbr->tx_array[index]->qb, PACKETBUF_ATTR_CHANNEL);
+            if(packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIO)
+              || packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIS)
+              || packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)
+              || packet_attr == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)
+              || ((packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIO)) && !curr_nbr->is_broadcast)) {
+              // TRGB-Question: cannot filter out unicast DIO??? or no need to filter out unicast DIO?
+              p = curr_nbr->tx_array[index];
+              if(p != NULL) {
+                if(n != NULL) {
                   *n = curr_nbr;
-                  }
-                  return p;
                 }
-              } 
-            } else { // G or B transmit
-              packetbuf_attr_t packet_attr = queuebuf_attr(curr_nbr->tx_array[index]->qb, PACKETBUF_ATTR_CHANNEL);
-              if( packet_attr != (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)
-                 && ((curr_nbr->tx_array[index]->sent == keepalive_packet_sent)
-                 || ((packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIS)) && !curr_nbr->is_broadcast)
-                 || (packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DAO)))
-                 ){
-                  p = curr_nbr->tx_array[index];
-                  if( p!= NULL){
-                    if(n != NULL) {
-                    *n = curr_nbr;
-                    }
-                    return p;
-                  }
+                return p;
+              }
+            } 
+          } else { // G or B -> transmit
+            packetbuf_attr_t packet_attr = queuebuf_attr(curr_nbr->tx_array[index]->qb, PACKETBUF_ATTR_CHANNEL);
+            if(packet_attr != (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)
+              && ((curr_nbr->tx_array[index]->sent == keepalive_packet_sent)
+              || ((packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIS)) && !curr_nbr->is_broadcast)
+              || (packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DAO)))) {
+              p = curr_nbr->tx_array[index];
+              if(p != NULL) {
+                if(n != NULL) {
+                  *n = curr_nbr;
+                }
+                return p;
               }
             }
           }
         }
+      }
       curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
     }
   } else{
     TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                    "TRGB tsch locked"));
+                "TRGB tsch locked"));
   }
   return NULL;
 }

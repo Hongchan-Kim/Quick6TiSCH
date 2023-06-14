@@ -2,13 +2,13 @@
 #define PROJECT_CONF_H_
 
 /* jhShin TRGB implementation*/
-#define RGB                                        0
-#if RGB
-#define RGB_debug                                  1
+#define WITH_TRGB                                  0
+#if WITH_TRGB
+#define TRGB_DBG                                   1
 #endif
 
 /* H-NEXT */
-#define HCKIM_NEXT                                 1
+#define HCKIM_NEXT                                 0
 
 #if HCKIM_NEXT
 #define HNEXT_DBG                                  1
