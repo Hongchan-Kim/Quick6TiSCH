@@ -60,7 +60,7 @@
 #define LOG_MODULE "TSCH RPL"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
 /*---------------------------------------------------------------------------*/
 int
 tsch_rpl_is_urgent_probing_target_null()
@@ -87,7 +87,7 @@ tsch_rpl_callback_dio_interval_increment()
     return 0xFF;
   }
 }
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
 
 /*---------------------------------------------------------------------------*/
 #if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS

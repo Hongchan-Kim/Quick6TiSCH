@@ -117,7 +117,7 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-#if HCKIM_NEXT
+#if WITH_HNEXT
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
         printf(", RES T %u %lu %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
               log->tx.hnext_packet_type,
@@ -155,7 +155,7 @@ tsch_log_process_pending(void)
               log->tx.hnext_backoff_exponent_after,
               log->tx.hnext_backoff_window_after);
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#else /* HCKIM_NEXT */
+#else /* WITH_HNEXT */
         printf(", RES T %u %u %u %u %u %u %u %u %u HK-T",
               linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
               log->tx.is_data,
@@ -166,7 +166,7 @@ tsch_log_process_pending(void)
               log->tx.asap_idle_time,
               log->tx.asap_curr_slot_len, 
               log->tx.asap_num_of_slots_until_idle_time);
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
 #endif
         printf("\n");
 
@@ -234,7 +234,7 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-#if HCKIM_NEXT
+#if WITH_HNEXT
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
         printf(", RES R %u %lu %u %u %u %u %u HK-T",
               log->rx.hnext_packet_type,
@@ -253,7 +253,7 @@ tsch_log_process_pending(void)
               log->rx.datalen,
               log->rx.asap_ack_len);
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */ 
-#else /* HCKIM_NEXT */
+#else /* WITH_HNEXT */
         printf(", RES R %u %u %u %u %u %u %u %u HK-T",
               log->rx.is_unicast == 0 ? 0 : 1, 
               log->rx.is_data,
@@ -263,7 +263,7 @@ tsch_log_process_pending(void)
               log->rx.asap_idle_time,
               log->rx.asap_curr_slot_len, 
               log->rx.asap_num_of_slots_until_idle_time);
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
 #endif
         printf("\n");
         break;

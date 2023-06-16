@@ -52,7 +52,7 @@
 #include "net/ipv6/uip-ds6-nbr.h"
 #endif
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
 enum HNEXT_PACKET_TYPE {
   HNEXT_PACKET_TYPE_EB,     // 0
   HNEXT_PACKET_TYPE_KA,     // 1
@@ -82,7 +82,7 @@ enum HNEXT_OFFSET {
   HNEXT_OFFSET_5,   // 5
   HNEXT_OFFSET_NULL // 6
 };
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
 
 /********** Data types **********/
 
@@ -143,7 +143,7 @@ struct tsch_packet {
   uint8_t header_len; /* length of header and header IEs (needed for link-layer security) */
   uint8_t tsch_sync_ie_offset; /* Offset within the frame used for quick update of EB ASN and join priority */
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
   uint8_t hnext_packet_type;
   uint8_t hnext_offset;
   uint8_t hnext_collision_count;

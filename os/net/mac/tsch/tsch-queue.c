@@ -63,7 +63,7 @@
 #include "net/routing/rpl-classic/rpl.h"
 #endif
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
 #endif
@@ -555,7 +555,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             p->ret = MAC_TX_DEFERRED;
             p->transmissions = 0;
             p->max_transmissions = max_transmissions;
-#if HCKIM_NEXT
+#if WITH_HNEXT
             uint8_t hnext_is_broadcast = (linkaddr_cmp(addr, &tsch_eb_address)
                                         || linkaddr_cmp(addr, &tsch_broadcast_address));
 
@@ -876,7 +876,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
       /* Failures on dedicated (== non-shared) leave the backoff
        * window nor exponent unchanged */
       if(is_shared_link) {
-#if HCKIM_NEXT
+#if WITH_HNEXT
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n, link, mac_tx_status);
 #else
@@ -888,7 +888,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 #if HNEXT_BCAST_BACKOFF
     else { // broadcast neighbor
       if(is_shared_link) {
-#if HCKIM_NEXT
+#if WITH_HNEXT
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n, link, mac_tx_status);
 #else
@@ -1442,7 +1442,7 @@ tsch_queue_backoff_reset(struct tsch_neighbor *n)
 }
 /*---------------------------------------------------------------------------*/
 /* Increment backoff exponent, pick a new window */
-#if HCKIM_NEXT
+#if WITH_HNEXT
 void
 tsch_queue_backoff_inc(struct tsch_neighbor *n, struct tsch_link *link, int status)
 #else

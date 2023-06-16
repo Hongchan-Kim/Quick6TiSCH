@@ -78,7 +78,7 @@ extern uint8_t fixed_parent_id[NODE_NUM];
 #define RPL_CODE_DAO                   0x02   /* Destination Advertisement Option */
 #define RPL_CODE_DAO_ACK               0x03   /* DAO acknowledgment */
 
-#if HCKIM_NEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT || WITH_TRGB
+#if WITH_HNEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT || WITH_TRGB
 #define RPL_CODE_NO_PATH_DAO           0x04   /* No-path DAO*/
 #endif
 

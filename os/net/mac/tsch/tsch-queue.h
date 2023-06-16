@@ -207,7 +207,7 @@ void tsch_queue_backoff_reset(struct tsch_neighbor *n);
  * \brief Increment backoff exponent of a given neighbor queue, pick a new window
  * \param n The neighbor queue
  */
-#if HCKIM_NEXT
+#if WITH_HNEXT
 void tsch_queue_backoff_inc(struct tsch_neighbor *n, struct tsch_link *l, int status);
 #else
 void tsch_queue_backoff_inc(struct tsch_neighbor *n);

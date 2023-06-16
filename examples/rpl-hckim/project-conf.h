@@ -8,11 +8,11 @@
 #endif
 
 /* H-NEXT */
-#define HCKIM_NEXT                                 0
+#define WITH_HNEXT                                 1
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
 #define HNEXT_DBG                                  1
-#define HCKIM_NEXT_TWO_NODES                       0
+#define WITH_HNEXT_TWO_NODES                       0
 
 /* Modification of Contiki-NG */
 #define HCK_MOD_TSCH_SYNC_COUNT                    1
@@ -132,7 +132,7 @@
 
 #endif /* HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_X */
 
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -199,7 +199,7 @@
 #define NODE_NUM                                   2
 #endif
 
-#if HCKIM_NEXT_TWO_NODES
+#if WITH_HNEXT_TWO_NODES
 #undef IOTLAB_SITE
 #define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
 #undef NODE_NUM
@@ -268,7 +268,7 @@
 
 #else /* HCK_RPL_FIXED_TOPOLOGY */
 
-#if HCKIM_NEXT_TWO_NODES
+#if WITH_HNEXT_TWO_NODES
 
 #define APP_RESET_BEFORE_DATA_DELAY                (2 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (3 * 60 * CLOCK_SECOND)
@@ -276,7 +276,7 @@
 #define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND)
 
-#else /* HCKIM_NEXT_TWO_NODES */
+#else /* WITH_HNEXT_TWO_NODES */
 
 #define APP_RESET_BEFORE_DATA_DELAY                (730 * 60 * CLOCK_SECOND) //(65 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (731 * 60 * CLOCK_SECOND) //(66 * 60 * CLOCK_SECOND)
@@ -284,7 +284,7 @@
 #define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)   //(19 * 60 * CLOCK_SECOND) //APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND)   //
 
-#endif /* HCKIM_NEXT_TWO_NODES */
+#endif /* WITH_HNEXT_TWO_NODES */
 
 #endif /* HCK_RPL_FIXED_TOPOLOGY */
 

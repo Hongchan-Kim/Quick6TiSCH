@@ -259,7 +259,7 @@ extern struct log_module all_modules[];
 #define LOG_HK_SLA_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
 #define LOG_HK_SLA_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
 #define LOG_HNEXT(...)            LOG(1, 0, "HK-H", LOG_COLOR_PRI, __VA_ARGS__)
 #define LOG_HNEXT_(...)           LOG(0, 0, "HK-H", LOG_COLOR_PRI, __VA_ARGS__)
 #define LOG_HNEXT_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)

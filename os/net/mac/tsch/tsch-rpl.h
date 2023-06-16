@@ -48,10 +48,10 @@
 #endif
 
 /********** Functions *********/
-#if HCKIM_NEXT
+#if WITH_HNEXT
 int tsch_rpl_is_urgent_probing_target_null(void);
 int tsch_rpl_callback_dio_interval_increment(void);
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
 
 #if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS
 int tsch_rpl_callback_is_root(void);

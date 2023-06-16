@@ -54,7 +54,7 @@
 #include "net/mac/tsch/tsch.h"
 #include "sys/critical.h"
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
 #include "orchestra.h"
@@ -160,7 +160,7 @@ enum tsch_radio_state_off_cmd {
   TSCH_RADIO_CMD_OFF_FORCE,
 };
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
 static uint8_t hnext_tx_backoff_exponent_before;
 static uint8_t hnext_tx_backoff_window_before;
 
@@ -186,7 +186,7 @@ static enum HNEXT_OFFSET hnext_rx_current_offset = HNEXT_OFFSET_NULL;
 
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
 
 
 /* A ringbuf storing outgoing packets after they were dequeued.
@@ -2016,7 +2016,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       regular_slot_tx_do_wait_for_ack = do_wait_for_ack;
 #endif
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
       hnext_tx_packet_type = current_packet->hnext_packet_type;
 
       if(hnext_tx_packet_type != HNEXT_PACKET_TYPE_EB) {
@@ -2056,7 +2056,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         ((uint8_t *)(packet))[hnext_hdr_len + 2] = (uint8_t)(hnext_tx_info & 0xFF);
         ((uint8_t *)(packet))[hnext_hdr_len + 3] = (uint8_t)((hnext_tx_info >> 8) & 0xFF);
       }
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
 
 #if WITH_UPA
       upa_link_requested = 0;
@@ -2835,7 +2835,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     current_packet->transmissions++;
     current_packet->ret = mac_tx_status;
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
     if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
       && current_packet->ret == MAC_TX_OK) {
       if(hnext_tx_packet_type == HNEXT_PACKET_TYPE_EB) {
@@ -2935,7 +2935,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     }
 #endif /* WITH_A3 */
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
     hnext_tx_backoff_exponent_before = current_neighbor->backoff_exponent;
     hnext_tx_backoff_window_before = current_neighbor->backoff_window;
 #endif
@@ -2993,7 +2993,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
           memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
-#if HCKIM_NEXT
+#if WITH_HNEXT
           log->tx.hnext_packet_type = hnext_tx_packet_type;
           log->tx.asap_ack_len = asap_tot_ack_len;
           log->tx.hnext_collision_count = current_packet->hnext_collision_count;
@@ -3007,13 +3007,13 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           log->tx.hnext_offset = hnext_tx_current_offset;
           log->tx.hnext_state = hnext_tx_current_state;
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#else /* HCKIM_NEXT */
+#else /* WITH_HNEXT */
           log->tx.asap_unused_offset_time = RTIMERTICKS_TO_US(current_slot_unused_offset_time);
           log->tx.asap_idle_time = RTIMERTICKS_TO_US(current_slot_idle_time);
           log->tx.asap_curr_slot_len = tsch_timing_us[tsch_ts_timeslot_length];
           log->tx.asap_num_of_slots_until_idle_time = current_slot_passed_slots;
           log->tx.asap_ack_len = asap_tot_ack_len;
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
       );
 #if WITH_UPA
     }
@@ -3815,7 +3815,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             int do_nack = 0;
             rx_count++;
 
-#if HCKIM_NEXT /* Needs to be modified for 6TiSCH-MC */
+#if WITH_HNEXT /* Needs to be modified for 6TiSCH-MC */
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
 
@@ -3850,7 +3850,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                                + hnext_rx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP);
             }
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
 
             estimated_drift = RTIMER_CLOCK_DIFF(expected_rx_time, rx_start_time);
             tsch_stats_on_time_synchronization(estimated_drift);
@@ -4269,13 +4269,13 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               memcpy(&log->rx.app_magic, (uint8_t *)current_input->payload + current_input->len - 2, 2);
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
-#if HCKIM_NEXT
+#if WITH_HNEXT
               log->rx.hnext_packet_type = hnext_rx_packet_type;
               log->rx.asap_ack_len = asap_tot_ack_len;
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
               log->rx.hnext_offset = hnext_rx_current_offset;
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#else /* HCKIM_NEXT */
+#else /* WITH_HNEXT */
 #if WITH_UPA
               log->rx.asap_unused_offset_time = upa_link_scheduled == 0 ? RTIMERTICKS_TO_US(current_slot_unused_offset_time) : 0;
               log->rx.asap_idle_time = upa_link_scheduled == 0 ? RTIMERTICKS_TO_US(current_slot_idle_time) : 0;
@@ -4289,7 +4289,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.asap_num_of_slots_until_idle_time = current_slot_passed_slots;
               log->rx.asap_ack_len = asap_tot_ack_len;
 #endif
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
             );
 
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
@@ -5132,7 +5132,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
 #else
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
       /* First determine current state */
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
         if(tsch_is_coordinator) { /* Coordinator -> final state */
@@ -5467,7 +5467,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_X */
       }
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#endif /* HCKIM_NEXT */
+#endif /* WITH_HNEXT */
 
 #if HNEXT_PACKET_SELECTION
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {

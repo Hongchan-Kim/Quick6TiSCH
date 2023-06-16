@@ -1240,7 +1240,7 @@ resynchronize(const linkaddr_t *original_time_source_addr)
 
 /*---------------------------------------------------------------------------*/
 /* Tx callback for keepalive messages */
-#if HCKIM_NEXT || WITH_TRGB
+#if WITH_HNEXT || WITH_TRGB
 void
 #else
 static void
@@ -1905,7 +1905,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
       LOG_INFO_LLADDR((const linkaddr_t *)&frame.src_addr);
       LOG_INFO_("\n");
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
       uint64_t asso_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
       LOG_HNEXT("asso %u | at %llu\n", tsch_association_count, asso_asn);
 #endif
@@ -2055,7 +2055,7 @@ PROCESS_THREAD(tsch_process, ev, data)
      * as long as we are associated */
     PROCESS_YIELD_UNTIL(!tsch_is_associated);
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
     uint64_t leaving_asn = tsch_calculate_current_asn();
     LOG_HNEXT("leave %u | at %llu\n", 
               tsch_leaving_count + 1,
@@ -2261,7 +2261,7 @@ tsch_init(void)
   LOG_INFO("nbr_tbl_reg: sync_stats %d\n", sync_stats->index);
 #endif /* TSCH_AUTOSELECT_TIME_SOURCE */
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
   LOG_INFO("hnext %u\n", HNEXT_OFFSET_ASSIGNMENT_POLICY);
 #endif
 
@@ -2325,7 +2325,7 @@ send_packet(mac_callback_t sent, void *ptr)
 
   packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
 
-#if HCKIM_NEXT
+#if WITH_HNEXT
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
 #endif
 
