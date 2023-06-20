@@ -394,7 +394,7 @@ dio_input(void)
 #if WITH_TRGB
   dio.gparent_id = buffer[i++];
 #if TRGB_DBG
-  LOG_INFO("dio Grandparent id is %d\n", dio.gparent_id);
+  LOG_INFO("TRGB dio_i GP ID %d\n", dio.gparent_id);
 #endif
 #else
   i += 1;
@@ -596,18 +596,19 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
   if(dag->rank == ROOT_RANK(instance)) {
     buffer[pos++] = 1;
 #if TRGB_DBG
-    LOG_INFO("Output Grandparent id is 1\n");
+    LOG_INFO("TRGB dio_o root GP ID %d\n", node_id);
 #endif
   } else {
     if(dag->preferred_parent != NULL) {
       buffer[pos++] = HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(dag->preferred_parent));
 #if TRGB_DBG
-      LOG_INFO("Output Grandparent id is %d\n",HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(dag->preferred_parent)));
+      LOG_INFO("TRGB dio_o non-root GP ID %d\n", 
+              HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(dag->preferred_parent)));
 #endif
     } else {
       buffer[pos++] = 0;
 #if TRGB_DBG
-      LOG_INFO("Output Grandparent id is 0\n");
+      LOG_INFO("TRGB dio_o non-root GP ID 0\n");
 #endif
     }
   }

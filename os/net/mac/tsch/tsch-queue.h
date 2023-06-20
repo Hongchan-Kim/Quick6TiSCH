@@ -188,8 +188,8 @@ struct tsch_packet *tsch_queue_get_packet_for_dest_addr(const linkaddr_t *addr, 
  * \return The packet if any, else NULL
  */
 #if WITH_TRGB
-struct tsch_packet *tsch_queue_get_packet_for_TRGB(struct tsch_neighbor **n, struct tsch_link *link, 
-                                                    int RGB_n, uint8_t current_hop);
+struct tsch_packet *tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link, 
+                                                    int trgb_current_cell);
 #endif
 struct tsch_packet *tsch_queue_get_unicast_packet_for_any(struct tsch_neighbor **n, struct tsch_link *link);
 /**

@@ -52,6 +52,23 @@
 #include "net/ipv6/uip-ds6-nbr.h"
 #endif
 
+#if WITH_TRGB
+enum TRGB_CELL {
+  TRGB_CELL_RED,                              // 0
+  TRGB_CELL_GREEN,                            // 1
+  TRGB_CELL_BLUE,                             // 2
+  TRGB_CELL_NULL                              // 3
+};
+enum TRGB_OPERATION {
+  TRGB_OPERATION_RED,                         // 0
+  TRGB_OPERATION_GREEN_OR_BLUE_RX,            // 1
+  TRGB_OPERATION_GREEN_OR_BLUE_TX,            // 2
+  TRGB_OPERATION_GREEN_OR_BLUE_TX_NO_PACKET,  // 3
+  TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE,   // 4
+  TRGB_OPERATION_NULL                         // 5
+};
+#endif
+
 #if WITH_HNEXT
 enum HNEXT_PACKET_TYPE {
   HNEXT_PACKET_TYPE_EB,     // 0

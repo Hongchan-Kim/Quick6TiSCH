@@ -313,7 +313,7 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
           (rpl_parent_get_ipaddr(p)->u8[14] << 8) + (rpl_parent_get_ipaddr(p)->u8[15]));
 
 #if TRGB_DBG
-    LOG_INFO("Grandparent id is %u\n", p->gparent_id);
+    LOG_INFO("TRGB ps GP ID %u\n", p->gparent_id);
 #endif
 
 #ifdef RPL_CALLBACK_PARENT_SWITCH

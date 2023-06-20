@@ -64,10 +64,12 @@
 #if WITH_TRGB
 #include "net/routing/rpl-classic/rpl.h"
 #include "net/routing/rpl-classic/rpl-private.h"
-uint8_t TRGB_operation = 0;
+
+static enum TRGB_CELL trgb_current_cell = TRGB_CELL_NULL;
+static enum TRGB_OPERATION trgb_current_operation = TRGB_OPERATION_NULL;
 
 uint8_t
-hash_for_RGB(uint8_t value)
+hash_for_trgb(uint8_t value)
 {
   uint8_t a = value;
   a = (a ^ 61) ^ (a >> 16);
@@ -75,7 +77,7 @@ hash_for_RGB(uint8_t value)
   a = a ^ (a >> 4);
   a = a * 0x27d4eb2d;
   a = a ^ (a >> 15);
-  return (uint8_t)(a % (uint8_t)(tsch_hopping_sequence_length.val -1)) + 1;
+  return (uint8_t)(a % (uint8_t)(tsch_hopping_sequence_length.val - 1)) + 1;
 }
 #endif
 
@@ -1589,10 +1591,6 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
 {
   struct tsch_packet *p = NULL;
   struct tsch_neighbor *n = NULL;
-#if WITH_TRGB
-  TRGB_operation = 0;
-#endif
-
   /* Is this a Tx link? */
   if(link->link_options & LINK_OPTION_TX) {
     /* is it for advertisement of EB? */
@@ -1608,102 +1606,126 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
         n = tsch_queue_get_nbr(&link->addr);
         p = tsch_queue_get_packet_for_nbr(n, link);
 
-#if WITH_TRGB
-        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-          uint8_t current_hop = 255;
-          int RGB_n = tsch_current_asn.ls4b % 3;
+#if WITH_TRGB /* Determine TRGB cell type and operation based on ASN, hop distance, and packet */
+        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) { /* Common shared cell only */
+          /* First, initialize current TRGB cell type and operation */
+          trgb_current_cell = TRGB_CELL_NULL;
+          trgb_current_operation = TRGB_OPERATION_NULL;
 
-          rpl_dag_t *dag = rpl_get_any_dag();
-          rpl_instance_t *instance = rpl_get_default_instance();
+          /* Second, determine current TRGB cell type based on ASN */          
+          if((tsch_current_asn.ls4b % 3) == TRGB_CELL_RED) {
+            trgb_current_cell = TRGB_CELL_RED;
+          } else if((tsch_current_asn.ls4b % 3) == TRGB_CELL_GREEN) {
+            trgb_current_cell = TRGB_CELL_GREEN;
+          } else if((tsch_current_asn.ls4b % 3) == TRGB_CELL_BLUE) {
+            trgb_current_cell = TRGB_CELL_BLUE;
+          }
 
-          if(instance != NULL && instance->current_dag != NULL) {
-            uint16_t min_hoprankinc = instance->min_hoprankinc;
-            uint16_t rank = (uint16_t)instance->current_dag->rank;
-            if(min_hoprankinc == rank) {
-              current_hop = 0; // JRC node
+          /* Third, determine current hop distance */
+          uint8_t trgb_current_hops = 0xFF;
+          int trgb_is_root = tsch_rpl_callback_is_root();
+          if(trgb_is_root == 1) { /* Root node */
+            trgb_current_hops = 0;
+          } else { /* Non-root node */
+            if(tsch_is_associated == 1 && tsch_rpl_check_dodag_joined()) {
+              rpl_instance_t *trgb_instance = rpl_get_default_instance();
+              rpl_dag_t *trgb_dag = trgb_instance->current_dag;
+              if(trgb_dag->preferred_parent != NULL
+                && trgb_dag->preferred_parent->rank != RPL_INFINITE_RANK
+                && trgb_dag->preferred_parent->hop_distance != 0xFF) {
+                trgb_current_hops = trgb_dag->preferred_parent->hop_distance + 1;
+              }
             }
           }
 
-          if((tsch_is_associated == 1) 
-            && (dag->preferred_parent != NULL) 
-            && (dag->preferred_parent->rank != RPL_INFINITE_RANK) 
-            && (dag->preferred_parent->hop_distance != 0xff)
-            ) {
-            current_hop = dag->preferred_parent->hop_distance + 1;
-          } else {
-            if(current_hop == 255) { // not JRC node and no parent
-              RGB_n = 3;
-              TRGB_operation = 3;
+          /* Fourth, get packet and determine TRGB cell operation */
+          if(trgb_current_hops == 0xFF) { /* If it is impossible to determine hop distance 
+                                            -> TRGB_CELL_RED is only executable */
+            if(trgb_current_cell == TRGB_CELL_GREEN || trgb_current_cell == TRGB_CELL_BLUE) {
+              trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE;
             }
           }
-
-          if(RGB_n == 1) { 
-            if((current_hop % 2) == 0) { 
-              TRGB_operation = 1; // G,B receive
-              p = NULL;
-#if TRGB_DBG
-              TSCH_LOG_ADD(tsch_log_message,
-                          snprintf(log->message, sizeof(log->message),
-                          "G receive"));
-#endif
-            }
-            if((current_hop % 2) == 1) { // G,B transmit
-              p = tsch_queue_get_packet_for_TRGB(&n, link, RGB_n, current_hop); 
-              TRGB_operation = 2;
-#if TRGB_DBG
-              TSCH_LOG_ADD(tsch_log_message,
-                          snprintf(log->message, sizeof(log->message),
-                          "G transmit"));
-#endif
-              if(p == NULL) {
-                TRGB_operation = 3; // no packet to send
-#if TRGB_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                            snprintf(log->message, sizeof(log->message),
-                            "G transmit but no packet"));
-#endif
-              }
-            }
-          } else if(RGB_n == 2) {
-            if((current_hop % 2) == 1) { 
-              TRGB_operation = 1; // G,B receive
-              p = NULL;
-#if TRGB_DBG
-              TSCH_LOG_ADD(tsch_log_message,
-                          snprintf(log->message, sizeof(log->message),
-                          "B receive"));
-#endif
-            }
-            if((current_hop % 2) == 0){ // G,B transmit
-              p = tsch_queue_get_packet_for_TRGB(&n, link, RGB_n, current_hop); 
-              TRGB_operation = 2; 
-#if TRGB_DBG
-              TSCH_LOG_ADD(tsch_log_message,
-                          snprintf(log->message, sizeof(log->message),
-                          "B transmit"));
-#endif
-              if(p == NULL) {
-                TRGB_operation = 3; // no packet to send
-#if TRGB_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                            snprintf(log->message, sizeof(log->message),
-                            "B transmit but no packet"));
-#endif
-              }
-            }
-          } else if(RGB_n == 0) {
-            p = tsch_queue_get_packet_for_TRGB(&n, link, RGB_n, current_hop); // R operation
+          if(trgb_current_cell == TRGB_CELL_RED) { /* TRGB RED cell operation */
+            p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_cell);
+            trgb_current_operation = TRGB_OPERATION_RED;
 #if TRGB_DBG
             if(p == NULL) {
               TSCH_LOG_ADD(tsch_log_message,
                           snprintf(log->message, sizeof(log->message),
-                          "R receive"));
+                          "TRGB R Rx"));
             } else {
               TSCH_LOG_ADD(tsch_log_message,
                           snprintf(log->message, sizeof(log->message),
-                          "R transmit"));
+                          "TRGB R Tx"));
             }
 #endif
+          } else if(trgb_current_operation 
+                  != TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE) { /* Available GREEN or BLUE cell */
+            if(trgb_current_cell == TRGB_CELL_GREEN) { /* GREEN cell */
+              if((trgb_current_hops % 2) == 0) { /* GREEN cell with even hop count -> Rx */
+                p = NULL;
+                trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_RX;
+#if TRGB_DBG
+                TSCH_LOG_ADD(tsch_log_message,
+                            snprintf(log->message, sizeof(log->message),
+                            "TRGB G Rx"));
+#endif
+              } else { /* GREEN cell with odd hop count -> Tx */
+                p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_cell);
+                if(p != NULL) { /* Tx GREEN cell with packet */
+                  trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_TX;
+#if TRGB_DBG
+                  TSCH_LOG_ADD(tsch_log_message,
+                              snprintf(log->message, sizeof(log->message),
+                              "TRGB G Tx Pkt"));
+#endif
+                } else { /* Tx GREEN cell without packet */
+                  trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_TX_NO_PACKET;
+#if TRGB_DBG
+                  TSCH_LOG_ADD(tsch_log_message,
+                              snprintf(log->message, sizeof(log->message),
+                              "TRGB G Tx no Pkt"));
+#endif
+                }
+              }
+            } else if(trgb_current_cell == TRGB_CELL_BLUE) { /* BLUE cell */
+              if((trgb_current_hops % 2) == 1) { /* BLUE cell with odd hop count -> Rx */
+                p = NULL;
+                trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_RX;
+#if TRGB_DBG
+                TSCH_LOG_ADD(tsch_log_message,
+                            snprintf(log->message, sizeof(log->message),
+                            "TRGB B Rx"));
+#endif
+              } else { /* BLUE cell with even hop count -> Tx */
+                p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_cell);
+                if(p != NULL) { /* Tx BLUE cell with packet */
+                  trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_TX;
+#if TRGB_DBG
+                  TSCH_LOG_ADD(tsch_log_message,
+                              snprintf(log->message, sizeof(log->message),
+                              "TRGB B Tx Pkt"));
+#endif
+                } else { /* Tx BLUE cell without packet */
+                  trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_TX_NO_PACKET;
+#if TRGB_DBG
+                  TSCH_LOG_ADD(tsch_log_message,
+                              snprintf(log->message, sizeof(log->message),
+                              "TRGB B Tx no Pkt"));
+#endif
+                }
+              }
+            }
+          }
+#if TRGB_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                      "TRGB %u %u %u", trgb_current_cell, trgb_current_hops, trgb_current_operation));
+#endif
+        } else {
+          /* if it is a broadcast slot and there were no broadcast packets, pick any unicast packet */
+          if(p == NULL && n == n_broadcast) {
+            p = tsch_queue_get_unicast_packet_for_any(&n, link);
           }
         }
 #else
@@ -5698,112 +5720,84 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
 
 #if WITH_TRGB
-          if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) { // common shared cell
-            // calulcate ASFC
+          if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) { /* TRGB: common shared cell only */
+            /* calulcate ASFN */
+            uint64_t trgb_asfn = 0;
             struct tsch_slotframe *cs_sf = tsch_schedule_get_slotframe_by_handle(TSCH_SCHED_COMMON_SF_HANDLE);
-            struct tsch_asn_t temp;
-            TSCH_ASN_COPY(temp, tsch_current_asn);
-            uint16_t mod = TSCH_ASN_MOD(tsch_current_asn, cs_sf->size);
-            TSCH_ASN_DEC(temp, mod);
-            uint8_t ASFC = TSCH_ASN_DIVISION(temp, cs_sf->size);
+            struct tsch_asn_t trgb_asn;
+            TSCH_ASN_COPY(trgb_asn, tsch_current_asn);
+            uint16_t trgb_mod = TSCH_ASN_MOD(tsch_current_asn, cs_sf->size);
+            TSCH_ASN_DEC(trgb_asn, trgb_mod);
+            trgb_asfn = TSCH_ASN_DIVISION(trgb_asn, cs_sf->size);
 
-            tsch_current_channel = tsch_hopping_sequence[0]; // TRGB-Question: for R operation chhanel // Question????
+            /* Initialize channel with the channel of RED cell */
+            tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(0 + trgb_asfn)];
 
-            // is Root???
-            rpl_dag_t *dag = rpl_get_any_dag();
-            rpl_instance_t *instance = rpl_get_default_instance();
-            uint8_t isJRC = 0;
-            if(instance != NULL && instance->current_dag != NULL) {
-              uint16_t min_hoprankinc = instance->min_hoprankinc;
-              uint16_t rank = (uint16_t)instance->current_dag->rank;
-              if(min_hoprankinc == rank) {
-                if(TRGB_operation == 1 || TRGB_operation == 2 ) {
-                  tsch_current_channel = tsch_hopping_sequence[hash_for_RGB(1 + ASFC)]; // JRC [0, own]
-                  isJRC = 1;
+            /* Assign channel */
+            int trgb_is_root = tsch_rpl_callback_is_root();
+            if(trgb_is_root == 1) { /* Root node */
+              if(trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_RX
+                || trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_TX) {
+                tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(1 + trgb_asfn)]; /* Root: [0, own] */
 #if TRGB_DBG
-                  TSCH_LOG_ADD(tsch_log_message,
-                              snprintf(log->message, sizeof(log->message),
-                              "TRGB_op 1 or 2, JRC op %u", TRGB_operation));
+                TSCH_LOG_ADD(tsch_log_message,
+                            snprintf(log->message, sizeof(log->message),
+                            "TRGB root G/B Tx/Rx"));
 #endif
-                }
               }
-            }
-
-            if(isJRC == 0) {
-              if(TRGB_operation == 1) { // G,B receive
-                if(instance != NULL 
-                  && instance->current_dag != NULL 
-                  && instance->current_dag->preferred_parent != NULL) {
-                  // parent
-                  tsch_current_channel = tsch_hopping_sequence[hash_for_RGB(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(instance->current_dag->preferred_parent)) + ASFC)]; 
+            } else { /* Non-root node */
+              rpl_instance_t *trgb_instance = rpl_get_default_instance();
+              if(trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_RX) {
+                tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent)) + trgb_asfn)]; 
 #if TRGB_DBG
-                  TSCH_LOG_ADD(tsch_log_message,
-                              snprintf(log->message, sizeof(log->message),
-                              "TRGB_op 1 p %u", HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(instance->current_dag->preferred_parent))));
+                TSCH_LOG_ADD(tsch_log_message,
+                            snprintf(log->message, sizeof(log->message),
+                            "TRGB n-root G/B Rx"));
 #endif
-                } else {
-                  TRGB_operation = 3;
-#if TRGB_DBG
-                  TSCH_LOG_ADD(tsch_log_message,
-                              snprintf(log->message, sizeof(log->message),
-                              "TRGB_op 1 but no parent"));
-#endif
-                } 
-              } else if(TRGB_operation == 2) { // G,B transmit
-                if(instance != NULL 
-                  && instance->current_dag != NULL 
-                  && instance->current_dag->preferred_parent != NULL) {
-                  if(linkaddr_cmp(queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER),
-                    rpl_get_parent_lladdr(instance->current_dag->preferred_parent))) { // current packet is for parent
-                    if(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(instance->current_dag->preferred_parent)) == 1) { // parent is JRC
-                      // parent
-                      tsch_current_channel = tsch_hopping_sequence[hash_for_RGB(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(instance->current_dag->preferred_parent)) + ASFC)]; 
-#if TRGB_DBG
-                      TSCH_LOG_ADD(tsch_log_message,
-                                  snprintf(log->message, sizeof(log->message),
-                                  "TRGB_op 2, parent is JRC"));
-#endif
-                    } else {
-                      // grandpa
-                      tsch_current_channel = tsch_hopping_sequence[hash_for_RGB(dag->preferred_parent->gparent_id + ASFC)]; 
-#if TRGB_DBG
-                      TSCH_LOG_ADD(tsch_log_message,
-                                  snprintf(log->message, sizeof(log->message),
-                                  "TRGB_op 2, parent isn't JRC gp %u",dag->preferred_parent->gparent_id));
-#endif
-                    }
-                  } else { // not for parent
-                    // own
-                    tsch_current_channel = tsch_hopping_sequence[hash_for_RGB(HCK_GET_NODE_ID_FROM_LINKADDR(&linkaddr_node_addr) + ASFC)];
+              } else if(trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_TX) {
+                if(linkaddr_cmp(queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER),
+                  rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent))) { /* Packet for parent */
+                  if(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent)) == 1) { /* Paretn is root */
+                    tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent)) + trgb_asfn)]; 
 #if TRGB_DBG
                     TSCH_LOG_ADD(tsch_log_message,
                                 snprintf(log->message, sizeof(log->message),
-                                "TRGB_op 2, not for parent"));
+                                "TRGB n-root G/B Tx PR"));
+#endif
+                  } else { /* Parent is non-root */
+                    tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(trgb_instance->current_dag->preferred_parent->gparent_id + trgb_asfn)]; 
+#if TRGB_DBG
+                    TSCH_LOG_ADD(tsch_log_message,
+                                snprintf(log->message, sizeof(log->message),
+                                "TRGB n-root G/B Tx PnR"));
 #endif
                   }
-                } else {
-                  TRGB_operation = 3;
+                } else { /* Packet for non-parent */
+                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(HCK_GET_NODE_ID_FROM_LINKADDR(&linkaddr_node_addr) + trgb_asfn)];
 #if TRGB_DBG
                   TSCH_LOG_ADD(tsch_log_message,
                               snprintf(log->message, sizeof(log->message),
-                              "TRGB_op 2 but no parent"));
+                              "TRGB n-root G/B Tx nP"));
 #endif
                 }
               }
             }
           }
 #endif
+
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
           is_burst_slot = 0;
 #endif
         }
 
 #if WITH_TRGB
-      uint8_t skip_slot = 0;
-      if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE && TRGB_operation == 3) {
-        skip_slot = 1;
-      }
-      if(!skip_slot) {
+        uint8_t trgb_skip_slot = 0;
+        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
+          && (trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_TX_NO_PACKET
+              || trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE)) {
+          trgb_skip_slot = 1;
+        }
+        if(!trgb_skip_slot) {
 #endif
 #if HCK_DBG_REGULAR_SLOT_TIMING /* RegC0: before RADIO.set_channel() */
         regular_slot_timestamp_common[0] = RTIMER_NOW();
@@ -5830,7 +5824,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
             TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                        "tsch_tx_slot"));
+                        "TRGB tx_slot"));
           }
 #endif
           PT_SPAWN(&slot_operation_pt, &slot_tx_pt, tsch_tx_slot(&slot_tx_pt, t));
@@ -5841,7 +5835,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE){
             TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                        "tsch_rx_slot"));
+                        "TRGB rx_slot"));
           }
 #endif
           PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
@@ -5854,14 +5848,14 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #if WITH_TRGB
       }
 #if TRGB_DBG
-      else{
+      else {
         TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                    "Skip tx or rx slot"));
+                    "TRGB skip Tx/Rx slot"));
       }
 #endif
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-        TRGB_operation = 0;
+        trgb_current_operation = TRGB_OPERATION_NULL;
       }
 #endif
       } else {

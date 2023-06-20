@@ -4,11 +4,16 @@
 /* jhShin TRGB implementation*/
 #define WITH_TRGB                                  0
 #if WITH_TRGB
-#define TRGB_DBG                                   1
+#define TRGB_DBG                                   0
+
+/* Modification of Contiki-NG */
+#define HCK_MOD_TSCH_SYNC_COUNT                    1
+#define HCK_MOD_TSCH_PACKET_REBASE                 1
+
 #endif
 
 /* H-NEXT */
-#define WITH_HNEXT                                 1
+#define WITH_HNEXT                                 0
 
 #if WITH_HNEXT
 #define HNEXT_DBG                                  1

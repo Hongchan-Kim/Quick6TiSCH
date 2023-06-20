@@ -90,7 +90,7 @@ tsch_rpl_callback_dio_interval_increment()
 #endif /* WITH_HNEXT */
 
 /*---------------------------------------------------------------------------*/
-#if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS
+#if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS || WITH_TRGB
 int
 tsch_rpl_callback_is_root(void)
 {
