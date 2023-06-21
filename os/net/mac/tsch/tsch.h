@@ -65,12 +65,12 @@ frequency hopping for enhanced reliability.
 #include "net/mac/tsch/tsch-rpl.h"
 #endif /* UIP_CONF_IPV6_RPL */
 
-#if WITH_HNEXT || WITH_TRGB
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
 void keepalive_packet_sent(void *ptr, int status, int transmissions);
 #endif
 #if WITH_HNEXT
-extern enum HNEXT_OFFSET hnext_offset_assignment_parent[HNEXT_PACKET_TYPE_NULL];
-extern enum HNEXT_OFFSET hnext_offset_assignment_others[HNEXT_PACKET_TYPE_NULL];
+extern enum HNEXT_OFFSET hnext_offset_assignment_parent[HCK_PACKET_TYPE_NULL];
+extern enum HNEXT_OFFSET hnext_offset_assignment_others[HCK_PACKET_TYPE_NULL];
 #endif
 
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP

@@ -1,28 +1,57 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
-/* jhShin TRGB implementation*/
-#define WITH_TRGB                                  1
+
+/***************************************************************
+ * HCK's modifications of Contiki-NG
+ * - HCK_MOD_TSCH_SYNC_COUNT:                          Network formation acceleration
+ * - HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF: Network formation acceleration
+ ****************************************************************/
+#define HCK_MOD_TSCH_SYNC_COUNT                             1 /* Network formation acceleration */
+#define HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF    1 /* Network formation acceleration */
+#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       1 /* Network formation acceleration */
+#define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1 /* Network formation acceleration */
+
+
+/***************************************************************
+ * Network formation acceleration
+ * - Common modifications of Contiki-NG
+ * - [TMC'19] Dynamic resource allocation
+ * - [TMC'23] TRGB
+ * - [Proposed] TOP
+ ****************************************************************/
+
+/***************************************************************
+ * Common modifications of Contiki-NG
+ ****************************************************************/
+#undef HCK_MOD_TSCH_SYNC_COUNT
+#define HCK_MOD_TSCH_SYNC_COUNT                             1
+#undef HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF
+#define HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF    1
+#undef HCK_MOD_TSCH_PACKET_TYPE_INFO
+#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       1
+#undef HCK_MOD_RPL_CODE_NO_PATH_DAO
+#define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
+
+/***************************************************************
+ * Logging for network formation
+ ****************************************************************/
+#define HCK_MOD_LOG_FORMATION                               1
+
+/***************************************************************
+ * TRGB implementation - WITH_TRGB
+ ****************************************************************/
+#define WITH_TRGB                                  0
 #if WITH_TRGB
-#define TRGB_DBG                                   1
+#define TRGB_DBG                                   0
+#endif /* WITH_TRGB */
 
-/* Modification of Contiki-NG */
-#define HCK_MOD_TSCH_SYNC_COUNT                    1
-#define HCK_MOD_TSCH_PACKET_REBASE                 1
-
-#endif
-
-/* H-NEXT */
-#define WITH_HNEXT                                 0
-
+/***************************************************************
+ * TOP implementation - WITH_HNEXT
+ ****************************************************************/
+#define WITH_HNEXT                                 1
 #if WITH_HNEXT
 #define HNEXT_DBG                                  1
-#define WITH_HNEXT_TWO_NODES                       0
-
-/* Modification of Contiki-NG */
-#define HCK_MOD_TSCH_SYNC_COUNT                    1
-#define HCK_MOD_TSCH_PACKET_REBASE                 1
-
 /* Always applied offset differentiation - up to six offsets  */
 #define HNEXT_CCA_OFFSET                           800
 #define HNEXT_TX_OFFSET                            1300 /* 1300 ~ 3100 */
@@ -30,7 +59,6 @@
 #define HNEXT_RX_OFFSET_RIGHT                      2900 /* 1300 ~ 4200, 500 margin */
 #define HNEXT_OFFSET_GAP                           600
 #define HNEXT_ADDITIONAL_CCA                       1
-
 /* Offset assignment policy */
 #define HNEXT_OFFSET_ASSIGNMENT_POLICY             HNEXT_OFFSET_ASSIGNMENT_POLICY_1 /* Fix to 2 or 4 */ ////////////////////
 #define HNEXT_OFFSET_ASSIGNMENT_POLICY_0           0 /* Baseline */
@@ -136,7 +164,6 @@
 #define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_SET     1
 
 #endif /* HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_X */
-
 #endif /* WITH_HNEXT */
 
 /*---------------------------------------------------------------------------*/
@@ -204,12 +231,6 @@
 #define NODE_NUM                                   2
 #endif
 
-#if WITH_HNEXT_TWO_NODES
-#undef IOTLAB_SITE
-#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
-#undef NODE_NUM
-#define NODE_NUM                                   2
-#endif
 
 #endif /* WITH_IOTLAB */
 /*---------------------------------------------------------------------------*/
@@ -273,23 +294,11 @@
 
 #else /* HCK_RPL_FIXED_TOPOLOGY */
 
-#if WITH_HNEXT_TWO_NODES
-
-#define APP_RESET_BEFORE_DATA_DELAY                (2 * 60 * CLOCK_SECOND)
-#define APP_DATA_START_DELAY                       (3 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (5 * 60 * CLOCK_SECOND)
-#define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)
-#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND)
-
-#else /* WITH_HNEXT_TWO_NODES */
-
 #define APP_RESET_BEFORE_DATA_DELAY                (730 * 60 * CLOCK_SECOND) //(65 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (731 * 60 * CLOCK_SECOND) //(66 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)  //(60 * 60 * CLOCK_SECOND)
 #define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)   //(19 * 60 * CLOCK_SECOND) //APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND)   //
-
-#endif /* WITH_HNEXT_TWO_NODES */
 
 #endif /* HCK_RPL_FIXED_TOPOLOGY */
 

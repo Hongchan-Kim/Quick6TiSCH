@@ -1240,7 +1240,7 @@ resynchronize(const linkaddr_t *original_time_source_addr)
 
 /*---------------------------------------------------------------------------*/
 /* Tx callback for keepalive messages */
-#if WITH_HNEXT || WITH_TRGB
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
 void
 #else
 static void

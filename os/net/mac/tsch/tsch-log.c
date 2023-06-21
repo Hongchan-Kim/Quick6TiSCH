@@ -116,11 +116,13 @@ tsch_log_process_pending(void)
           printf(", a_seq %lx", log->tx.app_seqno);
         }
 #endif
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+        printf(", PT %u", log->tx.hck_packet_type);
+#endif
 #if LOG_HK_ENABLED
 #if WITH_HNEXT || WITH_TRGB
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
-        printf(", RES T %u %lu %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
-              log->tx.hnext_packet_type,
+        printf(", RES T %lu %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
               log->asn.ls4b,
               log->link->slotframe_handle,
               linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
@@ -138,8 +140,7 @@ tsch_log_process_pending(void)
               log->tx.hnext_state,
               log->tx.hnext_offset);
 #else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-        printf(", RES T %u %lu %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
-              log->tx.hnext_packet_type,
+        printf(", RES T %lu %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
               log->asn.ls4b,
               log->link->slotframe_handle,
               linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
@@ -233,11 +234,13 @@ tsch_log_process_pending(void)
           printf(", a_seq %lx", log->rx.app_seqno);
         }
 #endif
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+        printf(", PT %u", log->rx.hck_packet_type);
+#endif
 #if LOG_HK_ENABLED
 #if WITH_HNEXT || WITH_TRGB
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
-        printf(", RES R %u %lu %u %u %u %u %u HK-T",
-              log->rx.hnext_packet_type,
+        printf(", RES R %lu %u %u %u %u %u HK-T",
               log->asn.ls4b,
               log->link->slotframe_handle,
               log->rx.is_unicast == 0 ? 0 : 1,
@@ -245,8 +248,7 @@ tsch_log_process_pending(void)
               log->rx.asap_ack_len,
               log->rx.hnext_offset);
 #else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */ 
-        printf(", RES R %u %lu %u %u %u %u HK-T",
-              log->rx.hnext_packet_type,
+        printf(", RES R %lu %u %u %u %u HK-T",
               log->asn.ls4b,
               log->link->slotframe_handle,
               log->rx.is_unicast == 0 ? 0 : 1,

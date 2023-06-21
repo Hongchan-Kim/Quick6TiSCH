@@ -104,8 +104,10 @@ struct tsch_log_t {
       uint16_t app_magic;
       uint32_t app_seqno;
 #endif
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+      uint8_t hck_packet_type;
+#endif
 #if WITH_HNEXT || WITH_TRGB
-      uint8_t hnext_packet_type;
       uint8_t asap_ack_len;
       uint8_t hnext_collision_count;
       uint8_t hnext_postponed_count;
@@ -141,8 +143,10 @@ struct tsch_log_t {
       uint16_t app_magic;
       uint32_t app_seqno;
 #endif
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+      uint8_t hck_packet_type;
+#endif
 #if WITH_HNEXT || WITH_TRGB
-      uint8_t hnext_packet_type;
       uint8_t asap_ack_len;
       uint8_t hnext_collision_count;
       uint8_t hnext_postponed_count;

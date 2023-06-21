@@ -105,9 +105,9 @@ static struct ctimer ost_select_N_timer;
 #endif
 
 /*---------------------------------------------------------------------------*/
-#if HCK_MOD_TSCH_PACKET_REBASE
+#if HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF || HCK_ORCHESTRA_PACKET_OFFLOADING
 void
-tsch_queue_change_attr_of_packets_in_queue_rebase(struct tsch_neighbor *target_nbr, 
+tsch_queue_change_attr_of_packets_in_queue(struct tsch_neighbor *target_nbr, 
                                            uint16_t sf_handle, uint16_t timeslot)
 {
   if(target_nbr == NULL) {
@@ -123,48 +123,6 @@ tsch_queue_change_attr_of_packets_in_queue_rebase(struct tsch_neighbor *target_n
     if(sf_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
       tsch_queue_backoff_reset(target_nbr);
     }
-
-    get_index = ringbufindex_peek_get(&target_nbr->tx_ringbuf);
-    num_elements = ringbufindex_elements(&target_nbr->tx_ringbuf);
-
-    if(get_index == -1) {
-      return;
-    }
-    
-    uint8_t i;
-    for(i = get_index; i < get_index + num_elements; i++) {
-      int16_t index;
-
-      if(i >= ringbufindex_size(&target_nbr->tx_ringbuf)) { /* default size: 16 */
-        index = i - ringbufindex_size(&target_nbr->tx_ringbuf);
-      } else {
-        index = i;  
-      }
-
-      queuebuf_update_attr(target_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME, sf_handle);
-      queuebuf_update_attr(target_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT, timeslot);
-    }
-  }
-}
-#endif
-/*---------------------------------------------------------------------------*/
-#if HCK_ORCHESTRA_PACKET_OFFLOADING
-void
-tsch_queue_change_attr_of_packets_in_queue(const struct tsch_neighbor *target_nbr, 
-                                           uint16_t sf_handle, uint16_t timeslot)
-{
-  if(target_nbr == NULL) {
-    /* we do not have packets to change */
-    return;
-  }
-
-  int16_t get_index = 0;
-  uint8_t num_elements = 0;
-
-  if(!tsch_is_locked()) {
-#if 0
-    tsch_queue_backoff_reset(target_nbr);
-#endif
 
     get_index = ringbufindex_peek_get(&target_nbr->tx_ringbuf);
     num_elements = ringbufindex_elements(&target_nbr->tx_ringbuf);
@@ -555,80 +513,51 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             p->ret = MAC_TX_DEFERRED;
             p->transmissions = 0;
             p->max_transmissions = max_transmissions;
-#if WITH_TRGB
-            uint8_t hnext_is_broadcast = (linkaddr_cmp(addr, &tsch_eb_address)
-                                        || linkaddr_cmp(addr, &tsch_broadcast_address));
 
-            uint8_t hnext_current_packet_type = HNEXT_PACKET_TYPE_NULL;
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+            uint8_t hck_is_broadcast = (linkaddr_cmp(addr, &tsch_eb_address) 
+                                        || linkaddr_cmp(addr, &tsch_broadcast_address));
+            uint8_t hck_current_packet_type = HCK_PACKET_TYPE_NULL;
             if(((((uint8_t *)(queuebuf_dataptr(p->qb)))[0]) & 7) == FRAME802154_BEACONFRAME) {
-              hnext_current_packet_type = HNEXT_PACKET_TYPE_EB;
+              hck_current_packet_type = HCK_PACKET_TYPE_EB;
             } else {
               if(p->sent == keepalive_packet_sent) {
-                hnext_current_packet_type = HNEXT_PACKET_TYPE_KA;
+                hck_current_packet_type = HCK_PACKET_TYPE_KA;
               } else {
                 if(queuebuf_attr(p->qb, PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
                   if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIS)) {
-                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DIS;
+                    hck_current_packet_type = HCK_PACKET_TYPE_DIS;
                   } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)) {
-                    if(hnext_is_broadcast) {
-                      hnext_current_packet_type = HNEXT_PACKET_TYPE_M_DIO;
+                    if(hck_is_broadcast) {
+                      hck_current_packet_type = HCK_PACKET_TYPE_M_DIO;
                     } else {
-                      hnext_current_packet_type = HNEXT_PACKET_TYPE_U_DIO;
+                      hck_current_packet_type = HCK_PACKET_TYPE_U_DIO;
                     }
                   } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
-                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DAO;
+                    hck_current_packet_type = HCK_PACKET_TYPE_DAO;
+#if HCK_MOD_RPL_CODE_NO_PATH_DAO
                   } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)) {
-                    hnext_current_packet_type = HNEXT_PACKET_TYPE_NP_DAO;
+                    hck_current_packet_type = HCK_PACKET_TYPE_NP_DAO;
+#endif
                   } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
-                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DAOA;
+                    hck_current_packet_type = HCK_PACKET_TYPE_DAOA;
                   }
                 } else {
-                  hnext_current_packet_type = HNEXT_PACKET_TYPE_DATA;
+                  hck_current_packet_type = HCK_PACKET_TYPE_DATA;
                 }
               }
             }
-            p->hnext_packet_type = hnext_current_packet_type;
+            p->hck_packet_type = hck_current_packet_type;
 #endif
 
 #if WITH_HNEXT
-            uint8_t hnext_is_broadcast = (linkaddr_cmp(addr, &tsch_eb_address)
-                                        || linkaddr_cmp(addr, &tsch_broadcast_address));
-
-            uint8_t hnext_current_packet_type = HNEXT_PACKET_TYPE_NULL;
-            if(((((uint8_t *)(queuebuf_dataptr(p->qb)))[0]) & 7) == FRAME802154_BEACONFRAME) {
-              hnext_current_packet_type = HNEXT_PACKET_TYPE_EB;
-            } else {
-              if(p->sent == keepalive_packet_sent) {
-                hnext_current_packet_type = HNEXT_PACKET_TYPE_KA;
-              } else {
-                if(queuebuf_attr(p->qb, PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-                  if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIS)) {
-                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DIS;
-                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)) {
-                    if(hnext_is_broadcast) {
-                      hnext_current_packet_type = HNEXT_PACKET_TYPE_M_DIO;
-                    } else {
-                      hnext_current_packet_type = HNEXT_PACKET_TYPE_U_DIO;
-                    }
-                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
-                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DAO;
-                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)) {
-                    hnext_current_packet_type = HNEXT_PACKET_TYPE_NP_DAO;
-                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
-                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DAOA;
-                  }
-                } else {
-                  hnext_current_packet_type = HNEXT_PACKET_TYPE_DATA;
-                }
-              }
-            }
-            p->hnext_packet_type = hnext_current_packet_type;
             p->hnext_offset = 0;
             p->hnext_collision_count = 0;
             p->hnext_noack_count = 0;
             p->hnext_sent_at_bc_asn = 0;
             p->hnext_postponed_count = 0;
 #endif
+
             /* Add to ringbuf (actual add committed through atomic operation) */
             n->tx_array[put_index] = p;
             ringbufindex_put(&n->tx_ringbuf);
@@ -1415,7 +1344,9 @@ tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link,
             if(((packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIO)) && curr_nbr->is_broadcast)    // Multicast DIO
               || ((packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIO)) && !curr_nbr->is_broadcast) // Unicast DIO -> TRGB-rev: additional filtering needed
               || (packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIS))                              // DIS
+#if HCK_MOD_RPL_CODE_NO_PATH_DAO
               || (packet_attr == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO))                      // No-path DAO
+#endif
               || (curr_nbr->tx_array[get_index]->sent == keepalive_packet_sent)                // KA
               ) { 
               p = curr_nbr->tx_array[get_index];

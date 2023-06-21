@@ -52,6 +52,25 @@
 #include "net/ipv6/uip-ds6-nbr.h"
 #endif
 
+
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+enum HCK_PACKET_TYPE {
+  HCK_PACKET_TYPE_EB,     // 0
+  HCK_PACKET_TYPE_KA,     // 1
+  HCK_PACKET_TYPE_DIS,    // 2
+  HCK_PACKET_TYPE_M_DIO,  // 3
+  HCK_PACKET_TYPE_U_DIO,  // 4
+  HCK_PACKET_TYPE_DAO,    // 5
+#if HCK_MOD_RPL_CODE_NO_PATH_DAO
+  HCK_PACKET_TYPE_NP_DAO, // 6
+#endif
+  HCK_PACKET_TYPE_DAOA,   // 7
+  HCK_PACKET_TYPE_DATA,   // 8
+  HCK_PACKET_TYPE_NULL    // 9
+};
+#endif
+
+
 #if WITH_TRGB
 enum TRGB_CELL {
   TRGB_CELL_RED,                              // 0
@@ -69,20 +88,7 @@ enum TRGB_OPERATION {
 };
 #endif
 
-#if WITH_HNEXT || WITH_TRGB
-enum HNEXT_PACKET_TYPE {
-  HNEXT_PACKET_TYPE_EB,     // 0
-  HNEXT_PACKET_TYPE_KA,     // 1
-  HNEXT_PACKET_TYPE_DIS,    // 2
-  HNEXT_PACKET_TYPE_M_DIO,  // 3
-  HNEXT_PACKET_TYPE_U_DIO,  // 4
-  HNEXT_PACKET_TYPE_DAO,    // 5
-  HNEXT_PACKET_TYPE_NP_DAO, // 6
-  HNEXT_PACKET_TYPE_DAOA,   // 7
-  HNEXT_PACKET_TYPE_DATA,   // 8
-  HNEXT_PACKET_TYPE_NULL    // 9
-};
-
+#if WITH_HNEXT
 enum HNEXT_STATE {
   HNEXT_STATE_1_NEW_NODE,       // 0
   HNEXT_STATE_2_TSCH_JOINED,    // 1
@@ -160,12 +166,11 @@ struct tsch_packet {
   uint8_t header_len; /* length of header and header IEs (needed for link-layer security) */
   uint8_t tsch_sync_ie_offset; /* Offset within the frame used for quick update of EB ASN and join priority */
 
-#if WITH_TRGB
-  uint8_t hnext_packet_type;
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+  uint8_t hck_packet_type;
 #endif
 
 #if WITH_HNEXT
-  uint8_t hnext_packet_type;
   uint8_t hnext_offset;
   uint8_t hnext_collision_count;
   uint8_t hnext_noack_count;
