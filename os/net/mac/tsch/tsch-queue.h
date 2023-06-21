@@ -58,6 +58,11 @@ extern struct tsch_neighbor *n_broadcast;
 extern struct tsch_neighbor *n_eb;
 
 /********** Functions *********/
+#if WITH_TRGB
+struct tsch_packet *tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link, 
+                                                uint8_t trgb_current_state, uint8_t trgb_current_cell);
+#endif
+
 #if WITH_UPA
 int tsch_queue_upa_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p, struct tsch_link *link, uint8_t mac_tx_status);
 struct tsch_packet *tsch_queue_upa_get_next_packet_for_nbr(const struct tsch_neighbor *n, uint8_t upa_last_tx_seq);
@@ -183,10 +188,6 @@ struct tsch_packet *tsch_queue_get_packet_for_dest_addr(const linkaddr_t *addr, 
  * \param link The link to be used for Tx
  * \return The packet if any, else NULL
  */
-#if WITH_TRGB
-struct tsch_packet *tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link, 
-                                                    int trgb_current_cell);
-#endif
 struct tsch_packet *tsch_queue_get_unicast_packet_for_any(struct tsch_neighbor **n, struct tsch_link *link);
 /**
  * \brief Is the neighbor backoff timer expired?

@@ -57,10 +57,14 @@
 #include "net/nbr-table.h"
 #include <string.h>
 
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#include "net/ipv6/uip-icmp6.h"
+#include "net/routing/rpl-classic/rpl-private.h"
+#endif
+
 #if WITH_TRGB
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
-//#include "net/routing/rpl-classic/rpl.h"
 #endif
 
 #if WITH_HNEXT
@@ -1326,7 +1330,7 @@ tsch_queue_get_unicast_packet_for_any(struct tsch_neighbor **n, struct tsch_link
 #if WITH_TRGB
 struct tsch_packet *
 tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link, 
-                              int trgb_current_cell)
+                              uint8_t trgb_current_state, uint8_t trgb_current_cell)
 {
   int16_t get_index = 0;
 
@@ -1338,17 +1342,17 @@ tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link,
       if(curr_nbr->is_broadcast || (!curr_nbr->is_broadcast && curr_nbr->tx_links_count == 0)) {
         get_index = ringbufindex_peek_get(&curr_nbr->tx_ringbuf);
         if(get_index != -1) {
+          uint8_t trgb_current_packet_type = curr_nbr->tx_array[get_index]->hck_packet_type;
           if(trgb_current_cell == TRGB_CELL_RED) { /* Get packet for TRGB RED cell */
-            packetbuf_attr_t packet_attr = queuebuf_attr(curr_nbr->tx_array[get_index]->qb, 
-                                                        PACKETBUF_ATTR_CHANNEL);
-            if(((packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIO)) && curr_nbr->is_broadcast)    // Multicast DIO
-              || ((packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIO)) && !curr_nbr->is_broadcast) // Unicast DIO -> TRGB-rev: additional filtering needed
-              || (packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DIS))                              // DIS
+            if((trgb_current_packet_type == HCK_PACKET_TYPE_M_DIO)
+              || (trgb_current_packet_type == HCK_PACKET_TYPE_U_DIO)
+              || (trgb_current_packet_type == HCK_PACKET_TYPE_DIS)
 #if HCK_MOD_RPL_CODE_NO_PATH_DAO
-              || (packet_attr == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO))                      // No-path DAO
+              || (trgb_current_packet_type == HCK_PACKET_TYPE_NP_DAO)
 #endif
-              || (curr_nbr->tx_array[get_index]->sent == keepalive_packet_sent)                // KA
-              ) { 
+              || ((trgb_current_packet_type == HCK_PACKET_TYPE_KA) 
+                  && (trgb_current_state == TRGB_STATE_GREEN_OR_BLUE_UNAVAILABLE))
+              ) {
               p = curr_nbr->tx_array[get_index];
               if(p != NULL) {
                 if(n != NULL) {
@@ -1356,12 +1360,11 @@ tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link,
                 }
                 return p;
               }
-            } 
+            }
           } else { /* Get packet for TRGB GREEN or BLUE cells */
-            packetbuf_attr_t packet_attr = queuebuf_attr(curr_nbr->tx_array[get_index]->qb, 
-                                                        PACKETBUF_ATTR_CHANNEL);
-            if((packet_attr == (ICMP6_RPL << 8 | RPL_CODE_DAO))                 // DAO
-              || (curr_nbr->tx_array[get_index]->sent == keepalive_packet_sent) // KA
+            if((trgb_current_packet_type == HCK_PACKET_TYPE_DAO)
+              || ((trgb_current_packet_type == HCK_PACKET_TYPE_KA) 
+                  && (trgb_current_state == TRGB_STATE_GREEN_OR_BLUE_AVAILABLE))
               ) {
               p = curr_nbr->tx_array[get_index];
               if(p != NULL) {

@@ -52,7 +52,6 @@
 #include "net/ipv6/uip-ds6-nbr.h"
 #endif
 
-
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
 enum HCK_PACKET_TYPE {
   HCK_PACKET_TYPE_EB,     // 0
@@ -70,13 +69,18 @@ enum HCK_PACKET_TYPE {
 };
 #endif
 
-
 #if WITH_TRGB
 enum TRGB_CELL {
   TRGB_CELL_RED,                              // 0
   TRGB_CELL_GREEN,                            // 1
   TRGB_CELL_BLUE,                             // 2
   TRGB_CELL_NULL                              // 3
+};
+enum TRGB_STATE {
+  TRGB_STATE_ALL_UNAVAILABLE,                 // 0
+  TRGB_STATE_GREEN_OR_BLUE_UNAVAILABLE,       // 1
+  TRGB_STATE_GREEN_OR_BLUE_AVAILABLE,         // 2
+  TRGB_STATE_NULL                             // 3 
 };
 enum TRGB_OPERATION {
   TRGB_OPERATION_RED,                         // 0
@@ -95,7 +99,6 @@ enum HNEXT_STATE {
   HNEXT_STATE_3_RPL_JOINED,     // 2
   HNEXT_STATE_4_CELL_ALLOCATED, // 3
 };
-
 enum HNEXT_OFFSET {
   HNEXT_OFFSET_0,   // 0 
   HNEXT_OFFSET_1,   // 1

@@ -7,10 +7,10 @@
  * - HCK_MOD_TSCH_SYNC_COUNT:                          Network formation acceleration
  * - HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF: Network formation acceleration
  ****************************************************************/
-#define HCK_MOD_TSCH_SYNC_COUNT                             1 /* Network formation acceleration */
-#define HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF    1 /* Network formation acceleration */
-#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       1 /* Network formation acceleration */
-#define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1 /* Network formation acceleration */
+#define HCK_MOD_TSCH_SYNC_COUNT                             0 /* Network formation acceleration */
+#define HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF    0 /* Network formation acceleration */
+#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0 /* Network formation acceleration */
+#define HCK_MOD_RPL_CODE_NO_PATH_DAO                        0 /* Network formation acceleration */
 
 
 /***************************************************************
@@ -20,9 +20,11 @@
  * - [TMC'23] TRGB
  * - [Proposed] TOP
  ****************************************************************/
+#define NETWORK_FORMATION_ACCELERATION                      1
+#if NETWORK_FORMATION_ACCELERATION
 
 /***************************************************************
- * Common modifications of Contiki-NG
+ * Prerequisite modifications of Contiki-NG for network formation acceleration
  ****************************************************************/
 #undef HCK_MOD_TSCH_SYNC_COUNT
 #define HCK_MOD_TSCH_SYNC_COUNT                             1
@@ -34,24 +36,26 @@
 #define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
 
 /***************************************************************
- * Logging for network formation
+ * Common logs for network formation acceleration
  ****************************************************************/
-#define HCK_MOD_LOG_FORMATION                               1
+#define FORMATION_COMMON_LOG                                1
 
 /***************************************************************
  * TRGB implementation - WITH_TRGB
  ****************************************************************/
-#define WITH_TRGB                                  0
+#define WITH_TRGB                                  1
 #if WITH_TRGB
+#define TRGB_LOG                                   0
 #define TRGB_DBG                                   0
 #endif /* WITH_TRGB */
 
 /***************************************************************
  * TOP implementation - WITH_HNEXT
  ****************************************************************/
-#define WITH_HNEXT                                 1
+#define WITH_HNEXT                                 0
 #if WITH_HNEXT
-#define HNEXT_DBG                                  1
+#define HNEXT_LOG                                  0
+#define HNEXT_DBG                                  0
 /* Always applied offset differentiation - up to six offsets  */
 #define HNEXT_CCA_OFFSET                           800
 #define HNEXT_TX_OFFSET                            1300 /* 1300 ~ 3100 */
@@ -165,6 +169,8 @@
 
 #endif /* HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_X */
 #endif /* WITH_HNEXT */
+
+#endif /* NETWORK_FORMATION_ACCELERATION */
 
 /*---------------------------------------------------------------------------*/
 /*

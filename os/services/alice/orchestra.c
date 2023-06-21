@@ -90,8 +90,8 @@ orchestra_packet_sent(int mac_status)
 
       uint64_t orchestra_one_parent_knows_us_asn = tsch_calculate_current_asn();
       LOG_HK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_one_parent_knows_us_asn);
-#if WITH_HNEXT || WITH_TRGB
-      LOG_HNEXT("opku %u | at %llu\n", orchestra_parent_knows_us, orchestra_one_parent_knows_us_asn);
+#if FORMATION_COMMON_LOG
+      LOG_HCK_FORMATION("opku %u | at %llu\n", orchestra_parent_knows_us, orchestra_one_parent_knows_us_asn);
 #endif
 
 #if HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF
@@ -172,8 +172,8 @@ orchestra_callback_new_time_source(const struct tsch_neighbor *old, const struct
 
     uint64_t orchestra_zero_parent_knows_us_asn = tsch_calculate_current_asn();
     LOG_HK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_zero_parent_knows_us_asn);
-#if WITH_HNEXT || WITH_TRGB
-    LOG_HNEXT("opku %u | at %llu\n", orchestra_parent_knows_us, orchestra_zero_parent_knows_us_asn);
+#if FORMATION_COMMON_LOG
+    LOG_HCK_FORMATION("opku %u | at %llu\n", orchestra_parent_knows_us, orchestra_zero_parent_knows_us_asn);
 #endif
   }
   for(i = 0; i < NUM_RULES; i++) {

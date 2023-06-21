@@ -58,7 +58,7 @@
 #include "sys/ctimer.h"
 #include "sys/log.h"
 
-#if WITH_HNEXT || WITH_TRGB
+#if FORMATION_COMMON_LOG
 #include "net/mac/tsch/tsch.h"
 #endif
 
@@ -297,9 +297,9 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
     }
     LOG_INFO_("\n");
 
-#if WITH_HNEXT || WITH_TRGB
+#if FORMATION_COMMON_LOG
     uint64_t ps_asn = tsch_calculate_current_asn();
-    LOG_HNEXT("ps %u | at %llu\n", 
+    LOG_HCK_FORMATION("ps %u | at %llu\n", 
               (p == NULL) ? 0 : 
               (rpl_parent_get_ipaddr(p)->u8[14] << 8) + (rpl_parent_get_ipaddr(p)->u8[15]),
               ps_asn);

@@ -259,11 +259,11 @@ extern struct log_module all_modules[];
 #define LOG_HK_SLA_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
 #define LOG_HK_SLA_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
 
-#if WITH_HNEXT || WITH_TRGB
-#define LOG_HNEXT(...)            LOG(1, 0, "HK-H", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HNEXT_(...)           LOG(0, 0, "HK-H", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HNEXT_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)
-#define LOG_HNEXT_6ADDR(...)      LOG_6ADDR(0, __VA_ARGS__)
+#if FORMATION_COMMON_LOG
+#define LOG_HCK_FORMATION(...)            LOG(1, 0, "HK-F", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_FORMATION_(...)           LOG(0, 0, "HK-F", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_FORMATION_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)
+#define LOG_HCK_FORMATION_6ADDR(...)      LOG_6ADDR(0, __VA_ARGS__)
 #endif
 #endif /* LOG_HK_ENABLED */
 

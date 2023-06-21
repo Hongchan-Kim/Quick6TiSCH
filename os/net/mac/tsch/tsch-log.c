@@ -116,11 +116,11 @@ tsch_log_process_pending(void)
           printf(", a_seq %lx", log->tx.app_seqno);
         }
 #endif
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
         printf(", PT %u", log->tx.hck_packet_type);
 #endif
 #if LOG_HK_ENABLED
-#if WITH_HNEXT || WITH_TRGB
+#if WITH_HNEXT
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
         printf(", RES T %lu %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
               log->asn.ls4b,
@@ -234,11 +234,11 @@ tsch_log_process_pending(void)
           printf(", a_seq %lx", log->rx.app_seqno);
         }
 #endif
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
         printf(", PT %u", log->rx.hck_packet_type);
 #endif
 #if LOG_HK_ENABLED
-#if WITH_HNEXT || WITH_TRGB
+#if WITH_HNEXT
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
         printf(", RES R %lu %u %u %u %u %u HK-T",
               log->asn.ls4b,

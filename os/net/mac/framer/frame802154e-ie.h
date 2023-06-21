@@ -71,8 +71,8 @@ struct ieee802154_ies {
 #if WITH_UPA
   uint16_t ie_upa_info;
 #endif
-#if WITH_HNEXT || WITH_TRGB
-  uint16_t ie_hnext_packet_type;
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+  uint16_t ie_formation_info;
 #endif
   int16_t ie_time_correction;
   uint8_t ie_is_nack;
@@ -108,8 +108,8 @@ struct ieee802154_ies {
 int frame80215e_create_ie_header_upa_info(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #endif
-#if WITH_HNEXT || WITH_TRGB
-int frame80215e_create_ie_header_hnext_packet_type(uint8_t *buf, int len,
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+int frame80215e_create_ie_header_formation_info(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #endif
 /* Header IE. ACK/NACK time correction. Used in enhanced ACKs */

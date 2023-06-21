@@ -50,8 +50,8 @@ enum ieee802154e_header_ie_id {
 #if WITH_UPA /* Header IE in Data and ACK frames */
   HEADER_IE_UPA_INFO = 0x01,
 #endif
-#if WITH_HNEXT || WITH_TRGB
-  HEADER_IE_HNEXT_PACKET_TYPE = 0x02,
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+  HEADER_IE_FORMATION_INFO = 0x02,
 #endif
   HEADER_IE_LE_CSL = 0x1a,
   HEADER_IE_LE_RIT,
@@ -161,16 +161,16 @@ frame80215e_create_ie_header_upa_info(uint8_t *buf, int len,
 }
 #endif
 
-#if WITH_HNEXT || WITH_TRGB
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
 int
-frame80215e_create_ie_header_hnext_packet_type(uint8_t *buf, int len,
+frame80215e_create_ie_header_formation_info(uint8_t *buf, int len,
     struct ieee802154_ies *ies)
 {
   int ie_len = 2; /* 16 bits */
   if(len >= 2 + ie_len && ies != NULL) {
-    uint16_t hnext_packet_type = ies->ie_hnext_packet_type;
-    WRITE16(buf+2, hnext_packet_type);
-    create_header_ie_descriptor(buf, HEADER_IE_HNEXT_PACKET_TYPE, ie_len);
+    uint16_t formation_info = ies->ie_formation_info;
+    WRITE16(buf+2, formation_info);
+    create_header_ie_descriptor(buf, HEADER_IE_FORMATION_INFO, ie_len);
     return 2 + ie_len;
   } else {
     return -1;
@@ -439,13 +439,13 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
       }
       break;
 #endif
-#if WITH_HNEXT || WITH_TRGB
-    case HEADER_IE_HNEXT_PACKET_TYPE:
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+    case HEADER_IE_FORMATION_INFO:
       if(len == 2) {
         if(ies != NULL) {
-          uint16_t hnext_packet_type = 0;
-          READ16(buf, hnext_packet_type);
-          ies->ie_hnext_packet_type = hnext_packet_type;
+          uint16_t formation_info = 0;
+          READ16(buf, formation_info);
+          ies->ie_formation_info = formation_info;
         }
         return len;
       }

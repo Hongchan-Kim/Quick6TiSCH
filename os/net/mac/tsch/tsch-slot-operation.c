@@ -64,21 +64,6 @@
 #if WITH_TRGB
 #include "net/routing/rpl-classic/rpl.h"
 #include "net/routing/rpl-classic/rpl-private.h"
-
-static enum TRGB_CELL trgb_current_cell = TRGB_CELL_NULL;
-static enum TRGB_OPERATION trgb_current_operation = TRGB_OPERATION_NULL;
-
-uint8_t
-hash_for_trgb(uint8_t value)
-{
-  uint8_t a = value;
-  a = (a ^ 61) ^ (a >> 16);
-  a = a + (a << 3);
-  a = a ^ (a >> 4);
-  a = a * 0x27d4eb2d;
-  a = a ^ (a >> 15);
-  return (uint8_t)(a % (uint8_t)(tsch_hopping_sequence_length.val - 1)) + 1;
-}
 #endif
 
 #if WITH_A3
@@ -162,6 +147,32 @@ enum tsch_radio_state_off_cmd {
   TSCH_RADIO_CMD_OFF_FORCE,
 };
 
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+static enum HCK_PACKET_TYPE formation_tx_packet_type = HCK_PACKET_TYPE_NULL;
+static enum HCK_PACKET_TYPE formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
+#endif
+
+#if WITH_TRGB
+static enum TRGB_STATE trgb_current_state = TRGB_STATE_NULL;
+static enum TRGB_CELL trgb_current_cell = TRGB_CELL_NULL;
+static enum TRGB_OPERATION trgb_current_operation = TRGB_OPERATION_NULL;
+
+static enum HCK_PACKET_TYPE trgb_tx_packet_type = HCK_PACKET_TYPE_NULL;
+static enum HCK_PACKET_TYPE trgb_rx_packet_type = HCK_PACKET_TYPE_NULL;
+
+uint8_t
+hash_for_trgb(uint8_t value)
+{
+  uint8_t a = value;
+  a = (a ^ 61) ^ (a >> 16);
+  a = a + (a << 3);
+  a = a ^ (a >> 4);
+  a = a * 0x27d4eb2d;
+  a = a ^ (a >> 15);
+  return (uint8_t)(a % (uint8_t)(tsch_hopping_sequence_length.val - 1)) + 1;
+}
+#endif
+
 #if WITH_HNEXT
 static uint8_t hnext_tx_backoff_exponent_before;
 static uint8_t hnext_tx_backoff_window_before;
@@ -189,12 +200,6 @@ static enum HNEXT_OFFSET hnext_rx_current_offset = HNEXT_OFFSET_NULL;
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 
 #endif /* WITH_HNEXT */
-
-#if WITH_TRGB
-static enum HCK_PACKET_TYPE hnext_tx_packet_type = HCK_PACKET_TYPE_NULL;
-static enum HCK_PACKET_TYPE hnext_rx_packet_type = HCK_PACKET_TYPE_NULL;
-#endif
-
 
 /* A ringbuf storing outgoing packets after they were dequeued.
  * Will be processed layer by tsch_tx_process_pending */
@@ -1611,9 +1616,10 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
         n = tsch_queue_get_nbr(&link->addr);
         p = tsch_queue_get_packet_for_nbr(n, link);
 
-#if WITH_TRGB /* Determine TRGB cell type and operation based on ASN, hop distance, and packet */
+#if WITH_TRGB
         if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) { /* Common shared cell only */
           /* First, initialize current TRGB cell type and operation */
+          trgb_current_state = TRGB_STATE_NULL;
           trgb_current_cell = TRGB_CELL_NULL;
           trgb_current_operation = TRGB_OPERATION_NULL;
 
@@ -1646,12 +1652,15 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
           /* Fourth, get packet and determine TRGB cell operation */
           if(trgb_current_hops == 0xFF) { /* If it is impossible to determine hop distance 
                                             -> TRGB_CELL_RED is only executable */
+            trgb_current_state = TRGB_STATE_GREEN_OR_BLUE_UNAVAILABLE;
             if(trgb_current_cell == TRGB_CELL_GREEN || trgb_current_cell == TRGB_CELL_BLUE) {
               trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE;
             }
+          } else {
+            trgb_current_state = TRGB_STATE_GREEN_OR_BLUE_AVAILABLE;
           }
           if(trgb_current_cell == TRGB_CELL_RED) { /* TRGB RED cell operation */
-            p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_cell);
+            p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_state, trgb_current_cell);
             trgb_current_operation = TRGB_OPERATION_RED;
 #if TRGB_DBG
             if(p == NULL) {
@@ -1676,7 +1685,7 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
                             "TRGB G Rx"));
 #endif
               } else { /* GREEN cell with odd hop count -> Tx */
-                p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_cell);
+                p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_state, trgb_current_cell);
                 if(p != NULL) { /* Tx GREEN cell with packet */
                   trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_TX;
 #if TRGB_DBG
@@ -1703,7 +1712,7 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
                             "TRGB B Rx"));
 #endif
               } else { /* BLUE cell with even hop count -> Tx */
-                p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_cell);
+                p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_state, trgb_current_cell);
                 if(p != NULL) { /* Tx BLUE cell with packet */
                   trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_TX;
 #if TRGB_DBG
@@ -1725,7 +1734,8 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
 #if TRGB_DBG
           TSCH_LOG_ADD(tsch_log_message,
                       snprintf(log->message, sizeof(log->message),
-                      "TRGB %u %u %u", trgb_current_cell, trgb_current_hops, trgb_current_operation));
+                      "TRGB %u %u %u %u", trgb_current_state, trgb_current_cell, 
+                                          trgb_current_hops, trgb_current_operation));
 #endif
         } else {
           /* if it is a broadcast slot and there were no broadcast packets, pick any unicast packet */
@@ -2043,17 +2053,32 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       regular_slot_tx_do_wait_for_ack = do_wait_for_ack;
 #endif
 
-#if WITH_TRGB
-      hnext_tx_packet_type = current_packet->hck_packet_type;
-      if(hnext_tx_packet_type != HCK_PACKET_TYPE_EB) {
-        uint16_t hnext_tx_info = 0;
-        hnext_tx_info = (hnext_tx_packet_type << 8) + 0;
-
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+      formation_tx_packet_type = current_packet->hck_packet_type;
+#if !WITH_TRGB && !WITH_HNEXT
+      formation_tx_packet_type = current_packet->hck_packet_type;
+      if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
+        uint16_t formation_tx_info = 0;
+        formation_tx_info = (formation_tx_packet_type << 8) + 0;
         frame802154_t hnext_frame;
-        int hnext_hdr_len;
-        hnext_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &hnext_frame);
-        ((uint8_t *)(packet))[hnext_hdr_len + 2] = (uint8_t)(hnext_tx_info & 0xFF);
-        ((uint8_t *)(packet))[hnext_hdr_len + 3] = (uint8_t)((hnext_tx_info >> 8) & 0xFF);
+        int formation_hdr_len;
+        formation_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &hnext_frame);
+        ((uint8_t *)(packet))[formation_hdr_len + 2] = (uint8_t)(formation_tx_info & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 3] = (uint8_t)((formation_tx_info >> 8) & 0xFF);
+      }
+#endif
+#endif /* HCK_MOD_TSCH_PACKET_TYPE_INFO */
+
+#if WITH_TRGB
+      trgb_tx_packet_type = current_packet->hck_packet_type;
+      if(trgb_tx_packet_type != HCK_PACKET_TYPE_EB) {
+        uint16_t trgb_tx_info = 0;
+        trgb_tx_info = (trgb_tx_packet_type << 8) + 0;
+        frame802154_t hnext_frame;
+        int trgb_hdr_len;
+        trgb_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &hnext_frame);
+        ((uint8_t *)(packet))[trgb_hdr_len + 2] = (uint8_t)(trgb_tx_info & 0xFF);
+        ((uint8_t *)(packet))[trgb_hdr_len + 3] = (uint8_t)((trgb_tx_info >> 8) & 0xFF);
       }
 #endif
 
@@ -3034,8 +3059,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
           memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
-          log->tx.hck_packet_type = hnext_tx_packet_type;
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+          log->tx.hck_packet_type = formation_tx_packet_type;
 #endif
 #if WITH_HNEXT
           log->tx.asap_ack_len = asap_tot_ack_len;
@@ -3860,19 +3885,17 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
 #if WITH_TRGB
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            hnext_rx_packet_type = HCK_PACKET_TYPE_NULL;
-
-            int hnext_rx_info = 0;
-
+            trgb_rx_packet_type = HCK_PACKET_TYPE_NULL;
+            int trgb_rx_info = 0;
             if(frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
               if(frame.fcf.ie_list_present) {
-                struct ieee802154_ies hnext_ies;
-                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &hnext_ies);
-                hnext_rx_info = (int)hnext_ies.ie_hnext_packet_type;
-                hnext_rx_packet_type = (uint8_t)((hnext_rx_info >> 8) & 0xFF);
+                struct ieee802154_ies trgb_ies;
+                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &trgb_ies);
+                trgb_rx_info = (int)trgb_ies.ie_formation_info;
+                trgb_rx_packet_type = (uint8_t)((trgb_rx_info >> 8) & 0xFF);
               } else {
-                hnext_rx_info = 0;
-                hnext_rx_packet_type = HCK_PACKET_TYPE_NULL;
+                trgb_rx_info = 0;
+                trgb_rx_packet_type = HCK_PACKET_TYPE_NULL;
               }
             }
 #endif
@@ -3887,7 +3910,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               if(frame.fcf.ie_list_present) {
                 struct ieee802154_ies hnext_ies;
                 frame802154e_parse_information_elements(frame.payload, frame.payload_len, &hnext_ies);
-                hnext_rx_info = (int)hnext_ies.ie_hnext_packet_type;
+                hnext_rx_info = (int)hnext_ies.ie_formation_info;
                 hnext_rx_packet_type = (uint8_t)((hnext_rx_info >> 8) & 0xFF);
               } else {
                 hnext_rx_info = 0;
@@ -3913,6 +3936,31 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             }
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 #endif /* WITH_HNEXT */
+
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if !WITH_TRGB && !WITH_HNEXT
+            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+            formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
+            int formation_rx_info = 0;
+            if(frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
+              if(frame.fcf.ie_list_present) {
+                struct ieee802154_ies formation_ies;
+                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &formation_ies);
+                formation_rx_info = (int)formation_ies.ie_formation_info;
+                formation_rx_packet_type = (uint8_t)((formation_rx_info >> 8) & 0xFF);
+              } else {
+                formation_rx_info = 0;
+                formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
+              }
+            }
+#endif
+#if WITH_TRGB
+            formation_rx_packet_type = trgb_rx_packet_type;
+#endif
+#if WITH_HNEXT
+            formation_rx_packet_type = hnext_rx_packet_type;
+#endif
+#endif /* HCK_MOD_TSCH_PACKET_TYPE_INFO */
 
             estimated_drift = RTIMER_CLOCK_DIFF(expected_rx_time, rx_start_time);
             tsch_stats_on_time_synchronization(estimated_drift);
@@ -4331,8 +4379,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               memcpy(&log->rx.app_magic, (uint8_t *)current_input->payload + current_input->len - 2, 2);
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
-              log->rx.hck_packet_type = hnext_rx_packet_type;
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+              log->rx.hck_packet_type = formation_rx_packet_type;
 #endif
 #if WITH_HNEXT
               log->rx.hck_packet_type = hnext_rx_packet_type;
