@@ -117,7 +117,7 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
         printf(", RES T %u %lu %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
               log->tx.hnext_packet_type,
@@ -234,7 +234,7 @@ tsch_log_process_pending(void)
         }
 #endif
 #if LOG_HK_ENABLED
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
         printf(", RES R %u %lu %u %u %u %u %u HK-T",
               log->rx.hnext_packet_type,

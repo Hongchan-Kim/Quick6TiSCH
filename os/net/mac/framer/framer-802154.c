@@ -56,7 +56,7 @@
 #include "net/mac/framer/frame802154e-ie.h"
 #endif
 
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
 #include "net/mac/framer/frame802154e-ie.h"
 #endif
 
@@ -178,7 +178,7 @@ create_frame(int do_create)
     hdr_len += hdr_len_increment;
 #endif
 
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
     int hdr_len_increment = 0;
     if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA) == 1 
        && packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) != FRAME802154_BEACONFRAME) {
@@ -350,7 +350,7 @@ parse(void)
     }
 #endif
 
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
     if(frame.fcf.ie_list_present) {
       /* hckim: must be revised */
       packetbuf_hdrreduce(6); /* 2 for termination, 4 for upa ie */

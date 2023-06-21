@@ -50,7 +50,7 @@ enum ieee802154e_header_ie_id {
 #if WITH_UPA /* Header IE in Data and ACK frames */
   HEADER_IE_UPA_INFO = 0x01,
 #endif
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
   HEADER_IE_HNEXT_PACKET_TYPE = 0x02,
 #endif
   HEADER_IE_LE_CSL = 0x1a,
@@ -161,7 +161,7 @@ frame80215e_create_ie_header_upa_info(uint8_t *buf, int len,
 }
 #endif
 
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
 int
 frame80215e_create_ie_header_hnext_packet_type(uint8_t *buf, int len,
     struct ieee802154_ies *ies)
@@ -439,7 +439,7 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
       }
       break;
 #endif
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
     case HEADER_IE_HNEXT_PACKET_TYPE:
       if(len == 2) {
         if(ies != NULL) {

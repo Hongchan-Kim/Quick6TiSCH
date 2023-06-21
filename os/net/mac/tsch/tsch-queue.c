@@ -60,7 +60,7 @@
 #if WITH_TRGB
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
-#include "net/routing/rpl-classic/rpl.h"
+//#include "net/routing/rpl-classic/rpl.h"
 #endif
 
 #if WITH_HNEXT
@@ -555,6 +555,41 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             p->ret = MAC_TX_DEFERRED;
             p->transmissions = 0;
             p->max_transmissions = max_transmissions;
+#if WITH_TRGB
+            uint8_t hnext_is_broadcast = (linkaddr_cmp(addr, &tsch_eb_address)
+                                        || linkaddr_cmp(addr, &tsch_broadcast_address));
+
+            uint8_t hnext_current_packet_type = HNEXT_PACKET_TYPE_NULL;
+            if(((((uint8_t *)(queuebuf_dataptr(p->qb)))[0]) & 7) == FRAME802154_BEACONFRAME) {
+              hnext_current_packet_type = HNEXT_PACKET_TYPE_EB;
+            } else {
+              if(p->sent == keepalive_packet_sent) {
+                hnext_current_packet_type = HNEXT_PACKET_TYPE_KA;
+              } else {
+                if(queuebuf_attr(p->qb, PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+                  if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIS)) {
+                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DIS;
+                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)) {
+                    if(hnext_is_broadcast) {
+                      hnext_current_packet_type = HNEXT_PACKET_TYPE_M_DIO;
+                    } else {
+                      hnext_current_packet_type = HNEXT_PACKET_TYPE_U_DIO;
+                    }
+                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
+                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DAO;
+                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)) {
+                    hnext_current_packet_type = HNEXT_PACKET_TYPE_NP_DAO;
+                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
+                    hnext_current_packet_type = HNEXT_PACKET_TYPE_DAOA;
+                  }
+                } else {
+                  hnext_current_packet_type = HNEXT_PACKET_TYPE_DATA;
+                }
+              }
+            }
+            p->hnext_packet_type = hnext_current_packet_type;
+#endif
+
 #if WITH_HNEXT
             uint8_t hnext_is_broadcast = (linkaddr_cmp(addr, &tsch_eb_address)
                                         || linkaddr_cmp(addr, &tsch_broadcast_address));

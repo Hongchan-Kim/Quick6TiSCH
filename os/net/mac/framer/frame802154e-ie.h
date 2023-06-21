@@ -71,7 +71,7 @@ struct ieee802154_ies {
 #if WITH_UPA
   uint16_t ie_upa_info;
 #endif
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
   uint16_t ie_hnext_packet_type;
 #endif
   int16_t ie_time_correction;
@@ -108,7 +108,7 @@ struct ieee802154_ies {
 int frame80215e_create_ie_header_upa_info(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #endif
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
 int frame80215e_create_ie_header_hnext_packet_type(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #endif

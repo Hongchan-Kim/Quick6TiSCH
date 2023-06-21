@@ -190,6 +190,11 @@ static enum HNEXT_OFFSET hnext_rx_current_offset = HNEXT_OFFSET_NULL;
 
 #endif /* WITH_HNEXT */
 
+#if WITH_TRGB
+static enum HNEXT_PACKET_TYPE hnext_tx_packet_type = HNEXT_PACKET_TYPE_NULL;
+static enum HNEXT_PACKET_TYPE hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
+#endif
+
 
 /* A ringbuf storing outgoing packets after they were dequeued.
  * Will be processed layer by tsch_tx_process_pending */
@@ -2038,6 +2043,20 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       regular_slot_tx_do_wait_for_ack = do_wait_for_ack;
 #endif
 
+#if WITH_TRGB
+      hnext_tx_packet_type = current_packet->hnext_packet_type;
+      if(hnext_tx_packet_type != HNEXT_PACKET_TYPE_EB) {
+        uint16_t hnext_tx_info = 0;
+        hnext_tx_info = (hnext_tx_packet_type << 8) + 0;
+
+        frame802154_t hnext_frame;
+        int hnext_hdr_len;
+        hnext_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &hnext_frame);
+        ((uint8_t *)(packet))[hnext_hdr_len + 2] = (uint8_t)(hnext_tx_info & 0xFF);
+        ((uint8_t *)(packet))[hnext_hdr_len + 3] = (uint8_t)((hnext_tx_info >> 8) & 0xFF);
+      }
+#endif
+
 #if WITH_HNEXT
       hnext_tx_packet_type = current_packet->hnext_packet_type;
 
@@ -3015,6 +3034,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
           memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
+#if WITH_TRGB
+          log->tx.hnext_packet_type = hnext_tx_packet_type;
+#else
 #if WITH_HNEXT
           log->tx.hnext_packet_type = hnext_tx_packet_type;
           log->tx.asap_ack_len = asap_tot_ack_len;
@@ -3036,6 +3058,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           log->tx.asap_num_of_slots_until_idle_time = current_slot_passed_slots;
           log->tx.asap_ack_len = asap_tot_ack_len;
 #endif /* WITH_HNEXT */
+#endif
       );
 #if WITH_UPA
     }
@@ -3837,6 +3860,25 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             int do_nack = 0;
             rx_count++;
 
+#if WITH_TRGB
+            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+            hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
+
+            int hnext_rx_info = 0;
+
+            if(frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
+              if(frame.fcf.ie_list_present) {
+                struct ieee802154_ies hnext_ies;
+                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &hnext_ies);
+                hnext_rx_info = (int)hnext_ies.ie_hnext_packet_type;
+                hnext_rx_packet_type = (uint8_t)((hnext_rx_info >> 8) & 0xFF);
+              } else {
+                hnext_rx_info = 0;
+                hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
+              }
+            }
+#endif
+
 #if WITH_HNEXT /* Needs to be modified for 6TiSCH-MC */
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             hnext_rx_packet_type = HNEXT_PACKET_TYPE_NULL;
@@ -4291,6 +4333,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               memcpy(&log->rx.app_magic, (uint8_t *)current_input->payload + current_input->len - 2, 2);
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
+#if WITH_TRGB
+              log->rx.hnext_packet_type = hnext_rx_packet_type;
+#else
 #if WITH_HNEXT
               log->rx.hnext_packet_type = hnext_rx_packet_type;
               log->rx.asap_ack_len = asap_tot_ack_len;
@@ -4312,6 +4357,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.asap_ack_len = asap_tot_ack_len;
 #endif
 #endif /* WITH_HNEXT */
+#endif
             );
 
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION

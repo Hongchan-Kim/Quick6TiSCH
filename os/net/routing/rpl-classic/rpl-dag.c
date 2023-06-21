@@ -58,7 +58,7 @@
 #include "sys/ctimer.h"
 #include "sys/log.h"
 
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
 #include "net/mac/tsch/tsch.h"
 #endif
 
@@ -297,7 +297,7 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
     }
     LOG_INFO_("\n");
 
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
     uint64_t ps_asn = tsch_calculate_current_asn();
     LOG_HNEXT("ps %u | at %llu\n", 
               (p == NULL) ? 0 : 

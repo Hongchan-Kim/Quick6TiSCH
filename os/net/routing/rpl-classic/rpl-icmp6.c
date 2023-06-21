@@ -69,6 +69,10 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
+#if WITH_TRGB
+#include "sys/node-id.h"
+#endif
+
 static uint16_t rpl_dis_recv_count;
 static uint16_t rpl_dis_send_count;
 static uint16_t rpl_dio_recv_count;
@@ -132,7 +136,7 @@ static uip_mcast6_route_t *mcast_group;
 UIP_ICMP6_HANDLER(dis_handler, ICMP6_RPL, RPL_CODE_DIS, dis_input);
 UIP_ICMP6_HANDLER(dio_handler, ICMP6_RPL, RPL_CODE_DIO, dio_input);
 UIP_ICMP6_HANDLER(dao_handler, ICMP6_RPL, RPL_CODE_DAO, dao_input);
-#if WITH_HNEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+#if WITH_HNEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT || WITH_TRGB
 UIP_ICMP6_HANDLER(dao_no_path_handler, ICMP6_RPL, RPL_CODE_NO_PATH_DAO, dao_input);
 #endif
 UIP_ICMP6_HANDLER(dao_ack_handler, ICMP6_RPL, RPL_CODE_DAO_ACK, dao_ack_input);
@@ -948,7 +952,7 @@ dao_input_storing(void)
 
         buffer = UIP_ICMP_PAYLOAD;
         buffer[3] = out_seq; /* add an outgoing seq no before fwd */
-#if WITH_HNEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+#if WITH_HNEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT || WITH_TRGB
         uip_icmp6_send(rpl_parent_get_ipaddr(dag->preferred_parent),
                        ICMP6_RPL, RPL_CODE_NO_PATH_DAO, buffer_length);
 #else
@@ -1593,7 +1597,7 @@ rpl_icmp6_register_handlers()
   uip_icmp6_register_input_handler(&dis_handler);
   uip_icmp6_register_input_handler(&dio_handler);
   uip_icmp6_register_input_handler(&dao_handler);
-#if WITH_HNEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+#if WITH_HNEXT || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT || WITH_TRGB
   uip_icmp6_register_input_handler(&dao_no_path_handler);
 #endif
   uip_icmp6_register_input_handler(&dao_ack_handler);

@@ -69,7 +69,7 @@ enum TRGB_OPERATION {
 };
 #endif
 
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
 enum HNEXT_PACKET_TYPE {
   HNEXT_PACKET_TYPE_EB,     // 0
   HNEXT_PACKET_TYPE_KA,     // 1
@@ -159,6 +159,10 @@ struct tsch_packet {
   uint8_t ret; /* status -- MAC return code */
   uint8_t header_len; /* length of header and header IEs (needed for link-layer security) */
   uint8_t tsch_sync_ie_offset; /* Offset within the frame used for quick update of EB ASN and join priority */
+
+#if WITH_TRGB
+  uint8_t hnext_packet_type;
+#endif
 
 #if WITH_HNEXT
   uint8_t hnext_packet_type;

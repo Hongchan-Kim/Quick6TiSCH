@@ -1905,7 +1905,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
       LOG_INFO_LLADDR((const linkaddr_t *)&frame.src_addr);
       LOG_INFO_("\n");
 
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
       uint64_t asso_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
       LOG_HNEXT("asso %u | at %llu\n", tsch_association_count, asso_asn);
 #endif
@@ -2055,7 +2055,7 @@ PROCESS_THREAD(tsch_process, ev, data)
      * as long as we are associated */
     PROCESS_YIELD_UNTIL(!tsch_is_associated);
 
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
     uint64_t leaving_asn = tsch_calculate_current_asn();
     LOG_HNEXT("leave %u | at %llu\n", 
               tsch_leaving_count + 1,
@@ -2325,7 +2325,7 @@ send_packet(mac_callback_t sent, void *ptr)
 
   packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
 
-#if WITH_HNEXT
+#if WITH_HNEXT || WITH_TRGB
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
 #endif
 

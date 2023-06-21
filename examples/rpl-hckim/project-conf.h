@@ -2,9 +2,9 @@
 #define PROJECT_CONF_H_
 
 /* jhShin TRGB implementation*/
-#define WITH_TRGB                                  0
+#define WITH_TRGB                                  1
 #if WITH_TRGB
-#define TRGB_DBG                                   0
+#define TRGB_DBG                                   1
 
 /* Modification of Contiki-NG */
 #define HCK_MOD_TSCH_SYNC_COUNT                    1
@@ -775,5 +775,9 @@
 #define TSCH_CONF_MAX_INCOMING_PACKETS             32 /* 8 in OST, originally 4 */
 
 #endif /* HCK_ASAP_EVAL_02_UPA_SINGLE_HOP */
+
+
+
+
 
 #endif /* PROJECT_CONF_H_ */ 
