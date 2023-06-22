@@ -4,13 +4,18 @@
 
 /***************************************************************
  * HCK's modifications of Contiki-NG
- * - HCK_MOD_TSCH_SYNC_COUNT:                          Network formation acceleration
- * - HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF: Network formation acceleration
  ****************************************************************/
 #define HCK_MOD_TSCH_SYNC_COUNT                             0 /* Network formation acceleration */
 #define HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF    0 /* Network formation acceleration */
 #define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0 /* Network formation acceleration */
 #define HCK_MOD_RPL_CODE_NO_PATH_DAO                        0 /* Network formation acceleration */
+
+/***************************************************************
+ * HCK's logging messages
+ ****************************************************************/
+#define HCK_LOG                                             0
+#define HCK_LOG_TSCH_SLOT                                   0
+#define HCK_LOG_TSCH_SLOT_APP_SEQNO                         0
 
 
 /***************************************************************
@@ -36,8 +41,14 @@
 #define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
 
 /***************************************************************
- * Common logs for network formation acceleration
+ * Prerequisite/common logging messages for network formation acceleration
  ****************************************************************/
+#undef HCK_LOG
+#define HCK_LOG                                             1
+#undef HCK_LOG_TSCH_SLOT
+#define HCK_LOG_TSCH_SLOT                                   1
+#undef HCK_LOG_TSCH_SLOT_APP_SEQNO
+#define HCK_LOG_TSCH_SLOT_APP_SEQNO                         1
 #define FORMATION_COMMON_LOG                                1
 
 /***************************************************************
@@ -172,6 +183,20 @@
 
 #endif /* NETWORK_FORMATION_ACCELERATION */
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*---------------------------------------------------------------------------*/
 /*
  * HCK modifications independent of proposed scheme
@@ -272,7 +297,6 @@
 #define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
 #define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
 #define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
-#define ENABLE_LOG_TSCH_WITH_APP_FOOTER            1
 #define ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE        1
 /*---------------------------------------------------------------------------*/
 

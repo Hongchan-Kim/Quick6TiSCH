@@ -3055,7 +3055,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* LLSEC802154_ENABLED */
           linkaddr_copy(&log->tx.dest, queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER));
           log->tx.seqno = queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_MAC_SEQNO);
-#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+#if HCK_LOG_TSCH_SLOT_APP_SEQNO
           memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
           memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
@@ -3423,7 +3423,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* LLSEC802154_ENABLED */
           linkaddr_copy(&log->tx.dest, queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER));
           log->tx.seqno = queuebuf_attr(current_packet->qb, PACKETBUF_ATTR_MAC_SEQNO);
-#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+#if HCK_LOG_TSCH_SLOT_APP_SEQNO
           memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
           memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
@@ -3467,7 +3467,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif /* LLSEC802154_ENABLED */
           linkaddr_copy(&log->tx.dest, queuebuf_addr(upa_tx_slot_packet_array[upa_seq]->qb, PACKETBUF_ADDR_RECEIVER));
           log->tx.seqno = queuebuf_attr(upa_tx_slot_packet_array[upa_seq]->qb, PACKETBUF_ATTR_MAC_SEQNO);
-#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+#if HCK_LOG_TSCH_SLOT_APP_SEQNO
           memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(upa_tx_slot_packet_array[upa_seq]->qb) + queuebuf_datalen(upa_tx_slot_packet_array[upa_seq]->qb) - 2, 2);
           memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(upa_tx_slot_packet_array[upa_seq]->qb) + queuebuf_datalen(upa_tx_slot_packet_array[upa_seq]->qb) - 2 - 4, 4);
 #endif
@@ -4375,7 +4375,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               log->rx.estimated_drift = estimated_drift;
               log->rx.seqno = frame.seq;
               log->rx.rssi = current_input->rssi;
-#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+#if HCK_LOG_TSCH_SLOT_APP_SEQNO
               memcpy(&log->rx.app_magic, (uint8_t *)current_input->payload + current_input->len - 2, 2);
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
@@ -4780,7 +4780,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                   log->rx.estimated_drift = 0;
                   log->rx.seqno = upa_rx_slot_frame.seq;
                   log->rx.rssi = upa_rx_slot_curr_input->rssi;
-#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+#if HCK_LOG_TSCH_SLOT_APP_SEQNO
                   memcpy(&log->rx.app_magic, (uint8_t *)upa_rx_slot_curr_input->payload + upa_rx_slot_curr_input->len - 2, 2);
                   memcpy(&log->rx.app_seqno, (uint8_t *)upa_rx_slot_curr_input->payload + upa_rx_slot_curr_input->len - 2 - 4, 4);
 #endif

@@ -111,14 +111,23 @@ tsch_log_process_pending(void)
         if(log->tx.drift_used) {
           printf(", dr %3d", log->tx.drift);
         }
-#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+
+#if HCK_LOG_TSCH_SLOT
+        printf(", LOG T");
+#endif
+#if HCK_LOG_TSCH_SLOT_APP_SEQNO
         if(log->tx.app_magic == APP_DATA_MAGIC) {
-          printf(", a_seq %lx", log->tx.app_seqno);
+          printf(" a_seq %lx", log->tx.app_seqno);
         }
 #endif
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
-        printf(", PT %u", log->tx.hck_packet_type);
+        printf(" PT %u", log->tx.hck_packet_type);
 #endif
+#if HK_LOG_TSCH_SLOT
+        printf(" HK-T");
+#endif
+
+#if 0
 #if LOG_HK_ENABLED
 #if WITH_HNEXT
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
@@ -168,6 +177,7 @@ tsch_log_process_pending(void)
               log->tx.asap_curr_slot_len, 
               log->tx.asap_num_of_slots_until_idle_time);
 #endif /* WITH_HNEXT */
+#endif
 #endif
         printf("\n");
 
@@ -229,14 +239,23 @@ tsch_log_process_pending(void)
           printf(", dr %3d", log->rx.drift);
         }
         printf(", rssi %3d", log->rx.rssi);
-#if ENABLE_LOG_TSCH_WITH_APP_FOOTER
+
+#if HCK_LOG_TSCH_SLOT
+        printf(", LOG R");
+#endif
+#if HCK_LOG_TSCH_SLOT_APP_SEQNO
         if(log->rx.app_magic == APP_DATA_MAGIC) {
-          printf(", a_seq %lx", log->rx.app_seqno);
+          printf(" a_seq %lx", log->rx.app_seqno);
         }
 #endif
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
-        printf(", PT %u", log->rx.hck_packet_type);
+        printf(" PT %u", log->rx.hck_packet_type);
 #endif
+#if HK_LOG_TSCH_SLOT
+        printf(" HK-R");
+#endif
+
+#if 0
 #if LOG_HK_ENABLED
 #if WITH_HNEXT
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
@@ -266,6 +285,7 @@ tsch_log_process_pending(void)
               log->rx.asap_curr_slot_len, 
               log->rx.asap_num_of_slots_until_idle_time);
 #endif /* WITH_HNEXT */
+#endif
 #endif
         printf("\n");
         break;
