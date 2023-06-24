@@ -54,9 +54,9 @@
 /***************************************************************
  * TRGB implementation - WITH_TRGB
  ****************************************************************/
-#define WITH_TRGB                                  1
+#define WITH_TRGB                                  0
 #if WITH_TRGB
-#define TRGB_LOG                                   0
+#define TRGB_LOG                                   1
 #define TRGB_DBG                                   0
 #endif /* WITH_TRGB */
 
@@ -65,15 +65,19 @@
  ****************************************************************/
 #define WITH_HNEXT                                 0
 #if WITH_HNEXT
-#define HNEXT_LOG                                  0
+#define HNEXT_LOG                                  1
 #define HNEXT_DBG                                  0
-/* Always applied offset differentiation - up to six offsets  */
+/* HNEXT modules */
+#define HNEXT_PACKET_URGENCY_DETERMINATION         1
+#define HNEXT_PACKET_OFFSET_ASSIGNMENT             1
+#define HNEXT_PACKET_OFFSET_ESCALATION             1
+#define HNEXT_PRIORITY_BASED_PACKET_SELECTION      1
+/* HNEXT offset configuration - up to six offsets */
 #define HNEXT_CCA_OFFSET                           800
 #define HNEXT_TX_OFFSET                            1300 /* 1300 ~ 3100 */
 #define HNEXT_RX_OFFSET_LEFT                       500  /* 800  ~ 1300, 500 margin */
 #define HNEXT_RX_OFFSET_RIGHT                      2900 /* 1300 ~ 4200, 500 margin */
 #define HNEXT_OFFSET_GAP                           600
-#define HNEXT_ADDITIONAL_CCA                       1
 /* Offset assignment policy */
 #define HNEXT_OFFSET_ASSIGNMENT_POLICY             HNEXT_OFFSET_ASSIGNMENT_POLICY_1 /* Fix to 2 or 4 */ ////////////////////
 #define HNEXT_OFFSET_ASSIGNMENT_POLICY_0           0 /* Baseline */
@@ -95,6 +99,7 @@
 #define HNEXT_OFFSET_ESCALATION_POLICY_1           1 /* Naive implementation */
 #define HNEXT_OFFSET_ESCALATION_POLICY_2           2 /* Bcast packets only */
 #define HNEXT_OFFSET_ESCALATION_POLICY_3           3 /* Ucast packets too */
+#define HNEXT_OFFSET_ESCALATION_POLICY_4           4 /* All gradual increment */
 
 #if (HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_0) || \
     (HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_1)  
@@ -118,11 +123,6 @@
 #define HNEXT_POSTPONED_BACKOFF_POLICY             HNEXT_POSTPONED_BACKOFF_POLICY_1 /* Fix to 1 */ ////////////////////
 #define HNEXT_POSTPONED_BACKOFF_POLICY_0           0
 #define HNEXT_POSTPONED_BACKOFF_POLICY_1           1
-#define HNEXT_POSTPONED_BACKOFF_POLICY_2           2
-#define HNEXT_POSTPONED_BACKOFF_POLICY_3           3
-#define HNEXT_POSTPONED_BACKOFF_POLICY_4           4
-#define HNEXT_POSTPONED_BACKOFF_POLICY_5           5
-#define HNEXT_POSTPONED_BACKOFF_POLICY_6           6
 
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_0
 #undef HNEXT_POSTPONED_BACKOFF_POLICY
@@ -130,53 +130,12 @@
 #endif
 
 #if HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_0
-#define HNEXT_BCAST_BACKOFF                        0 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_TRANS_CNT  0
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_DEC     0
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BE_INC     0
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_SET     0
+#define HNEXT_BACKOFF_FOR_BCAST_PACKETS                        0 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
+#define HNEXT_NO_TRANS_COUNT_INCREASE_FOR_CSSF_POSTPONED_PACKETS  0
 
 #elif HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_1
-#define HNEXT_BCAST_BACKOFF                        1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_TRANS_CNT  1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_DEC     0
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BE_INC     0
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_SET     0
-
-#elif HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_2
-#define HNEXT_BCAST_BACKOFF                        1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_TRANS_CNT  1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_DEC     0
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BE_INC     1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_SET     0
-
-#elif HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_3
-#define HNEXT_BCAST_BACKOFF                        1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_TRANS_CNT  1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_DEC     0
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BE_INC     1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_SET     1
-
-#elif HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_4
-#define HNEXT_BCAST_BACKOFF                        1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_TRANS_CNT  1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_DEC     1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BE_INC     0
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_SET     0
-
-#elif HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_5
-#define HNEXT_BCAST_BACKOFF                        1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_TRANS_CNT  1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_DEC     1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BE_INC     1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_SET     0
-
-#elif HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_6
-#define HNEXT_BCAST_BACKOFF                        1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_TRANS_CNT  1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_DEC     1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BE_INC     1
-#define HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_SET     1
+#define HNEXT_BACKOFF_FOR_BCAST_PACKETS                        1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
+#define HNEXT_NO_TRANS_COUNT_INCREASE_FOR_CSSF_POSTPONED_PACKETS  1
 
 #endif /* HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_X */
 #endif /* WITH_HNEXT */

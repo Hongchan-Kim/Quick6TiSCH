@@ -558,8 +558,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             p->hnext_offset = 0;
             p->hnext_collision_count = 0;
             p->hnext_noack_count = 0;
-            p->hnext_sent_at_bc_asn = 0;
-            p->hnext_postponed_count = 0;
+            p->hnext_cssf_postponed_count = 0;
 #endif
 
             /* Add to ringbuf (actual add committed through atomic operation) */
@@ -819,7 +818,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
         tsch_queue_backoff_reset(n);
       }
     }
-#if HNEXT_BCAST_BACKOFF
+#if HNEXT_BACKOFF_FOR_BCAST_PACKETS
     else { // broadcast neirhbor
       if(is_shared_link || tsch_queue_is_empty(n)) {
         /* If this is a shared link, reset backoff on success.
@@ -853,8 +852,8 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 #endif
       }
     }
-#if HNEXT_BCAST_BACKOFF
-    else { // broadcast neighbor
+#if HNEXT_BACKOFF_FOR_BCAST_PACKETS
+    else { /* Broadcast neighbor */
       if(is_shared_link) {
 #if WITH_HNEXT
         /* Shared link: increment backoff exponent, pick a new window */
@@ -1206,13 +1205,13 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
             curr_p = curr_nbr->tx_array[temp_index];
 
             if(curr_nbr->is_time_source) {
-              hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hnext_packet_type];
+              hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hck_packet_type];
             } else {
-              hnext_curr_offset = hnext_offset_assignment_others[curr_p->hnext_packet_type];
+              hnext_curr_offset = hnext_offset_assignment_others[curr_p->hck_packet_type];
             }
 
             if(curr_nbr == n_broadcast) {
-              if(curr_p->hnext_postponed_count >= (curr_p->max_transmissions - 1)) {
+              if(curr_p->hnext_cssf_postponed_count >= (curr_p->max_transmissions - 1)) {
                 hnext_curr_offset = HNEXT_OFFSET_0;
               }
             }
@@ -1236,17 +1235,17 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
             curr_p = curr_nbr->tx_array[temp_index];
 
             if(curr_nbr->is_time_source) {
-              hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hnext_packet_type];
+              hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hck_packet_type];
             } else {
-              hnext_curr_offset = hnext_offset_assignment_others[curr_p->hnext_packet_type];
+              hnext_curr_offset = hnext_offset_assignment_others[curr_p->hck_packet_type];
             }
 
             if(curr_nbr == n_broadcast) {
-              if(curr_p->hnext_postponed_count >= (curr_p->max_transmissions - 1)) {
+              if(curr_p->hnext_cssf_postponed_count >= (curr_p->max_transmissions - 1)) {
                 hnext_curr_offset = HNEXT_OFFSET_0;
               }
             } else {
-              if(curr_p->hnext_postponed_count >= (curr_p->max_transmissions - 1)) {
+              if(curr_p->hnext_cssf_postponed_count >= (curr_p->max_transmissions - 1)) {
                 hnext_curr_offset = HNEXT_OFFSET_1;
               }
             }
@@ -1265,6 +1264,51 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
               }
             }
 
+#elif HNEXT_OFFSET_ESCALATION_POLICY == HNEXT_OFFSET_ESCALATION_POLICY_4
+
+            curr_p = curr_nbr->tx_array[temp_index];
+
+            if(curr_nbr->is_time_source) {
+              hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hck_packet_type];
+            } else {
+              hnext_curr_offset = hnext_offset_assignment_others[curr_p->hck_packet_type];
+            }
+
+            if(curr_nbr == n_broadcast) {
+              int hnext_quotient = curr_p->hnext_postponed_count / curr_p->max_transmissions;
+              if(hnext_curr_offset < hnext_quotient) {
+                hnext_curr_offset = HNEXT_OFFSET_0;
+              } else {
+                hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+              }
+/*              if(curr_p->hnext_postponed_count >= (curr_p->max_transmissions - 1)) {
+                hnext_curr_offset = HNEXT_OFFSET_0;
+              } */
+            } else {
+              int hnext_quotient = curr_p->hnext_postponed_count / curr_p->max_transmissions;
+              if(hnext_curr_offset < hnext_quotient) {
+                hnext_curr_offset = HNEXT_OFFSET_0;
+              } else {
+                hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+              }
+/*              if(curr_p->hnext_postponed_count >= (curr_p->max_transmissions - 1)) {
+                hnext_curr_offset = HNEXT_OFFSET_1;
+              }*/
+            }
+
+            curr_p->hnext_offset = hnext_curr_offset; /* Update metadat!!! */
+
+            if(best_nbr == NULL && best_p == NULL) {
+              best_nbr = curr_nbr;
+              best_p = curr_p;
+              hnext_best_offset = hnext_curr_offset;
+            } else {
+              if(hnext_curr_offset < hnext_best_offset) {
+                best_nbr = curr_nbr;
+                best_p = curr_p;
+                hnext_best_offset = hnext_curr_offset;
+              }
+            }
 
 #else
             curr_p = curr_nbr->tx_array[temp_index];
@@ -1273,15 +1317,15 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
               best_nbr = curr_nbr;
               best_p = curr_p;
               if(curr_nbr->is_time_source) {
-                hnext_best_offset = hnext_offset_assignment_parent[curr_p->hnext_packet_type];
+                hnext_best_offset = hnext_offset_assignment_parent[curr_p->hck_packet_type];
               } else {
-                hnext_best_offset = hnext_offset_assignment_others[curr_p->hnext_packet_type];
+                hnext_best_offset = hnext_offset_assignment_others[curr_p->hck_packet_type];
               }
             } else {
               if(curr_nbr->is_time_source) {
-                hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hnext_packet_type];
+                hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hck_packet_type];
               } else {
-                hnext_curr_offset = hnext_offset_assignment_others[curr_p->hnext_packet_type];
+                hnext_curr_offset = hnext_offset_assignment_others[curr_p->hck_packet_type];
               }
               if(hnext_curr_offset < hnext_best_offset) {
                 best_nbr = curr_nbr;
@@ -1412,15 +1456,7 @@ void
 tsch_queue_backoff_inc(struct tsch_neighbor *n)
 #endif
 {
-#if HNEXT_TEMP_POSTPONED_BACKOFF_NO_BE_INC
-  if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
-    && status == MAC_TX_COLLISION) {
-  } else {
-    /* Increment exponent */
-    n->backoff_exponent = MIN(n->backoff_exponent + 1, TSCH_MAC_MAX_BE);
-  }
-#else
-#if HNEXT_BCAST_BACKOFF
+#if HNEXT_BACKOFF_FOR_BCAST_PACKETS
   if(n == n_broadcast) {
     /* Increment exponent */
     n->backoff_exponent = MIN(n->backoff_exponent + 1, HNEXT_TSCH_MAC_BCAST_MAX_BE);
@@ -1432,21 +1468,7 @@ tsch_queue_backoff_inc(struct tsch_neighbor *n)
   /* Increment exponent */
   n->backoff_exponent = MIN(n->backoff_exponent + 1, TSCH_MAC_MAX_BE);
 #endif
-#endif
 
-#if HNEXT_TEMP_POSTPONED_BACKOFF_NO_BC_SET
-  if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
-    && status == MAC_TX_COLLISION) {
-  } else {
-    /* Pick a window (number of shared slots to skip). Ignore least significant
-    * few bits, which, on some embedded implementations of rand (e.g. msp430-libc),
-    * are known to have poor pseudo-random properties. */
-    n->backoff_window = (random_rand() >> 6) % (1 << n->backoff_exponent);
-    /* Add one to the window as we will decrement it at the end of the current slot
-    * through tsch_queue_update_all_backoff_windows */
-    n->backoff_window++;
-  }
-#else
   /* Pick a window (number of shared slots to skip). Ignore least significant
    * few bits, which, on some embedded implementations of rand (e.g. msp430-libc),
    * are known to have poor pseudo-random properties. */
@@ -1454,7 +1476,6 @@ tsch_queue_backoff_inc(struct tsch_neighbor *n)
   /* Add one to the window as we will decrement it at the end of the current slot
    * through tsch_queue_update_all_backoff_windows */
   n->backoff_window++;
-#endif
 }
 /*---------------------------------------------------------------------------*/
 /* Decrement backoff window for all queues directed at dest_addr */

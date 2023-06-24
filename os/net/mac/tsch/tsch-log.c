@@ -123,6 +123,25 @@ tsch_log_process_pending(void)
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
         printf(" PT %u", log->tx.hck_packet_type);
 #endif
+#if HNEXT_LOG
+        printf(" HN %lu %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
+              log->asn.ls4b,
+              log->link->slotframe_handle,
+              linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
+              log->tx.datalen,
+              log->tx.asap_ack_len,
+              log->tx.mac_tx_status,
+              log->tx.num_tx,
+              log->tx.hnext_collision_count,
+              log->tx.hnext_cssf_postponed_count,
+              log->tx.hnext_noack_count,
+              log->tx.hnext_backoff_exponent_before,
+              log->tx.hnext_backoff_window_before,
+              log->tx.hnext_backoff_exponent_after,
+              log->tx.hnext_backoff_window_after,
+              log->tx.hnext_state,
+              log->tx.hnext_offset);
+#endif
 #if HK_LOG_TSCH_SLOT
         printf(" HK-T");
 #endif
@@ -140,7 +159,7 @@ tsch_log_process_pending(void)
               log->tx.mac_tx_status,
               log->tx.num_tx,
               log->tx.hnext_collision_count,
-              log->tx.hnext_postponed_count,
+              log->tx.hnext_cssf_postponed_count,
               log->tx.hnext_noack_count,
               log->tx.hnext_backoff_exponent_before,
               log->tx.hnext_backoff_window_before,
@@ -158,7 +177,7 @@ tsch_log_process_pending(void)
               log->tx.mac_tx_status,
               log->tx.num_tx,
               log->tx.hnext_collision_count,
-              log->tx.hnext_postponed_count,
+              log->tx.hnext_cssf_postponed_count,
               log->tx.hnext_noack_count,
               log->tx.hnext_backoff_exponent_before,
               log->tx.hnext_backoff_window_before,
@@ -251,8 +270,17 @@ tsch_log_process_pending(void)
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
         printf(" PT %u", log->rx.hck_packet_type);
 #endif
+#if HNEXT_LOG
+        printf(" HN %lu %u %u %u %u %u",
+              log->asn.ls4b,
+              log->link->slotframe_handle,
+              log->rx.is_unicast == 0 ? 0 : 1,
+              log->rx.datalen,
+              log->rx.asap_ack_len,
+              log->rx.hnext_offset);
+#endif
 #if HK_LOG_TSCH_SLOT
-        printf(" HK-R");
+        printf(" HK-T");
 #endif
 
 #if 0

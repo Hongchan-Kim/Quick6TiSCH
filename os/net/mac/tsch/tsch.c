@@ -2262,9 +2262,8 @@ tsch_init(void)
 #endif /* TSCH_AUTOSELECT_TIME_SOURCE */
 
 #if WITH_HNEXT
-  LOG_INFO("hnext %u\n", HNEXT_OFFSET_ASSIGNMENT_POLICY);
+  LOG_HCK_FORMATION("hnext %u |\n", HNEXT_OFFSET_ASSIGNMENT_POLICY);
 #endif
-
 
   tsch_packet_seqno = random_rand();
   tsch_is_initialized = 1;
@@ -2325,7 +2324,7 @@ send_packet(mac_callback_t sent, void *ptr)
 
   packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
 
-#if WITH_TRGB || WITH_HNEXT
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
 #endif
 

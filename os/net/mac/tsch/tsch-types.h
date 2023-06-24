@@ -108,7 +108,7 @@ enum HNEXT_OFFSET {
   HNEXT_OFFSET_5,   // 5
   HNEXT_OFFSET_NULL // 6
 };
-#endif /* WITH_HNEXT */
+#endif
 
 /********** Data types **********/
 
@@ -174,11 +174,10 @@ struct tsch_packet {
 #endif
 
 #if WITH_HNEXT
-  uint8_t hnext_offset;
+  uint8_t hnext_offset; // Delete later
   uint8_t hnext_collision_count;
   uint8_t hnext_noack_count;
-  uint8_t hnext_sent_at_bc_asn;
-  uint8_t hnext_postponed_count;
+  uint8_t hnext_cssf_postponed_count; // Delete later
 #endif
 
 #if WITH_SLA

@@ -110,7 +110,7 @@ struct tsch_log_t {
 #if WITH_HNEXT
       uint8_t asap_ack_len;
       uint8_t hnext_collision_count;
-      uint8_t hnext_postponed_count;
+      uint8_t hnext_cssf_postponed_count;
       uint8_t hnext_noack_count;
       uint8_t hnext_backoff_exponent_before;
       uint8_t hnext_backoff_window_before;
@@ -149,7 +149,7 @@ struct tsch_log_t {
 #if WITH_HNEXT
       uint8_t asap_ack_len;
       uint8_t hnext_collision_count;
-      uint8_t hnext_postponed_count;
+      uint8_t hnext_cssf_postponed_count;
       uint8_t hnext_noack_count;
       uint8_t hnext_backoff_exponent_before;
       uint8_t hnext_backoff_window_before;
