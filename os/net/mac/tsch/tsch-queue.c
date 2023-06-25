@@ -109,7 +109,8 @@ static struct ctimer ost_select_N_timer;
 #endif
 
 /*---------------------------------------------------------------------------*/
-#if HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF || HCK_ORCHESTRA_PACKET_OFFLOADING
+#if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF \
+    || HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
 void
 tsch_queue_change_attr_of_packets_in_queue(struct tsch_neighbor *target_nbr, 
                                            uint16_t sf_handle, uint16_t timeslot)
@@ -456,7 +457,7 @@ struct tsch_packet *
 tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
                       mac_callback_t sent, void *ptr)
 {
-#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
+#if HCK_LOG_TSCH_PACKET_ADD_REMOVE
   uint64_t tsch_queue_add_packet_asn = tsch_calculate_current_asn();
   uint8_t is_unicast = !(linkaddr_cmp(addr, &tsch_eb_address)
                         || linkaddr_cmp(addr, &tsch_broadcast_address));
@@ -476,19 +477,19 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     /* No scheduled slots for the packet available; drop it early to save queue space. */
     LOG_DBG("tsch_queue_add_packet(): rejected by the scheduler\n");
 
-#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
+#if HCK_LOG_TSCH_PACKET_ADD_REMOVE
     global_queued_pkts = tsch_queue_global_packet_count();
     bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
     eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
     uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
 
-    LOG_HK_QUEUE("af1 uc %u at %llx q %d %d %d %d |\n", 
-              is_unicast, 
-              tsch_queue_add_packet_asn,
-              global_queued_pkts,
-              uc_queued_pkts,
-              bc_queued_pkts,
-              eb_queued_pkts);
+    LOG_HCK_QUEUE("af1 uc %u at %llx q %d %d %d %d |\n", 
+                  is_unicast, 
+                  tsch_queue_add_packet_asn,
+                  global_queued_pkts,
+                  uc_queued_pkts,
+                  bc_queued_pkts,
+                  eb_queued_pkts);
 #endif
     return NULL;
   }
@@ -567,19 +568,19 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             LOG_DBG("packet is added put_index %u, packet %p\n",
                    put_index, p);
 
-#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
+#if HCK_LOG_TSCH_PACKET_ADD_REMOVE
             global_queued_pkts = tsch_queue_global_packet_count();
             bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
             eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
             uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
 
-            LOG_HK_QUEUE("as uc %u at %llx q %d %d %d %d |\n", 
-                      is_unicast, 
-                      tsch_queue_add_packet_asn,
-                      global_queued_pkts,
-                      uc_queued_pkts,
-                      bc_queued_pkts,
-                      eb_queued_pkts);
+            LOG_HCK_QUEUE("as uc %u at %llx q %d %d %d %d |\n", 
+                          is_unicast, 
+                          tsch_queue_add_packet_asn,
+                          global_queued_pkts,
+                          uc_queued_pkts,
+                          bc_queued_pkts,
+                          eb_queued_pkts);
 #endif
             return p;
           } else {
@@ -591,19 +592,19 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
   LOG_ERR("! add packet failed: %u %p %d %p %p\n", tsch_is_locked(), n, put_index, p, p ? p->qb : NULL);
 
-#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
+#if HCK_LOG_TSCH_PACKET_ADD_REMOVE
   global_queued_pkts = tsch_queue_global_packet_count();
   bc_queued_pkts = tsch_queue_nbr_packet_count(n_broadcast);
   eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
   uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
 
-  LOG_HK_QUEUE("af2 uc %u at %llx q %d %d %d %d |\n", 
-            is_unicast, 
-            tsch_queue_add_packet_asn,
-            global_queued_pkts,
-            uc_queued_pkts,
-            bc_queued_pkts,
-            eb_queued_pkts);
+  LOG_HCK_QUEUE("af2 uc %u at %llx q %d %d %d %d |\n", 
+                is_unicast, 
+                tsch_queue_add_packet_asn,
+                global_queued_pkts,
+                uc_queued_pkts,
+                bc_queued_pkts,
+                eb_queued_pkts);
 #endif
 
   return NULL;
@@ -715,7 +716,7 @@ void
 tsch_queue_free_packet(struct tsch_packet *p)
 {
   if(p != NULL) {
-#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
+#if HCK_LOG_TSCH_PACKET_ADD_REMOVE
     linkaddr_t addr;
     linkaddr_copy(&addr, queuebuf_addr(p->qb, PACKETBUF_ADDR_RECEIVER));
     uint8_t is_unicast = !(linkaddr_cmp(&addr, &tsch_eb_address)
@@ -725,7 +726,7 @@ tsch_queue_free_packet(struct tsch_packet *p)
     queuebuf_free(p->qb);
     memb_free(&packet_memb, p);
 
-#if ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE
+#if HCK_LOG_TSCH_PACKET_ADD_REMOVE
     uint64_t tsch_queue_free_packet_asn = tsch_calculate_current_asn();
 
     int global_queued_pkts = tsch_queue_global_packet_count();
@@ -733,13 +734,13 @@ tsch_queue_free_packet(struct tsch_packet *p)
     int eb_queued_pkts = tsch_queue_nbr_packet_count(n_eb);
     int uc_queued_pkts = global_queued_pkts - bc_queued_pkts - eb_queued_pkts;
 
-  LOG_HK_QUEUE("f uc %u at %llx q %d %d %d %d |\n", 
-            is_unicast, 
-            tsch_queue_free_packet_asn,
-            global_queued_pkts,
-            uc_queued_pkts,
-            bc_queued_pkts,
-            eb_queued_pkts);
+    LOG_HCK_QUEUE("f uc %u at %llx q %d %d %d %d |\n", 
+                  is_unicast, 
+                  tsch_queue_free_packet_asn,
+                  global_queued_pkts,
+                  uc_queued_pkts,
+                  bc_queued_pkts,
+                  eb_queued_pkts);
 #endif
   }
 }
@@ -870,7 +871,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
   return in_queue;
 }
 /*---------------------------------------------------------------------------*/
-#if HCK_ORCHESTRA_PACKET_DROP
+#if HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF
 void
 tsch_queue_drop_packets(struct tsch_neighbor *n)
 {

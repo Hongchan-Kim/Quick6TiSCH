@@ -179,7 +179,7 @@ child_added(const linkaddr_t *linkaddr)
 static void
 child_removed(const linkaddr_t *linkaddr)
 {
-#if HCK_ORCHESTRA_PACKET_OFFLOADING
+#if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF
     const struct tsch_neighbor *removed_child = tsch_queue_get_nbr(linkaddr);
     tsch_queue_change_attr_of_packets_in_queue(removed_child, TSCH_SCHED_COMMON_SF_HANDLE, 0);
 #endif
@@ -219,7 +219,7 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     } else {
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
-#if HCK_ORCHESTRA_PACKET_OFFLOADING
+#if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF
     tsch_queue_change_attr_of_packets_in_queue(old, TSCH_SCHED_COMMON_SF_HANDLE, 0);
 #endif
     remove_uc_link(old_addr);

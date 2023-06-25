@@ -72,12 +72,13 @@ struct tsch_packet *tsch_queue_upa_get_next_packet_for_nbr(const struct tsch_nei
 struct tsch_packet * tsch_queue_burst_get_next_packet_for_nbr(const struct tsch_neighbor *n);
 #endif
 
-#if HCK_ORCHESTRA_PACKET_DROP
+#if HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF
 void tsch_queue_drop_packets(struct tsch_neighbor *n);
 #endif
 
 void tsch_queue_reset_except_n_eb(void);
-#if HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF || HCK_ORCHESTRA_PACKET_OFFLOADING
+#if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF \
+    || HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
 void tsch_queue_change_attr_of_packets_in_queue(struct tsch_neighbor *target_nbr, 
                                            uint16_t sf_handle, uint16_t timeslot);
 #endif

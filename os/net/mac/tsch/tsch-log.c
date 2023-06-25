@@ -142,12 +142,12 @@ tsch_log_process_pending(void)
               log->tx.hnext_state,
               log->tx.hnext_offset);
 #endif
-#if HK_LOG_TSCH_SLOT
+#if HCK_LOG_TSCH_SLOT
         printf(" HK-T");
 #endif
 
 #if 0
-#if LOG_HK_ENABLED
+#if HCK_LOG
 #if WITH_HNEXT
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
         printf(", RES T %lu %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
@@ -279,12 +279,12 @@ tsch_log_process_pending(void)
               log->rx.asap_ack_len,
               log->rx.hnext_offset);
 #endif
-#if HK_LOG_TSCH_SLOT
+#if HCK_LOG_TSCH_SLOT
         printf(" HK-T");
 #endif
 
 #if 0
-#if LOG_HK_ENABLED
+#if HCK_LOG
 #if WITH_HNEXT
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
         printf(", RES R %lu %u %u %u %u %u HK-T",

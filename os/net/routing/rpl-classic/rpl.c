@@ -73,7 +73,7 @@ static uint32_t subtree_measure_sum;
 /*---------------------------------------------------------------------------*/
 void print_log_rpl()
 {
-  LOG_HK("subtree_now %d subtree_sum %lu subtree_cnt %lu |\n", 
+  LOG_HCK("subtree_now %d subtree_sum %lu subtree_cnt %lu |\n", 
         uip_ds6_route_num_routes(), subtree_measure_sum, subtree_measure_count);
 }
 /*---------------------------------------------------------------------------*/

@@ -716,13 +716,13 @@ PROCESS_THREAD(rf2xx_process, ev, data)
 
     while(1)
     {
-#if !RF2XX_WITH_TSCH && !HCK_TSCH_DEACTIVATE_INTERRUPT_MODE
+#if !RF2XX_WITH_TSCH && !HCK_MOD_TSCH_DEACTIVATE_RADIO_INTERRUPT_MODE
         static int len;
         static int flag;
-#endif /* !RF2XX_WITH_TSCH && !HCK_TSCH_DEACTIVATE_INTERRUPT_MODE */
+#endif
         PROCESS_YIELD_UNTIL(!poll_mode && ev == PROCESS_EVENT_POLL);
 
-#if !RF2XX_WITH_TSCH && !HCK_TSCH_DEACTIVATE_INTERRUPT_MODE
+#if !RF2XX_WITH_TSCH && !HCK_MOD_TSCH_DEACTIVATE_RADIO_INTERRUPT_MODE
         /*
          * at this point, we may be in any state
          *
@@ -757,7 +757,7 @@ PROCESS_THREAD(rf2xx_process, ev, data)
                 NETSTACK_MAC.input();
             }
         }
-#endif /* !RF2XX_WITH_TSCH && !HCK_TSCH_DEACTIVATE_INTERRUPT_MODE */
+#endif /* !RF2XX_WITH_TSCH && !HCK_MOD_TSCH_DEACTIVATE_RADIO_INTERRUPT_MODE */
     }
 
     PROCESS_END();

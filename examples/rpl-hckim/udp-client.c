@@ -124,7 +124,7 @@ reset_eval(uint8_t phase)
   reset_log_simple_energest();    /* simple-energest.c */
 
   uint64_t app_client_reset_log_asn = tsch_calculate_current_asn();
-  LOG_HK("reset_eval %u rs_opku %u rs_q %d | rs_q_eb %d at %llx\n", 
+  LOG_HCK("reset_eval %u rs_opku %u rs_q %d | rs_q_eb %d at %llx\n", 
         phase,
         orchestra_parent_knows_us,
         tsch_queue_global_packet_count(),
@@ -132,26 +132,26 @@ reset_eval(uint8_t phase)
         app_client_reset_log_asn);
 
 #if HCK_LOG_EVAL_CONFIG
-  LOG_HK("eval_config 1 fixed_topology %u lite_log %u |\n", 
+  LOG_HCK("eval_config 1 fixed_topology %u lite_log %u |\n", 
           HCK_RPL_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
-  LOG_HK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
+  LOG_HCK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
           WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
           WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
           APP_PAYLOAD_LEN);
-  LOG_HK("eval_config 3 hysteresis %u slot_len %u ucsf_period %u |\n", 
+  LOG_HCK("eval_config 3 hysteresis %u slot_len %u ucsf_period %u |\n", 
           RPL_CONF_PARENT_SWITCH_THRESHOLD, 
           HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
 #if WITH_UPA
-  LOG_HK("eval_config 4 with_upa %u |\n", WITH_UPA);
+  LOG_HCK("eval_config 4 with_upa %u |\n", WITH_UPA);
 #endif
 #if WITH_SLA
-  LOG_HK("eval_config 5 with_sla %u sla_k %u |\n", WITH_SLA, SLA_K_TH_PERCENTILE);
+  LOG_HCK("eval_config 5 with_sla %u sla_k %u |\n", WITH_SLA, SLA_K_TH_PERCENTILE);
 #endif
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-  LOG_HK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
+  LOG_HCK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
 #endif
 #if WITH_A3
-  LOG_HK("eval_config 7 with_a3 %u a3_max_zone %u |\n", WITH_A3, A3_MAX_ZONE);
+  LOG_HCK("eval_config 7 with_a3 %u a3_max_zone %u |\n", WITH_A3, A3_MAX_ZONE);
 #endif
 #endif
 }
@@ -186,7 +186,7 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_down_sequence_is_duplicate(app_received_seqno_count)) {
-    LOG_HK("| dup_down from %u a_seq %lx at %llx\n",
+    LOG_HCK("| dup_down from %u a_seq %lx at %llx\n",
               HCK_GET_NODE_ID_FROM_IPADDR(sender_addr),
               app_received_seqno,
               app_rx_down_asn);
@@ -200,7 +200,7 @@ udp_rx_callback(struct simple_udp_connection *c,
     ++app_rxd_count;
     uint8_t hops = uip_ds6_if.cur_hop_limit - UIP_IP_BUF->ttl + 1;
 
-    LOG_HK("rx_down %u | from %u a_seq %lx len %u lt_down_r %llx lt_down_t %llx hops %u\n",
+    LOG_HCK("rx_down %u | from %u a_seq %lx len %u lt_down_r %llx lt_down_t %llx hops %u\n",
               app_rxd_count, //
               HCK_GET_NODE_ID_FROM_IPADDR(sender_addr),
               app_received_seqno,
@@ -253,26 +253,26 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #endif
 
 #if HCK_LOG_EVAL_CONFIG
-  LOG_HK("eval_config 1 fixed_topology %u lite_log %u |\n", 
+  LOG_HCK("eval_config 1 fixed_topology %u lite_log %u |\n", 
           HCK_RPL_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
-  LOG_HK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
+  LOG_HCK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
           WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
           WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
           APP_PAYLOAD_LEN);
-  LOG_HK("eval_config 3 hysteresis %u slot_len %u ucsf_period %u |\n", 
+  LOG_HCK("eval_config 3 hysteresis %u slot_len %u ucsf_period %u |\n", 
           RPL_CONF_PARENT_SWITCH_THRESHOLD, 
           HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
 #if WITH_UPA
-  LOG_HK("eval_config 4 with_upa %u |\n", WITH_UPA);
+  LOG_HCK("eval_config 4 with_upa %u |\n", WITH_UPA);
 #endif
 #if WITH_SLA
-  LOG_HK("eval_config 5 with_sla %u sla_k %u |\n", WITH_SLA, SLA_K_TH_PERCENTILE);
+  LOG_HCK("eval_config 5 with_sla %u sla_k %u |\n", WITH_SLA, SLA_K_TH_PERCENTILE);
 #endif
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-  LOG_HK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
+  LOG_HCK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
 #endif
 #if WITH_A3
-  LOG_HK("eval_config 7 with_a3 %u a3_max_zone %u |\n", WITH_A3, A3_MAX_ZONE);
+  LOG_HCK("eval_config 7 with_a3 %u a3_max_zone %u |\n", WITH_A3, A3_MAX_ZONE);
 #endif
 #endif
 
@@ -288,7 +288,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
     else if(data == &data_start_timer || data == &data_periodic_timer) {
       if(data == &data_start_timer) {
         uint64_t app_data_start_asn = tsch_calculate_current_asn();
-        LOG_HK("| data_start at %llx \n", app_data_start_asn);
+        LOG_HCK("| data_start at %llx \n", app_data_start_asn);
       }
       if(data_count <= APP_UPWARD_MAX_TX) {
         etimer_set(&data_send_timer, random_rand() % (APP_UPWARD_SEND_INTERVAL / 2));
@@ -329,7 +329,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
         LOG_INFO_6ADDR(&dest_ipaddr);
         LOG_INFO_("\n");
 
-        LOG_HK("tx_up %u | to %u a_seq %lx len %u at %llx\n", 
+        LOG_HCK("tx_up %u | to %u a_seq %lx len %u at %llx\n", 
                   data_count,
                   HCK_GET_NODE_ID_FROM_IPADDR(&dest_ipaddr),
                   app_seqno,

@@ -1526,14 +1526,14 @@ packet_sent(void *ptr, int status, int transmissions)
     ++ip_ucast_ok_count;
     if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
       ++ip_ucast_icmp6_ok_count;
-      LOG_HK("ip_uc_tx %lu ip_uc_icmp6_tx %lu ip_uc_ok %u ip_uc_icmp6_ok %u |\n", 
+      LOG_HCK("ip_uc_tx %lu ip_uc_icmp6_tx %lu ip_uc_ok %u ip_uc_icmp6_ok %u |\n", 
             ip_ucast_transmission_count, 
             ip_ucast_icmp6_transmission_count, 
             ip_ucast_ok_count, 
             ip_ucast_icmp6_ok_count);
     } else {
       ++ip_ucast_udp_ok_count;
-      LOG_HK("ip_uc_tx %lu ip_uc_udp_tx %lu ip_uc_ok %u ip_uc_udp_ok %u |\n", 
+      LOG_HCK("ip_uc_tx %lu ip_uc_udp_tx %lu ip_uc_ok %u ip_uc_udp_ok %u |\n", 
             ip_ucast_transmission_count, 
             ip_ucast_udp_transmission_count, 
             ip_ucast_ok_count, 
@@ -1543,14 +1543,14 @@ packet_sent(void *ptr, int status, int transmissions)
     ++ip_ucast_noack_count;
     if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
       ++ip_ucast_icmp6_noack_count;
-      LOG_HK("ip_uc_tx %lu ip_uc_icmp6_tx %lu ip_uc_noack %u ip_uc_icmp6_noack %u |\n", 
+      LOG_HCK("ip_uc_tx %lu ip_uc_icmp6_tx %lu ip_uc_noack %u ip_uc_icmp6_noack %u |\n", 
             ip_ucast_transmission_count, 
             ip_ucast_icmp6_transmission_count, 
             ip_ucast_noack_count, 
             ip_ucast_icmp6_noack_count);
     } else {
       ++ip_ucast_udp_noack_count;
-      LOG_HK("ip_uc_tx %lu ip_uc_udp_tx %lu ip_uc_noack %u ip_uc_udp_noack %u |\n", 
+      LOG_HCK("ip_uc_tx %lu ip_uc_udp_tx %lu ip_uc_noack %u ip_uc_udp_noack %u |\n", 
             ip_ucast_transmission_count, 
             ip_ucast_udp_transmission_count, 
             ip_ucast_noack_count, 
@@ -1560,14 +1560,14 @@ packet_sent(void *ptr, int status, int transmissions)
     ++ip_ucast_error_count;
     if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
       ++ip_ucast_icmp6_error_count;
-      LOG_HK("ip_uc_tx %lu ip_uc_icmp6_tx %lu ip_uc_err %u ip_uc_icmp6_err %u |\n", 
+      LOG_HCK("ip_uc_tx %lu ip_uc_icmp6_tx %lu ip_uc_err %u ip_uc_icmp6_err %u |\n", 
             ip_ucast_transmission_count, 
             ip_ucast_icmp6_transmission_count, 
             ip_ucast_error_count, 
             ip_ucast_icmp6_error_count);
     } else {
       ++ip_ucast_udp_error_count;
-      LOG_HK("ip_uc_tx %lu ip_uc_udp_tx %lu ip_uc_err %u ip_uc_udp_err %u |\n", 
+      LOG_HCK("ip_uc_tx %lu ip_uc_udp_tx %lu ip_uc_err %u ip_uc_udp_err %u |\n", 
             ip_ucast_transmission_count, 
             ip_ucast_udp_transmission_count, 
             ip_ucast_error_count, 

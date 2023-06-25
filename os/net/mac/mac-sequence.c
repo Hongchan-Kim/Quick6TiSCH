@@ -48,7 +48,7 @@
 #include "net/mac/mac-sequence.h"
 #include "net/packetbuf.h"
 
-#if HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
+#if HCK_MOD_MAC_SEQNO_DUPLICATE_CHECK
 
 #ifdef NETSTACK_CONF_MAC_SEQNO_MAX_AGE
 #define SEQNO_MAX_AGE NETSTACK_CONF_MAC_SEQNO_MAX_AGE
@@ -138,7 +138,7 @@ mac_sequence_register_seqno(void)
 }
 /*---------------------------------------------------------------------------*/
 
-#else /* HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK */
+#else /* HCK_MOD_MAC_SEQNO_DUPLICATE_CHECK */
 
 struct seqno {
   linkaddr_t sender;
@@ -213,4 +213,5 @@ mac_sequence_register_seqno(void)
                 packetbuf_addr(PACKETBUF_ADDR_SENDER));
 }
 /*---------------------------------------------------------------------------*/
-#endif /* HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK */
+
+#endif /* HCK_MOD_MAC_SEQNO_DUPLICATE_CHECK */

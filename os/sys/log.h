@@ -233,31 +233,31 @@ extern struct log_module all_modules[];
 #define LOG_INFO_ENABLED       ((LOG_LEVEL) >= LOG_LEVEL_INFO)
 #define LOG_DBG_ENABLED        ((LOG_LEVEL) >= LOG_LEVEL_DBG)
 
-#if LOG_HK_ENABLED
-#define LOG_HK(...)            LOG(1, 0, "HK-P", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_(...)           LOG(0, 0, "HK-P", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)
-#define LOG_HK_6ADDR(...)      LOG_6ADDR(0, __VA_ARGS__)
+#if HCK_LOG
+#define LOG_HCK(...)            LOG(1, 0, "HK-P", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_(...)           LOG(0, 0, "HK-P", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)
+#define LOG_HCK_6ADDR(...)      LOG_6ADDR(0, __VA_ARGS__)
 
-#define LOG_HK_NODE(...)           LOG(1, 0, "HK-N", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_NODE_(...)          LOG(0, 0, "HK-N", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_NODE_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
-#define LOG_HK_NODE_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
+#define LOG_HCK_NODE(...)           LOG(1, 0, "HK-N", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_NODE_(...)          LOG(0, 0, "HK-N", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_NODE_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
+#define LOG_HCK_NODE_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
 
-#define LOG_HK_QUEUE(...)           LOG(1, 0, "HK-Q", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_QUEUE_(...)          LOG(0, 0, "HK-Q", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_QUEUE_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
-#define LOG_HK_QUEUE_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
+#define LOG_HCK_QUEUE(...)           LOG(1, 0, "HK-Q", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_QUEUE_(...)          LOG(0, 0, "HK-Q", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_QUEUE_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
+#define LOG_HCK_QUEUE_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
 
-#define LOG_HK_ORCHESTRA(...)           LOG(1, 0, "HK-O", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_ORCHESTRA_(...)          LOG(0, 0, "HK-O", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_ORCHESTRA_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
-#define LOG_HK_ORCHESTRA_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
+#define LOG_HCK_ORCHESTRA(...)           LOG(1, 0, "HK-O", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_ORCHESTRA_(...)          LOG(0, 0, "HK-O", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_ORCHESTRA_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
+#define LOG_HCK_ORCHESTRA_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
 
-#define LOG_HK_SLA(...)           LOG(1, 0, "HK-S", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_SLA_(...)          LOG(0, 0, "HK-S", LOG_COLOR_PRI, __VA_ARGS__)
-#define LOG_HK_SLA_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
-#define LOG_HK_SLA_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
+#define LOG_HCK_SLA(...)           LOG(1, 0, "HK-S", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_SLA_(...)          LOG(0, 0, "HK-S", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_SLA_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
+#define LOG_HCK_SLA_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
 
 #if FORMATION_COMMON_LOG
 #define LOG_HCK_FORMATION(...)            LOG(1, 0, "HK-F", LOG_COLOR_PRI, __VA_ARGS__)
@@ -265,7 +265,7 @@ extern struct log_module all_modules[];
 #define LOG_HCK_FORMATION_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)
 #define LOG_HCK_FORMATION_6ADDR(...)      LOG_6ADDR(0, __VA_ARGS__)
 #endif
-#endif /* LOG_HK_ENABLED */
+#endif /* HCK_LOG */
 
 #if NETSTACK_CONF_WITH_IPV6
 

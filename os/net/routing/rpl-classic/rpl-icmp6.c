@@ -136,7 +136,7 @@ static uip_mcast6_route_t *mcast_group;
 UIP_ICMP6_HANDLER(dis_handler, ICMP6_RPL, RPL_CODE_DIS, dis_input);
 UIP_ICMP6_HANDLER(dio_handler, ICMP6_RPL, RPL_CODE_DIO, dio_input);
 UIP_ICMP6_HANDLER(dao_handler, ICMP6_RPL, RPL_CODE_DAO, dao_input);
-#if HCK_MOD_RPL_CODE_NO_PATH_DAO || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+#if HCK_MOD_ORCHESTRA_NO_PATH_DAO_HANDLING || HCK_MOD_RPL_CODE_NO_PATH_DAO
 UIP_ICMP6_HANDLER(dao_no_path_handler, ICMP6_RPL, RPL_CODE_NO_PATH_DAO, dao_input);
 #endif
 UIP_ICMP6_HANDLER(dao_ack_handler, ICMP6_RPL, RPL_CODE_DAO_ACK, dao_ack_input);
@@ -263,7 +263,7 @@ dis_input(void)
   LOG_INFO_("\n");
 
   ++rpl_dis_recv_count;
-  LOG_HK("dis_recv %u |\n", rpl_dis_recv_count);
+  LOG_HCK("dis_recv %u |\n", rpl_dis_recv_count);
 
   for(instance = &instance_table[0], end = instance + RPL_MAX_INSTANCES;
       instance < end; ++instance) {
@@ -323,7 +323,7 @@ dis_output(uip_ipaddr_t *addr)
   LOG_INFO_("\n");
 
   ++rpl_dis_send_count;
-  LOG_HK("dis_send %u |\n", rpl_dis_send_count);
+  LOG_HCK("dis_send %u |\n", rpl_dis_send_count);
 
   uip_icmp6_send(addr, ICMP6_RPL, RPL_CODE_DIS, 2);
 }
@@ -359,7 +359,7 @@ dio_input(void)
   LOG_INFO_("\n");
 
   ++rpl_dio_recv_count;
-  LOG_HK("dio_recv %u |\n", rpl_dio_recv_count);
+  LOG_HCK("dio_recv %u |\n", rpl_dio_recv_count);
 
 #if HCK_RPL_FIXED_TOPOLOGY
   uint8_t my_index = node_id - 1;
@@ -367,7 +367,7 @@ dio_input(void)
   uint8_t from_parent_id = HCK_GET_NODE_ID_FROM_IPADDR(&from);
 
   if(from_parent_id != target_parent_id) {
-    LOG_HK("| Discard DIO from non-fixed parent %u (fixed parent: %u)\n", 
+    LOG_HCK("| Discard DIO from non-fixed parent %u (fixed parent: %u)\n", 
             from_parent_id, target_parent_id);
     goto discard;
   }
@@ -714,7 +714,7 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
   LOG_INFO_("\n");
 
   ++rpl_dio_ucast_send_count;
-  LOG_HK("dioU_send %u |\n", rpl_dio_ucast_send_count);
+  LOG_HCK("dioU_send %u |\n", rpl_dio_ucast_send_count);
 
   uip_icmp6_send(uc_addr, ICMP6_RPL, RPL_CODE_DIO, pos);
 #else /* RPL_LEAF_ONLY */
@@ -724,7 +724,7 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
            (unsigned)instance->current_dag->rank);
 
     ++rpl_dio_mcast_send_count;
-    LOG_HK("dioM_send %u |\n", rpl_dio_mcast_send_count);
+    LOG_HCK("dioM_send %u |\n", rpl_dio_mcast_send_count);
 
     uip_create_linklocal_rplnodes_mcast(&addr);
     uip_icmp6_send(&addr, ICMP6_RPL, RPL_CODE_DIO, pos);
@@ -735,7 +735,7 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
     LOG_INFO_("\n");
 
     ++rpl_dio_ucast_send_count;
-    LOG_HK("dioU_send %u |\n", rpl_dio_ucast_send_count);
+    LOG_HCK("dioU_send %u |\n", rpl_dio_ucast_send_count);
 
     uip_icmp6_send(uc_addr, ICMP6_RPL, RPL_CODE_DIO, pos);
   }
@@ -948,11 +948,11 @@ dao_input_storing(void)
         LOG_DBG_("\n");
 
         ++rpl_dao_nopath_fwd_count;
-        LOG_HK("daoN_fwd %u |\n", rpl_dao_nopath_fwd_count);
+        LOG_HCK("daoN_fwd %u |\n", rpl_dao_nopath_fwd_count);
 
         buffer = UIP_ICMP_PAYLOAD;
         buffer[3] = out_seq; /* add an outgoing seq no before fwd */
-#if HCK_MOD_RPL_CODE_NO_PATH_DAO || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+#if HCK_MOD_ORCHESTRA_NO_PATH_DAO_HANDLING || HCK_MOD_RPL_CODE_NO_PATH_DAO
         uip_icmp6_send(rpl_parent_get_ipaddr(dag->preferred_parent),
                        ICMP6_RPL, RPL_CODE_NO_PATH_DAO, buffer_length);
 #else
@@ -1063,7 +1063,7 @@ fwd_dao:
       LOG_DBG_(" in seq: %d out seq: %d\n", sequence, out_seq);
 
       ++rpl_dao_path_fwd_count;
-      LOG_HK("daoP_fwd %u |\n", rpl_dao_path_fwd_count);
+      LOG_HCK("daoP_fwd %u |\n", rpl_dao_path_fwd_count);
 
       buffer = UIP_ICMP_PAYLOAD;
       buffer[3] = out_seq; /* add an outgoing seq no before fwd */
@@ -1206,7 +1206,7 @@ dao_input(void)
   LOG_INFO_("\n");
 
   ++rpl_dao_recv_count;
-  LOG_HK("dao_recv %u |\n", rpl_dao_recv_count);
+  LOG_HCK("dao_recv %u |\n", rpl_dao_recv_count);
 
   instance_id = UIP_ICMP_PAYLOAD[0];
   instance = rpl_get_instance(instance_id);
@@ -1443,15 +1443,15 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
 
   if(lifetime == RPL_ZERO_LIFETIME) {
     ++rpl_dao_nopath_send_count;
-    LOG_HK("daoN_send %u |\n", rpl_dao_nopath_send_count);
+    LOG_HCK("daoN_send %u |\n", rpl_dao_nopath_send_count);
   } else {
     ++rpl_dao_path_send_count;
-    LOG_HK("daoP_send %u |\n", rpl_dao_path_send_count);
+    LOG_HCK("daoP_send %u |\n", rpl_dao_path_send_count);
   }
 
   if(dest_ipaddr != NULL) {
 
-#if HCK_MOD_RPL_CODE_NO_PATH_DAO || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+#if HCK_MOD_ORCHESTRA_NO_PATH_DAO_HANDLING || HCK_MOD_RPL_CODE_NO_PATH_DAO
     if(lifetime != RPL_ZERO_LIFETIME) {
       uip_icmp6_send(dest_ipaddr, ICMP6_RPL, RPL_CODE_DAO, pos);
     } else {
@@ -1511,7 +1511,7 @@ dao_ack_input(void)
   LOG_INFO_("\n");
 
   ++rpl_dao_ack_recv_count;
-  LOG_HK("daoA_recv %u |\n", rpl_dao_ack_recv_count);
+  LOG_HCK("daoA_recv %u |\n", rpl_dao_ack_recv_count);
 
   if(sequence == instance->my_dao_seqno) {
     instance->has_downward_route = status < 128;
@@ -1578,7 +1578,7 @@ dao_ack_output(rpl_instance_t *instance, uip_ipaddr_t *dest, uint8_t sequence,
   LOG_INFO_(" with status %d\n", status);
 
   ++rpl_dao_ack_send_count;
-  LOG_HK("daoA_send %u |\n", rpl_dao_ack_send_count);
+  LOG_HCK("daoA_send %u |\n", rpl_dao_ack_send_count);
 
   buffer = UIP_ICMP_PAYLOAD;
 
@@ -1597,7 +1597,7 @@ rpl_icmp6_register_handlers()
   uip_icmp6_register_input_handler(&dis_handler);
   uip_icmp6_register_input_handler(&dio_handler);
   uip_icmp6_register_input_handler(&dao_handler);
-#if HCK_MOD_RPL_CODE_NO_PATH_DAO || HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT
+#if HCK_MOD_ORCHESTRA_NO_PATH_DAO_HANDLING || HCK_MOD_RPL_CODE_NO_PATH_DAO
   uip_icmp6_register_input_handler(&dao_no_path_handler);
 #endif
   uip_icmp6_register_input_handler(&dao_ack_handler);

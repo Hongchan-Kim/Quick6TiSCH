@@ -648,7 +648,7 @@ tsch_schedule_get_link_by_handle(uint16_t handle)
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
-#if ENABLE_LOG_TSCH_LINK_ADD_REMOVE || ENABLE_LOG_ALICE_LINK_ADD_REMOVE
+#if HCK_LOG_TSCH_LINK_ADD_REMOVE || ENABLE_LOG_ALICE_LINK_ADD_REMOVE
 static const char *
 print_link_options(uint16_t link_options)
 {
@@ -687,7 +687,7 @@ print_link_type(uint16_t link_type)
     return "?";
   }
 }
-#endif /* ENABLE_LOG_TSCH_LINK_ADD_REMOVE || ENABLE_LOG_ALICE_LINK_ADD_REMOVE */
+#endif /* HCK_LOG_TSCH_LINK_ADD_REMOVE || ENABLE_LOG_ALICE_LINK_ADD_REMOVE */
 /*---------------------------------------------------------------------------*/
 /* Adds a link to a slotframe, return a pointer to it (NULL if failure) */
 struct tsch_link *
@@ -741,14 +741,14 @@ tsch_schedule_add_link(struct tsch_slotframe *slotframe,
         }
         linkaddr_copy(&l->addr, address);
 
-#if ENABLE_LOG_TSCH_LINK_ADD_REMOVE
+#if HCK_LOG_TSCH_LINK_ADD_REMOVE
         LOG_INFO("add_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
                  slotframe->handle,
                  print_link_options(link_options),
                  print_link_type(link_type), timeslot, channel_offset);
         LOG_INFO_LLADDR(address);
         LOG_INFO_("\n");
-#endif /* ENABLE_LOG_TSCH_LINK_ADD_REMOVE */
+#endif /* HCK_LOG_TSCH_LINK_ADD_REMOVE */
 
         /* Release the lock before we update the neighbor (will take the lock) */
         tsch_release_lock();
@@ -914,14 +914,14 @@ tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link *l)
         current_link = NULL;
       }
 
-#if ENABLE_LOG_TSCH_LINK_ADD_REMOVE
+#if HCK_LOG_TSCH_LINK_ADD_REMOVE
       LOG_INFO("remove_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
                slotframe->handle,
                print_link_options(l->link_options),
                print_link_type(l->link_type), l->timeslot, l->channel_offset);
       LOG_INFO_LLADDR(&l->addr);
       LOG_INFO_("\n");
-#endif /* ENABLE_LOG_TSCH_LINK_ADD_REMOVE */
+#endif /* HCK_LOG_TSCH_LINK_ADD_REMOVE */
 
       list_remove(slotframe->links_list, l);
       memb_free(&link_memb, l);
@@ -1605,7 +1605,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             }
           }
 
-#if HCK_APPLY_LATEST_CONTIKI
+#if HCK_MOD_APPLY_LATEST_CONTIKI
           /* Maintain backup_link */
           /* Check if 'l' best can be used as backup */
           if(new_best != l && (l->link_options & LINK_OPTION_RX)) { /* Does 'l' have Rx flag? */

@@ -89,12 +89,12 @@ orchestra_packet_sent(int mac_status)
       orchestra_parent_knows_us = 1;
 
       uint64_t orchestra_one_parent_knows_us_asn = tsch_calculate_current_asn();
-      LOG_HK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_one_parent_knows_us_asn);
+      LOG_HCK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_one_parent_knows_us_asn);
 #if FORMATION_COMMON_LOG
       LOG_HCK_FORMATION("opku %u | at %llu\n", orchestra_parent_knows_us, orchestra_one_parent_knows_us_asn);
 #endif
 
-#if HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF
+#if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
       struct tsch_neighbor *orchestra_parent_nbr = tsch_queue_get_nbr(&orchestra_parent_linkaddr);
       tsch_queue_change_attr_of_packets_in_queue(orchestra_parent_nbr, ALICE_UNICAST_SF_HANDLE, 0);
 #endif
@@ -171,7 +171,7 @@ orchestra_callback_new_time_source(const struct tsch_neighbor *old, const struct
     orchestra_parent_knows_us = 0;
 
     uint64_t orchestra_zero_parent_knows_us_asn = tsch_calculate_current_asn();
-    LOG_HK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_zero_parent_knows_us_asn);
+    LOG_HCK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_zero_parent_knows_us_asn);
 #if FORMATION_COMMON_LOG
     LOG_HCK_FORMATION("opku %u | at %llu\n", orchestra_parent_knows_us, orchestra_zero_parent_knows_us_asn);
 #endif

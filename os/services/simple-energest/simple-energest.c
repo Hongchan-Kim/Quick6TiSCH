@@ -60,7 +60,7 @@ uint32_t dc_total_sum;
 /*---------------------------------------------------------------------------*/
 void print_log_simple_energest()
 {
-  LOG_HK("dc_count %lu dc_tx_sum %lu dc_rx_sum %lu dc_total_sum %lu |\n", 
+  LOG_HCK("dc_count %lu dc_tx_sum %lu dc_rx_sum %lu dc_total_sum %lu |\n", 
           dc_count, dc_tx_sum, dc_rx_sum, dc_total_sum);
 }
 /*---------------------------------------------------------------------------*/

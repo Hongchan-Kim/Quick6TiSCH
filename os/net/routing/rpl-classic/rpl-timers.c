@@ -60,14 +60,14 @@ static uint16_t first_hop_distance_measure;
 static uint16_t next_hop_distance_measure;
 static uint32_t hop_distance_measure_count;
 static uint32_t hop_distance_measure_sum;
-#if HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+#if HCK_MOD_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 static uint8_t ignore_redundancy = 1;
 #endif
 /*---------------------------------------------------------------------------*/
 void print_log_rpl_timers()
 {
   rpl_dag_t *dag = rpl_get_any_dag();
-  LOG_HK("hopD_now %u hopD_sum %lu hopD_cnt %lu |\n", 
+  LOG_HCK("hopD_now %u hopD_sum %lu hopD_cnt %lu |\n", 
         dag->rank == ROOT_RANK(dag->instance) ? 
           0 : dag->preferred_parent->hop_distance + 1, 
         hop_distance_measure_sum, hop_distance_measure_count);
@@ -76,7 +76,7 @@ void print_log_rpl_timers()
 void reset_log_rpl_timers()
 {
   print_log_rpl_timers();
-#if HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+#if HCK_MOD_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
   ignore_redundancy = 0;
 #endif
   rpl_dio_reset_count = 0;
@@ -227,7 +227,7 @@ handle_dio_timer(void *ptr)
 
   if(instance->dio_send) {
     /* send DIO if counter is less than desired redundancy */
-#if HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+#if HCK_MOD_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
     if(ignore_redundancy || instance->dio_redundancy == 0 || instance->dio_counter < instance->dio_redundancy) {
 #else
     if(instance->dio_redundancy == 0 || instance->dio_counter < instance->dio_redundancy) {
@@ -275,7 +275,7 @@ rpl_reset_dio_timer(rpl_instance_t *instance)
   /* Do not reset if we are already on the minimum interval,
      unless forced to do so. */
   ++rpl_dio_reset_count;
-  LOG_HK("rdt %u | reset DIO timer\n", rpl_dio_reset_count);
+  LOG_HCK("rdt %u | reset DIO timer\n", rpl_dio_reset_count);
 
   if(instance->dio_intcurrent > instance->dio_intmin) {
     instance->dio_counter = 0;

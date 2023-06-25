@@ -252,10 +252,10 @@ uint16_t alice_early_packet_drop_count;
 void print_log_tsch()
 {
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
-  LOG_HK("e_drop %u |\n", alice_early_packet_drop_count);
+  LOG_HCK("e_drop %u |\n", alice_early_packet_drop_count);
 #endif
 
-  LOG_HK("input_full %u input_avail %u dequeued_full %u dequeued_avail %u |\n", 
+  LOG_HCK("input_full %u input_avail %u dequeued_full %u dequeued_avail %u |\n", 
           tsch_input_ringbuf_full_count, 
           tsch_input_ringbuf_available_count, 
           tsch_dequeued_ringbuf_full_count, 
@@ -268,7 +268,7 @@ void print_log_tsch()
           tsch_timeslots_until_last_session + tsch_timeslots_in_current_session;
 
 #if WITH_OST
-  LOG_HK("asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu sch_pp_tx %lu sch_pp_rx %lu sch_odp_tx %lu sch_odp_rx %lu |\n", 
+  LOG_HCK("asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu sch_pp_tx %lu sch_pp_rx %lu sch_odp_tx %lu sch_odp_rx %lu |\n", 
           tsch_total_associated_timeslots, 
           tsch_scheduled_eb_sf_cell_count, 
           tsch_scheduled_common_sf_cell_count, 
@@ -278,7 +278,7 @@ void print_log_tsch()
           tsch_scheduled_ost_odp_sf_tx_cell_count, 
           tsch_scheduled_ost_odp_sf_rx_cell_count);
 #else
-  LOG_HK("asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
+  LOG_HCK("asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
           tsch_total_associated_timeslots, 
           tsch_scheduled_eb_sf_cell_count, 
           tsch_scheduled_common_sf_cell_count, 
@@ -287,7 +287,7 @@ void print_log_tsch()
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #if WITH_OST
-  LOG_HK("sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu sch_pp_bst_tx %lu sch_pp_bst_rx %lu |\n", 
+  LOG_HCK("sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu sch_pp_bst_tx %lu sch_pp_bst_rx %lu |\n", 
           tsch_scheduled_common_sf_bst_tx_cell_count,
           tsch_scheduled_common_sf_bst_rx_cell_count,
           tsch_scheduled_unicast_sf_bst_tx_cell_count,
@@ -295,7 +295,7 @@ void print_log_tsch()
           tsch_scheduled_ost_pp_sf_bst_tx_cell_count,
           tsch_scheduled_ost_pp_sf_bst_rx_cell_count);
 #else
-  LOG_HK("sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu |\n", 
+  LOG_HCK("sch_bc_bst_tx %lu sch_bc_bst_rx %lu sch_uc_bst_tx %lu sch_uc_bst_rx %lu |\n", 
           tsch_scheduled_common_sf_bst_tx_cell_count,
           tsch_scheduled_common_sf_bst_rx_cell_count,
           tsch_scheduled_unicast_sf_bst_tx_cell_count,
@@ -305,7 +305,7 @@ void print_log_tsch()
 
 #if WITH_UPA
 #if WITH_OST
-  LOG_HK("sch_bc_upa_tx %lu sch_bc_upa_rx %lu sch_uc_upa_tx %lu sch_uc_upa_rx %lu sch_pp_upa_tx %lu sch_pp_upa_rx %lu |\n", 
+  LOG_HCK("sch_bc_upa_tx %lu sch_bc_upa_rx %lu sch_uc_upa_tx %lu sch_uc_upa_rx %lu sch_pp_upa_tx %lu sch_pp_upa_rx %lu |\n", 
           tsch_scheduled_common_sf_upa_tx_cell_count,
           tsch_scheduled_common_sf_upa_rx_cell_count,
           tsch_scheduled_unicast_sf_upa_tx_cell_count,
@@ -313,7 +313,7 @@ void print_log_tsch()
           tsch_scheduled_ost_pp_sf_upa_tx_cell_count,
           tsch_scheduled_ost_pp_sf_upa_rx_cell_count);
 #else
-  LOG_HK("sch_bc_upa_tx %lu sch_bc_upa_rx %lu sch_uc_upa_tx %lu sch_uc_upa_rx %lu |\n", 
+  LOG_HCK("sch_bc_upa_tx %lu sch_bc_upa_rx %lu sch_uc_upa_tx %lu sch_uc_upa_rx %lu |\n", 
           tsch_scheduled_common_sf_upa_tx_cell_count,
           tsch_scheduled_common_sf_upa_rx_cell_count,
           tsch_scheduled_unicast_sf_upa_tx_cell_count,
@@ -322,7 +322,7 @@ void print_log_tsch()
 #endif
 
 #if WITH_OST
-  LOG_HK("eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu pp_tx_op %lu pp_rx_op %lu odp_tx_op %lu odp_rx_op %lu |\n", 
+  LOG_HCK("eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu pp_tx_op %lu pp_rx_op %lu odp_tx_op %lu odp_rx_op %lu |\n", 
           tsch_eb_sf_tx_operation_count, 
           tsch_eb_sf_rx_operation_count, 
           tsch_common_sf_tx_operation_count, 
@@ -334,7 +334,7 @@ void print_log_tsch()
           tsch_ost_odp_sf_tx_operation_count, 
           tsch_ost_odp_sf_rx_operation_count);
 #else
-  LOG_HK("eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
+  LOG_HCK("eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
           tsch_eb_sf_tx_operation_count, 
           tsch_eb_sf_rx_operation_count, 
           tsch_common_sf_tx_operation_count, 
@@ -345,7 +345,7 @@ void print_log_tsch()
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
 #if WITH_OST
-  LOG_HK("bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu pp_bst_tx_op %lu pp_bst_rx_op %lu |\n", 
+  LOG_HCK("bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu pp_bst_tx_op %lu pp_bst_rx_op %lu |\n", 
           tsch_common_sf_bst_tx_operation_count,
           tsch_common_sf_bst_rx_operation_count,
           tsch_unicast_sf_bst_tx_operation_count,
@@ -353,7 +353,7 @@ void print_log_tsch()
           tsch_ost_pp_sf_bst_tx_operation_count,
           tsch_ost_pp_sf_bst_rx_operation_count);
 #else
-  LOG_HK("bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu |\n", 
+  LOG_HCK("bc_bst_tx_op %lu bc_bst_rx_op %lu uc_bst_tx_op %lu uc_bst_rx_op %lu |\n", 
           tsch_common_sf_bst_tx_operation_count,
           tsch_common_sf_bst_rx_operation_count,
           tsch_unicast_sf_bst_tx_operation_count,
@@ -363,7 +363,7 @@ void print_log_tsch()
 
 #if WITH_UPA
 #if WITH_OST
-  LOG_HK("bc_upa_tx_rs %lu bc_upa_rx_rs %lu uc_upa_tx_rs %lu uc_upa_rx_rs %lu pp_upa_tx_rs %lu pp_upa_rx_rs %lu |\n", 
+  LOG_HCK("bc_upa_tx_rs %lu bc_upa_rx_rs %lu uc_upa_tx_rs %lu uc_upa_rx_rs %lu pp_upa_tx_rs %lu pp_upa_rx_rs %lu |\n", 
           tsch_common_sf_upa_tx_reserved_count,
           tsch_common_sf_upa_rx_reserved_count,
           tsch_unicast_sf_upa_tx_reserved_count,
@@ -371,7 +371,7 @@ void print_log_tsch()
           tsch_ost_pp_sf_upa_tx_reserved_count,
           tsch_ost_pp_sf_upa_rx_reserved_count);
 
-  LOG_HK("bc_upa_tx_ok %lu bc_upa_rx_ok %lu uc_upa_tx_ok %lu uc_upa_rx_ok %lu pp_upa_tx_ok %lu pp_upa_rx_ok %lu |\n", 
+  LOG_HCK("bc_upa_tx_ok %lu bc_upa_rx_ok %lu uc_upa_tx_ok %lu uc_upa_rx_ok %lu pp_upa_tx_ok %lu pp_upa_rx_ok %lu |\n", 
           tsch_common_sf_upa_tx_ok_count,
           tsch_common_sf_upa_rx_ok_count,
           tsch_unicast_sf_upa_tx_ok_count,
@@ -379,7 +379,7 @@ void print_log_tsch()
           tsch_ost_pp_sf_upa_tx_ok_count,
           tsch_ost_pp_sf_upa_rx_ok_count);
 
-  LOG_HK("bc_upa_tx_ts %lu bc_upa_rx_ts %lu uc_upa_tx_ts %lu uc_upa_rx_ts %lu pp_upa_tx_ts %lu pp_upa_rx_ts %lu |\n", 
+  LOG_HCK("bc_upa_tx_ts %lu bc_upa_rx_ts %lu uc_upa_tx_ts %lu uc_upa_rx_ts %lu pp_upa_tx_ts %lu pp_upa_rx_ts %lu |\n", 
           tsch_common_sf_upa_tx_timeslots,
           tsch_common_sf_upa_rx_timeslots,
           tsch_unicast_sf_upa_tx_timeslots,
@@ -387,19 +387,19 @@ void print_log_tsch()
           tsch_ost_pp_sf_upa_tx_timeslots,
           tsch_ost_pp_sf_upa_rx_timeslots);
 #else
-  LOG_HK("bc_upa_tx_rs %lu bc_upa_rx_rs %lu uc_upa_tx_rs %lu uc_upa_rx_rs %lu |\n", 
+  LOG_HCK("bc_upa_tx_rs %lu bc_upa_rx_rs %lu uc_upa_tx_rs %lu uc_upa_rx_rs %lu |\n", 
           tsch_common_sf_upa_tx_reserved_count,
           tsch_common_sf_upa_rx_reserved_count,
           tsch_unicast_sf_upa_tx_reserved_count,
           tsch_unicast_sf_upa_rx_reserved_count);
 
-  LOG_HK("bc_upa_tx_ok %lu bc_upa_rx_ok %lu uc_upa_tx_ok %lu uc_upa_rx_ok %lu |\n", 
+  LOG_HCK("bc_upa_tx_ok %lu bc_upa_rx_ok %lu uc_upa_tx_ok %lu uc_upa_rx_ok %lu |\n", 
           tsch_common_sf_upa_tx_ok_count,
           tsch_common_sf_upa_rx_ok_count,
           tsch_unicast_sf_upa_tx_ok_count,
           tsch_unicast_sf_upa_rx_ok_count);
 
-  LOG_HK("bc_upa_tx_ts %lu bc_upa_rx_ts %lu uc_upa_tx_ts %lu uc_upa_rx_ts %lu |\n", 
+  LOG_HCK("bc_upa_tx_ts %lu bc_upa_rx_ts %lu uc_upa_tx_ts %lu uc_upa_rx_ts %lu |\n", 
           tsch_common_sf_upa_tx_timeslots,
           tsch_common_sf_upa_rx_timeslots,
           tsch_unicast_sf_upa_tx_timeslots,
@@ -416,7 +416,7 @@ void reset_log_tsch()
   TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
 
   tsch_log_association_count = 1; /* assume that this node is associated when bootstrap period ends */
-  LOG_HK("asso %u |\n", tsch_log_association_count);
+  LOG_HCK("asso %u |\n", tsch_log_association_count);
 
   tsch_leaving_count = 0;
   /* do not initialize clock_last_leaving and clock_inst_leaving_time */
@@ -671,22 +671,22 @@ sla_rapid_eb_broadcast()
           LOG_ERR("! could not enqueue EB packet\n");
 
           ++tsch_eb_packet_qloss_count;
-          LOG_HK("eb_qloss %u |\n", tsch_eb_packet_qloss_count);
+          LOG_HCK("eb_qloss %u |\n", tsch_eb_packet_qloss_count);
 
 #if SLA_DBG_ESSENTIAL
           ++sla_eb_packet_qloss_count;
-          LOG_HK_SLA("rapid_eb eb_qloss %u\n", sla_eb_packet_qloss_count);
+          LOG_HCK_SLA("rapid_eb eb_qloss %u\n", sla_eb_packet_qloss_count);
 #endif
         } else {
           LOG_INFO("TSCH: enqueue EB packet %u %u\n", 
                     packetbuf_totlen(), packetbuf_hdrlen());
 
           ++tsch_eb_packet_enqueue_count;
-          LOG_HK("eb_enq %u |\n", tsch_eb_packet_enqueue_count);
+          LOG_HCK("eb_enq %u |\n", tsch_eb_packet_enqueue_count);
 
 #if SLA_DBG_ESSENTIAL
           ++sla_eb_packet_enqueue_count;
-          LOG_HK_SLA("rapid_eb eb_enq %u\n", sla_eb_packet_enqueue_count);
+          LOG_HCK_SLA("rapid_eb eb_enq %u\n", sla_eb_packet_enqueue_count);
 #endif
 
           p->tsch_sync_ie_offset = tsch_sync_ie_offset;
@@ -696,7 +696,7 @@ sla_rapid_eb_broadcast()
     }
 #if SLA_DBG_OPERATION
     else {
-      LOG_HK_SLA("rapid_eb exist\n");
+      LOG_HCK_SLA("rapid_eb exist\n");
     }
 #endif
 
@@ -704,7 +704,7 @@ sla_rapid_eb_broadcast()
     int32_t sla_asn_diff = TSCH_ASN_DIFF(tsch_current_asn, sla_triggering_asn);
     if(sla_asn_diff >= 0) {
 #if SLA_DBG_ESSENTIAL
-      LOG_HK_SLA("rapid_eb stop c_ts %u n_ts %u\n",
+      LOG_HCK_SLA("rapid_eb stop c_ts %u n_ts %u\n",
                 tsch_timing_us[tsch_ts_timeslot_length], 
                 sla_next_timeslot_length);
 #endif
@@ -926,7 +926,7 @@ sla_determine_next_timeslot_length_and_trig_asn()
   if(hck_asap_eval_01_sla_real_time_skip_det == 1) {
     hck_asap_eval_01_sla_real_time_skip_det = 0;
 
-    LOG_HK_SLA("det skip_first\n");
+    LOG_HCK_SLA("det skip_first\n");
 
     /* Reset next observation array */
     sla_current_window_index = (sla_current_window_index + 1) % SLA_OBSERVATION_WINDOWS;
@@ -953,33 +953,33 @@ sla_determine_next_timeslot_length_and_trig_asn()
 #if SLA_DBG_ESSENTIAL
   /* Print recorded frame and ACK length distribution */
   uint64_t sla_determine_asn = tsch_calculate_current_asn();
-  LOG_HK_SLA("det d_asn %llx | c_win %u\n", sla_determine_asn, sla_current_window_index);
+  LOG_HCK_SLA("det d_asn %llx | c_win %u\n", sla_determine_asn, sla_current_window_index);
 
   int j = 0;
 
   for(i = 0; i < SLA_OBSERVATION_WINDOWS; i++) {
-    LOG_HK_SLA("det dist_bc | win %u", i);
+    LOG_HCK_SLA("det dist_bc | win %u", i);
     for(j = 0; j < SLA_FRAME_LEN_QUANTIZED_LEVELS; j++) {
-      LOG_HK_SLA_(" | %u %u", j, sla_observed_bc_frame_length[i][j]);
+      LOG_HCK_SLA_(" | %u %u", j, sla_observed_bc_frame_length[i][j]);
     }
-    LOG_HK_SLA_("\n");
+    LOG_HCK_SLA_("\n");
   }
   for(i = 0; i < SLA_OBSERVATION_WINDOWS; i++) {
-    LOG_HK_SLA("det dist_uc | win %u", i);
+    LOG_HCK_SLA("det dist_uc | win %u", i);
     for(j = 0; j < SLA_FRAME_LEN_QUANTIZED_LEVELS; j++) {
-      LOG_HK_SLA_(" | %u %u", j, sla_observed_uc_frame_length[i][j]);
+      LOG_HCK_SLA_(" | %u %u", j, sla_observed_uc_frame_length[i][j]);
     }
-    LOG_HK_SLA_("\n");
+    LOG_HCK_SLA_("\n");
   }
   for(i = 0; i < SLA_OBSERVATION_WINDOWS; i++) {
-    LOG_HK_SLA("det dist_ack | win %u", i);
+    LOG_HCK_SLA("det dist_ack | win %u", i);
     for(j = 0; j < SLA_ACK_LEN_QUANTIZED_LEVELS; j++) {
-      LOG_HK_SLA_(" | %u %u", j, sla_observed_ack_length[i][j]);
+      LOG_HCK_SLA_(" | %u %u", j, sla_observed_ack_length[i][j]);
     }
-    LOG_HK_SLA_("\n");
+    LOG_HCK_SLA_("\n");
   }
   for(i = 0; i < SLA_OBSERVATION_WINDOWS; i++) {
-    LOG_HK_SLA("det max_hops | win %u | %u\n", i, sla_max_hop_distance[i]);
+    LOG_HCK_SLA("det max_hops | win %u | %u\n", i, sla_max_hop_distance[i]);
   }
 #endif
 
@@ -1000,7 +1000,7 @@ sla_determine_next_timeslot_length_and_trig_asn()
   sla_calculate_triggering_asn();
 
 #if SLA_DBG_ESSENTIAL
-  LOG_HK_SLA("det c_ref_bc %u n_ref_bc %u c_ref_uc %u n_ref_uc %u c_ref_ack %u n_ref_ack %u c_ts %u n_ts %u t_asn %llx hops %u\n",
+  LOG_HCK_SLA("det c_ref_bc %u n_ref_bc %u c_ref_uc %u n_ref_uc %u c_ref_ack %u n_ref_ack %u c_ts %u n_ts %u t_asn %llx hops %u\n",
             sla_curr_ref_bc_frame_len,
             sla_next_ref_bc_frame_len,
             sla_curr_ref_uc_frame_len,
@@ -1017,7 +1017,7 @@ sla_determine_next_timeslot_length_and_trig_asn()
   if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_timeslot_length) {
     if(sla_in_rapid_eb_broadcasting == 0) {
 #if SLA_DBG_ESSENTIAL
-      LOG_HK_SLA("det start_rapid_eb c_ts %u n_ts %u\n",
+      LOG_HCK_SLA("det start_rapid_eb c_ts %u n_ts %u\n",
                 tsch_timing_us[tsch_ts_timeslot_length], 
                 sla_next_timeslot_length);
 #endif
@@ -1155,11 +1155,11 @@ tsch_reset(void)
   sla_next_ref_ack_len = SLA_MAX_ACK_LEN;
 
 #if SLA_DBG_ESSENTIAL
-  LOG_HK_SLA("reset f_lvs %d a_lvs %d sla_k %u\n", 
+  LOG_HCK_SLA("reset f_lvs %d a_lvs %d sla_k %u\n", 
             SLA_FRAME_LEN_QUANTIZED_LEVELS, 
             SLA_ACK_LEN_QUANTIZED_LEVELS,
             SLA_K_TH_PERCENTILE);
-  LOG_HK_SLA("reset c_ref_bc %u n_ref_bc %u c_ref_uc %u n_ref_uc %u c_ref_ack %u n_ref_ack %u c_ts %u n_ts %u t_asn %llx hops %u\n",
+  LOG_HCK_SLA("reset c_ref_bc %u n_ref_bc %u c_ref_uc %u n_ref_uc %u c_ref_ack %u n_ref_ack %u c_ts %u n_ts %u t_asn %llx hops %u\n",
             sla_curr_ref_bc_frame_len,
             sla_next_ref_bc_frame_len,
             sla_curr_ref_uc_frame_len,
@@ -1261,7 +1261,7 @@ keepalive_packet_sent(void *ptr, int status, int transmissions)
   LOG_INFO_LLADDR(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
   LOG_INFO_(", st %d-%d\n", status, transmissions);
 
-  LOG_HK("ka_tx %lu |\n", tsch_ka_packet_transmission_count);
+  LOG_HCK("ka_tx %lu |\n", tsch_ka_packet_transmission_count);
 
   /* We got no ack, try to resynchronize */
   if(status == MAC_TX_NOACK) {
@@ -1290,7 +1290,7 @@ keepalive_send(void *ptr)
         LOG_INFO_("\n");
 
         ++tsch_ka_packet_send_count;
-        LOG_HK("ka_send %u |\n", tsch_ka_packet_send_count);
+        LOG_HCK("ka_send %u |\n", tsch_ka_packet_send_count);
 
         /* Simply send an empty packet */
         packetbuf_clear();
@@ -1460,7 +1460,7 @@ eb_input(struct input_packet *current_input)
 
       if(tsch_timing_us[tsch_ts_timeslot_length] != eb_ies.ie_sla_curr_timeslot_len) {
 #if SLA_DBG_ESSENTIAL
-        LOG_HK_SLA("eb_input invalid rx_asn %llx ie_asn %llx c_ts %u n_ts %u\n",
+        LOG_HCK_SLA("eb_input invalid rx_asn %llx ie_asn %llx c_ts %u n_ts %u\n",
                 curr_eb_rx_asn,
                 curr_eb_ie_asn,
                 tsch_timing_us[tsch_ts_timeslot_length],
@@ -1476,7 +1476,7 @@ eb_input(struct input_packet *current_input)
         sla_next_timeslot_length = eb_ies.ie_sla_next_timeslot_len;
 
 #if SLA_DBG_ESSENTIAL
-        LOG_HK_SLA("eb_input valid rx_asn %llx ie_asn %llx valid c_ts %u n_ts %u t_asn %llx \n", 
+        LOG_HCK_SLA("eb_input valid rx_asn %llx ie_asn %llx valid c_ts %u n_ts %u t_asn %llx \n", 
                 curr_eb_rx_asn,
                 curr_eb_ie_asn,
                 tsch_timing_us[tsch_ts_timeslot_length],
@@ -1487,7 +1487,7 @@ eb_input(struct input_packet *current_input)
         if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_timeslot_length) {
           if(sla_in_rapid_eb_broadcasting == 0) {
 #if SLA_DBG_ESSENTIAL
-            LOG_HK_SLA("eb_input start_rapid_eb c_ts %u n_ts %u\n",
+            LOG_HCK_SLA("eb_input start_rapid_eb c_ts %u n_ts %u\n",
                       tsch_timing_us[tsch_ts_timeslot_length], 
                       sla_next_timeslot_length);
 #endif
@@ -1597,36 +1597,36 @@ tsch_tx_process_pending(void)
     if(p->sent == NULL) { // EB
       if(p->ret == MAC_TX_NOACK) {
         ++tsch_eb_packet_noack_count;
-        LOG_HK("eb_noack %u |\n", tsch_eb_packet_noack_count);
+        LOG_HCK("eb_noack %u |\n", tsch_eb_packet_noack_count);
       } else if(p->ret == MAC_TX_OK) {
         ++tsch_eb_packet_ok_count;
-        LOG_HK("eb_ok %u |\n", tsch_eb_packet_ok_count);
+        LOG_HCK("eb_ok %u |\n", tsch_eb_packet_ok_count);
       } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
         ++tsch_eb_packet_error_count;
-        LOG_HK("eb_err %u |\n", tsch_eb_packet_error_count);
+        LOG_HCK("eb_err %u |\n", tsch_eb_packet_error_count);
       }
     } else if(p->sent == keepalive_packet_sent) { // KA
       if(p->ret == MAC_TX_NOACK) {
         ++tsch_ka_packet_noack_count;
-        LOG_HK("ka_noack %u |\n", tsch_ka_packet_noack_count);
+        LOG_HCK("ka_noack %u |\n", tsch_ka_packet_noack_count);
       } else if(p->ret == MAC_TX_OK) {
         ++tsch_ka_packet_ok_count;
-        LOG_HK("ka_ok %u |\n", tsch_ka_packet_ok_count);
+        LOG_HCK("ka_ok %u |\n", tsch_ka_packet_ok_count);
       } else if(p->ret == MAC_TX_ERR || p->ret == MAC_TX_ERR_FATAL) {
         ++tsch_ka_packet_error_count;
-        LOG_HK("ka_err %u |\n", tsch_ka_packet_error_count);
+        LOG_HCK("ka_err %u |\n", tsch_ka_packet_error_count);
       }
     } else {
       if(p->ret == MAC_TX_NOACK) { // IP layer packet
         ++tsch_ip_packet_noack_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
           ++tsch_ip_icmp6_packet_noack_count;
-          LOG_HK("ip_noack %u ip_icmp6_noack %u |\n", 
+          LOG_HCK("ip_noack %u ip_icmp6_noack %u |\n", 
                 tsch_ip_packet_noack_count, 
                 tsch_ip_icmp6_packet_noack_count);
         } else {
           ++tsch_ip_udp_packet_noack_count;
-          LOG_HK("ip_noack %u ip_udp_noack %u |\n", 
+          LOG_HCK("ip_noack %u ip_udp_noack %u |\n", 
                 tsch_ip_packet_noack_count, 
                 tsch_ip_udp_packet_noack_count);
         }
@@ -1635,12 +1635,12 @@ tsch_tx_process_pending(void)
         ++tsch_ip_packet_ok_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
           ++tsch_ip_icmp6_packet_ok_count;
-          LOG_HK("ip_ok %u ip_icmp6_ok %u |\n", 
+          LOG_HCK("ip_ok %u ip_icmp6_ok %u |\n", 
                 tsch_ip_packet_ok_count, 
                 tsch_ip_icmp6_packet_ok_count);
         } else {
           ++tsch_ip_udp_packet_ok_count;
-          LOG_HK("ip_ok %u ip_udp_ok %u |\n", 
+          LOG_HCK("ip_ok %u ip_udp_ok %u |\n", 
                 tsch_ip_packet_ok_count, 
                 tsch_ip_udp_packet_ok_count);
         }
@@ -1648,12 +1648,12 @@ tsch_tx_process_pending(void)
         ++tsch_ip_packet_error_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
           ++tsch_ip_icmp6_packet_error_count;
-          LOG_HK("ip_err %u ip_icmp6_err %u |\n", 
+          LOG_HCK("ip_err %u ip_icmp6_err %u |\n", 
                 tsch_ip_packet_error_count, 
                 tsch_ip_icmp6_packet_error_count);
         } else {
           ++tsch_ip_udp_packet_error_count;
-          LOG_HK("ip_err %u ip_udp_err %u |\n", 
+          LOG_HCK("ip_err %u ip_udp_err %u |\n", 
                 tsch_ip_packet_error_count, 
                 tsch_ip_udp_packet_error_count);
         }
@@ -1795,10 +1795,10 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
 
 
 #if SLA_DBG_ESSENTIAL
-        LOG_HK_SLA("asso c_ts %u n_ts %u t_asn %llx\n",
-                tsch_timing_us[tsch_ts_timeslot_length],
-                sla_next_timeslot_length, 
-                (uint64_t)(sla_triggering_asn.ls4b) + ((uint64_t)(sla_triggering_asn.ms1b) << 32));
+  LOG_HCK_SLA("asso c_ts %u n_ts %u t_asn %llx\n",
+              tsch_timing_us[tsch_ts_timeslot_length],
+              sla_next_timeslot_length, 
+              (uint64_t)(sla_triggering_asn.ls4b) + ((uint64_t)(sla_triggering_asn.ms1b) << 32));
 #endif
 #endif
 
@@ -1915,7 +1915,7 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
         clock_inst_leaving_time = clock_time() - clock_last_leaving;
         clock_avg_leaving_time = (clock_avg_leaving_time * (tsch_log_association_count - 2) + clock_inst_leaving_time) / (tsch_log_association_count - 1);
       }
-      LOG_HK("asso %u leave_time %lu inst_l_time %lu |\n",
+      LOG_HCK("asso %u leave_time %lu inst_l_time %lu |\n",
              tsch_log_association_count,
              clock_avg_leaving_time, 
              clock_inst_leaving_time);
@@ -2072,7 +2072,7 @@ PROCESS_THREAD(tsch_process, ev, data)
       tx_count, rx_count, sync_count);
 
     ++tsch_leaving_count;
-    LOG_HK("leaving %u |\n", tsch_leaving_count);
+    LOG_HCK("leaving %u |\n", tsch_leaving_count);
 
     /* Will need to re-synchronize */
     tsch_reset();
@@ -2125,13 +2125,13 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
             LOG_ERR("! could not enqueue EB packet\n");
 
             ++tsch_eb_packet_qloss_count;
-            LOG_HK("eb_qloss %u |\n", tsch_eb_packet_qloss_count);
+            LOG_HCK("eb_qloss %u |\n", tsch_eb_packet_qloss_count);
           } else {
             LOG_INFO("TSCH: enqueue EB packet %u %u\n",
                      packetbuf_totlen(), packetbuf_hdrlen());
 
             ++tsch_eb_packet_enqueue_count;
-            LOG_HK("eb_enq %u |\n", tsch_eb_packet_enqueue_count);
+            LOG_HCK("eb_enq %u |\n", tsch_eb_packet_enqueue_count);
 
             p->tsch_sync_ie_offset = tsch_sync_ie_offset;
             p->header_len = hdr_len;
@@ -2140,7 +2140,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
       }
 #if SLA_DBG_OPERATION
       else {
-        LOG_HK_SLA("send_eb exist\n");
+        LOG_HCK_SLA("send_eb exist\n");
       }
 #endif
     }
@@ -2367,21 +2367,21 @@ send_packet(mac_callback_t sent, void *ptr)
       ret = MAC_TX_ERR;
       if(sent == keepalive_packet_sent) {
         ++tsch_ka_packet_qloss_count;
-        LOG_HK("ka_qloss %u | to %u seq %u\n", tsch_ka_packet_qloss_count,
+        LOG_HCK("ka_qloss %u | to %u seq %u\n", tsch_ka_packet_qloss_count,
                                               HCK_GET_NODE_ID_FROM_LINKADDR(addr),
                                               tsch_packet_seqno);
       } else {
         ++tsch_ip_packet_qloss_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
           ++tsch_ip_icmp6_packet_qloss_count;
-          LOG_HK("ip_qloss %u ip_icmp6_qloss %u | to %u seq %u\n", 
+          LOG_HCK("ip_qloss %u ip_icmp6_qloss %u | to %u seq %u\n", 
                 tsch_ip_packet_qloss_count, 
                 tsch_ip_icmp6_packet_qloss_count,
                 HCK_GET_NODE_ID_FROM_LINKADDR(addr),
                 tsch_packet_seqno);
         } else {
           ++tsch_ip_udp_packet_qloss_count;
-          LOG_HK("ip_qloss %u ip_udp_qloss %u | to %u seq %u\n", 
+          LOG_HCK("ip_qloss %u ip_udp_qloss %u | to %u seq %u\n", 
                 tsch_ip_packet_qloss_count, 
                 tsch_ip_udp_packet_qloss_count,
                 HCK_GET_NODE_ID_FROM_LINKADDR(addr),
@@ -2398,7 +2398,7 @@ send_packet(mac_callback_t sent, void *ptr)
              QUEUEBUF_NUM, p->header_len, queuebuf_datalen(p->qb));
       if(sent == keepalive_packet_sent) {
         ++tsch_ka_packet_enqueue_count;
-        LOG_HK("ka_enq %u | to %u seq %u len %u %u\n", tsch_ka_packet_enqueue_count,
+        LOG_HCK("ka_enq %u | to %u seq %u len %u %u\n", tsch_ka_packet_enqueue_count,
                                                       HCK_GET_NODE_ID_FROM_LINKADDR(addr),
                                                       tsch_packet_seqno,
                                                       p->header_len, 
@@ -2407,7 +2407,7 @@ send_packet(mac_callback_t sent, void *ptr)
         ++tsch_ip_packet_enqueue_count;
         if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
           ++tsch_ip_icmp6_packet_enqueue_count;
-          LOG_HK("ip_enq %u ip_icmp6_enq %u | to %u seq %u len %u %u\n", 
+          LOG_HCK("ip_enq %u ip_icmp6_enq %u | to %u seq %u len %u %u\n", 
                 tsch_ip_packet_enqueue_count, 
                 tsch_ip_icmp6_packet_enqueue_count,
                 HCK_GET_NODE_ID_FROM_LINKADDR(addr),
@@ -2416,7 +2416,7 @@ send_packet(mac_callback_t sent, void *ptr)
                 queuebuf_datalen(p->qb));
         } else {
           ++tsch_ip_udp_packet_enqueue_count;
-          LOG_HK("ip_enq %u ip_udp_enq %u | to %u seq %u len %u %u\n", 
+          LOG_HCK("ip_enq %u ip_udp_enq %u | to %u seq %u len %u %u\n", 
                 tsch_ip_packet_enqueue_count, 
                 tsch_ip_udp_packet_enqueue_count,
                 HCK_GET_NODE_ID_FROM_LINKADDR(addr),

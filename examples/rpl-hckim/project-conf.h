@@ -3,19 +3,141 @@
 
 
 /***************************************************************
- * HCK's modifications of Contiki-NG
+ * Prerequisite macros for HCK's implementations
  ****************************************************************/
-#define HCK_MOD_TSCH_SYNC_COUNT                             0 /* Network formation acceleration */
-#define HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF    0 /* Network formation acceleration */
-#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0 /* Network formation acceleration */
-#define HCK_MOD_RPL_CODE_NO_PATH_DAO                        0 /* Network formation acceleration */
+#define HCK_GET_NODE_ID_FROM_IPADDR(addr)                   ((((addr)->u8[14]) << 8) | (addr)->u8[15])
+#define HCK_GET_NODE_ID_FROM_LINKADDR(addr)                 ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
+
 
 /***************************************************************
- * HCK's logging messages
+ * HCK's modifications of Contiki-NG
+ ****************************************************************/
+#define HCK_MOD_RPL_CODE_NO_PATH_DAO                        0
+#define HCK_MOD_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP          0
+//
+#define HCK_MOD_MAC_SEQNO_DUPLICATE_CHECK                   1
+//
+#define HCK_MOD_ORCHESTRA_NO_PATH_DAO_HANDLING              1
+//
+#define HCK_MOD_APPLY_LATEST_CONTIKI                        1
+#define HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF                  1
+#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF       0
+#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF       0
+#define HCK_MOD_TSCH_SYNC_COUNT                             0
+#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0
+#define HCK_MOD_TSCH_DEACTIVATE_RADIO_INTERRUPT_MODE        1
+//
+#if HCK_MOD_MAC_SEQNO_DUPLICATE_CHECK
+#define NETSTACK_CONF_MAC_SEQNO_MAX_AGE                     (20 * CLOCK_SECOND)
+#define NETSTACK_CONF_MAC_SEQNO_HISTORY                     8
+#endif
+
+
+/***************************************************************
+ * HCK's logging implementation
  ****************************************************************/
 #define HCK_LOG                                             0
+#define HCK_LOG_LEVEL_LITE                                  1
+#define HCK_LOG_EVAL_CONFIG                                 1
+#define HCK_LOG_TSCH_LINK_ADD_REMOVE                        1
+#define HCK_LOG_TSCH_PACKET_ADD_REMOVE                      1
 #define HCK_LOG_TSCH_SLOT                                   0
 #define HCK_LOG_TSCH_SLOT_APP_SEQNO                         0
+#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      0
+//
+#define SIMPLE_ENERGEST_CONF_PERIOD                         (1 * 60 * CLOCK_SECOND)
+//
+#if HCK_LOG_LEVEL_LITE
+#define LOG_LEVEL_APP                                       LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_IPV6                                 LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_RPL                                  LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_6LOWPAN                              LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_TCPIP                                LOG_LEVEL_NONE
+#define LOG_CONF_LEVEL_MAC                                  LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_FRAMER                               LOG_LEVEL_NONE
+#define LOG_LEVEL_ENERGEST                                  LOG_LEVEL_NONE
+#else
+#define LOG_LEVEL_APP                                       LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_IPV6                                 LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_RPL                                  LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_6LOWPAN                              LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_TCPIP                                LOG_LEVEL_INFO
+#define LOG_CONF_LEVEL_MAC                                  LOG_LEVEL_DBG
+#define LOG_CONF_LEVEL_FRAMER                               LOG_LEVEL_INFO
+#define LOG_LEVEL_ENERGEST                                  LOG_LEVEL_INFO
+#endif
+
+
+/***************************************************************
+ * HCK's debugging implementation
+ ****************************************************************/
+
+
+/***************************************************************
+ * HCK's topology configuration
+ ****************************************************************/
+#define WITH_COOJA                                          0
+#define WITH_IOTLAB                                         1
+//
+#if WITH_IOTLAB
+#define IOTLAB_GRENOBLE_79_L_CORNER_U                       1 /* 79 nodes */
+#define IOTLAB_GRENOBLE_78_R_CORNER_U                       2 /* 78 nodes */
+#define IOTLAB_LILLE_79_CORNER                              3 /* 79 nodes */
+#define IOTLAB_LILLE_2_CORNER                               4 /* 2 nodes */
+//
+//#define IOTLAB_SITE                                         IOTLAB_GRENOBLE_79_L_CORNER_U
+//#define IOTLAB_SITE                                         IOTLAB_GRENOBLE_78_R_CORNER_U
+#define IOTLAB_SITE                                         IOTLAB_LILLE_79_CORNER
+//#define IOTLAB_SITE                                         IOTLAB_LILLE_2_CORNER
+//
+#if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
+#define NODE_NUM                                            79
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_78_R_CORNER_U
+#define NODE_NUM                                            78
+#elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
+#define NODE_NUM                                            79
+#elif IOTLAB_SITE == IOTLAB_LILLE_2_CORNER
+#define NODE_NUM                                            2
+#endif
+#endif
+
+
+/***************************************************************
+ * HCK's application layer configuration (examples/rpl-hckim)
+ ****************************************************************/
+#if WITH_COOJA
+
+#elif WITH_IOTLAB
+#define WITH_UPWARD_TRAFFIC                        0
+#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4)
+#define WITH_DOWNWARD_TRAFFIC                      0
+#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 4)
+#define APP_PRINT_NODE_INFO_DELAY                  (1 * 60 * CLOCK_SECOND / 2)
+/* Bootstrap timing configurations */
+#if HCK_RPL_FIXED_TOPOLOGY
+#define APP_RESET_BEFORE_DATA_DELAY                (5 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (6 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
+#define APP_PRINT_LOG_DELAY                        (37 * 60 * CLOCK_SECOND)   /* APP_DATA_START_DELAY + APP_DATA_PERIOD + 1 */
+#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 4)
+#else /* HCK_RPL_FIXED_TOPOLOGY */
+#define APP_RESET_BEFORE_DATA_DELAY                (730 * 60 * CLOCK_SECOND)
+#define APP_DATA_START_DELAY                       (731 * 60 * CLOCK_SECOND)
+#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
+#define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)    /* APP_DATA_START_DELAY + APP_DATA_PERIOD + 2 */
+#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND)
+#endif /* HCK_RPL_FIXED_TOPOLOGY */
+#endif /* WITH_IOTLAB */
+
+
+
+
+
+
+/***************************************************************
+ * HCK's TSCH scheduler implementation
+ ****************************************************************/
+
 
 
 /***************************************************************
@@ -33,8 +155,8 @@
  ****************************************************************/
 #undef HCK_MOD_TSCH_SYNC_COUNT
 #define HCK_MOD_TSCH_SYNC_COUNT                             1
-#undef HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF
-#define HCK_MOD_TSCH_PACKET_OFFLOADING_FROM_CSSF_TO_UCSF    1
+#undef HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
+#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF       1
 #undef HCK_MOD_TSCH_PACKET_TYPE_INFO
 #define HCK_MOD_TSCH_PACKET_TYPE_INFO                       1
 #undef HCK_MOD_RPL_CODE_NO_PATH_DAO
@@ -156,142 +278,34 @@
 
 
 
+
+
+
+
+
+
 /*---------------------------------------------------------------------------*/
 /*
  * HCK modifications independent of proposed scheme
  */
-#define LOG_HK_ENABLED                             1
-
-#define HCK_MOD_NO_PATH_DAO_FOR_ORCHESTRA_PARENT   1
-
-#define HCK_ORCHESTRA_PACKET_OFFLOADING            0
-#define HCK_ORCHESTRA_PACKET_DROP                  1
-
-#define HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK     1
-#if HCK_MODIFIED_MAC_SEQNO_DUPLICATE_CHECK
-#define NETSTACK_CONF_MAC_SEQNO_MAX_AGE            (20 * CLOCK_SECOND)
-#define NETSTACK_CONF_MAC_SEQNO_HISTORY            8
-#endif
-
 #define HCK_DBG_ALICE_RESCHEDULE_INTERVAL          0
-
 #define HCK_DBG_REGULAR_SLOT_DETAIL                0
 #define HCK_DBG_REGULAR_SLOT_TIMING                (0 && HCK_DBG_REGULAR_SLOT_DETAIL)
-
-#define HCK_GET_NODE_ID_FROM_IPADDR(addr)          ((((addr)->u8[14]) << 8) | (addr)->u8[15])
-#define HCK_GET_NODE_ID_FROM_LINKADDR(addr)        ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
-
-#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     0
-
 #define HCK_RPL_FIXED_TOPOLOGY                     0
 #if HCK_RPL_FIXED_TOPOLOGY
 #define RPL_CONF_DEFAULT_LIFETIME                  RPL_INFINITE_LIFETIME
 #endif /* HCK_RPL_FIXED_TOPOLOGY */
-
-#define HCK_TSCH_DEACTIVATE_INTERRUPT_MODE         1
 #define HCK_TSCH_TIMESLOT_LENGTH                   10000
-
-#define HCK_APPLY_LATEST_CONTIKI                   1
-/*---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*/
-/*
- * Configure testbed site, node num, topology
- */
-#define WITH_IOTLAB                                1
-#if WITH_IOTLAB
-
-#define IOTLAB_GRENOBLE_79_L_CORNER_U              1 /* 79 nodes */
-#define IOTLAB_GRENOBLE_78_R_CORNER_U              2 /* 78 nodes */
-#define IOTLAB_LILLE_79_CORNER                     3 /* 79 nodes */
-#define IOTLAB_LILLE_2_CORNER                      4 /* 2 nodes */
-
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_79_L_CORNER_U
-//#define IOTLAB_SITE                                IOTLAB_GRENOBLE_78_R_CORNER_U
-#define IOTLAB_SITE                                IOTLAB_LILLE_79_CORNER
-//#define IOTLAB_SITE                                IOTLAB_LILLE_2_CORNER
-
-#if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
-#define NODE_NUM                                   79
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_78_R_CORNER_U
-#define NODE_NUM                                   78
-#elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
-#define NODE_NUM                                   79
-#elif IOTLAB_SITE == IOTLAB_LILLE_2_CORNER
-#define NODE_NUM                                   2
-#endif
-
-
-#endif /* WITH_IOTLAB */
 /*---------------------------------------------------------------------------*/
 
 
-/*---------------------------------------------------------------------------*/
-/*
- * Configure log
- */
-#define HCK_LOG_EVAL_CONFIG                        1
-#define HCK_LOG_LEVEL_LITE                         1
-
-#if HCK_LOG_LEVEL_LITE
-#define LOG_LEVEL_APP                              LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_NONE
-#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
-#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_NONE
-#define LOG_LEVEL_ENERGEST                         LOG_LEVEL_NONE
-#else
-#define LOG_LEVEL_APP                              LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_IPV6                        LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_RPL                         LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_6LOWPAN                     LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_TCPIP                       LOG_LEVEL_INFO
-#define LOG_CONF_LEVEL_MAC                         LOG_LEVEL_DBG
-#define LOG_CONF_LEVEL_FRAMER                      LOG_LEVEL_INFO
-#define LOG_LEVEL_ENERGEST                         LOG_LEVEL_INFO
-#endif
-
-#define SIMPLE_ENERGEST_CONF_PERIOD                (1 * 60 * CLOCK_SECOND)
-#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            1
-#define ENABLE_LOG_TSCH_SLOT_LEVEL_RX_LOG          0
-#define ENABLE_LOG_TSCH_PACKET_ADD_AND_FREE        1
-/*---------------------------------------------------------------------------*/
 
 
 /*---------------------------------------------------------------------------*/
 /*
  * Configure App
  */
-#if WITH_IOTLAB
-#define WITH_UPWARD_TRAFFIC                        0
-#define APP_UPWARD_SEND_INTERVAL                   (1 * 60 * CLOCK_SECOND / 4)
 
-#define WITH_DOWNWARD_TRAFFIC                      0
-#define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 4)
-
-#define APP_PRINT_NODE_INFO_DELAY                  (1 * 60 * CLOCK_SECOND / 2)
-
-#if HCK_RPL_FIXED_TOPOLOGY
-
-#define APP_RESET_BEFORE_DATA_DELAY                (5 * 60 * CLOCK_SECOND)
-#define APP_DATA_START_DELAY                       (6 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
-#define APP_PRINT_LOG_DELAY                        (37 * 60 * CLOCK_SECOND) // APP_DATA_START_DELAY + APP_DATA_PERIOD + 1
-#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 4)
-
-#else /* HCK_RPL_FIXED_TOPOLOGY */
-
-#define APP_RESET_BEFORE_DATA_DELAY                (730 * 60 * CLOCK_SECOND) //(65 * 60 * CLOCK_SECOND)
-#define APP_DATA_START_DELAY                       (731 * 60 * CLOCK_SECOND) //(66 * 60 * CLOCK_SECOND)
-#define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)  //(60 * 60 * CLOCK_SECOND)
-#define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)   //(19 * 60 * CLOCK_SECOND) //APP_DATA_START_DELAY + APP_DATA_PERIOD + 2
-#define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND)   //
-
-#endif /* HCK_RPL_FIXED_TOPOLOGY */
-
-#endif
 
 #define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
 #define APP_DOWNWARD_MAX_TX                        (APP_DATA_PERIOD / APP_DOWNWARD_SEND_INTERVAL)
@@ -452,8 +466,8 @@
 #define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
 #define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
 #define ENABLE_ALICE_EARLY_PACKET_DROP_LOG         0
-#undef ENABLE_LOG_TSCH_LINK_ADD_REMOVE
-#define ENABLE_LOG_TSCH_LINK_ADD_REMOVE            0
+#undef HCK_LOG_TSCH_LINK_ADD_REMOVE
+#define HCK_LOG_TSCH_LINK_ADD_REMOVE            0
 #define ENABLE_LOG_ALICE_LINK_ADD_REMOVE           0
 
 #define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
@@ -736,8 +750,8 @@
 #undef ASAP_DBG_SLOT_END
 #define ASAP_DBG_SLOT_END                          0
 
-#undef HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
-#define HCK_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP     0
+#undef HCK_MOD_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
+#define HCK_MOD_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP 0
 #undef HCK_RPL_FIXED_TOPOLOGY
 #define HCK_RPL_FIXED_TOPOLOGY                     0
 

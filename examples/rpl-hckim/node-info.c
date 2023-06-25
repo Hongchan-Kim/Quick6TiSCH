@@ -279,12 +279,12 @@ iotlab_node_id_from_uid(uint16_t uid)
 void
 print_iotlab_node_info()
 {
-  LOG_HK_NODE("root %u %x (%u %x)\n", APP_ROOT_ID, APP_ROOT_ID, iotlab_nodes[0][0], iotlab_nodes[0][1]);
+  LOG_HCK_NODE("root %u %x (%u %x)\n", APP_ROOT_ID, APP_ROOT_ID, iotlab_nodes[0][0], iotlab_nodes[0][1]);
   uint8_t i = 1;
   for(i = 1; i < NODE_NUM; i++) {
-    LOG_HK_NODE("non_root %u %x %u %x\n", i + 1, i + 1, iotlab_nodes[i][0], iotlab_nodes[i][1]);
+    LOG_HCK_NODE("non_root %u %x %u %x\n", i + 1, i + 1, iotlab_nodes[i][0], iotlab_nodes[i][1]);
   }
-  LOG_HK_NODE("end\n");
+  LOG_HCK_NODE("end\n");
 }
 /*---------------------------------------------------------------------------*/
 #endif /* WITH_IOTLAB */

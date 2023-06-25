@@ -464,7 +464,7 @@ update_hbh_header(void)
           LOG_WARN("RPL forwarding error\n");
 
           ++rpl_fwd_err_count;
-          LOG_HK("fwd_err %u |\n", rpl_fwd_err_count);
+          LOG_HCK("fwd_err %u |\n", rpl_fwd_err_count);
 
           /* We should send back the packet to the originating parent,
                 but it is not feasible yet, so we send a No-Path DAO instead */

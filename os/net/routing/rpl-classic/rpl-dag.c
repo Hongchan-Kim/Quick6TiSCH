@@ -307,7 +307,7 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
 
 
     ++rpl_parent_switch_count;
-    LOG_HK("ps %u lastP %u |\n", 
+    LOG_HCK("ps %u lastP %u |\n", 
           rpl_parent_switch_count, 
           (p == NULL) ? 0 : 
           (rpl_parent_get_ipaddr(p)->u8[14] << 8) + (rpl_parent_get_ipaddr(p)->u8[15]));
@@ -1461,7 +1461,7 @@ rpl_local_repair(rpl_instance_t *instance)
   LOG_INFO("Starting a local instance repair\n");
 
   ++rpl_local_repair_count;
-  LOG_HK("local_repair %u |\n", rpl_local_repair_count);
+  LOG_HCK("local_repair %u |\n", rpl_local_repair_count);
 
   for(i = 0; i < RPL_MAX_DAG_PER_INSTANCE; i++) {
     if(instance->dag_table[i].used) {
