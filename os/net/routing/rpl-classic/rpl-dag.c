@@ -68,7 +68,7 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
-#if HCK_RPL_FIXED_TOPOLOGY
+#if IOTLAB_FIXED_TOPOLOGY
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 uint8_t fixed_parent_id[NODE_NUM] = {0,  1,  1,  1,  1,  1,  9,  1,  1,  9, 
                                      1, 11, 11,  1, 11, 18, 18,  1, 18, 18, 
@@ -249,7 +249,7 @@ rpl_get_parent_link_stats(rpl_parent_t *p)
 int
 rpl_parent_is_fresh(rpl_parent_t *p)
 {
-#if HCK_RPL_FIXED_TOPOLOGY
+#if IOTLAB_FIXED_TOPOLOGY
   uint16_t my_index = node_id - 1;
   uint16_t target_parent_id = fixed_parent_id[my_index];
 
@@ -320,7 +320,8 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
     RPL_CALLBACK_PARENT_SWITCH(dag->preferred_parent, p);
 #endif /* RPL_CALLBACK_PARENT_SWITCH */
 
-#if RPL_MODIFIED_DAO_OPERATION_1
+#if RPL_WITH_DAO_ACK
+#if HCK_MOD_RPL_DAO_RETX_OPERATION
     rpl_parent_t *old_p = dag->preferred_parent;
     if(old_p != NULL) {
       if(old_p->dag != NULL) {
@@ -332,6 +333,7 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
         }
       }
     }
+#endif
 #endif
 
     /* Always keep the preferred parent locked, so it remains in the
@@ -406,7 +408,7 @@ should_refresh_routes(rpl_instance_t *instance, rpl_dio_t *dio, rpl_parent_t *p)
 static int
 acceptable_rank(rpl_dag_t *dag, rpl_rank_t rank)
 {
-#if HCK_RPL_FIXED_TOPOLOGY
+#if IOTLAB_FIXED_TOPOLOGY
   uint16_t my_index = node_id - 1;
   uint16_t target_parent_id = fixed_parent_id[my_index];
 
@@ -960,7 +962,7 @@ best_parent(rpl_dag_t *dag, int fresh_only)
     return NULL;
   }
 
-#if HCK_RPL_FIXED_TOPOLOGY
+#if IOTLAB_FIXED_TOPOLOGY
   uint16_t my_index = node_id - 1;
   uint16_t target_parent_id = fixed_parent_id[my_index];
 #endif
@@ -968,7 +970,7 @@ best_parent(rpl_dag_t *dag, int fresh_only)
   of = dag->instance->of;
   /* Search for the best parent according to the OF */
   for(p = nbr_table_head(rpl_parents); p != NULL; p = nbr_table_next(rpl_parents, p)) {
-#if HCK_RPL_FIXED_TOPOLOGY
+#if IOTLAB_FIXED_TOPOLOGY
     if(HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(p)) == target_parent_id) {
       best = p;
       break;
@@ -1074,7 +1076,7 @@ rpl_nullify_parent(rpl_parent_t *parent)
       }
       /* Send No-Path DAO only when nullifying preferred parent */
       if(parent == dag->preferred_parent) {
-#if RPL_MODIFIED_DAO_OPERATION_2
+#if HCK_MOD_RPL_DAO_PARENT_NULLIFICATION
         rpl_set_preferred_parent(dag, NULL);
         if(RPL_IS_STORING(dag->instance)) {
           dao_output(parent, RPL_ZERO_LIFETIME);

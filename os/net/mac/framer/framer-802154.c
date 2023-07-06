@@ -148,7 +148,7 @@ create_frame(int do_create)
   } else if(packetbuf_hdralloc(hdr_len)) {
 
 #if WITH_UPA
-    int hdr_len_increment = 0;
+    int upa_hdr_len_increment = 0;
     if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA) == 1 && !packetbuf_holds_broadcast()) {
       struct ieee802154_ies upa_ies;
       memset(&upa_ies, 0, sizeof(upa_ies));
@@ -160,7 +160,7 @@ create_frame(int do_create)
                                                           PACKETBUF_SIZE - hdr_len, &upa_ies) < 0) {
           return FRAMER_FAILED;
         }
-        hdr_len_increment += 2;
+        upa_hdr_len_increment += 2;
       } else {
         return FRAMER_FAILED;
       }
@@ -170,16 +170,16 @@ create_frame(int do_create)
                                                                 PACKETBUF_SIZE - hdr_len, &upa_ies) < 0) {
           return FRAMER_FAILED;
         }
-        hdr_len_increment += 4;
+        upa_hdr_len_increment += 4;
       } else {
         return FRAMER_FAILED;
       }
     }
-    hdr_len += hdr_len_increment;
+    hdr_len += upa_hdr_len_increment;
 #endif
 
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
-    int hdr_len_increment = 0;
+    int hck_hdr_len_increment = 0;
     if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA) == 1 
        && packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) != FRAME802154_BEACONFRAME) {
       struct ieee802154_ies formation_ies;
@@ -192,7 +192,7 @@ create_frame(int do_create)
                                                           PACKETBUF_SIZE - hdr_len, &formation_ies) < 0) {
           return FRAMER_FAILED;
         }
-        hdr_len_increment += 2;
+        hck_hdr_len_increment += 2;
       } else {
         return FRAMER_FAILED;
       }
@@ -202,12 +202,12 @@ create_frame(int do_create)
                                                                 PACKETBUF_SIZE - hdr_len, &formation_ies) < 0) {
           return FRAMER_FAILED;
         }
-        hdr_len_increment += 4;
+        hck_hdr_len_increment += 4;
       } else {
         return FRAMER_FAILED;
       }
     }
-    hdr_len += hdr_len_increment;
+    hdr_len += hck_hdr_len_increment;
 #endif
 
     frame802154_create(&params, packetbuf_hdrptr());

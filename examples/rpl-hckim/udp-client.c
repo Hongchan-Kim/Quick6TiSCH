@@ -37,7 +37,7 @@ static uint32_t  eval_01_count = 1;
 #endif
 
 /*---------------------------------------------------------------------------*/
-#if APP_SEQNO_DUPLICATE_CHECK
+#if HCK_MOD_APP_SEQNO_DUPLICATE_CHECK
 struct app_down_seqno {
   clock_time_t app_down_timestamp;
   uint16_t app_down_seqno;
@@ -90,14 +90,14 @@ app_down_sequence_register_seqno(uint16_t current_app_down_seqno)
   app_down_received_seqnos[0].app_down_seqno = current_app_down_seqno;
   app_down_received_seqnos[0].app_down_timestamp = clock_time();
 }
-#endif /* APP_SEQNO_DUPLICATE_CHECK */
+#endif /* HCK_MOD_APP_SEQNO_DUPLICATE_CHECK */
 /*---------------------------------------------------------------------------*/
 static void
 reset_log_app_client()
 {
   app_rxd_count = 0;
 
-#if APP_SEQNO_DUPLICATE_CHECK
+#if HCK_MOD_APP_SEQNO_DUPLICATE_CHECK
   uint8_t j = 0;
   for(j = 0; j < APP_SEQNO_HISTORY; j++) {
     app_down_received_seqnos[j].app_down_seqno = 0;
@@ -133,7 +133,7 @@ reset_eval(uint8_t phase)
 
 #if HCK_LOG_EVAL_CONFIG
   LOG_HCK("eval_config 1 fixed_topology %u lite_log %u |\n", 
-          HCK_RPL_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
+          IOTLAB_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
   LOG_HCK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
           WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
           WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
@@ -182,7 +182,7 @@ udp_rx_callback(struct simple_udp_connection *c,
   uint32_t app_received_seqno = 0;
   memcpy(&app_received_seqno, data + datalen - 6, 4);
 
-#if APP_SEQNO_DUPLICATE_CHECK
+#if HCK_MOD_APP_SEQNO_DUPLICATE_CHECK
   uint16_t app_received_seqno_count = app_received_seqno % (1 << 16);
 
   if(app_down_sequence_is_duplicate(app_received_seqno_count)) {
@@ -192,7 +192,7 @@ udp_rx_callback(struct simple_udp_connection *c,
               app_rx_down_asn);
   } else {
     app_down_sequence_register_seqno(app_received_seqno_count);
-#endif /* APP_SEQNO_DUPLICATE_CHECK */
+#endif /* HCK_MOD_APP_SEQNO_DUPLICATE_CHECK */
     LOG_INFO("Received message from ");
     LOG_INFO_6ADDR(sender_addr);
     LOG_INFO_("\n");
@@ -208,9 +208,9 @@ udp_rx_callback(struct simple_udp_connection *c,
               app_rx_down_asn,
               app_tx_down_asn,
               hops);
-#if APP_SEQNO_DUPLICATE_CHECK
+#if HCK_MOD_APP_SEQNO_DUPLICATE_CHECK
   }
-#endif /* APP_SEQNO_DUPLICATE_CHECK */
+#endif /* HCK_MOD_APP_SEQNO_DUPLICATE_CHECK */
 }
 /*---------------------------------------------------------------------------*/
 PROCESS(udp_client_process, "UDP client");
@@ -254,7 +254,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
 #if HCK_LOG_EVAL_CONFIG
   LOG_HCK("eval_config 1 fixed_topology %u lite_log %u |\n", 
-          HCK_RPL_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
+          IOTLAB_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
   LOG_HCK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
           WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
           WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,

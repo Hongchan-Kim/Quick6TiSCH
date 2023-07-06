@@ -2166,7 +2166,7 @@ PROCESS_THREAD(tsch_pending_events_process, ev, data)
   PROCESS_BEGIN();
   while(1) {
     PROCESS_YIELD_UNTIL(ev == PROCESS_EVENT_POLL);
-#if TSCH_SWAP_TX_RX_PROCESS_PENDING
+#if HCK_MOD_TSCH_SWAP_TX_RX_PROCESS_PENDING
     tsch_tx_process_pending();
     tsch_rx_process_pending();
 #else

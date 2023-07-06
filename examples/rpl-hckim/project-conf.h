@@ -1,7 +1,6 @@
 #ifndef PROJECT_CONF_H_
 #define PROJECT_CONF_H_
 
-
 /***************************************************************
  * Prerequisite macros for HCK's implementations
  ****************************************************************/
@@ -12,20 +11,32 @@
 /***************************************************************
  * HCK's modifications of Contiki-NG
  ****************************************************************/
-#define HCK_MOD_RPL_CODE_NO_PATH_DAO                        0
-#define HCK_MOD_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP          0
-//
+#define HCK_MOD_APP_SEQNO_DUPLICATE_CHECK                   1
 #define HCK_MOD_MAC_SEQNO_DUPLICATE_CHECK                   1
+//
+#define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
+#define HCK_MOD_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP          0
+#define HCK_MOD_RPL_RELAX_ETX_NOACK_PENALTY                 1
+#define HCK_MOD_RPL_DAO_RETX_OPERATION                      1 /* stop dao retransmission when preferred parent changed */
+#define HCK_MOD_RPL_DAO_PARENT_NULLIFICATION                1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
+//
+#define HCK_MOD_TSCH_APPLY_LATEST_CONTIKI                   1
+#define HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF                  1
+#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF       0
+#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF       1
+#define HCK_MOD_TSCH_SYNC_COUNT                             1
+#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0
+#define HCK_MOD_TSCH_DEACTIVATE_RADIO_INTERRUPT_MODE        1
+#define HCK_MOD_TSCH_SWAP_TX_RX_PROCESS_PENDING             1 /* swap order of rx_process_pending and tx_process_pending */
+#define HCK_MOD_TSCH_FILTER_PACKETS_WITH_INVALID_RX_TIMING  1
+#define HCK_MOD_TSCH_HANDLE_OVERFULL_SLOT_OPERATION         1
 //
 #define HCK_MOD_ORCHESTRA_NO_PATH_DAO_HANDLING              1
 //
-#define HCK_MOD_APPLY_LATEST_CONTIKI                        1
-#define HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF                  1
-#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF       0
-#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF       0
-#define HCK_MOD_TSCH_SYNC_COUNT                             0
-#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0
-#define HCK_MOD_TSCH_DEACTIVATE_RADIO_INTERRUPT_MODE        1
+#if HCK_MOD_APP_SEQNO_DUPLICATE_CHECK
+#define APP_SEQNO_MAX_AGE                                   (20 * CLOCK_SECOND)
+#define APP_SEQNO_HISTORY                                   8
+#endif
 //
 #if HCK_MOD_MAC_SEQNO_DUPLICATE_CHECK
 #define NETSTACK_CONF_MAC_SEQNO_MAX_AGE                     (20 * CLOCK_SECOND)
@@ -36,16 +47,19 @@
 /***************************************************************
  * HCK's logging implementation
  ****************************************************************/
-#define HCK_LOG                                             0
+#define HCK_LOG                                             1
 #define HCK_LOG_LEVEL_LITE                                  1
 #define HCK_LOG_EVAL_CONFIG                                 1
 #define HCK_LOG_TSCH_LINK_ADD_REMOVE                        1
 #define HCK_LOG_TSCH_PACKET_ADD_REMOVE                      1
-#define HCK_LOG_TSCH_SLOT                                   0
-#define HCK_LOG_TSCH_SLOT_APP_SEQNO                         0
-#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      0
+#define HCK_LOG_TSCH_SLOT                                   1
+#define HCK_LOG_TSCH_SLOT_APP_SEQNO                         1
+#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      1
 //
 #define SIMPLE_ENERGEST_CONF_PERIOD                         (1 * 60 * CLOCK_SECOND)
+#define RPL_FIRST_MEASURE_PERIOD                            (1 * 60)
+#define RPL_NEXT_MEASURE_PERIOD                             (1 * 60)
+#define TSCH_NEXT_PRINT_PERIOD                              (1 * 60 * CLOCK_SECOND)
 //
 #if HCK_LOG_LEVEL_LITE
 #define LOG_LEVEL_APP                                       LOG_LEVEL_NONE
@@ -71,6 +85,9 @@
 /***************************************************************
  * HCK's debugging implementation
  ****************************************************************/
+#define HCK_DBG_REGULAR_SLOT_DETAIL                0
+#define HCK_DBG_REGULAR_SLOT_TIMING                (0 && HCK_DBG_REGULAR_SLOT_DETAIL)
+#define HCK_DBG_ALICE_RESCHEDULE_INTERVAL          0
 
 
 /***************************************************************
@@ -79,16 +96,17 @@
 #define WITH_COOJA                                          0
 #define WITH_IOTLAB                                         1
 //
-#if WITH_IOTLAB
+#if WITH_COOJA
+//
+#elif WITH_IOTLAB
+#define IOTLAB_FIXED_TOPOLOGY                               0
+//
 #define IOTLAB_GRENOBLE_79_L_CORNER_U                       1 /* 79 nodes */
 #define IOTLAB_GRENOBLE_78_R_CORNER_U                       2 /* 78 nodes */
 #define IOTLAB_LILLE_79_CORNER                              3 /* 79 nodes */
 #define IOTLAB_LILLE_2_CORNER                               4 /* 2 nodes */
 //
-//#define IOTLAB_SITE                                         IOTLAB_GRENOBLE_79_L_CORNER_U
-//#define IOTLAB_SITE                                         IOTLAB_GRENOBLE_78_R_CORNER_U
 #define IOTLAB_SITE                                         IOTLAB_LILLE_79_CORNER
-//#define IOTLAB_SITE                                         IOTLAB_LILLE_2_CORNER
 //
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 #define NODE_NUM                                            79
@@ -103,7 +121,15 @@
 
 
 /***************************************************************
- * HCK's application layer configuration (examples/rpl-hckim)
+ * HCK's configuration for Contiki-NG system
+ ****************************************************************/
+#define IEEE802154_CONF_PANID                      0x58FA /* 22782 hckim */
+#define MAX_NBR_NODE_NUM                           60
+#define NBR_TABLE_CONF_MAX_NEIGHBORS               (MAX_NBR_NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
+
+
+/***************************************************************
+ * HCK's configuration for pplication layer (examples/rpl-hckim)
  ****************************************************************/
 #if WITH_COOJA
 
@@ -114,29 +140,198 @@
 #define APP_DOWNWARD_SEND_INTERVAL                 (1 * 60 * CLOCK_SECOND / 4)
 #define APP_PRINT_NODE_INFO_DELAY                  (1 * 60 * CLOCK_SECOND / 2)
 /* Bootstrap timing configurations */
-#if HCK_RPL_FIXED_TOPOLOGY
+#if IOTLAB_FIXED_TOPOLOGY
 #define APP_RESET_BEFORE_DATA_DELAY                (5 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (6 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (30 * 60 * CLOCK_SECOND)
 #define APP_PRINT_LOG_DELAY                        (37 * 60 * CLOCK_SECOND)   /* APP_DATA_START_DELAY + APP_DATA_PERIOD + 1 */
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND / 4)
-#else /* HCK_RPL_FIXED_TOPOLOGY */
+#else /* IOTLAB_FIXED_TOPOLOGY */
 #define APP_RESET_BEFORE_DATA_DELAY                (730 * 60 * CLOCK_SECOND)
 #define APP_DATA_START_DELAY                       (731 * 60 * CLOCK_SECOND)
 #define APP_DATA_PERIOD                            (60 * 60 * CLOCK_SECOND)
 #define APP_PRINT_LOG_DELAY                        (1 * 60 * CLOCK_SECOND)    /* APP_DATA_START_DELAY + APP_DATA_PERIOD + 2 */
 #define APP_PRINT_LOG_PERIOD                       (1 * 60 * CLOCK_SECOND)
-#endif /* HCK_RPL_FIXED_TOPOLOGY */
-#endif /* WITH_IOTLAB */
+#endif /* IOTLAB_FIXED_TOPOLOGY */
+#endif /* WITH_COOJA or WITH_IOTLAB */
+//
+#define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
+#define APP_DOWNWARD_MAX_TX                        (APP_DATA_PERIOD / APP_DOWNWARD_SEND_INTERVAL)
+/* 
+   App payload size
+   - Orchestra or ALICE
+      - Wihtout any: Max in single hop: 87, Max in multi hop: 70
+      - With UPA: Max in single hop: 81, Max in multi hop: 64 
+   OST
+      - Without any: Max in single hop: 85, Max in multi hop: 58
+      - With UPA: Max in single hop: 79, Max in multi hop: ???
+      - With ODP: ???
+*/
+#define APP_PAYLOAD_LEN                            14
+#define APP_DATA_MAGIC                             0x58FA
 
 
+/***************************************************************
+ * HCK's configuration for IPv6, 6LoWPAN, and RPL layers
+ ****************************************************************/
+/* IPv6 and 6LoWPAN layers */
+#define UIP_CONF_BUFFER_SIZE                       160
+#define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
+#define SICSLOWPAN_CONF_FRAG                       0
+/* RPL layer */
+#define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST
+#if IOTLAB_FIXED_TOPOLOGY
+#define RPL_CONF_WITH_DAO_ACK                      0
+#define RPL_CONF_DEFAULT_LIFETIME                  RPL_INFINITE_LIFETIME
+#else /* IOTLAB_FIXED_TOPOLOGY */
+#define RPL_CONF_WITH_DAO_ACK                      1
+#endif /* IOTLAB_FIXED_TOPOLOGY */
+#define RPL_CONF_WITH_PROBING                      1
+#define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
+#define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND) /* originally 5 seconds */
+#define RPL_CONF_PARENT_SWITCH_THRESHOLD           96 /* 96 (0.75, default), 127 (0.99), 128 (1) */
+#define RPL_MRHOF_CONF_SQUARED_ETX                 0
+#define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
 
 
+/***************************************************************
+ * HCK's configuration for TSCH layer
+ ****************************************************************/
+#define HCK_TSCH_TIMESLOT_LENGTH                   10000
+#define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
+#define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* 8 in OST, originally 4 */
+#define TSCH_CONF_CCA_ENABLED                      1
+//#define TSCH_CONF_AUTOSTART                        0
+//#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH          3
+#ifndef WITH_SECURITY
+#define WITH_SECURITY                              0
+#endif /* WITH_SECURITY */
+#define TSCH_LOG_CONF_QUEUE_LEN                    128 // originally 16
 
 
 /***************************************************************
  * HCK's TSCH scheduler implementation
  ****************************************************************/
+#define TSCH_SCHEDULER_NB_ORCHESTRA                1 // 1: NB-Orchestra-storing
+#define TSCH_SCHEDULER_LB_ORCHESTRA                2 // 2: LB-Orchestra
+#define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
+#define TSCH_SCHEDULER_OST                         4 // 4: OST
+//
+#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
+//
+#define ORCHESTRA_RULE_NB { &eb_per_time_source, \
+                          &unicast_per_neighbor_rpl_storing, \
+                          &default_common }
+#define ORCHESTRA_RULE_LB { &eb_per_time_source, \
+                          &unicast_per_neighbor_link_based, \
+                          &default_common }
+#define ORCHESTRA_RULE_ALICE { &eb_per_time_source, \
+                          &default_common, \
+                          &unicast_per_neighbor_rpl_storing }
+#define ORCHESTRA_RULE_OST { &eb_per_time_source, \
+                          &unicast_per_neighbor_rpl_storing, \
+                          &default_common }
+//
+/* Neighbor-based Orchestra configuration */
+#if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
+#define WITH_ORCHESTRA                             1
+#define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
+#define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
+#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
+#define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
+#define TSCH_SCHED_COMMON_SF_HANDLE                2 //slotframe handle of broadcast/default slotframe
+/* Link-based Orchestra configuration */
+#elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_LB_ORCHESTRA
+#define WITH_ORCHESTRA                             1
+#define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_LB //link-based Orchestra
+#define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
+#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
+#define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
+#define TSCH_SCHED_COMMON_SF_HANDLE                2 //slotframe handle of broadcast/default slotframe
+/* ALICE configuration */
+#elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE
+#define WITH_ALICE                                 1
+#define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
+#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
+#define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        31 //19, 31, 41, 53, 61, ... 101 // broadcast and default slotframe length, original: 31
+#define ORCHESTRA_CONF_UNICAST_PERIOD              20 // unicast, should be longer than (2N-2)/3 to provide contention-free links
+#define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
+#define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
+#define ALICE_EARLY_PACKET_DROP                    0
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
+#define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
+#define ENABLE_ALICE_EARLY_PACKET_DROP_LOG         0
+#undef HCK_LOG_TSCH_LINK_ADD_REMOVE
+#define HCK_LOG_TSCH_LINK_ADD_REMOVE               0
+#define ENABLE_LOG_ALICE_LINK_ADD_REMOVE           0
+#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
+#define TSCH_SCHED_COMMON_SF_HANDLE                1 //slotframe handle of broadcast/default slotframe
+#define TSCH_SCHED_UNICAST_SF_HANDLE               2 //slotframe handle of unicast slotframe
+#define ALICE_COMMON_SF_HANDLE                     TSCH_SCHED_COMMON_SF_HANDLE
+#define ALICE_UNICAST_SF_HANDLE                    TSCH_SCHED_UNICAST_SF_HANDLE
+/* OST configuration */
+#elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST
+#define WITH_OST                                   1
+#define OST_ON_DEMAND_PROVISION                    1
+#define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
+#define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
+#define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
+//
+#define OST_HANDLE_QUEUED_PACKETS                  1
+#define WITH_OST_LOG_INFO                          0
+#define WITH_OST_LOG_DBG                           0
+#define WITH_OST_LOG_NBR                           0
+#define WITH_OST_LOG_SCH                           0
+#define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
+//
+#define OST_N_SELECTION_PERIOD                     15 // related to OST_N_MAX: Min. traffic load = 1 / (OST_N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
+#define OST_N_MAX                                  8 // max t_offset 65535-1, 65535 is used for no-allocation
+#define OST_MORE_UNDER_PROVISION                   1 // more allocation 2^OST_MORE_UNDER_PROVISION times than under-provision
+#define OST_N_OFFSET_NEW_TX_REQUEST                100 // Maybe used for denial message
+#define PRR_THRES_TX_CHANGE                        70
+#define NUM_TX_MAC_THRES_TX_CHANGE                 20
+#define NUM_TX_FAIL_THRES                          5
+#define OST_THRES_CONSEQUTIVE_N_INC                3
+#define OST_T_OFFSET_ALLOCATION_FAILURE            ((1 << OST_N_MAX) + 1)
+#define OST_T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST    ((1 << OST_N_MAX) + 2)
+#define OST_THRES_CONSECUTIVE_NEW_TX_SCHEDULE_REQUEST           10
+#define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          (3 + 4 * MAX_NBR_NODE_NUM + 2) /* EB, CS, RBUC, Periodic, Ondemand, 2 for spare */
+#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 1 + MAX_NBR_NODE_NUM + 4 * MAX_NBR_NODE_NUM + 2) /* EB (2), CS (1), RBUC (1 + NODE_NUM), Periodic, Ondemand, 2 for spare */
+#define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) /* End of the periodic slotframe (Under-provision uses up to 2*NODE_NUM+2) */
+//
+#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
+#define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
+#define TSCH_SCHED_COMMON_SF_HANDLE                2 //slotframe handle of broadcast/default slotframe
+#define OST_PERIODIC_SF_ID_OFFSET                  2
+#define OST_ONDEMAND_SF_ID_OFFSET                  SSQ_SCHEDULE_HANDLE_OFFSET
+/* OST only */
+#undef TSCH_LOG_CONF_QUEUE_LEN
+#define TSCH_LOG_CONF_QUEUE_LEN                    16 // originally 16
+#define TSCH_CONF_RX_WAIT                          800 /* ignore too late packets */
+#define OST_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
+#define OST_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
+#endif /* CURRENT_TSCH_SCHEDULER */
+
+
+/***************************************************************
+ * RADIO configuration
+ ****************************************************************/
+#if WITH_ITOLAB
+/* m17dBm, m12dBm, m9dBm, m7dBm, m5dBm, m4dBm, m3dBm, m2dBm, m1dBm, 
+   0dBm, 0_7dBm, 1_3dBm, 1_8dBm, 2_3dBm, 2_8dBm, 3dBm */
+#define RF2XX_TX_POWER                             PHY_POWER_m17dBm
+/* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
+   m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */ //
+#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
+#endif
+
 
 
 
@@ -147,7 +342,7 @@
  * - [TMC'23] TRGB
  * - [Proposed] TOP
  ****************************************************************/
-#define NETWORK_FORMATION_ACCELERATION                      1
+#define NETWORK_FORMATION_ACCELERATION                      0
 #if NETWORK_FORMATION_ACCELERATION
 
 /***************************************************************
@@ -267,350 +462,81 @@
 
 
 
+/***************************************************************
+ * Network time-efficiency enhancement
+ * - Common modifications of Contiki-NG
+ * - [IEEE 802.15.4e] Default burst transmission
+ * - [IPSN'21] A3
+ * - [Proposed] Utility-based packet aggregation (UPA)
+ * - [Proposed] Slot length adaptation (SLA)
+ ****************************************************************/
+#define NETWORK_TIME_EFFICIENCY_ENHANCEMENT                 1
+#if NETWORK_TIME_EFFICIENCY_ENHANCEMENT
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * HCK modifications independent of proposed scheme
- */
-#define HCK_DBG_ALICE_RESCHEDULE_INTERVAL          0
-#define HCK_DBG_REGULAR_SLOT_DETAIL                0
-#define HCK_DBG_REGULAR_SLOT_TIMING                (0 && HCK_DBG_REGULAR_SLOT_DETAIL)
-#define HCK_RPL_FIXED_TOPOLOGY                     0
-#if HCK_RPL_FIXED_TOPOLOGY
-#define RPL_CONF_DEFAULT_LIFETIME                  RPL_INFINITE_LIFETIME
-#endif /* HCK_RPL_FIXED_TOPOLOGY */
-#define HCK_TSCH_TIMESLOT_LENGTH                   10000
-/*---------------------------------------------------------------------------*/
-
-
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * Configure App
- */
-
-
-#define APP_UPWARD_MAX_TX                          (APP_DATA_PERIOD / APP_UPWARD_SEND_INTERVAL)
-#define APP_DOWNWARD_MAX_TX                        (APP_DATA_PERIOD / APP_DOWNWARD_SEND_INTERVAL)
-
-/* Orchestra or ALICE
-   - Wihtout any: Max in single hop: 87, Max in multi hop: 70
-   - With UPA: Max in single hop: 81, Max in multi hop: 64 
-   OST
-   - Without any: Max in single hop: 85, Max in multi hop: 58
-   - With UPA: Max in single hop: 79, Max in multi hop: ???
-   - With ODP: ???
-   */
-#define APP_PAYLOAD_LEN                            14 // Min len with App footer
-//#define APP_PAYLOAD_LEN                            86 // Max len of Orchestra/ALICE in single hop
-//#define APP_PAYLOAD_LEN                            69 // Max len of Orchestra/ALICE in multi hop
-//#define APP_PAYLOAD_LEN                            80 // Max len of Orchestra/ALICE + UPA in single hop
-//#define APP_PAYLOAD_LEN                            63 // Max len of Orchestra/ALICE + UPA in multi hop
-//#define APP_PAYLOAD_LEN                            84 // Max len of OST w/o ODP in single hop
-//#define APP_PAYLOAD_LEN                            67 // Max len of OST w/o ODP in multi hop
-//#define APP_PAYLOAD_LEN                            82 // Max len of OST in single hop
-//#define APP_PAYLOAD_LEN                            65 // Max len of OST in multi hop
-//#define APP_PAYLOAD_LEN                            78 // Max len of OST + UPA in single hop
-//#define APP_PAYLOAD_LEN                            61 // Max len of OST + UPA in multi hop
-
-#define APP_DATA_MAGIC                             0x58FA
-
-#define APP_SEQNO_DUPLICATE_CHECK                  1
-#if APP_SEQNO_DUPLICATE_CHECK
-#define APP_SEQNO_MAX_AGE                          (20 * CLOCK_SECOND)
-#define APP_SEQNO_HISTORY                          8
-#endif
-/*---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*/
-/* 
- * Configure Contiki-NG system
- */
-#define MAX_NBR_NODE_NUM                           60
-#define NBR_TABLE_CONF_MAX_NEIGHBORS               (MAX_NBR_NODE_NUM + 2) /* Add 2 for EB and broadcast neighbors in TSCH layer */
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * Configure IP and 6LOWPAN
- */
-#define UIP_CONF_BUFFER_SIZE                       160 /* ksh */
-#define UIP_CONF_MAX_ROUTES                        (NODE_NUM)
-#define SICSLOWPAN_CONF_FRAG                       0
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * Configure RPL
- */
-#define RPL_CONF_MOP                               RPL_MOP_STORING_NO_MULTICAST
-#if HCK_RPL_FIXED_TOPOLOGY
-#define RPL_CONF_WITH_DAO_ACK                      0
-#else /* HCK_RPL_FIXED_TOPOLOGY */
-#define RPL_CONF_WITH_DAO_ACK                      1
-#endif /* HCK_RPL_FIXED_TOPOLOGY */
-#define RPL_CONF_WITH_PROBING                      1
-#define RPL_CONF_PROBING_INTERVAL                  (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
-#define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT        (20 * CLOCK_SECOND) /* originally 5 seconds */
-#define RPL_FIRST_MEASURE_PERIOD                   (1 * 60)
-#define RPL_NEXT_MEASURE_PERIOD                    (1 * 60)
-#define LINK_STATS_CONF_INIT_ETX_FROM_RSSI         1 /* originally 1 */
-#define RPL_RELAXED_ETX_NOACK_PENALTY              1
-#define RPL_MRHOF_CONF_SQUARED_ETX                 0
-#define RPL_CONF_PARENT_SWITCH_THRESHOLD           96 /* 96 (0.75, default), 127 (0.99), 128 (1) */
-#define RPL_MODIFIED_DAO_OPERATION_1               RPL_CONF_WITH_DAO_ACK /* stop dao retransmission when preferred parent changed */
-#define RPL_MODIFIED_DAO_OPERATION_2               1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
-//#define RPL_CONF_RPL_REPAIR_ON_DAO_NACK            0 /*  original: 0, set 1 in ALICE to enable local repair, quickly find another parent. */
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * Configure TSCH
- */
-#define QUEUEBUF_CONF_NUM                          16 /* 16 in Orchestra, ALICE, and OST, originally 8 */
-#define TSCH_CONF_MAX_INCOMING_PACKETS             8 /* 8 in OST, originally 4 */
-#define IEEE802154_CONF_PANID                      0x58FA //22782 hckim //0x81a5 //ksh
-#define TSCH_CONF_CCA_ENABLED                      1
-//#define TSCH_CONF_AUTOSTART                        0 //ksh
-//#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH          3 //ksh 6TiSCH minimal schedule length.
-#ifndef WITH_SECURITY
-#define WITH_SECURITY                              0
-#endif /* WITH_SECURITY */
-#define TSCH_NEXT_PRINT_PERIOD                     (1 * 60 * CLOCK_SECOND)
-#define TSCH_LOG_CONF_QUEUE_LEN                    128 // originally 16
-#define TSCH_SWAP_TX_RX_PROCESS_PENDING            1 /* swap order of rx_process_pending and tx_process_pending */
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * Configure TSCH scheduler
- */
-#define TSCH_SCHEDULER_NB_ORCHESTRA                1 // 1: NB-Orchestra-storing
-#define TSCH_SCHEDULER_LB_ORCHESTRA                2 // 2: LB-Orchestra
-#define TSCH_SCHEDULER_ALICE                       3 // 3: ALICE
-#define TSCH_SCHEDULER_OST                         4 // 4: OST
-
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_NB_ORCHESTRA
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_LB_ORCHESTRA
-#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_ALICE
-//#define CURRENT_TSCH_SCHEDULER                     TSCH_SCHEDULER_OST
-
-#define ORCHESTRA_RULE_NB { &eb_per_time_source, \
-                          &unicast_per_neighbor_rpl_storing, \
-                          &default_common }
-#define ORCHESTRA_RULE_LB { &eb_per_time_source, \
-                          &unicast_per_neighbor_link_based, \
-                          &default_common }
-#define ORCHESTRA_RULE_ALICE { &eb_per_time_source, \
-                          &default_common, \
-                          &unicast_per_neighbor_rpl_storing }
-#define ORCHESTRA_RULE_OST { &eb_per_time_source, \
-                          &unicast_per_neighbor_rpl_storing, \
-                          &default_common }
-
-#if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA
-#define WITH_ORCHESTRA                             1
-#define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_NB // neighbor-storing
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 // 0: receiver-based, 1: sender-based
-#define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              17 //unicast, 7, 11, 13, 17, 19, 23, 31, 43, 47, 59, 67, 71
-
-#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
-#define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
-#define TSCH_SCHED_COMMON_SF_HANDLE                2 //slotframe handle of broadcast/default slotframe
-
-#elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_LB_ORCHESTRA
-#define WITH_ORCHESTRA                             1
-#define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_LB //link-based Orchestra
-#define ORCHESTRA_CONF_EBSF_PERIOD                 397 //EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 //broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              11 //unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71
-
-#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
-#define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
-#define TSCH_SCHED_COMMON_SF_HANDLE                2 //slotframe handle of broadcast/default slotframe
-
-
-#elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_ALICE //ALICE
-#define WITH_ALICE                                 1
-#define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_ALICE
-#define ORCHESTRA_CONF_UNICAST_SENDER_BASED        1 //1: sender-based, 0:receiver-based
-#define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        31 //19, 31, 41, 53, 61, ... 101 // broadcast and default slotframe length, original: 31
-#define ORCHESTRA_CONF_UNICAST_PERIOD              20 // unicast, should be longer than (2N-2)/3 to provide contention-free links
-#define ALICE_PACKET_CELL_MATCHING_ON_THE_FLY      alice_packet_cell_matching_on_the_fly
-#define ALICE_TIME_VARYING_SCHEDULING              alice_time_varying_scheduling
-#define ALICE_EARLY_PACKET_DROP                    0
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
-#define ENABLE_ALICE_PACKET_CELL_MATCHING_LOG      0
-#define ENABLE_ALICE_EARLY_PACKET_DROP_LOG         0
-#undef HCK_LOG_TSCH_LINK_ADD_REMOVE
-#define HCK_LOG_TSCH_LINK_ADD_REMOVE            0
-#define ENABLE_LOG_ALICE_LINK_ADD_REMOVE           0
-
-#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
-#define TSCH_SCHED_COMMON_SF_HANDLE                1 //slotframe handle of broadcast/default slotframe
-#define TSCH_SCHED_UNICAST_SF_HANDLE               2 //slotframe handle of unicast slotframe
-#define ALICE_COMMON_SF_HANDLE                     TSCH_SCHED_COMMON_SF_HANDLE
-#define ALICE_UNICAST_SF_HANDLE                    TSCH_SCHED_UNICAST_SF_HANDLE
-
-#elif CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_OST
-#define WITH_OST                                   1
-#define ORCHESTRA_CONF_RULES                       ORCHESTRA_RULE_OST
-#define ORCHESTRA_CONF_EBSF_PERIOD                 397 // EB, original: 397
-#define ORCHESTRA_CONF_UNICAST_PERIOD              47 // unicast, 7, 11, 23, 31, 43, 47, 59, 67, 71    
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD        19 // broadcast and default slotframe length, original: 31
-
-#define OST_ON_DEMAND_PROVISION                    1
-
-#define OST_HANDLE_QUEUED_PACKETS                  1
-#define WITH_OST_LOG_INFO                          0
-#define WITH_OST_LOG_DBG                           0
-#define WITH_OST_LOG_NBR                           0
-#define WITH_OST_LOG_SCH                           0
-#define WITH_OST_TODO                              0 /* check ost_pigg1 of EB later */
-
-#define OST_N_SELECTION_PERIOD                     15 // related to OST_N_MAX: Min. traffic load = 1 / (OST_N_SELECTION_PERIOD * 100) pkt/slot (when num_tx = 1). 
-#define OST_N_MAX                                  8 // max t_offset 65535-1, 65535 is used for no-allocation
-#define OST_MORE_UNDER_PROVISION                   1 // more allocation 2^OST_MORE_UNDER_PROVISION times than under-provision
-#define OST_N_OFFSET_NEW_TX_REQUEST                100 // Maybe used for denial message
-#define PRR_THRES_TX_CHANGE                        70
-#define NUM_TX_MAC_THRES_TX_CHANGE                 20
-#define NUM_TX_FAIL_THRES                          5
-#define OST_THRES_CONSEQUTIVE_N_INC                3
-#define OST_T_OFFSET_ALLOCATION_FAILURE            ((1 << OST_N_MAX) + 1)
-#define OST_T_OFFSET_CONSECUTIVE_NEW_TX_REQUEST    ((1 << OST_N_MAX) + 2)
-#define OST_THRES_CONSECUTIVE_NEW_TX_SCHEDULE_REQUEST           10
-#define TSCH_SCHEDULE_CONF_MAX_SLOTFRAMES          (3 + 4 * MAX_NBR_NODE_NUM + 2) /* EB, CS, RBUC, Periodic, Ondemand, 2 for spare */
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 1 + MAX_NBR_NODE_NUM + 4 * MAX_NBR_NODE_NUM + 2) /* EB (2), CS (1), RBUC (1 + NODE_NUM), Periodic, Ondemand, 2 for spare */
-#define SSQ_SCHEDULE_HANDLE_OFFSET                 (2 * NODE_NUM + 2) /* End of the periodic slotframe (Under-provision uses up to 2*NODE_NUM+2) */
-
-/* for log messages */
-#define TSCH_SCHED_EB_SF_HANDLE                    0 //slotframe handle of EB slotframe
-#define TSCH_SCHED_UNICAST_SF_HANDLE               1 //slotframe handle of unicast slotframe
-#define TSCH_SCHED_COMMON_SF_HANDLE                2 //slotframe handle of broadcast/default slotframe
-#define OST_PERIODIC_SF_ID_OFFSET                  2
-#define OST_ONDEMAND_SF_ID_OFFSET                  SSQ_SCHEDULE_HANDLE_OFFSET
-
-/* OST only */
-#undef TSCH_LOG_CONF_QUEUE_LEN
-#define TSCH_LOG_CONF_QUEUE_LEN                    16 // originally 16
-#define TSCH_CONF_RX_WAIT                          800 /* ignore too late packets */
-#define OST_NODE_ID_FROM_IPADDR(addr)              ((((addr)->u8[14]) << 8) | (addr)->u8[15])
-#define OST_NODE_ID_FROM_LINKADDR(addr)            ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
-
-#endif /* CURRENT_TSCH_SCHEDULER */
-/*---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*/
-/*
- * Default burst transmission implementation
- */
-#define WITH_TSCH_DEFAULT_BURST_TRANSMISSION       0
-
+/***************************************************************
+ * Default burst transmission (DBT)
+ ****************************************************************/
+#define WITH_TSCH_DEFAULT_BURST_TRANSMISSION                0
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-#define TSCH_CONF_BURST_MAX_LEN                    16 /* turn burst on */
-#define MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION   1
-#define ENABLE_MODIFIED_DBT_LOG                    0
-#define TSCH_DBT_TEMPORARY_LINK                    1
-#define TSCH_DBT_HANDLE_SKIPPED_DBT_SLOT           1
-#define TSCH_DBT_HANDLE_MISSED_DBT_SLOT            1
-#define TSCH_DBT_HOLD_CURRENT_NBR                  1
-#define TSCH_DBT_QUEUE_AWARENESS                   1
-
+#define TSCH_CONF_BURST_MAX_LEN                             16 /* turn burst on */
+#define MODIFIED_TSCH_DEFAULT_BURST_TRANSMISSION            1
+#define ENABLE_MODIFIED_DBT_LOG                             0
+#define TSCH_DBT_TEMPORARY_LINK                             1
+#define TSCH_DBT_HANDLE_SKIPPED_DBT_SLOT                    1
+#define TSCH_DBT_HANDLE_MISSED_DBT_SLOT                     1
+#define TSCH_DBT_HOLD_CURRENT_NBR                           1
+#define TSCH_DBT_QUEUE_AWARENESS                            1
+//
 #if WITH_ALICE
 #undef TSCH_SCHEDULE_CONF_MAX_LINKS
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 4 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
-#define ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE   3
-#define ENABLE_LOG_ALICE_DBT_OPERATION             0
+#define TSCH_SCHEDULE_CONF_MAX_LINKS                        (3 + 4 * MAX_NBR_NODE_NUM + 2) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
+#define ALICE_AFTER_LASTLY_SCHEDULED_ASFN_SF_HANDLE         3
+#define ENABLE_LOG_ALICE_DBT_OPERATION                      0
 #endif
+//
+#else /* WITH_TSCH_DEFAULT_BURST_TRANSMISSION */
+#define TSCH_CONF_BURST_MAX_LEN                             0 /* turn burst off */
+#endif /* WITH_TSCH_DEFAULT_BURST_TRANSMISSION */
 
-#else
-#define TSCH_CONF_BURST_MAX_LEN                    0 /* turn burst off */
-#endif
-/*---------------------------------------------------------------------------*/
 
-/*---------------------------------------------------------------------------*/
-/*
- * A3 implementation
- */
-#define WITH_A3                                    0
+/***************************************************************
+ * HCK's TSCH scheduler add-on implementation: A3
+ ****************************************************************/
+#define WITH_A3                                             0
 #if WITH_A3
 #undef ORCHESTRA_CONF_UNICAST_PERIOD
-#define ORCHESTRA_CONF_UNICAST_PERIOD              20 // 20, 40
-
+#define ORCHESTRA_CONF_UNICAST_PERIOD                       20 // 20, 40
+//
 #if WITH_ALICE
 #undef TSCH_SCHEDULE_CONF_MAX_LINKS
-#define TSCH_SCHEDULE_CONF_MAX_LINKS               (3 + 2 * MAX_NBR_NODE_NUM) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
+#define TSCH_SCHEDULE_CONF_MAX_LINKS                        (3 + 2 * MAX_NBR_NODE_NUM) /* EB SF: tx/rx, CS SF: one link, UC SF: tx/rx for each node + 2 for spare */
+#endif
+//
+#define A3_ALICE1_ORB2_OSB3                                 1
+#define A3_MAX_ZONE                                         4 // 2, 4, 8
+
+#define A3_INITIAL_NUM_OF_SLOTS                             1
+#define A3_INITIAL_NUM_OF_PKTS                              0
+
+#define A3_INITIAL_TX_ATTEMPT_RATE_EWMA                     (0.5)
+#define A3_INITIAL_RX_ATTEMPT_RATE_EWMA                     (0.5)
+#define A3_INITIAL_TX_SUCCESS_RATE_EWMA                     (0.4)
+
+#define A3_TX_INCREASE_THRESH                               (0.75)
+#define A3_TX_DECREASE_THRESH                               (0.34) //0.36 in code, 0.34 in paper
+#define A3_RX_INCREASE_THRESH                               (0.65)
+#define A3_RX_DECREASE_THRESH                               (0.29)
+#define A3_MAX_ERR_PROB                                     (0.5)
+
+#define A3_DBG                                              1
+#define A3_DBG_VALUE                                        0
 #endif
 
-#define A3_ALICE1_ORB2_OSB3                        1
-#define A3_MAX_ZONE                                4 // 2, 4, 8
 
-#define A3_INITIAL_NUM_OF_SLOTS                    1
-#define A3_INITIAL_NUM_OF_PKTS                     0
-
-#define A3_INITIAL_TX_ATTEMPT_RATE_EWMA            (0.5)
-#define A3_INITIAL_RX_ATTEMPT_RATE_EWMA            (0.5)
-#define A3_INITIAL_TX_SUCCESS_RATE_EWMA            (0.4)
-
-#define A3_TX_INCREASE_THRESH                      (0.75)
-#define A3_TX_DECREASE_THRESH                      (0.34) //0.36 in code, 0.34 in paper
-#define A3_RX_INCREASE_THRESH                      (0.65)
-#define A3_RX_DECREASE_THRESH                      (0.29)
-#define A3_MAX_ERR_PROB                            (0.5)
-
-#define A3_DBG                                     1
-#define A3_DBG_VALUE                               0
-#endif
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * Configure radio
- */
-/* m17dBm, m12dBm, m9dBm, m7dBm, m5dBm, m4dBm, m3dBm, m2dBm, m1dBm, 
-   0dBm, 0_7dBm, 1_3dBm, 1_8dBm, 2_3dBm, 2_8dBm, 3dBm */
-#define RF2XX_TX_POWER                             PHY_POWER_m17dBm
-//#define RF2XX_TX_POWER                             PHY_POWER_3dBm
-
-/* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
-   m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */ //
-//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m101dBm
-//#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m90dBm
-#define RF2XX_RX_RSSI_THRESHOLD                    RF2XX_PHY_RX_THRESHOLD__m87dBm
-/*---------------------------------------------------------------------------*/
-
-
-/*---------------------------------------------------------------------------*/
-/*
- * UPA: Utility-based Packet Aggregation
- */
-/* Need to be tested */
-#define WITH_UPA                                   0
+/***************************************************************
+ * UPA implementation
+ ****************************************************************/
+#define WITH_UPA                                   1
 #if WITH_UPA
 #define UPA_TRIPLE_CCA                             1
 #define UPA_RX_SLOT_POLICY                         1 /* 0: no policy, 1: max gain, 2: max pkts w/ gain */
@@ -621,33 +547,31 @@
 #define UPA_DBG_TIMING_TRIPLE_CCA                  (0 && UPA_TRIPLE_CCA)
 #define UPA_DBG_SLOT_TIMING                        0
 #endif /* WITH_UPA */
-/*---------------------------------------------------------------------------*/
 
 
-/*---------------------------------------------------------------------------*/
-/*
- * Adaptive timeslot length
- */
-#define WITH_SLA                                   0
+/***************************************************************
+ * SLA implementation
+ ****************************************************************/
+#define WITH_SLA                                   1
 #if WITH_SLA
-
 #define SLA_K_TH_PERCENTILE                        90
-
 #define SLA_DBG_ESSENTIAL                          1
 #define SLA_DBG_OPERATION                          0
+#define SLA_START_DELAY                            (5 * 60 * CLOCK_SECOND)
+#define SLA_DETERMINATION_PERIOD                   (5 * 60 * CLOCK_SECOND)
+#define SLA_RAPID_EB_PERIOD                        (3 * CLOCK_SECOND)
+#define SLA_MAX_FRAME_LEN                          128 /* Including RADIO_PHY_OVERHEAD (3 bytes) */
+#define SLA_CALCULATE_DURATION(len)                (32 * (5 + len)) /* len includes RADIO_PHY_OVERHEAD (3 bytes) */
+#define HCK_TSCH_MAX_ACK                           SLA_CALCULATE_DURATION(SLA_MAX_ACK_LEN)
+#define SLA_SHIFT_BITS                             3
+
 
 #if WITH_UPA
 #define SLA_GUARD_TIME_TIMESLOTS                   6
 #else
 #define SLA_GUARD_TIME_TIMESLOTS                   2
 #endif
-#define SLA_CALCULATE_DURATION(len)                (32 * (5 + len)) /* len includes RADIO_PHY_OVERHEAD (3 bytes) */
 
-#define SLA_START_DELAY                            (5 * 60 * CLOCK_SECOND)
-#define SLA_DETERMINATION_PERIOD                   (5 * 60 * CLOCK_SECOND)
-#define SLA_RAPID_EB_PERIOD                        (3 * CLOCK_SECOND)
-
-#define SLA_MAX_FRAME_LEN                          128 /* Including RADIO_PHY_OVERHEAD (3 bytes) */
 #if WITH_UPA
 #if UPA_TRIPLE_CCA
 #define SLA_MAX_ACK_LEN                            34  /* 2950, 1300, Including RADIO_PHY_OVERHEAD (3 bytes) */
@@ -657,8 +581,6 @@
 #else
 #define SLA_MAX_ACK_LEN                            70  /* 2120, 1000, Including RADIO_PHY_OVERHEAD (3 bytes) */
 #endif
-#define HCK_TSCH_MAX_ACK                           SLA_CALCULATE_DURATION(SLA_MAX_ACK_LEN)
-#define SLA_SHIFT_BITS                             3
 
 #define SLA_OBSERVATION_WINDOWS                    1
 #define SLA_FRAME_LEN_QUANTIZED_LEVELS             ((((SLA_MAX_FRAME_LEN - 1) >> SLA_SHIFT_BITS) + 1) + 1)
@@ -676,10 +598,7 @@
 /*
  * ASAP
  */
-#define WITH_ASAP                                  (1 || (WITH_UPA || WITH_SLA))
-#if WITH_ASAP
 #define ASAP_DBG_SLOT_END                          (0 || UPA_DBG_SLOT_TIMING)
-#endif
 
 
 
@@ -752,8 +671,8 @@
 
 #undef HCK_MOD_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP
 #define HCK_MOD_RPL_IGNORE_REDUNDANCY_IN_BOOTSTRAP 0
-#undef HCK_RPL_FIXED_TOPOLOGY
-#define HCK_RPL_FIXED_TOPOLOGY                     0
+#undef IOTLAB_FIXED_TOPOLOGY
+#define IOTLAB_FIXED_TOPOLOGY                     0
 
 #undef IOTLAB_SITE
 #define IOTLAB_SITE                                IOTLAB_GRENOBLE_2
@@ -788,8 +707,6 @@
 
 #endif /* HCK_ASAP_EVAL_02_UPA_SINGLE_HOP */
 
-
-
-
+#endif /* NETWORK_TIME_EFFICIENCY_ENHANCEMENT */
 
 #endif /* PROJECT_CONF_H_ */ 

@@ -47,7 +47,7 @@
 #include "net/ipv6/uip-ds6-route.h"
 #include "net/ipv6/multicast/uip-mcast6.h"
 
-#if HCK_RPL_FIXED_TOPOLOGY
+#if IOTLAB_FIXED_TOPOLOGY
 #include "sys/node-id.h"
 extern uint8_t fixed_parent_id[NODE_NUM];
 #endif

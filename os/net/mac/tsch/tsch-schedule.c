@@ -1605,7 +1605,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             }
           }
 
-#if HCK_MOD_APPLY_LATEST_CONTIKI
+#if HCK_MOD_TSCH_APPLY_LATEST_CONTIKI
           /* Maintain backup_link */
           /* Check if 'l' best can be used as backup */
           if(new_best != l && (l->link_options & LINK_OPTION_RX)) { /* Does 'l' have Rx flag? */

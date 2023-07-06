@@ -361,7 +361,7 @@ dio_input(void)
   ++rpl_dio_recv_count;
   LOG_HCK("dio_recv %u |\n", rpl_dio_recv_count);
 
-#if HCK_RPL_FIXED_TOPOLOGY
+#if IOTLAB_FIXED_TOPOLOGY
   uint8_t my_index = node_id - 1;
   uint8_t target_parent_id = fixed_parent_id[my_index];
   uint8_t from_parent_id = HCK_GET_NODE_ID_FROM_IPADDR(&from);
@@ -826,7 +826,7 @@ dao_input_storing(void)
        DAG_RANK(parent->rank, instance) < DAG_RANK(dag->rank, instance)) {
       LOG_WARN("Loop detected when receiving a unicast DAO from a node with a lower rank! (%u < %u)\n",
              DAG_RANK(parent->rank, instance), DAG_RANK(dag->rank, instance));
-#if !HCK_RPL_FIXED_TOPOLOGY
+#if !IOTLAB_FIXED_TOPOLOGY
       parent->rank = RPL_INFINITE_RANK;
       parent->hop_distance = 0xff; /* hckim to measure hop distance accurately */
       parent->flags |= RPL_PARENT_FLAG_UPDATED;
@@ -837,7 +837,7 @@ dao_input_storing(void)
     /* If we get the DAO from our parent, we also have a loop. */
     if(parent != NULL && parent == dag->preferred_parent) {
       LOG_WARN("Loop detected when receiving a unicast DAO from our parent\n");
-#if !HCK_RPL_FIXED_TOPOLOGY
+#if !IOTLAB_FIXED_TOPOLOGY
       parent->rank = RPL_INFINITE_RANK;
       parent->hop_distance = 0xff; /* hckim to measure hop distance accurately */
       parent->flags |= RPL_PARENT_FLAG_UPDATED;
