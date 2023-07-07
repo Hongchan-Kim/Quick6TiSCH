@@ -53,13 +53,9 @@ int tsch_rpl_is_urgent_probing_target_null(void);
 int tsch_rpl_callback_dio_interval_increment(void);
 #endif /* WITH_HNEXT */
 
-#if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS || WITH_TRGB
+#if TSCH_DBT_QUEUE_AWARENESS || WITH_TRGB
 int tsch_rpl_callback_is_root(void);
 int tsch_rpl_callback_has_no_children(void);
-#endif
-
-#if WITH_SLA
-uint16_t sla_get_rpl_dao_max_hop_distance(void);
 #endif
 
 /**

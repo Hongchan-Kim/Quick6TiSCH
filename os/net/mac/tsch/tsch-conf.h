@@ -445,10 +445,6 @@ by default, useful in case of duplicate seqno */
 #define TSCH_DEFAULT_TIMESLOT_TIMING tsch_timeslot_timing_us_10000
 #endif
 
-#if WITH_UPA
-#define UPA_DEFAULT_TIMESLOT_TIMING upa_timeslot_timing_us_10000
-#endif
-
 /* Configurable Rx guard time is micro-seconds */
 #ifndef TSCH_CONF_RX_WAIT
 #define TSCH_CONF_RX_WAIT 2200

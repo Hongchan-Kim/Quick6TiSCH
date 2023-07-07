@@ -68,9 +68,6 @@ struct tsch_slotframe_and_links {
 /* The information elements that we currently support */
 struct ieee802154_ies {
   /* Header IEs */
-#if WITH_UPA
-  uint16_t ie_upa_info;
-#endif
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
   uint16_t ie_formation_info;
 #endif
@@ -80,11 +77,6 @@ struct ieee802154_ies {
   uint8_t ie_payload_ie_offset;
   uint16_t ie_mlme_len;
   /* Payload Short MLME IEs */
-#if WITH_SLA /* Variables */
-  struct tsch_asn_t ie_sla_triggering_asn;
-  uint16_t ie_sla_curr_timeslot_len;
-  uint16_t ie_sla_next_timeslot_len;
-#endif
   uint8_t ie_tsch_synchronization_offset;
   struct tsch_asn_t ie_asn;
   uint8_t ie_join_priority;
@@ -104,10 +96,6 @@ struct ieee802154_ies {
 };
 
 /** Insert various Information Elements **/
-#if WITH_UPA
-int frame80215e_create_ie_header_upa_info(uint8_t *buf, int len,
-    struct ieee802154_ies *ies);
-#endif
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
 int frame80215e_create_ie_header_formation_info(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
@@ -135,12 +123,6 @@ int frame80215e_create_ie_ietf(uint8_t *buf, int len,
 int frame80215e_create_ie_mlme(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 /* MLME sub-IE. TSCH synchronization. Used in EBs: ASN and join priority */
-#if WITH_SLA /* Functions */
-int frame80215e_create_ie_tsch_sla_triggering_asn(uint8_t *buf, int len,
-    struct ieee802154_ies *ies);
-int frame80215e_create_ie_tsch_sla_timeslot_len(uint8_t *buf, int len, 
-    struct ieee802154_ies *ies);
-#endif
 int frame80215e_create_ie_tsch_synchronization(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 /* MLME sub-IE. TSCH slotframe and link. Used in EBs: initial schedule */

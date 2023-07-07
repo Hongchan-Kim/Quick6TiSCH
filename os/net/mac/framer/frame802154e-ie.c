@@ -47,9 +47,6 @@
 
 /* c.f. IEEE 802.15.4e Table 4b */
 enum ieee802154e_header_ie_id {
-#if WITH_UPA /* Header IE in Data and ACK frames */
-  HEADER_IE_UPA_INFO = 0x01,
-#endif
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
   HEADER_IE_FORMATION_INFO = 0x02,
 #endif
@@ -74,10 +71,6 @@ enum ieee802154e_payload_ie_id {
 
 /* c.f. IEEE 802.15.4e Table 4d */
 enum ieee802154e_mlme_short_subie_id {
-#if WITH_SLA /* MLME IE ids */
-  MLME_SHORT_IE_TSCH_SLA_TRIGGERING_ASN = 0x10,
-  MLME_SHORT_IE_TSCH_SLA_TIMESLOT_LEN,
-#endif
   MLME_SHORT_IE_TSCH_SYNCHRONIZATION = 0x1a,
   MLME_SHORT_IE_TSCH_SLOFTRAME_AND_LINK,
   MLME_SHORT_IE_TSCH_TIMESLOT,
@@ -143,23 +136,6 @@ create_mlme_long_ie_descriptor(uint8_t *buf, uint8_t sub_id, int ie_len)
   ie_desc = (ie_len & 0x07ff) + ((sub_id & 0x0f) << 11) + (1 << 15);
   WRITE16(buf, ie_desc);
 }
-
-#if WITH_UPA /* Header IE in Data and ACK frames */
-int
-frame80215e_create_ie_header_upa_info(uint8_t *buf, int len,
-    struct ieee802154_ies *ies)
-{
-  int ie_len = 2; /* 16 bits */
-  if(len >= 2 + ie_len && ies != NULL) {
-    uint16_t upa_info = ies->ie_upa_info;
-    WRITE16(buf+2, upa_info);
-    create_header_ie_descriptor(buf, HEADER_IE_UPA_INFO, ie_len);
-    return 2 + ie_len;
-  } else {
-    return -1;
-  }
-}
-#endif
 
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
 int
@@ -294,43 +270,6 @@ frame80215e_create_ie_tsch_synchronization(uint8_t *buf, int len,
   }
 }
 
-#if WITH_SLA /* Functions to piggyback SLA information to EB */
-int
-frame80215e_create_ie_tsch_sla_triggering_asn(uint8_t *buf, int len, 
-    struct ieee802154_ies *ies)
-{
-  int ie_len = 5;
-  if(len >= 2 + ie_len && ies != NULL) {
-    buf[2] = ies->ie_sla_triggering_asn.ls4b;
-    buf[3] = ies->ie_sla_triggering_asn.ls4b >> 8;
-    buf[4] = ies->ie_sla_triggering_asn.ls4b >> 16;
-    buf[5] = ies->ie_sla_triggering_asn.ls4b >> 24;
-    buf[6] = ies->ie_sla_triggering_asn.ms1b;
-    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_SLA_TRIGGERING_ASN, ie_len);
-    return 2 + ie_len;
-  } else {
-    return -1;
-  }
-}
-
-int
-frame80215e_create_ie_tsch_sla_timeslot_len(uint8_t *buf, int len, 
-    struct ieee802154_ies *ies)
-{
-  int ie_len = 4; /* 2 * 16 bits */
-  if(len >= 2 + ie_len && ies != NULL) {
-    uint16_t sla_curr_timeslot_len = ies->ie_sla_curr_timeslot_len;
-    WRITE16(buf+2, sla_curr_timeslot_len);
-    uint16_t sla_next_timeslot_len = ies->ie_sla_next_timeslot_len;
-    WRITE16(buf+4, sla_next_timeslot_len);
-    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_SLA_TIMESLOT_LEN, ie_len);
-    return 2 + ie_len;
-  } else {
-    return -1;
-  }
-}
-#endif
-
 /* MLME sub-IE. TSCH slotframe and link. Used in EBs: initial schedule */
 int
 frame80215e_create_ie_tsch_slotframe_and_link(uint8_t *buf, int len,
@@ -427,18 +366,6 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
     uint8_t element_id, struct ieee802154_ies *ies)
 {
   switch(element_id) {
-#if WITH_UPA /* Header IE in Data and ACK frames */
-    case HEADER_IE_UPA_INFO:
-      if(len == 2) {
-        if(ies != NULL) {
-          uint16_t upa_info = 0;
-          READ16(buf, upa_info);
-          ies->ie_upa_info = upa_info;
-        }
-        return len;
-      }
-      break;
-#endif
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
     case HEADER_IE_FORMATION_INFO:
       if(len == 2) {
@@ -539,33 +466,6 @@ frame802154e_parse_mlme_short_ie(const uint8_t *buf, int len,
         return len;
       }
       break;
-#if WITH_SLA /* Functions to parse SLA information in EB */
-    case MLME_SHORT_IE_TSCH_SLA_TRIGGERING_ASN: 
-      if(len == 5) {
-        if(ies != NULL) {
-          ies->ie_sla_triggering_asn.ls4b = (uint32_t)buf[0];
-          ies->ie_sla_triggering_asn.ls4b |= (uint32_t)buf[1] << 8;
-          ies->ie_sla_triggering_asn.ls4b |= (uint32_t)buf[2] << 16;
-          ies->ie_sla_triggering_asn.ls4b |= (uint32_t)buf[3] << 24;
-          ies->ie_sla_triggering_asn.ms1b = (uint8_t)buf[4];
-        }
-        return len;
-      }
-      break;
-    case MLME_SHORT_IE_TSCH_SLA_TIMESLOT_LEN: 
-      if(len == 4) {
-        if(ies != NULL) {
-          uint16_t sla_curr_timeslot_len = 0;
-          READ16(buf, sla_curr_timeslot_len);
-          ies->ie_sla_curr_timeslot_len = sla_curr_timeslot_len;
-          uint16_t sla_next_timeslot_len = 0;
-          READ16(buf+2, sla_next_timeslot_len);
-          ies->ie_sla_next_timeslot_len = sla_next_timeslot_len;
-        }
-        return len;
-      }
-      break;
-#endif
   }
   return -1;
 }

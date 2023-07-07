@@ -78,37 +78,19 @@
  * (TxOffset - (RxWait / 2)) instead
  */
 
-#ifndef HCK_TSCH_TIMESLOT_LENGTH
-#define HCK_TSCH_TIMESLOT_LENGTH 10000
-#endif
-
-#ifndef HCK_TSCH_MAX_ACK
-#define HCK_TSCH_MAX_ACK 2400
-#endif
-
 const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
 #if TSCH_CONF_CCA_ENABLED
-#if UPA_TRIPLE_CCA
-    910, /* CCAOffset */
-    150, /* CCA (radio-rf2xx requires 140 us or 5 ticks) */
-   2950, /* TxOffset */
-  (2950 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
-#else /* UPA_TRIPLE_CCA */
    1600, /* CCAOffset (52 ticks) */
     150, /* CCA (radio-rf2xx requires 140 us or 5 ticks) */
    2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
-#endif /* UPA_TRIPLE_CCA */
 #else /* TSCH_CONF_CCA_ENABLED */
    1800, /* CCAOffset */
     128, /* CCA */
    2120, /* TxOffset */
   (2120 - (TSCH_CONF_RX_WAIT / 2)), /* RxOffset */
 #endif /* TSCH_CONF_CCA_ENABLED */
-#if WITH_UPA
-   1100, /* RxAckDelay - 1000 */
-   1300, /* TxAckDelay - 1200 */
-#elif WITH_OST
+#if WITH_OST
    1000, /* RxAckDelay - 1000 */
    1200, /* TxAckDelay - 1200 */
 #else
@@ -118,33 +100,9 @@ const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000 = {
   TSCH_CONF_RX_WAIT, /* RxWait */
     400, /* AckWait */
     192, /* RxTx */
-  HCK_TSCH_MAX_ACK, //2400, /* MaxAck */
+   2400, /* MaxAck */
    4256, /* MaxTx */
-  HCK_TSCH_TIMESLOT_LENGTH, //10000, /* TimeslotLength */
-#if UPA_TRIPLE_CCA
-   720, /* Inter CCA offset */
-#endif
+  10000, /* TimeslotLength */
 };
-
-#if WITH_UPA
-#define UPA_RX_WAIT 300
-const upa_timeslot_timing_usec upa_timeslot_timing_us_10000 = {
-   1250, /* upa_ts_tx_offset_1 (41 ticks required) */
-   (1250 - (UPA_RX_WAIT / 2)), /* upa_ts_rx_offset_1 */
-   1000, /* upa_ts_tx_offset_2 (30 ticks required, 1000 == 33 ticks) */
-   (1000 - (UPA_RX_WAIT / 2)), /* upa_ts_rx_offset_2 */
-   1050, /* upa_ts_rx_ack_delay */
-   1250, /* upa_ts_tx_ack_delay */
-  UPA_RX_WAIT, /* upa_ts_rx_wait */
-    400, /* upa_ts_ack_wait */
-#if WITH_OST
-    900, /* upa_ts_max_ack (23 bytes) -> 832 us, 27 ticks -> 2 ticks for guard -> 900 us, 29 ticks */
-#else
-    810, /* upa_ts_max_ack (21 bytes) -> 768 us, 25 ticks -> 2 ticks for guard -> 810 us, 27 ticks */
-#endif
-   4256, /* upa_ts_max_tx */
-    360, /* upa_ts_tx_process_b_ack (12 ticks) - time to read and process b-ack */
-};
-#endif
 
 /** @} */

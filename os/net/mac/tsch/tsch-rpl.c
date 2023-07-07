@@ -90,7 +90,7 @@ tsch_rpl_callback_dio_interval_increment()
 #endif /* WITH_HNEXT */
 
 /*---------------------------------------------------------------------------*/
-#if WITH_UPA || TSCH_DBT_QUEUE_AWARENESS || WITH_TRGB
+#if TSCH_DBT_QUEUE_AWARENESS || WITH_TRGB
 int
 tsch_rpl_callback_is_root(void)
 {
@@ -101,26 +101,6 @@ int
 tsch_rpl_callback_has_no_children(void)
 {
   return uip_ds6_route_num_routes() == 0;
-}
-#endif
-/*---------------------------------------------------------------------------*/
-#if WITH_SLA
-uint16_t sla_get_rpl_dao_max_hop_distance(void)
-{
-  uint16_t max_hop_distance = 0;
-
-  uip_ds6_route_t *r;
-  r = uip_ds6_route_head();
-
-  while(r != NULL) {
-    if(r->state.lifetime != 0 
-       && r->state.sla_dao_hop_distance > max_hop_distance) {
-      max_hop_distance = r->state.sla_dao_hop_distance;
-    }
-    r = uip_ds6_route_next(r);
-  }
-
-  return max_hop_distance;
 }
 #endif
 /*---------------------------------------------------------------------------*/

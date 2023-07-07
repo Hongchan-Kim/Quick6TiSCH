@@ -145,61 +145,7 @@ tsch_log_process_pending(void)
 #if HCK_LOG_TSCH_SLOT
         printf(" HK-T");
 #endif
-
-#if 0
-#if HCK_LOG
-#if WITH_HNEXT
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
-        printf(", RES T %lu %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
-              log->asn.ls4b,
-              log->link->slotframe_handle,
-              linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
-              log->tx.datalen,
-              log->tx.asap_ack_len,
-              log->tx.mac_tx_status,
-              log->tx.num_tx,
-              log->tx.hnext_collision_count,
-              log->tx.hnext_cssf_postponed_count,
-              log->tx.hnext_noack_count,
-              log->tx.hnext_backoff_exponent_before,
-              log->tx.hnext_backoff_window_before,
-              log->tx.hnext_backoff_exponent_after,
-              log->tx.hnext_backoff_window_after,
-              log->tx.hnext_state,
-              log->tx.hnext_offset);
-#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-        printf(", RES T %lu %u %u %u %u %u %u %u %u %u %u %u %u %u HK-T",
-              log->asn.ls4b,
-              log->link->slotframe_handle,
-              linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
-              log->tx.datalen,
-              log->tx.asap_ack_len,
-              log->tx.mac_tx_status,
-              log->tx.num_tx,
-              log->tx.hnext_collision_count,
-              log->tx.hnext_cssf_postponed_count,
-              log->tx.hnext_noack_count,
-              log->tx.hnext_backoff_exponent_before,
-              log->tx.hnext_backoff_window_before,
-              log->tx.hnext_backoff_exponent_after,
-              log->tx.hnext_backoff_window_after);
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#else /* WITH_HNEXT */
-        printf(", RES T %u %u %u %u %u %u %u %u %u HK-T",
-              linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1, 
-              log->tx.is_data,
-              log->tx.datalen,
-              log->tx.mac_tx_status,
-              log->tx.asap_ack_len, 
-              log->tx.asap_unused_offset_time, 
-              log->tx.asap_idle_time,
-              log->tx.asap_curr_slot_len, 
-              log->tx.asap_num_of_slots_until_idle_time);
-#endif /* WITH_HNEXT */
-#endif
-#endif
         printf("\n");
-
 #if WITH_OST
         /* unicast packets only */
         if(!linkaddr_cmp(&log->tx.dest, &linkaddr_null)
@@ -282,79 +228,11 @@ tsch_log_process_pending(void)
 #if HCK_LOG_TSCH_SLOT
         printf(" HK-T");
 #endif
-
-#if 0
-#if HCK_LOG
-#if WITH_HNEXT
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
-        printf(", RES R %lu %u %u %u %u %u HK-T",
-              log->asn.ls4b,
-              log->link->slotframe_handle,
-              log->rx.is_unicast == 0 ? 0 : 1,
-              log->rx.datalen,
-              log->rx.asap_ack_len,
-              log->rx.hnext_offset);
-#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */ 
-        printf(", RES R %lu %u %u %u %u HK-T",
-              log->asn.ls4b,
-              log->link->slotframe_handle,
-              log->rx.is_unicast == 0 ? 0 : 1,
-              log->rx.datalen,
-              log->rx.asap_ack_len);
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */ 
-#else /* WITH_HNEXT */
-        printf(", RES R %u %u %u %u %u %u %u %u HK-T",
-              log->rx.is_unicast == 0 ? 0 : 1, 
-              log->rx.is_data,
-              log->rx.datalen,
-              log->rx.asap_ack_len, 
-              log->rx.asap_unused_offset_time, 
-              log->rx.asap_idle_time,
-              log->rx.asap_curr_slot_len, 
-              log->rx.asap_num_of_slots_until_idle_time);
-#endif /* WITH_HNEXT */
-#endif
-#endif
         printf("\n");
         break;
       case tsch_log_message:
         printf("%s\n", log->message);
         break;
-#if WITH_UPA
-      case upa_log_result:
-        if(log->upa_result.upa_link_type == 1) {
-          printf("RES T B");
-        } else if(log->upa_result.upa_link_type == 2) {
-          printf("RES R B");
-        } else if(log->upa_result.upa_link_type == 3) {
-          printf("RES T U");
-        } else if(log->upa_result.upa_link_type == 4) {
-          printf("RES R U");
-        } else if(log->upa_result.upa_link_type == 5) {
-          printf("RES T P");
-        } else if(log->upa_result.upa_link_type == 6) {
-          printf("RES R P");
-        }
-        printf(" %u %u %u %u %u %u %u %u %u %u %u %u %u",
-              log->upa_result.upa_num_of_reserved_pkts,
-              log->upa_result.upa_num_of_successful_pkts,
-              log->upa_result.upa_trig_pkt_len,
-              log->upa_result.upa_all_pkt_len_same,
-              log->upa_result.upa_tot_pkt_len,
-              log->upa_result.upa_successful_pkt_len,
-              log->upa_result.upa_tot_ack_len,
-              log->upa_result.upa_unused_offset_time,
-              log->upa_result.upa_idle_time,
-              log->upa_result.upa_curr_slot_length,
-              log->upa_result.upa_num_of_slots_until_ilde_time,
-              log->upa_result.upa_num_of_slots_until_scheduling,
-              log->upa_result.upa_num_of_expected_slots);
-        if(log->upa_result.upa_is_overflowed == 1) {
-          printf(" !O");
-        }
-        printf(" HK-U\n");
-        break;
-#endif
     }
     /* Remove input from ringbuf */
     ringbufindex_get(&log_ringbuf);

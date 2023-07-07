@@ -63,11 +63,6 @@ struct tsch_packet *tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, str
                                                 uint8_t trgb_current_state, uint8_t trgb_current_cell);
 #endif
 
-#if WITH_UPA
-int tsch_queue_upa_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p, struct tsch_link *link, uint8_t mac_tx_status);
-struct tsch_packet *tsch_queue_upa_get_next_packet_for_nbr(const struct tsch_neighbor *n, uint8_t upa_last_tx_seq);
-#endif
-
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HOLD_CURRENT_NBR
 struct tsch_packet * tsch_queue_burst_get_next_packet_for_nbr(const struct tsch_neighbor *n);
 #endif

@@ -102,16 +102,6 @@ extern uint32_t tsch_scheduled_ost_pp_sf_bst_tx_cell_count;
 extern uint32_t tsch_scheduled_ost_pp_sf_bst_rx_cell_count;
 #endif
 #endif
-#if WITH_UPA
-extern uint32_t tsch_scheduled_common_sf_upa_tx_cell_count;
-extern uint32_t tsch_scheduled_common_sf_upa_rx_cell_count;
-extern uint32_t tsch_scheduled_unicast_sf_upa_tx_cell_count;
-extern uint32_t tsch_scheduled_unicast_sf_upa_rx_cell_count;
-#if WITH_OST
-extern uint32_t tsch_scheduled_ost_pp_sf_upa_tx_cell_count;
-extern uint32_t tsch_scheduled_ost_pp_sf_upa_rx_cell_count;
-#endif
-#endif
 
 /* hckim measure tx/rx operation counts */
 extern uint32_t tsch_eb_sf_tx_operation_count;
@@ -134,32 +124,6 @@ extern uint32_t tsch_unicast_sf_bst_rx_operation_count;
 #if WITH_OST
 extern uint32_t tsch_ost_pp_sf_bst_tx_operation_count;
 extern uint32_t tsch_ost_pp_sf_bst_rx_operation_count;
-#endif
-#endif
-#if WITH_UPA
-extern uint32_t tsch_common_sf_upa_tx_reserved_count;
-extern uint32_t tsch_common_sf_upa_rx_reserved_count;
-extern uint32_t tsch_unicast_sf_upa_tx_reserved_count;
-extern uint32_t tsch_unicast_sf_upa_rx_reserved_count;
-#if WITH_OST
-extern uint32_t tsch_ost_pp_sf_upa_tx_reserved_count;
-extern uint32_t tsch_ost_pp_sf_upa_rx_reserved_count;
-#endif
-extern uint32_t tsch_common_sf_upa_tx_ok_count;
-extern uint32_t tsch_common_sf_upa_rx_ok_count;
-extern uint32_t tsch_unicast_sf_upa_tx_ok_count;
-extern uint32_t tsch_unicast_sf_upa_rx_ok_count;
-#if WITH_OST
-extern uint32_t tsch_ost_pp_sf_upa_tx_ok_count;
-extern uint32_t tsch_ost_pp_sf_upa_rx_ok_count;
-#endif
-extern uint32_t tsch_common_sf_upa_tx_timeslots;
-extern uint32_t tsch_common_sf_upa_rx_timeslots;
-extern uint32_t tsch_unicast_sf_upa_tx_timeslots;
-extern uint32_t tsch_unicast_sf_upa_rx_timeslots;
-#if WITH_OST
-extern uint32_t tsch_ost_pp_sf_upa_tx_timeslots;
-extern uint32_t tsch_ost_pp_sf_upa_rx_timeslots;
 #endif
 #endif
 
@@ -295,17 +259,6 @@ extern int32_t max_drift_seen;
 /* The TSCH standard 10ms timeslot timing */
 extern const tsch_timeslot_timing_usec tsch_timeslot_timing_us_10000;
 
-#if WITH_SLA /* Variables */
-extern struct tsch_asn_t sla_triggering_asn;
-extern uint16_t sla_next_timeslot_length;
-#endif
-
-#if WITH_UPA
-extern upa_timeslot_timing_usec upa_timing_us;
-extern upa_timeslot_timing_ticks upa_timing;
-extern const upa_timeslot_timing_usec upa_timeslot_timing_us_10000;
-#endif
-
 /* TSCH processes */
 PROCESS_NAME(tsch_process);
 PROCESS_NAME(tsch_send_eb_process);
@@ -376,16 +329,6 @@ uint64_t tsch_get_network_uptime_ticks(void);
   * Leave the TSCH network we are currently in
   */
 void tsch_disassociate(void);
-
-/**
- *  Change timeslot length 
- */
-#if WITH_SLA /* Functions */
-void sla_record_ack_len(int ack_len);
-void sla_record_max_hop_distance(uint8_t hops);
-void sla_apply_next_timeslot_length();
-void sla_finish_rapid_eb_broadcasting();
-#endif
 
 #if WITH_OST
 void ost_post_process_rx_N(struct input_packet *);

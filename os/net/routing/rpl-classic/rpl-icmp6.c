@@ -361,18 +361,6 @@ dio_input(void)
   ++rpl_dio_recv_count;
   LOG_HCK("dio_recv %u |\n", rpl_dio_recv_count);
 
-#if IOTLAB_FIXED_TOPOLOGY
-  uint8_t my_index = node_id - 1;
-  uint8_t target_parent_id = fixed_parent_id[my_index];
-  uint8_t from_parent_id = HCK_GET_NODE_ID_FROM_IPADDR(&from);
-
-  if(from_parent_id != target_parent_id) {
-    LOG_HCK("| Discard DIO from non-fixed parent %u (fixed parent: %u)\n", 
-            from_parent_id, target_parent_id);
-    goto discard;
-  }
-#endif
-
   buffer_length = uip_len - uip_l3_icmp_hdr_len;
 
   /* Process the DIO base option. */
@@ -789,10 +777,6 @@ dao_input_storing(void)
 
   flags = buffer[pos++];
   /* reserved */
-#if WITH_SLA
-  uint8_t sla_dao_hop_distance = buffer[pos];
-  buffer[pos] = sla_dao_hop_distance + 1;
-#endif
   pos++;
   sequence = buffer[pos++];
 
@@ -826,23 +810,19 @@ dao_input_storing(void)
        DAG_RANK(parent->rank, instance) < DAG_RANK(dag->rank, instance)) {
       LOG_WARN("Loop detected when receiving a unicast DAO from a node with a lower rank! (%u < %u)\n",
              DAG_RANK(parent->rank, instance), DAG_RANK(dag->rank, instance));
-#if !IOTLAB_FIXED_TOPOLOGY
       parent->rank = RPL_INFINITE_RANK;
       parent->hop_distance = 0xff; /* hckim to measure hop distance accurately */
       parent->flags |= RPL_PARENT_FLAG_UPDATED;
       return;
-#endif
     }
 
     /* If we get the DAO from our parent, we also have a loop. */
     if(parent != NULL && parent == dag->preferred_parent) {
       LOG_WARN("Loop detected when receiving a unicast DAO from our parent\n");
-#if !IOTLAB_FIXED_TOPOLOGY
       parent->rank = RPL_INFINITE_RANK;
       parent->hop_distance = 0xff; /* hckim to measure hop distance accurately */
       parent->flags |= RPL_PARENT_FLAG_UPDATED;
       return;
-#endif
     }
   }
 
@@ -898,23 +878,17 @@ dao_input_storing(void)
 
   if(lifetime == RPL_ZERO_LIFETIME) {
     LOG_INFO("No-Path DAO received\n");
-
     /* No-Path DAO received; invoke the route purging routine. */
     if(rep != NULL &&
        !RPL_ROUTE_IS_NOPATH_RECEIVED(rep) &&
        rep->length == prefixlen &&
        uip_ds6_route_nexthop(rep) != NULL &&
        uip_ipaddr_cmp(uip_ds6_route_nexthop(rep), &dao_sender_addr)) {
-
       LOG_DBG("Setting expiration timer for prefix ");
       LOG_DBG_6ADDR(&prefix);
       LOG_DBG_("\n");
       RPL_ROUTE_SET_NOPATH_RECEIVED(rep);
       rep->state.lifetime = RPL_NOPATH_REMOVAL_DELAY;
-
-#if WITH_SLA
-      rep->state.sla_dao_hop_distance = sla_dao_hop_distance;
-#endif
 
 #if WITH_OST
       /* received No-path DAO */
@@ -1016,10 +990,6 @@ dao_input_storing(void)
   /* set lifetime and clear NOPATH bit */
   rep->state.lifetime = RPL_LIFETIME(instance, lifetime);
   RPL_ROUTE_CLEAR_NOPATH_RECEIVED(rep);
-
-#if WITH_SLA
-  rep->state.sla_dao_hop_distance = sla_dao_hop_distance;
-#endif
 
 #if RPL_WITH_MULTICAST
 fwd_dao:
@@ -1390,11 +1360,7 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
   }
 #endif /* RPL_WITH_DAO_ACK */
   ++pos;
-#if WITH_SLA
-  buffer[pos++] = 1; /* reserved */
-#else
   buffer[pos++] = 0; /* reserved */
-#endif
   buffer[pos++] = seq_no;
 #if RPL_DAO_SPECIFY_DAG
   memcpy(buffer + pos, &dag->dag_id, sizeof(dag->dag_id));

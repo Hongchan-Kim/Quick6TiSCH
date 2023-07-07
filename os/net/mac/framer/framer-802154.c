@@ -52,10 +52,6 @@
 #include "net/mac/tsch/tsch-schedule.h"
 #endif
 
-#if WITH_UPA
-#include "net/mac/framer/frame802154e-ie.h"
-#endif
-
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
 #include "net/mac/framer/frame802154e-ie.h"
 #endif
@@ -146,37 +142,6 @@ create_frame(int do_create)
     /* Only calculate header length */
     return hdr_len;
   } else if(packetbuf_hdralloc(hdr_len)) {
-
-#if WITH_UPA
-    int upa_hdr_len_increment = 0;
-    if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA) == 1 && !packetbuf_holds_broadcast()) {
-      struct ieee802154_ies upa_ies;
-      memset(&upa_ies, 0, sizeof(upa_ies));
-      upa_ies.ie_upa_info = 0;
-
-      if(packetbuf_hdralloc(2)) {
-        /* HCK: the second parameter must be revised */
-        if(frame80215e_create_ie_header_list_termination_2((uint8_t *)packetbuf_hdrptr() + hdr_len,
-                                                          PACKETBUF_SIZE - hdr_len, &upa_ies) < 0) {
-          return FRAMER_FAILED;
-        }
-        upa_hdr_len_increment += 2;
-      } else {
-        return FRAMER_FAILED;
-      }
-      if(packetbuf_hdralloc(4)) {
-        /* HCK: the second parameter must be revised */
-        if(frame80215e_create_ie_header_upa_info((uint8_t *)packetbuf_hdrptr() + hdr_len,
-                                                                PACKETBUF_SIZE - hdr_len, &upa_ies) < 0) {
-          return FRAMER_FAILED;
-        }
-        upa_hdr_len_increment += 4;
-      } else {
-        return FRAMER_FAILED;
-      }
-    }
-    hdr_len += upa_hdr_len_increment;
-#endif
 
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
     int hck_hdr_len_increment = 0;
@@ -341,14 +306,6 @@ parse(void)
   if(hdr_len && packetbuf_hdrreduce(hdr_len)) {
     packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, frame.fcf.frame_type);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, frame.fcf.ack_required);
-
-#if WITH_UPA
-    if(frame.fcf.ie_list_present) {
-      /* hckim: must be revised */
-      packetbuf_hdrreduce(6); /* 2 for termination, 4 for upa ie */
-      packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, frame.fcf.ie_list_present);
-    }
-#endif
 
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
     if(frame.fcf.ie_list_present) {

@@ -745,54 +745,6 @@ tsch_queue_free_packet(struct tsch_packet *p)
   }
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_UPA
-/* Updates neighbor queue state after a transmission */
-int
-tsch_queue_upa_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
-                      struct tsch_link *link, uint8_t mac_tx_status)
-{
-  int in_queue = 1;
-  int is_unicast = !n->is_broadcast;
-
-  if(mac_tx_status == MAC_TX_OK) {
-    /* Successful transmission */
-    in_queue = 0;
-
-    /* Update CSMA state in the unicast case */
-    if(is_unicast) {
-      /* Actually, we do not need to check 'is_shard_link'.
-       * If this is shared slot,
-       * then the regular slot that triggered current upa slot is also shared.
-       * Also, being in the upa slot means that the transmission of unicast packet
-       * in the previous 'shared' regular slot was successful.
-       * Therefore, backoff must be reset in the previous regular slot.
-       * So, we only need to check tsch_queue_is_empty(n) for dedicated links. */
-      if(tsch_queue_is_empty(n)) {
-        /* If this is a shared link, reset backoff on success.
-         * Otherwise, do so only is the queue is empty */
-        tsch_queue_backoff_reset(n);
-      }
-    }
-  } else {
-    /* Failed transmission */
-    if(p->transmissions >= p->max_transmissions) {
-      /* Drop packet */
-      in_queue = 0;
-    }
-    /* Even if this packet is not successfully sent in current upa slot,
-     * do not increase backoff because of following reasons.
-     * First, being in the upa slot means that the transmission of unicast packet
-     * in the regular slot that triggered current upa slot was successful. 
-     * Second, if we increaase backoff during upa slot,
-     * then, backoff window will be non-zero and
-     * consecutive transmission will be stopped.
-     * Therefore, we disable tsch_queue_backoff_inc in upa slot. */
-  }
-
-  return in_queue;
-}
-#endif
-/*---------------------------------------------------------------------------*/
 /* Updates neighbor queue state after a transmission */
 int
 tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
@@ -976,32 +928,6 @@ tsch_queue_is_empty(const struct tsch_neighbor *n)
   return !tsch_is_locked() && n != NULL && ringbufindex_empty(&n->tx_ringbuf);
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_UPA
-struct tsch_packet *
-tsch_queue_upa_get_next_packet_for_nbr(const struct tsch_neighbor *n, uint8_t upa_last_tx_seq)
-{
-  if(!tsch_is_locked()) {
-    uint8_t offset = upa_last_tx_seq;
-    if(n != NULL) {
-      int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
-
-      if(get_index != -1) {
-        /* Even if this is a shared slot,
-         * backoff exponent and window are already reset 
-         * in the regular slot that triggered current upa slot */
-        /* Disable TSCH_WITH_LINK_SELECTOR in upa slot 
-         * because packets with predefined slotframe handle and timeoffset
-         * can be sent in upa slot with different slotframe handle and timeoffset */
-        int16_t get_index_with_offset = get_index + offset < TSCH_QUEUE_NUM_PER_NEIGHBOR ? 
-                                      get_index + offset : get_index + offset - TSCH_QUEUE_NUM_PER_NEIGHBOR;
-        return n->tx_array[get_index_with_offset];
-      }
-    }
-  }
-  return NULL;
-}
-#endif
-/*---------------------------------------------------------------------------*/
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HOLD_CURRENT_NBR
 /* Returns the first packet from a neighbor queue */
 struct tsch_packet *
@@ -1037,7 +963,6 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
       if(get_index != -1 &&
           !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
                                                                     make sure the backoff has expired */
-
 #if TSCH_WITH_LINK_SELECTOR
 #if WITH_OST && OST_ON_DEMAND_PROVISION
         if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
@@ -1048,7 +973,7 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
             return NULL;
           }
         }
-#endif        
+#endif
 
         int packet_attr_slotframe = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
         int packet_attr_timeslot = queuebuf_attr(n->tx_array[get_index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);

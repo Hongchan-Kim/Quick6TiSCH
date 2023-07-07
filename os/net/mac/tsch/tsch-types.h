@@ -180,13 +180,6 @@ struct tsch_packet {
   uint8_t hnext_cssf_postponed_count; // Delete later
 #endif
 
-#if WITH_SLA
-  uint8_t sla_is_broadcast;
-#endif
-#if WITH_UPA && UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
-  uint8_t upa_sent_in_batch;
-#endif
-
 #if WITH_OST
   uip_ds6_nbr_t *ost_prt_nbr;
   uint16_t ost_prt_new_t_offset;
@@ -228,40 +221,14 @@ enum tsch_timeslot_timing_elements {
   tsch_ts_max_ack,
   tsch_ts_max_tx,
   tsch_ts_timeslot_length,
-#if UPA_TRIPLE_CCA
-  upa_ts_inter_cca_offset,
-#endif
   tsch_ts_elements_count, /* Not a timing element */
 };
-
-#if WITH_UPA
-enum upa_timeslot_timing_elements {
-  upa_ts_tx_offset_1,
-  upa_ts_rx_offset_1,
-  upa_ts_tx_offset_2,
-  upa_ts_rx_offset_2,
-  upa_ts_rx_ack_delay,
-  upa_ts_tx_ack_delay,
-  upa_ts_rx_wait,
-  upa_ts_ack_wait,
-  upa_ts_max_ack,
-  upa_ts_max_tx,
-  upa_ts_tx_process_b_ack,
-  upa_ts_elements_count, /* Not a timing element */
-};
-#endif
-
 
 /** \brief TSCH timeslot timing elements in rtimer ticks */
 typedef rtimer_clock_t tsch_timeslot_timing_ticks[tsch_ts_elements_count];
 
 /** \brief TSCH timeslot timing elements in micro-seconds */
 typedef uint16_t tsch_timeslot_timing_usec[tsch_ts_elements_count];
-
-#if WITH_UPA
-typedef rtimer_clock_t upa_timeslot_timing_ticks[upa_ts_elements_count];
-typedef uint16_t upa_timeslot_timing_usec[upa_ts_elements_count];
-#endif
 
 /** \brief Stores data about an incoming packet */
 struct input_packet {
@@ -270,13 +237,6 @@ struct input_packet {
   int len; /* Packet len */
   int16_t rssi; /* RSSI for this packet */
   uint8_t channel; /* Channel we received the packet on */
-
-#if WITH_SLA
-  uint8_t sla_is_broadcast;
-#endif
-#if WITH_UPA
-  uint8_t upa_received_in_batch;
-#endif
 
 #if WITH_OST /* OST-09: Post process received N */
   uip_ds6_nbr_t *ost_prN_nbr;

@@ -158,9 +158,6 @@ typedef struct rpl_route_entry {
   uint8_t dao_seqno_out;
   uint8_t dao_seqno_in;
   uint8_t state_flags;
-#if WITH_SLA
-  uint8_t sla_dao_hop_distance;
-#endif
 } rpl_route_entry_t;
 #endif /* UIP_DS6_ROUTE_STATE_TYPE */
 

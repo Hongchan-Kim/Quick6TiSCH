@@ -48,10 +48,6 @@
 
 /********** Functions *********/
 
-#if WITH_SLA /* Functions */
-int sla_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset);
-#endif
-
 /**
  * \brief Construct Enhanced ACK packet
  * \param buf The buffer where to build the EACK
@@ -63,27 +59,16 @@ int sla_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset
  * \return The length of the packet that was created. -1 if failure.
  */
 #if !WITH_OST
-#if WITH_UPA /* HEADER_IE_IN_DATA_AND_ACK */
-int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
-                            const linkaddr_t *dest_addr, uint8_t seqno,
-                            int16_t drift, int nack, 
-                            uint16_t upa_pkts_to_receive);
-#else /* Default burst transmission or no burst transmission */
+/* Default burst transmission or no burst transmission */
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,
                             int16_t drift, int nack);
-#endif
 #else /* !WIT_OST */
 #if OST_ON_DEMAND_PROVISION
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,
                             int16_t drift, int nack, 
                             struct input_packet *current_input, uint16_t matching_slot);
-#elif WITH_UPA /* HEADER_IE_IN_DATA_AND_ACK */
-int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
-                            const linkaddr_t *dest_addr, uint8_t seqno,
-                            int16_t drift, int nack, 
-                            struct input_packet *current_input, uint16_t upa_pkts_to_receive);
 #else /* Default burst transmission or no burst transmission */
 int tsch_packet_create_eack(uint8_t *buf, uint16_t buf_size,
                             const linkaddr_t *dest_addr, uint8_t seqno,

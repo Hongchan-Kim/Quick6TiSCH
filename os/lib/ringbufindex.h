@@ -48,7 +48,7 @@ struct ringbufindex {
   uint8_t put_ptr, get_ptr;
 };
 
-#if HNEXT_PACKET_SELECTION || WITH_UPA
+#if HNEXT_PACKET_SELECTION
 int ringbufindex_shift_get_ptr(struct ringbufindex *r, int shift);
 #endif
 

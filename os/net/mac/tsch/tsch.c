@@ -71,40 +71,6 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
-#if HCK_ASAP_EVAL_01_SLA_REAL_TIME
-static uint8_t hck_asap_eval_01_sla_real_time_skip_det = 1;
-#endif
-
-#if WITH_SLA /* Variables */
-static struct ctimer sla_timer;
-static struct ctimer sla_eb_send_timer;
-static volatile int sla_in_rapid_eb_broadcasting;
-static uint8_t sla_current_window_index = 0;
-static uint16_t sla_observed_bc_frame_length[SLA_OBSERVATION_WINDOWS][SLA_FRAME_LEN_QUANTIZED_LEVELS];
-static uint16_t sla_observed_uc_frame_length[SLA_OBSERVATION_WINDOWS][SLA_FRAME_LEN_QUANTIZED_LEVELS];
-static uint16_t sla_observed_ack_length[SLA_OBSERVATION_WINDOWS][SLA_ACK_LEN_QUANTIZED_LEVELS];
-static uint16_t sla_observed_bc_frame_count[SLA_OBSERVATION_WINDOWS];
-static uint16_t sla_observed_uc_frame_count[SLA_OBSERVATION_WINDOWS];
-static uint16_t sla_observed_ack_count[SLA_OBSERVATION_WINDOWS];
-static uint16_t sla_max_hop_distance[SLA_OBSERVATION_WINDOWS];
-
-static uint16_t sla_curr_ref_hop_distance = SLA_INITIAL_HOP_DISTANCE;
-
-struct tsch_asn_t sla_triggering_asn;
-uint16_t sla_next_timeslot_length;
-
-/* Used by SLA coordinator */
-static uint8_t sla_curr_ref_bc_frame_len = SLA_MAX_FRAME_LEN; /* Includes RADIO_PHY_OVERHEAD */
-static uint8_t sla_curr_ref_uc_frame_len = SLA_MAX_FRAME_LEN; /* Includes RADIO_PHY_OVERHEAD */
-static uint8_t sla_curr_ref_ack_len = SLA_MAX_ACK_LEN; /* Includes RADIO_PHY_OVERHEAD */
-static uint8_t sla_next_ref_bc_frame_len = SLA_MAX_FRAME_LEN; /* Includes RADIO_PHY_OVERHEAD */
-static uint8_t sla_next_ref_uc_frame_len = SLA_MAX_FRAME_LEN; /* Includes RADIO_PHY_OVERHEAD */
-static uint8_t sla_next_ref_ack_len = SLA_MAX_ACK_LEN; /* Includes RADIO_PHY_OVERHEAD */
-
-static uint16_t sla_eb_packet_qloss_count;
-static uint16_t sla_eb_packet_enqueue_count;
-#endif
-
 /* hckim measure associated cell counts */
 static uint32_t tsch_timeslots_until_last_session;
 static int32_t tsch_timeslots_in_current_session; // timeslots in current session
@@ -181,16 +147,6 @@ uint32_t tsch_scheduled_ost_pp_sf_bst_tx_cell_count;
 uint32_t tsch_scheduled_ost_pp_sf_bst_rx_cell_count;
 #endif
 #endif
-#if WITH_UPA
-uint32_t tsch_scheduled_common_sf_upa_tx_cell_count;
-uint32_t tsch_scheduled_common_sf_upa_rx_cell_count;
-uint32_t tsch_scheduled_unicast_sf_upa_tx_cell_count;
-uint32_t tsch_scheduled_unicast_sf_upa_rx_cell_count;
-#if WITH_OST
-uint32_t tsch_scheduled_ost_pp_sf_upa_tx_cell_count;
-uint32_t tsch_scheduled_ost_pp_sf_upa_rx_cell_count;
-#endif
-#endif
 
 /* hckim measure tx/rx operation counts */
 uint32_t tsch_eb_sf_tx_operation_count;
@@ -213,32 +169,6 @@ uint32_t tsch_unicast_sf_bst_rx_operation_count;
 #if WITH_OST
 uint32_t tsch_ost_pp_sf_bst_tx_operation_count;
 uint32_t tsch_ost_pp_sf_bst_rx_operation_count;
-#endif
-#endif
-#if WITH_UPA
-uint32_t tsch_common_sf_upa_tx_reserved_count;
-uint32_t tsch_common_sf_upa_rx_reserved_count;
-uint32_t tsch_unicast_sf_upa_tx_reserved_count;
-uint32_t tsch_unicast_sf_upa_rx_reserved_count;
-#if WITH_OST
-uint32_t tsch_ost_pp_sf_upa_tx_reserved_count;
-uint32_t tsch_ost_pp_sf_upa_rx_reserved_count;
-#endif
-uint32_t tsch_common_sf_upa_tx_ok_count;
-uint32_t tsch_common_sf_upa_rx_ok_count;
-uint32_t tsch_unicast_sf_upa_tx_ok_count;
-uint32_t tsch_unicast_sf_upa_rx_ok_count;
-#if WITH_OST
-uint32_t tsch_ost_pp_sf_upa_tx_ok_count;
-uint32_t tsch_ost_pp_sf_upa_rx_ok_count;
-#endif
-uint32_t tsch_common_sf_upa_tx_timeslots;
-uint32_t tsch_common_sf_upa_rx_timeslots;
-uint32_t tsch_unicast_sf_upa_tx_timeslots;
-uint32_t tsch_unicast_sf_upa_rx_timeslots;
-#if WITH_OST
-uint32_t tsch_ost_pp_sf_upa_tx_timeslots;
-uint32_t tsch_ost_pp_sf_upa_rx_timeslots;
 #endif
 #endif
 
@@ -303,24 +233,6 @@ void print_log_tsch()
 #endif
 #endif
 
-#if WITH_UPA
-#if WITH_OST
-  LOG_HCK("sch_bc_upa_tx %lu sch_bc_upa_rx %lu sch_uc_upa_tx %lu sch_uc_upa_rx %lu sch_pp_upa_tx %lu sch_pp_upa_rx %lu |\n", 
-          tsch_scheduled_common_sf_upa_tx_cell_count,
-          tsch_scheduled_common_sf_upa_rx_cell_count,
-          tsch_scheduled_unicast_sf_upa_tx_cell_count,
-          tsch_scheduled_unicast_sf_upa_rx_cell_count,
-          tsch_scheduled_ost_pp_sf_upa_tx_cell_count,
-          tsch_scheduled_ost_pp_sf_upa_rx_cell_count);
-#else
-  LOG_HCK("sch_bc_upa_tx %lu sch_bc_upa_rx %lu sch_uc_upa_tx %lu sch_uc_upa_rx %lu |\n", 
-          tsch_scheduled_common_sf_upa_tx_cell_count,
-          tsch_scheduled_common_sf_upa_rx_cell_count,
-          tsch_scheduled_unicast_sf_upa_tx_cell_count,
-          tsch_scheduled_unicast_sf_upa_rx_cell_count);
-#endif
-#endif
-
 #if WITH_OST
   LOG_HCK("eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu pp_tx_op %lu pp_rx_op %lu odp_tx_op %lu odp_rx_op %lu |\n", 
           tsch_eb_sf_tx_operation_count, 
@@ -358,52 +270,6 @@ void print_log_tsch()
           tsch_common_sf_bst_rx_operation_count,
           tsch_unicast_sf_bst_tx_operation_count,
           tsch_unicast_sf_bst_rx_operation_count);
-#endif
-#endif
-
-#if WITH_UPA
-#if WITH_OST
-  LOG_HCK("bc_upa_tx_rs %lu bc_upa_rx_rs %lu uc_upa_tx_rs %lu uc_upa_rx_rs %lu pp_upa_tx_rs %lu pp_upa_rx_rs %lu |\n", 
-          tsch_common_sf_upa_tx_reserved_count,
-          tsch_common_sf_upa_rx_reserved_count,
-          tsch_unicast_sf_upa_tx_reserved_count,
-          tsch_unicast_sf_upa_rx_reserved_count,
-          tsch_ost_pp_sf_upa_tx_reserved_count,
-          tsch_ost_pp_sf_upa_rx_reserved_count);
-
-  LOG_HCK("bc_upa_tx_ok %lu bc_upa_rx_ok %lu uc_upa_tx_ok %lu uc_upa_rx_ok %lu pp_upa_tx_ok %lu pp_upa_rx_ok %lu |\n", 
-          tsch_common_sf_upa_tx_ok_count,
-          tsch_common_sf_upa_rx_ok_count,
-          tsch_unicast_sf_upa_tx_ok_count,
-          tsch_unicast_sf_upa_rx_ok_count,
-          tsch_ost_pp_sf_upa_tx_ok_count,
-          tsch_ost_pp_sf_upa_rx_ok_count);
-
-  LOG_HCK("bc_upa_tx_ts %lu bc_upa_rx_ts %lu uc_upa_tx_ts %lu uc_upa_rx_ts %lu pp_upa_tx_ts %lu pp_upa_rx_ts %lu |\n", 
-          tsch_common_sf_upa_tx_timeslots,
-          tsch_common_sf_upa_rx_timeslots,
-          tsch_unicast_sf_upa_tx_timeslots,
-          tsch_unicast_sf_upa_rx_timeslots, 
-          tsch_ost_pp_sf_upa_tx_timeslots,
-          tsch_ost_pp_sf_upa_rx_timeslots);
-#else
-  LOG_HCK("bc_upa_tx_rs %lu bc_upa_rx_rs %lu uc_upa_tx_rs %lu uc_upa_rx_rs %lu |\n", 
-          tsch_common_sf_upa_tx_reserved_count,
-          tsch_common_sf_upa_rx_reserved_count,
-          tsch_unicast_sf_upa_tx_reserved_count,
-          tsch_unicast_sf_upa_rx_reserved_count);
-
-  LOG_HCK("bc_upa_tx_ok %lu bc_upa_rx_ok %lu uc_upa_tx_ok %lu uc_upa_rx_ok %lu |\n", 
-          tsch_common_sf_upa_tx_ok_count,
-          tsch_common_sf_upa_rx_ok_count,
-          tsch_unicast_sf_upa_tx_ok_count,
-          tsch_unicast_sf_upa_rx_ok_count);
-
-  LOG_HCK("bc_upa_tx_ts %lu bc_upa_rx_ts %lu uc_upa_tx_ts %lu uc_upa_rx_ts %lu |\n", 
-          tsch_common_sf_upa_tx_timeslots,
-          tsch_common_sf_upa_rx_timeslots,
-          tsch_unicast_sf_upa_tx_timeslots,
-          tsch_unicast_sf_upa_rx_timeslots);
 #endif
 #endif
 }
@@ -481,16 +347,6 @@ void reset_log_tsch()
   tsch_scheduled_ost_pp_sf_bst_rx_cell_count = 0;
 #endif
 #endif
-#if WITH_UPA
-  tsch_scheduled_common_sf_upa_tx_cell_count = 0;
-  tsch_scheduled_common_sf_upa_rx_cell_count = 0;
-  tsch_scheduled_unicast_sf_upa_tx_cell_count = 0;
-  tsch_scheduled_unicast_sf_upa_rx_cell_count = 0;
-#if WITH_OST
-  tsch_scheduled_ost_pp_sf_upa_tx_cell_count = 0;
-  tsch_scheduled_ost_pp_sf_upa_rx_cell_count = 0;
-#endif
-#endif
 
 /* hckim measure tx/rx operation counts */
   tsch_eb_sf_tx_operation_count = 0;
@@ -513,32 +369,6 @@ void reset_log_tsch()
 #if WITH_OST
   tsch_ost_pp_sf_bst_tx_operation_count = 0;
   tsch_ost_pp_sf_bst_rx_operation_count = 0;
-#endif
-#endif
-#if WITH_UPA
-  tsch_common_sf_upa_tx_reserved_count = 0;
-  tsch_common_sf_upa_rx_reserved_count = 0;
-  tsch_unicast_sf_upa_tx_reserved_count = 0;
-  tsch_unicast_sf_upa_rx_reserved_count = 0;
-#if WITH_OST
-  tsch_ost_pp_sf_upa_tx_reserved_count = 0;
-  tsch_ost_pp_sf_upa_rx_reserved_count = 0;
-#endif
-  tsch_common_sf_upa_tx_ok_count = 0;
-  tsch_common_sf_upa_rx_ok_count = 0;
-  tsch_unicast_sf_upa_tx_ok_count = 0;
-  tsch_unicast_sf_upa_rx_ok_count = 0;
-#if WITH_OST
-  tsch_ost_pp_sf_upa_tx_ok_count = 0;
-  tsch_ost_pp_sf_upa_rx_ok_count = 0;
-#endif
-  tsch_common_sf_upa_tx_timeslots = 0;
-  tsch_common_sf_upa_rx_timeslots = 0;
-  tsch_unicast_sf_upa_tx_timeslots = 0;
-  tsch_unicast_sf_upa_rx_timeslots = 0;
-#if WITH_OST
-  tsch_ost_pp_sf_upa_tx_timeslots = 0;
-  tsch_ost_pp_sf_upa_rx_timeslots = 0;
 #endif
 #endif
 
@@ -575,12 +405,6 @@ static const uint16_t *tsch_default_timing_us;
 uint16_t tsch_timing_us[tsch_ts_elements_count];
 /* TSCH timeslot timing (in rtimer ticks) */
 rtimer_clock_t tsch_timing[tsch_ts_elements_count];
-
-#if WITH_UPA
-static const uint16_t *upa_default_timing_us;
-uint16_t upa_timing_us[upa_ts_elements_count];
-rtimer_clock_t upa_timing[upa_ts_elements_count];
-#endif
 
 #if LINKADDR_SIZE == 8
 /* 802.15.4 broadcast MAC address  */
@@ -643,418 +467,6 @@ PROCESS(tsch_pending_events_process, "pending events process");
 
 /* Other function prototypes */
 static void packet_input(void);
-
-/*---------------------------------------------------------------------------*/
-#if WITH_SLA /* Coordinator/non-coordinator: rapidly broadcast EB */
-static void
-sla_rapid_eb_broadcast()
-{
-  sla_in_rapid_eb_broadcasting = 1;
-
-  if(tsch_is_associated && tsch_current_eb_period > 0
-#ifdef TSCH_RPL_CHECK_DODAG_JOINED
-    /* Implementation section 6.3 of RFC 8180 */
-    && TSCH_RPL_CHECK_DODAG_JOINED()
-#endif /* TSCH_RPL_CHECK_DODAG_JOINED */
-    /* don't send when in leaf mode */
-    && !NETSTACK_ROUTING.is_in_leaf_mode()
-      ) {
-    /* Enqueue EB only if there isn't already one in queue */
-    if(tsch_queue_nbr_packet_count(n_eb) == 0) {
-      uint8_t hdr_len = 0;
-      uint8_t tsch_sync_ie_offset;
-      /* Prepare the EB packet and schedule it to be sent */
-      if(tsch_packet_create_eb(&hdr_len, &tsch_sync_ie_offset) > 0) {
-        struct tsch_packet *p;
-        /* Enqueue EB packet, for a single transmission only */
-        if(!(p = tsch_queue_add_packet(&tsch_eb_address, 1, NULL, NULL))) {
-          LOG_ERR("! could not enqueue EB packet\n");
-
-          ++tsch_eb_packet_qloss_count;
-          LOG_HCK("eb_qloss %u |\n", tsch_eb_packet_qloss_count);
-
-#if SLA_DBG_ESSENTIAL
-          ++sla_eb_packet_qloss_count;
-          LOG_HCK_SLA("rapid_eb eb_qloss %u\n", sla_eb_packet_qloss_count);
-#endif
-        } else {
-          LOG_INFO("TSCH: enqueue EB packet %u %u\n", 
-                    packetbuf_totlen(), packetbuf_hdrlen());
-
-          ++tsch_eb_packet_enqueue_count;
-          LOG_HCK("eb_enq %u |\n", tsch_eb_packet_enqueue_count);
-
-#if SLA_DBG_ESSENTIAL
-          ++sla_eb_packet_enqueue_count;
-          LOG_HCK_SLA("rapid_eb eb_enq %u\n", sla_eb_packet_enqueue_count);
-#endif
-
-          p->tsch_sync_ie_offset = tsch_sync_ie_offset;
-          p->header_len = hdr_len;
-        }
-      }
-    }
-#if SLA_DBG_OPERATION
-    else {
-      LOG_HCK_SLA("rapid_eb exist\n");
-    }
-#endif
-
-    /* Call ctimer_stop if triggering_asn passed */
-    int32_t sla_asn_diff = TSCH_ASN_DIFF(tsch_current_asn, sla_triggering_asn);
-    if(sla_asn_diff >= 0) {
-#if SLA_DBG_ESSENTIAL
-      LOG_HCK_SLA("rapid_eb stop c_ts %u n_ts %u\n",
-                tsch_timing_us[tsch_ts_timeslot_length], 
-                sla_next_timeslot_length);
-#endif
-      sla_finish_rapid_eb_broadcasting();
-    } else {
-      ctimer_set(&sla_eb_send_timer, SLA_RAPID_EB_PERIOD, sla_rapid_eb_broadcast, NULL);
-    }
-  }
-}
-/*---------------------------------------------------------------------------*/
-void
-sla_finish_rapid_eb_broadcasting()
-{
-  if(sla_in_rapid_eb_broadcasting == 1) {
-    sla_in_rapid_eb_broadcasting = 0;
-    ctimer_stop(&sla_eb_send_timer);
-  }
-}
-#endif
-/*---------------------------------------------------------------------------*/
-#if WITH_SLA /* Coordinator/non-coordinator: record hop distnace, frame/ACK len */
-void
-sla_record_max_hop_distance(uint8_t hops)
-{
-  if(hops > sla_max_hop_distance[sla_current_window_index]) {
-    sla_max_hop_distance[sla_current_window_index] = hops;
-  }
-}
-/*---------------------------------------------------------------------------*/
-static uint8_t
-sla_quantize_frame_len_with_radio_phy_overhead(int frame_len_with_radio_phy_overhead)
-{
-  return ((frame_len_with_radio_phy_overhead - 1) >> SLA_SHIFT_BITS) + 1;
-}
-/*---------------------------------------------------------------------------*/
-static void
-sla_record_bc_frame_len(int frame_len)
-{
-  int frame_len_with_radio_phy_overhead = frame_len + RADIO_PHY_OVERHEAD;
-  uint8_t quantized_index = sla_quantize_frame_len_with_radio_phy_overhead(frame_len_with_radio_phy_overhead);
-  sla_observed_bc_frame_length[sla_current_window_index][quantized_index] += 1;
-  sla_observed_bc_frame_count[sla_current_window_index] += 1;
-}
-/*---------------------------------------------------------------------------*/
-static void
-sla_record_uc_frame_len(int frame_len)
-{
-  int frame_len_with_radio_phy_overhead = frame_len + RADIO_PHY_OVERHEAD;
-  uint8_t quantized_index = sla_quantize_frame_len_with_radio_phy_overhead(frame_len_with_radio_phy_overhead);
-  sla_observed_uc_frame_length[sla_current_window_index][quantized_index] += 1;
-  sla_observed_uc_frame_count[sla_current_window_index] += 1;
-}
-/*---------------------------------------------------------------------------*/
-void
-sla_record_ack_len(int ack_len)
-{
-  int ack_len_with_radio_phy_overhead = ack_len + RADIO_PHY_OVERHEAD;
-  uint8_t quantized_index = sla_quantize_frame_len_with_radio_phy_overhead(ack_len_with_radio_phy_overhead);
-  sla_observed_ack_length[sla_current_window_index][quantized_index] += 1;
-  sla_observed_ack_count[sla_current_window_index] += 1;
-}
-#endif
-/*---------------------------------------------------------------------------*/
-#if WITH_SLA /* Coordinator: policy-related functions */
-static uint8_t
-sla_get_frame_len_with_radio_phy_overhead(uint8_t quantized_val)
-{
-  return quantized_val << SLA_SHIFT_BITS;
-}
-/*---------------------------------------------------------------------------*/
-static int
-sla_calculate_next_ref_bc_frame_len()
-{
-  int target_index = 0;
-
-  uint16_t ref_count 
-          = sla_observed_bc_frame_count[sla_current_window_index] * (100 - SLA_K_TH_PERCENTILE) / 100;
-  uint16_t accum_count = 0;
-
-  int i = 0;
-  for(i = SLA_FRAME_LEN_QUANTIZED_LEVELS - 1; i >= 0; i--) {
-    accum_count += sla_observed_bc_frame_length[sla_current_window_index][i];
-    if(accum_count != 0 && accum_count > ref_count) {
-      target_index = i;
-      break;
-    }
-  }
-  if(accum_count > 0) {
-    return sla_get_frame_len_with_radio_phy_overhead(target_index);
-  } else {
-    return sla_curr_ref_bc_frame_len;
-  }
-}
-/*---------------------------------------------------------------------------*/
-static int
-sla_calculate_next_ref_uc_frame_len()
-{
-  int target_index = 0;
-
-  uint16_t ref_count 
-          = sla_observed_uc_frame_count[sla_current_window_index] * (100 - SLA_K_TH_PERCENTILE) / 100;
-  uint16_t accum_count = 0;
-
-  int i = 0;
-  for(i = SLA_FRAME_LEN_QUANTIZED_LEVELS - 1; i >= 0; i--) {
-    accum_count += sla_observed_uc_frame_length[sla_current_window_index][i];
-    if(accum_count != 0 && accum_count > ref_count) {
-      target_index = i;
-      break;
-    }
-  }
-  if(accum_count > 0) {
-    return sla_get_frame_len_with_radio_phy_overhead(target_index);
-  } else {
-    return sla_curr_ref_uc_frame_len;
-  }
-}
-/*---------------------------------------------------------------------------*/
-static int
-sla_calculate_next_ref_ack_len()
-{
-  int target_index = 0;
-
-  uint16_t ref_count 
-          = sla_observed_ack_count[sla_current_window_index] * (100 - SLA_K_TH_PERCENTILE) / 100;
-  uint16_t accum_count = 0;
-
-  int i = 0;
-  for(i = SLA_ACK_LEN_QUANTIZED_LEVELS - 1; i >= 0; i--) {
-    accum_count += sla_observed_ack_length[sla_current_window_index][i];
-    if(accum_count != 0 && accum_count > ref_count) {
-      target_index = i;
-      break;
-    }
-  }
-  if(accum_count > 0) {
-    return sla_get_frame_len_with_radio_phy_overhead(target_index);
-  } else {
-    return sla_curr_ref_ack_len;
-  }
-}
-/*---------------------------------------------------------------------------*/
-static void
-sla_calculate_triggering_asn()
-{
-  /* determine triggering asn */
-  uint64_t sla_current_asn = tsch_calculate_current_asn();
-
-  TSCH_ASN_INIT(sla_triggering_asn, sla_current_asn >> 32, sla_current_asn & 0xFFFFFFFF);
-
-  uint16_t sla_curr_max_hop_distance_from_ttl
-            = sla_max_hop_distance[sla_current_window_index];
-
-  uint16_t sla_curr_max_hop_distance_from_dao 
-            = sla_get_rpl_dao_max_hop_distance();
-
-  uint16_t sla_max_hop_distance_between_ttl_and_dao
-            = MAX(sla_curr_max_hop_distance_from_ttl, sla_curr_max_hop_distance_from_dao);
-
-  uint16_t sla_curr_max_hop_distance 
-            = sla_max_hop_distance_between_ttl_and_dao != 0 ?
-              sla_max_hop_distance_between_ttl_and_dao : SLA_ZERO_HOP_DISTANCE_OFFSET;
-
-  if(sla_curr_ref_hop_distance <= sla_curr_max_hop_distance) {
-    sla_curr_ref_hop_distance = sla_curr_max_hop_distance;
-  } else {
-    sla_curr_ref_hop_distance = MAX(sla_curr_ref_hop_distance - 1, sla_curr_max_hop_distance);
-
-  }
-
-  uint16_t expected_propagation_duration 
-            = (sla_curr_ref_hop_distance + SLA_TRIGGERING_ASN_INCREMENT) 
-              * ORCHESTRA_CONF_EBSF_PERIOD * SLA_TRIGGERING_ASN_MULTIPLIER;
-            
-  TSCH_ASN_INC(sla_triggering_asn, expected_propagation_duration);
-
-  struct tsch_slotframe *cs_sf = tsch_schedule_get_slotframe_by_handle(TSCH_SCHED_COMMON_SF_HANDLE);
-
-  uint16_t ts_remainder = TSCH_ASN_MOD(sla_triggering_asn, cs_sf->size);
-  TSCH_ASN_INC(sla_triggering_asn, cs_sf->size.val - ts_remainder);
-}
-#endif
-/*---------------------------------------------------------------------------*/
-#if WITH_SLA /* Coordinator: determine next frame length and ACK length */
-static uint16_t
-sla_calculate_timeslot_length()
-{
-  uint16_t ref_bc_frame_duration = MIN(SLA_CALCULATE_DURATION(sla_next_ref_bc_frame_len), tsch_timing_us[tsch_ts_max_tx]);
-
-  uint16_t ref_uc_frame_duration = MIN(SLA_CALCULATE_DURATION(sla_next_ref_uc_frame_len), tsch_timing_us[tsch_ts_max_tx]);
-  uint16_t ref_ack_duration = MIN(SLA_CALCULATE_DURATION(sla_next_ref_ack_len), tsch_timing_us[tsch_ts_max_ack]);
-
-  uint16_t ref_bc_tx_duration = ref_bc_frame_duration;
-  uint16_t ref_uc_tx_duration = ref_uc_frame_duration + tsch_timing_us[tsch_ts_tx_ack_delay] + ref_ack_duration;
-
-  uint16_t longer_ref_tx_duration = MAX(ref_bc_tx_duration, ref_uc_tx_duration);
-
-  uint16_t max_tx_duration = tsch_timing_us[tsch_ts_max_tx]
-                              + tsch_timing_us[tsch_ts_tx_ack_delay] 
-                              + tsch_timing_us[tsch_ts_max_ack];
-  uint16_t tx_duration_diff = max_tx_duration - longer_ref_tx_duration;
-  
-  uint16_t calculated_timeslot_length = tsch_default_timing_us[tsch_ts_timeslot_length] - tx_duration_diff;
-
-  return calculated_timeslot_length;
-}
-/*---------------------------------------------------------------------------*/
-static void
-sla_determine_next_timeslot_length_and_trig_asn()
-{
-  /* 
-   * 1. Coordinator determines next representative frame/ACK length.
-   * 2. Only if next rep frame/ACK lengths are different from current ones,
-   *    coordinator starts rapid EB broadcasting.
-   */
-  int i = 0;
-
-#if HCK_ASAP_EVAL_01_SLA_REAL_TIME
-  if(hck_asap_eval_01_sla_real_time_skip_det == 1) {
-    hck_asap_eval_01_sla_real_time_skip_det = 0;
-
-    LOG_HCK_SLA("det skip_first\n");
-
-    /* Reset next observation array */
-    sla_current_window_index = (sla_current_window_index + 1) % SLA_OBSERVATION_WINDOWS;
-    for(i = 0; i < SLA_FRAME_LEN_QUANTIZED_LEVELS; i++) {
-      sla_observed_bc_frame_length[sla_current_window_index][i] = 0;
-    }
-    for(i = 0; i < SLA_FRAME_LEN_QUANTIZED_LEVELS; i++) {
-      sla_observed_uc_frame_length[sla_current_window_index][i] = 0;
-    }
-    for(i = 0; i < SLA_ACK_LEN_QUANTIZED_LEVELS; i++) {
-      sla_observed_ack_length[sla_current_window_index][i] = 0;
-    }
-    sla_observed_bc_frame_count[sla_current_window_index] = 0;
-    sla_observed_uc_frame_count[sla_current_window_index] = 0;
-    sla_observed_ack_count[sla_current_window_index] = 0;
-    sla_max_hop_distance[sla_current_window_index] = 0;
-
-    /* Reset and restart sla_timer */
-    ctimer_set(&sla_timer, SLA_DETERMINATION_PERIOD, sla_determine_next_timeslot_length_and_trig_asn, NULL);
-    return;
-  }
-#endif
-
-#if SLA_DBG_ESSENTIAL
-  /* Print recorded frame and ACK length distribution */
-  uint64_t sla_determine_asn = tsch_calculate_current_asn();
-  LOG_HCK_SLA("det d_asn %llx | c_win %u\n", sla_determine_asn, sla_current_window_index);
-
-  int j = 0;
-
-  for(i = 0; i < SLA_OBSERVATION_WINDOWS; i++) {
-    LOG_HCK_SLA("det dist_bc | win %u", i);
-    for(j = 0; j < SLA_FRAME_LEN_QUANTIZED_LEVELS; j++) {
-      LOG_HCK_SLA_(" | %u %u", j, sla_observed_bc_frame_length[i][j]);
-    }
-    LOG_HCK_SLA_("\n");
-  }
-  for(i = 0; i < SLA_OBSERVATION_WINDOWS; i++) {
-    LOG_HCK_SLA("det dist_uc | win %u", i);
-    for(j = 0; j < SLA_FRAME_LEN_QUANTIZED_LEVELS; j++) {
-      LOG_HCK_SLA_(" | %u %u", j, sla_observed_uc_frame_length[i][j]);
-    }
-    LOG_HCK_SLA_("\n");
-  }
-  for(i = 0; i < SLA_OBSERVATION_WINDOWS; i++) {
-    LOG_HCK_SLA("det dist_ack | win %u", i);
-    for(j = 0; j < SLA_ACK_LEN_QUANTIZED_LEVELS; j++) {
-      LOG_HCK_SLA_(" | %u %u", j, sla_observed_ack_length[i][j]);
-    }
-    LOG_HCK_SLA_("\n");
-  }
-  for(i = 0; i < SLA_OBSERVATION_WINDOWS; i++) {
-    LOG_HCK_SLA("det max_hops | win %u | %u\n", i, sla_max_hop_distance[i]);
-  }
-#endif
-
-  /* Update current frame_len and ack_len */
-  sla_curr_ref_bc_frame_len = sla_next_ref_bc_frame_len;
-  sla_curr_ref_uc_frame_len = sla_next_ref_uc_frame_len;
-  sla_curr_ref_ack_len = sla_next_ref_ack_len;
-
-  /* Calculate next frame_len and ack_len */
-  sla_next_ref_bc_frame_len = sla_calculate_next_ref_bc_frame_len();
-  sla_next_ref_uc_frame_len = sla_calculate_next_ref_uc_frame_len();
-  sla_next_ref_ack_len = sla_calculate_next_ref_ack_len();
-
-  /* Calculate sla_next_timeslot_length */
-  sla_next_timeslot_length = sla_calculate_timeslot_length();
-
-  /* Calculate triggering asn */
-  sla_calculate_triggering_asn();
-
-#if SLA_DBG_ESSENTIAL
-  LOG_HCK_SLA("det c_ref_bc %u n_ref_bc %u c_ref_uc %u n_ref_uc %u c_ref_ack %u n_ref_ack %u c_ts %u n_ts %u t_asn %llx hops %u\n",
-            sla_curr_ref_bc_frame_len,
-            sla_next_ref_bc_frame_len,
-            sla_curr_ref_uc_frame_len,
-            sla_next_ref_uc_frame_len,
-            sla_curr_ref_ack_len,
-            sla_next_ref_ack_len, 
-            tsch_timing_us[tsch_ts_timeslot_length],
-            sla_next_timeslot_length, 
-            (uint64_t)(sla_triggering_asn.ls4b) + ((uint64_t)(sla_triggering_asn.ms1b) << 32),
-            sla_curr_ref_hop_distance);
-#endif
-
-  /* Only when timeslot length is changed, coordinator starts rapid eb broadcasting. */
-  if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_timeslot_length) {
-    if(sla_in_rapid_eb_broadcasting == 0) {
-#if SLA_DBG_ESSENTIAL
-      LOG_HCK_SLA("det start_rapid_eb c_ts %u n_ts %u\n",
-                tsch_timing_us[tsch_ts_timeslot_length], 
-                sla_next_timeslot_length);
-#endif
-      sla_rapid_eb_broadcast();
-    }
-  }
-
-  /* Reset next observation array */
-  sla_current_window_index = (sla_current_window_index + 1) % SLA_OBSERVATION_WINDOWS;
-  for(i = 0; i < SLA_FRAME_LEN_QUANTIZED_LEVELS; i++) {
-    sla_observed_bc_frame_length[sla_current_window_index][i] = 0;
-  }
-  for(i = 0; i < SLA_FRAME_LEN_QUANTIZED_LEVELS; i++) {
-    sla_observed_uc_frame_length[sla_current_window_index][i] = 0;
-  }
-  for(i = 0; i < SLA_ACK_LEN_QUANTIZED_LEVELS; i++) {
-    sla_observed_ack_length[sla_current_window_index][i] = 0;
-  }
-  sla_observed_bc_frame_count[sla_current_window_index] = 0;
-  sla_observed_uc_frame_count[sla_current_window_index] = 0;
-  sla_observed_ack_count[sla_current_window_index] = 0;
-  sla_max_hop_distance[sla_current_window_index] = 0;
-
-  /* Reset and restart sla_timer */
-  ctimer_set(&sla_timer, SLA_DETERMINATION_PERIOD, sla_determine_next_timeslot_length_and_trig_asn, NULL);
-}
-#endif
-/*---------------------------------------------------------------------------*/
-#if WITH_SLA /* Coordinator/non-coordinator: apply next timeslot length */
-void
-sla_apply_next_timeslot_length()
-{
-  tsch_timing_us[tsch_ts_timeslot_length] = sla_next_timeslot_length;
-  tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
-}
-#endif
-/*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
 #if WITH_ALICE
@@ -1142,45 +554,6 @@ tsch_reset(void)
     tsch_timing_us[i] = tsch_default_timing_us[i];
     tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
   }
-
-#if WITH_SLA /* Coordinator/non-coordinator: initialize SLA variables and timeslot length */
-  TSCH_ASN_INIT(sla_triggering_asn, 0, 0);
-  sla_next_timeslot_length = tsch_default_timing_us[tsch_ts_timeslot_length];
-
-  sla_curr_ref_bc_frame_len = SLA_MAX_FRAME_LEN;
-  sla_curr_ref_uc_frame_len = SLA_MAX_FRAME_LEN;
-  sla_curr_ref_ack_len = SLA_MAX_ACK_LEN;
-  sla_next_ref_bc_frame_len = SLA_MAX_FRAME_LEN;
-  sla_next_ref_uc_frame_len = SLA_MAX_FRAME_LEN;
-  sla_next_ref_ack_len = SLA_MAX_ACK_LEN;
-
-#if SLA_DBG_ESSENTIAL
-  LOG_HCK_SLA("reset f_lvs %d a_lvs %d sla_k %u\n", 
-            SLA_FRAME_LEN_QUANTIZED_LEVELS, 
-            SLA_ACK_LEN_QUANTIZED_LEVELS,
-            SLA_K_TH_PERCENTILE);
-  LOG_HCK_SLA("reset c_ref_bc %u n_ref_bc %u c_ref_uc %u n_ref_uc %u c_ref_ack %u n_ref_ack %u c_ts %u n_ts %u t_asn %llx hops %u\n",
-            sla_curr_ref_bc_frame_len,
-            sla_next_ref_bc_frame_len,
-            sla_curr_ref_uc_frame_len,
-            sla_next_ref_uc_frame_len,
-            sla_curr_ref_ack_len,
-            sla_next_ref_ack_len, 
-            tsch_timing_us[tsch_ts_timeslot_length],
-            sla_next_timeslot_length, 
-            (uint64_t)(sla_triggering_asn.ls4b) + ((uint64_t)(sla_triggering_asn.ms1b) << 32),
-            sla_curr_ref_hop_distance);
-#endif
-#endif
-
-#if WITH_UPA
-  upa_default_timing_us = UPA_DEFAULT_TIMESLOT_TIMING;
-  for(i = 0; i < upa_ts_elements_count; i++) {
-    upa_timing_us[i] = upa_default_timing_us[i];
-    upa_timing[i] = US_TO_RTIMERTICKS(upa_timing_us[i]);
-  }
-#endif
-
 #ifdef TSCH_CALLBACK_LEAVING_NETWORK
   TSCH_CALLBACK_LEAVING_NETWORK();
 #endif
@@ -1453,49 +826,6 @@ eb_input(struct input_packet *current_input)
           }
         }
       }
-
-#if WITH_SLA /* Non-coordinator: update SLA variables and timeslot length */
-      uint64_t curr_eb_rx_asn = (uint64_t)(current_input->rx_asn.ls4b) + ((uint64_t)(current_input->rx_asn.ms1b) << 32);
-      uint64_t curr_eb_ie_asn = (uint64_t)(eb_ies.ie_asn.ls4b) + ((uint64_t)(eb_ies.ie_asn.ms1b) << 32);
-
-      if(tsch_timing_us[tsch_ts_timeslot_length] != eb_ies.ie_sla_curr_timeslot_len) {
-#if SLA_DBG_ESSENTIAL
-        LOG_HCK_SLA("eb_input invalid rx_asn %llx ie_asn %llx c_ts %u n_ts %u\n",
-                curr_eb_rx_asn,
-                curr_eb_ie_asn,
-                tsch_timing_us[tsch_ts_timeslot_length],
-                eb_ies.ie_sla_curr_timeslot_len);
-#endif
-        tsch_disassociate();
-      } else {
-        /*
-         * curr slot length is matched
-         * now update triggering_asn, next slot length, which are assigned by coordinator.
-         */
-        sla_triggering_asn = eb_ies.ie_sla_triggering_asn;
-        sla_next_timeslot_length = eb_ies.ie_sla_next_timeslot_len;
-
-#if SLA_DBG_ESSENTIAL
-        LOG_HCK_SLA("eb_input valid rx_asn %llx ie_asn %llx valid c_ts %u n_ts %u t_asn %llx \n", 
-                curr_eb_rx_asn,
-                curr_eb_ie_asn,
-                tsch_timing_us[tsch_ts_timeslot_length],
-                sla_next_timeslot_length,
-                (uint64_t)(sla_triggering_asn.ls4b) + ((uint64_t)(sla_triggering_asn.ms1b) << 32));
-#endif
-
-        if(tsch_timing_us[tsch_ts_timeslot_length] != sla_next_timeslot_length) {
-          if(sla_in_rapid_eb_broadcasting == 0) {
-#if SLA_DBG_ESSENTIAL
-            LOG_HCK_SLA("eb_input start_rapid_eb c_ts %u n_ts %u\n",
-                      tsch_timing_us[tsch_ts_timeslot_length], 
-                      sla_next_timeslot_length);
-#endif
-            sla_rapid_eb_broadcast();
-          }
-        }
-      }
-#endif
     }
   }
 }
@@ -1505,29 +835,12 @@ static void
 tsch_rx_process_pending()
 {
   int16_t input_index;
-
   /* Loop on accessing (without removing) a pending input packet */
   while((input_index = ringbufindex_peek_get(&input_ringbuf)) != -1) {
     struct input_packet *current_input = &input_array[input_index];
 
-#if WITH_SLA /* Coordinator: record received frame length */
-    if(tsch_is_coordinator) {
-      if(current_input->sla_is_broadcast) {
-        sla_record_bc_frame_len(current_input->len);
-      } else {
-        sla_record_uc_frame_len(current_input->len);
-      }
-    }
-#endif
-
 #if WITH_OST /* OST-09: Post process received N */
-#if WITH_UPA
-    if(current_input->upa_received_in_batch == 0) {
-      ost_post_process_rx_N(current_input);
-    }
-#else
     ost_post_process_rx_N(current_input);
-#endif
 #endif
 
     frame802154_t frame;
@@ -1566,24 +879,8 @@ tsch_tx_process_pending(void)
   while((dequeued_index = ringbufindex_peek_get(&dequeued_ringbuf)) != -1) {
     struct tsch_packet *p = dequeued_array[dequeued_index];
 
-#if WITH_SLA /* Coordinator: record transmitted frame length */
-    if(tsch_is_coordinator) {
-      if(p->sla_is_broadcast) {
-        sla_record_bc_frame_len(queuebuf_datalen(p->qb));
-      } else {
-        sla_record_uc_frame_len(queuebuf_datalen(p->qb));
-      }
-    }
-#endif
-
 #if WITH_OST
-#if WITH_UPA && UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
-    if(p->upa_sent_in_batch == 0) { /* Sent in regular schcedule */
-      ost_post_process_rx_t_offset(p);
-    }
-#else
     ost_post_process_rx_t_offset(p);
-#endif
 #endif
 
     /* Put packet into packetbuf for packet_sent callback */
@@ -1659,19 +956,8 @@ tsch_tx_process_pending(void)
         }
       }
     }
-
-#if WITH_UPA && UPA_NO_ETX_UPDATE_FROM_PACKETS_IN_BATCH
-    if(p->upa_sent_in_batch == 1) { /* sent in exclusive period */
-      /* Call packet_sent callback */
-      mac_call_sent_callback(p->sent, p->ptr, p->ret, 0xff + p->transmissions);
-    } else { /* sent in regular schedule */
-      /* Call packet_sent callback */
-      mac_call_sent_callback(p->sent, p->ptr, p->ret, p->transmissions);
-    }
-#else
     /* Call packet_sent callback */
     mac_call_sent_callback(p->sent, p->ptr, p->ret, p->transmissions);
-#endif
     /* Free packet queuebuf */
     tsch_queue_free_packet(p);
     /* Free all unused neighbors */
@@ -1782,25 +1068,6 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
     }
     tsch_timing[i] = US_TO_RTIMERTICKS(tsch_timing_us[i]);
   }
-
-#if WITH_SLA /* Non-coordinator: during association, get triggering asn, curr/next_frame/ack_len from EB */
-  /* Update tsch_timing_us and tsch_timing */
-  tsch_timing_us[tsch_ts_timeslot_length] = ies.ie_sla_curr_timeslot_len;
-  tsch_timing[tsch_ts_timeslot_length] = US_TO_RTIMERTICKS(tsch_timing_us[tsch_ts_timeslot_length]);
-
-  sla_triggering_asn = ies.ie_sla_triggering_asn;
-
-  /* Update tsch_next_timing_us */
-  sla_next_timeslot_length = ies.ie_sla_next_timeslot_len;
-
-
-#if SLA_DBG_ESSENTIAL
-  LOG_HCK_SLA("asso c_ts %u n_ts %u t_asn %llx\n",
-              tsch_timing_us[tsch_ts_timeslot_length],
-              sla_next_timeslot_length, 
-              (uint64_t)(sla_triggering_asn.ls4b) + ((uint64_t)(sla_triggering_asn.ms1b) << 32));
-#endif
-#endif
 
   /* TSCH hopping sequence */
   if(ies.ie_channel_hopping_sequence_id == 0) {
@@ -2041,13 +1308,6 @@ PROCESS_THREAD(tsch_process, ev, data)
     //hckim record the asn when association is achieved
     TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);
 
-#if WITH_SLA /* Coordinator: start sla_timer for frame/ACK length observation */
-    if(tsch_is_coordinator) {
-      ctimer_set(&sla_timer, SLA_START_DELAY, sla_determine_next_timeslot_length_and_trig_asn, NULL);
-    }
-#endif
-
-
     /* We are part of a TSCH network, start slot operation */
     tsch_slot_operation_start();
 
@@ -2138,11 +1398,6 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
           }
         }
       }
-#if SLA_DBG_OPERATION
-      else {
-        LOG_HCK_SLA("send_eb exist\n");
-      }
-#endif
     }
     if(tsch_current_eb_period > 0) {
       /* Next EB transmission with a random delay
@@ -2310,11 +1565,6 @@ send_packet(mac_callback_t sent, void *ptr)
     }
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_SEQNO, tsch_packet_seqno);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, 1);
-
-#if WITH_UPA /* HEADER_IE_IN_DATA_AND_ACK */
-    packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
-#endif
-
   } else {
     /* Broadcast packets shall be added to broadcast queue
      * The broadcast address in Contiki is linkaddr_null which is equal

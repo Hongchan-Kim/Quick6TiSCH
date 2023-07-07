@@ -99,18 +99,11 @@ tsch_packet_eackbuf_attr(uint8_t type)
 /*---------------------------------------------------------------------------*/
 /* Construct enhanced ACK packet and return ACK length */
 #if !WITH_OST
-#if WITH_UPA
-int
-tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
-                        const linkaddr_t *dest_addr, uint8_t seqno,
-                        int16_t drift, int nack, 
-                        uint16_t upa_pkts_to_receive)
-#else /* Default burst transmission or no burst transmission */
+/* Default burst transmission or no burst transmission */
 int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
                         int16_t drift, int nack)
-#endif
 #else /* !WIT_OST */
 #if OST_ON_DEMAND_PROVISION
 int
@@ -118,12 +111,6 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
                         const linkaddr_t *dest_addr, uint8_t seqno,
                         int16_t drift, int nack, 
                         struct input_packet *current_input, uint16_t matching_slot)
-#elif WITH_UPA /* HEADER_IE_IN_DATA_AND_ACK */
-int
-tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
-                        const linkaddr_t *dest_addr, uint8_t seqno,
-                        int16_t drift, int nack, 
-                        struct input_packet *current_input, uint16_t upa_pkts_to_receive)
 #else /* Default burst transmission or no burst transmission */
 int
 tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
@@ -137,10 +124,6 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   struct ieee802154_ies ies;
   int hdr_len;
   int ack_len;
-#if WITH_UPA /* HEADER_IE_IN_DATA_AND_ACK */
-  int ies_len;
-  int current_ie_len;
-#endif
 
   if(buf == NULL) {
     return -1;
@@ -208,32 +191,6 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
   ies.ie_time_correction = drift;
   ies.ie_is_nack = nack;
 
-#if WITH_UPA /* HEADER_IE_IN_DATA_AND_ACK */
-  ies.ie_upa_info = upa_pkts_to_receive;
-  ies_len = 0;
-  
-  current_ie_len = 0;
-  current_ie_len =
-    frame80215e_create_ie_header_upa_info(buf + hdr_len + ies_len, 
-                                                          buf_len - hdr_len - ies_len, &ies);
-  if(current_ie_len < 0) {
-    return -1;
-  }
-  ies_len += current_ie_len;
-
-  current_ie_len = 0;
-  current_ie_len =
-    frame80215e_create_ie_header_ack_nack_time_correction(buf + hdr_len + ies_len,
-                                                          buf_len - hdr_len - ies_len, &ies);
-  if(current_ie_len < 0) {
-    return -1;
-  }
-  ies_len += current_ie_len;
-
-  ack_len = hdr_len + ies_len;
-
-#else /* WITH_UPA */
-
   ack_len =
     frame80215e_create_ie_header_ack_nack_time_correction(buf + hdr_len,
                                                           buf_len - hdr_len, &ies);
@@ -241,8 +198,6 @@ tsch_packet_create_eack(uint8_t *buf, uint16_t buf_len,
     return -1;
   }
   ack_len += hdr_len;
-
-#endif
 
   frame802154_create(&params, buf);
 
@@ -332,12 +287,6 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
   p.ost_pigg1 = 0xffff;
 #endif
 
-#if WITH_SLA /* Coordinator/non-coordinator: piggyback information to ies */
-  ies.ie_sla_triggering_asn = sla_triggering_asn;
-  ies.ie_sla_curr_timeslot_len = tsch_timing_us[tsch_ts_timeslot_length];
-  ies.ie_sla_next_timeslot_len = sla_next_timeslot_length;
-#endif
-
   /* Add TSCH timeslot timing IE. */
 #if TSCH_PACKET_EB_WITH_TIMESLOT_TIMING
   {
@@ -389,26 +338,6 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
   }
   p += ie_len;
   packetbuf_set_datalen(packetbuf_datalen() + ie_len);
-
-#if WITH_SLA /* Coordinator/non-coordinator: piggyback information to ies */
-  ie_len = frame80215e_create_ie_tsch_sla_triggering_asn(p,
-                                                      packetbuf_remaininglen(),
-                                                      &ies);
-  if(ie_len < 0) {
-    return -1;
-  }
-  p += ie_len;
-  packetbuf_set_datalen(packetbuf_datalen() + ie_len);
-
-  ie_len = frame80215e_create_ie_tsch_sla_timeslot_len(p,
-                                               packetbuf_remaininglen(),
-                                               &ies);
-  if(ie_len < 0) {
-    return -1;
-  }
-  p += ie_len;
-  packetbuf_set_datalen(packetbuf_datalen() + ie_len);
-#endif
 
   ie_len = frame80215e_create_ie_tsch_timeslot(p,
                                                packetbuf_remaininglen(),
@@ -510,21 +439,6 @@ tsch_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
   ies.ie_join_priority = tsch_join_priority;
   return frame80215e_create_ie_tsch_synchronization(buf+tsch_sync_ie_offset, buf_size-tsch_sync_ie_offset, &ies) != -1;
 }
-/*---------------------------------------------------------------------------*/
-#if WITH_SLA /* Coordinator/non-coordinator: update information in EB before transmission */
-/* Update SLA info in EB packet */
-int
-sla_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
-{
-  struct ieee802154_ies ies;
-  ies.ie_sla_triggering_asn = sla_triggering_asn;
-  ies.ie_sla_curr_timeslot_len = tsch_timing_us[tsch_ts_timeslot_length];
-  ies.ie_sla_next_timeslot_len = sla_next_timeslot_length;
-  uint8_t result_triggering_asn = frame80215e_create_ie_tsch_sla_triggering_asn(buf+tsch_sync_ie_offset+8, buf_size-tsch_sync_ie_offset-8, &ies) != -1;
-  uint8_t result_frame_ack_len = frame80215e_create_ie_tsch_sla_timeslot_len(buf+tsch_sync_ie_offset+8+7, buf_size-tsch_sync_ie_offset-8-7, &ies) != -1;
-  return result_triggering_asn && result_frame_ack_len;
-}
-#endif
 /*---------------------------------------------------------------------------*/
 /* Parse a IEEE 802.15.4e TSCH Enhanced Beacon (EB) */
 int

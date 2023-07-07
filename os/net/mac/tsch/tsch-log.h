@@ -76,10 +76,7 @@
 struct tsch_log_t {
   enum { tsch_log_tx,
          tsch_log_rx,
-         tsch_log_message,
-#if WITH_UPA
-         upa_log_result,
-#endif
+         tsch_log_message
   } type;
   struct tsch_asn_t asn;
   struct tsch_link *link;
@@ -88,7 +85,7 @@ struct tsch_log_t {
   uint8_t channel_offset;
   uint16_t timeslot; // hckim
   union {
-    char message[40];
+    char message[48];
     struct {
       int mac_tx_status;
       linkaddr_t dest;
@@ -108,7 +105,6 @@ struct tsch_log_t {
       uint8_t hck_packet_type;
 #endif
 #if WITH_HNEXT
-      uint8_t asap_ack_len;
       uint8_t hnext_collision_count;
       uint8_t hnext_cssf_postponed_count;
       uint8_t hnext_noack_count;
@@ -120,12 +116,6 @@ struct tsch_log_t {
       uint8_t hnext_offset;
       uint8_t hnext_state;
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#else /* WITH_HNEXT */
-      uint16_t asap_unused_offset_time;
-      uint16_t asap_idle_time;
-      uint16_t asap_curr_slot_len;
-      uint8_t asap_num_of_slots_until_idle_time;
-      uint8_t asap_ack_len;
 #endif /* WITH_HNEXT */
     } tx;
     struct {
@@ -147,7 +137,6 @@ struct tsch_log_t {
       uint8_t hck_packet_type;
 #endif
 #if WITH_HNEXT
-      uint8_t asap_ack_len;
       uint8_t hnext_collision_count;
       uint8_t hnext_cssf_postponed_count;
       uint8_t hnext_noack_count;
@@ -159,33 +148,8 @@ struct tsch_log_t {
       uint8_t hnext_offset;
       uint8_t hnext_state;
 #endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#else /* WITH_HNEXT */
-      uint16_t asap_unused_offset_time;
-      uint16_t asap_idle_time;
-      uint16_t asap_curr_slot_len;
-      uint8_t asap_num_of_slots_until_idle_time;
-      uint8_t asap_ack_len;
 #endif /* WITH_HNEXT */
     } rx;
-#if WITH_UPA
-    struct {
-      uint8_t upa_link_type;              // bcsf/ucsf/ppsf tx/rx
-      uint8_t upa_num_of_reserved_pkts;   // number of reserved packets
-      uint8_t upa_num_of_successful_pkts; // number of successful packets
-      uint8_t upa_trig_pkt_len;
-      uint8_t upa_all_pkt_len_same;
-      uint8_t upa_tot_ack_len;
-      uint16_t upa_tot_pkt_len;
-      uint16_t upa_successful_pkt_len;
-      uint16_t upa_unused_offset_time;
-      uint16_t upa_idle_time;
-      uint16_t upa_curr_slot_length;
-      uint8_t upa_num_of_slots_until_ilde_time;
-      uint8_t upa_num_of_slots_until_scheduling;
-      uint8_t upa_num_of_expected_slots;
-      uint8_t upa_is_overflowed;
-    } upa_result;
-#endif
   };
 };
 

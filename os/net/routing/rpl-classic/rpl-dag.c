@@ -68,28 +68,6 @@
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
 
-#if IOTLAB_FIXED_TOPOLOGY
-#if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
-uint8_t fixed_parent_id[NODE_NUM] = {0,  1,  1,  1,  1,  1,  9,  1,  1,  9, 
-                                     1, 11, 11,  1, 11, 18, 18,  1, 18, 18, 
-                                    18, 18, 18, 11, 18,  9, 30, 18, 28, 18, 
-                                    28, 30, 26, 30, 26, 30, 30, 30, 36, 30, 
-                                    40, 24, 30, 30, 43, 36, 42, 40, 42, 44, 
-                                    42, 48, 54, 42, 49, 40, 54, 54, 56, 54, 
-                                    54, 56, 62, 62, 61, 68, 61, 56, 70, 68, 
-                                    68, 68, 70, 68, 71, 72, 74, 72, 74};
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_78_R_CORNER_U
-uint8_t fixed_parent_id[NODE_NUM] = {0,  1,  1,  1,  1, 11,  5, 11,  5, 11, 
-                                     1, 11, 11, 15, 11, 15, 11, 11, 11, 11, 
-                                    11, 24, 27, 11, 27, 27, 11, 27, 30, 19, 
-                                    30, 27, 24, 27, 33, 33, 38, 34, 34, 34, 
-                                    34, 40, 34, 41, 41, 43, 43, 43, 38, 49, 
-                                    49, 49, 49, 49, 49, 51, 49, 57, 51, 57, 
-                                    57, 61, 57, 63, 55, 67, 57, 67, 63, 63, 
-                                    63, 69, 67, 73, 67, 78, 75, 71};
-#endif
-#endif
-
 static uint16_t rpl_parent_switch_count;
 static uint16_t rpl_local_repair_count;
 
@@ -249,15 +227,6 @@ rpl_get_parent_link_stats(rpl_parent_t *p)
 int
 rpl_parent_is_fresh(rpl_parent_t *p)
 {
-#if IOTLAB_FIXED_TOPOLOGY
-  uint16_t my_index = node_id - 1;
-  uint16_t target_parent_id = fixed_parent_id[my_index];
-
-  if(HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(p)) == target_parent_id) {
-    return 1;
-  }
-#endif
-
   const struct link_stats *stats = rpl_get_parent_link_stats(p);
   return link_stats_is_fresh(stats);
 }
@@ -408,15 +377,6 @@ should_refresh_routes(rpl_instance_t *instance, rpl_dio_t *dio, rpl_parent_t *p)
 static int
 acceptable_rank(rpl_dag_t *dag, rpl_rank_t rank)
 {
-#if IOTLAB_FIXED_TOPOLOGY
-  uint16_t my_index = node_id - 1;
-  uint16_t target_parent_id = fixed_parent_id[my_index];
-
-  if(HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(dag->preferred_parent)) == target_parent_id) {
-    return 1;
-  }
-#endif
-
   return rank != RPL_INFINITE_RANK &&
     ((dag->instance->max_rankinc == 0) ||
      DAG_RANK(rank, dag->instance) <= DAG_RANK(dag->min_rank + dag->instance->max_rankinc, dag->instance));
@@ -962,21 +922,9 @@ best_parent(rpl_dag_t *dag, int fresh_only)
     return NULL;
   }
 
-#if IOTLAB_FIXED_TOPOLOGY
-  uint16_t my_index = node_id - 1;
-  uint16_t target_parent_id = fixed_parent_id[my_index];
-#endif
-
   of = dag->instance->of;
   /* Search for the best parent according to the OF */
   for(p = nbr_table_head(rpl_parents); p != NULL; p = nbr_table_next(rpl_parents, p)) {
-#if IOTLAB_FIXED_TOPOLOGY
-    if(HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(p)) == target_parent_id) {
-      best = p;
-      break;
-    }
-#endif
-
     /* Exclude parents from other DAGs or announcing an infinite rank */
     if(p->dag != dag || p->rank == RPL_INFINITE_RANK || p->rank < ROOT_RANK(dag->instance)) {
       if(p->rank < ROOT_RANK(dag->instance)) {

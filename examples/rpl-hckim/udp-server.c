@@ -141,21 +141,13 @@ reset_eval(uint8_t phase)
         app_server_reset_log_asn);
 
 #if HCK_LOG_EVAL_CONFIG
-  LOG_HCK("eval_config 1 fixed_topology %u lite_log %u |\n", 
-          IOTLAB_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
+  LOG_HCK("eval_config 1 lite_log %u |\n", HCK_LOG_LEVEL_LITE);
   LOG_HCK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
           WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
           WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
           APP_PAYLOAD_LEN);
-  LOG_HCK("eval_config 3 hysteresis %u slot_len %u ucsf_period %u |\n", 
-          RPL_CONF_PARENT_SWITCH_THRESHOLD, 
-          HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
-#if WITH_UPA
-  LOG_HCK("eval_config 4 with_upa %u |\n", WITH_UPA);
-#endif
-#if WITH_SLA
-  LOG_HCK("eval_config 5 with_sla %u sla_k %u |\n", WITH_SLA, SLA_K_TH_PERCENTILE);
-#endif
+  LOG_HCK("eval_config 3 hysteresis %u ucsf_period %u |\n", 
+          RPL_CONF_PARENT_SWITCH_THRESHOLD, ORCHESTRA_CONF_UNICAST_PERIOD);
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
   LOG_HCK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
 #endif
@@ -269,21 +261,14 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #endif
 
 #if HCK_LOG_EVAL_CONFIG
-  LOG_HCK("eval_config 1 fixed_topology %u lite_log %u |\n", 
-          IOTLAB_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
+  LOG_HCK("eval_config 1 lite_log %u |\n", 
+          HCK_LOG_LEVEL_LITE);
   LOG_HCK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
           WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
           WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
           APP_PAYLOAD_LEN);
-  LOG_HCK("eval_config 3 hysteresis %u slot_len %u ucsf_period %u |\n", 
-          RPL_CONF_PARENT_SWITCH_THRESHOLD, 
-          HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
-#if WITH_UPA
-  LOG_HCK("eval_config 4 with_upa %u |\n", WITH_UPA);
-#endif
-#if WITH_SLA
-  LOG_HCK("eval_config 5 with_sla %u sla_k %u |\n", WITH_SLA, SLA_K_TH_PERCENTILE);
-#endif
+  LOG_HCK("eval_config 3 hysteresis %u ucsf_period %u |\n", 
+          RPL_CONF_PARENT_SWITCH_THRESHOLD, ORCHESTRA_CONF_UNICAST_PERIOD);
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
   LOG_HCK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
 #endif

@@ -71,10 +71,6 @@
 #define LOG_MODULE "TSCH Sched"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
-#if HCK_DBG_ALICE_RESCHEDULE_INTERVAL
-static uint64_t hck_dbg_alice_last_reschedule_asfn = 0;
-#endif
-
 #if WITH_ALICE
 #ifdef ALICE_TIME_VARYING_SCHEDULING
 void ALICE_TIME_VARYING_SCHEDULING(); 
@@ -1516,19 +1512,6 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             }
 #endif /* WITH_A3 */
 
-#if HCK_DBG_ALICE_RESCHEDULE_INTERVAL
-            if(hck_dbg_alice_last_reschedule_asfn == 0) {
-              hck_dbg_alice_last_reschedule_asfn = alice_lastly_scheduled_asfn;
-            } else {
-              uint16_t hck_dbg_alice_reschedule_interval = alice_lastly_scheduled_asfn - hck_dbg_alice_last_reschedule_asfn;
-              hck_dbg_alice_last_reschedule_asfn = alice_lastly_scheduled_asfn;
-
-              TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "atvs-int %u %llx", hck_dbg_alice_reschedule_interval, alice_current_asfn);
-              );
-            }
-#endif
             ALICE_TIME_VARYING_SCHEDULING();
           }
         }

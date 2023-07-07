@@ -32,10 +32,6 @@ static unsigned data_count = 1;
 
 static uint16_t app_rxd_count;
 
-#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
-static uint32_t  eval_01_count = 1;
-#endif
-
 /*---------------------------------------------------------------------------*/
 #if HCK_MOD_APP_SEQNO_DUPLICATE_CHECK
 struct app_down_seqno {
@@ -132,21 +128,14 @@ reset_eval(uint8_t phase)
         app_client_reset_log_asn);
 
 #if HCK_LOG_EVAL_CONFIG
-  LOG_HCK("eval_config 1 fixed_topology %u lite_log %u |\n", 
-          IOTLAB_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
+  LOG_HCK("eval_config 1 lite_log %u |\n", 
+          HCK_LOG_LEVEL_LITE);
   LOG_HCK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
           WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
           WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
           APP_PAYLOAD_LEN);
-  LOG_HCK("eval_config 3 hysteresis %u slot_len %u ucsf_period %u |\n", 
-          RPL_CONF_PARENT_SWITCH_THRESHOLD, 
-          HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
-#if WITH_UPA
-  LOG_HCK("eval_config 4 with_upa %u |\n", WITH_UPA);
-#endif
-#if WITH_SLA
-  LOG_HCK("eval_config 5 with_sla %u sla_k %u |\n", WITH_SLA, SLA_K_TH_PERCENTILE);
-#endif
+  LOG_HCK("eval_config 3 hysteresis %u ucsf_period %u |\n", 
+          RPL_CONF_PARENT_SWITCH_THRESHOLD, ORCHESTRA_CONF_UNICAST_PERIOD);
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
   LOG_HCK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
 #endif
@@ -234,10 +223,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
   static uint16_t app_magic = (uint16_t)APP_DATA_MAGIC;
 #endif
 
-#if HCK_ASAP_EVAL_01_SLA_REAL_TIME
-  current_payload_len = APP_PAYLOAD_LEN_FIRST;
-#endif
-
   PROCESS_BEGIN();
 
   /* Initialize UDP connection */
@@ -253,21 +238,14 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #endif
 
 #if HCK_LOG_EVAL_CONFIG
-  LOG_HCK("eval_config 1 fixed_topology %u lite_log %u |\n", 
-          IOTLAB_FIXED_TOPOLOGY, HCK_LOG_LEVEL_LITE);
+  LOG_HCK("eval_config 1 lite_log %u |\n", 
+          HCK_LOG_LEVEL_LITE);
   LOG_HCK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
           WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
           WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
           APP_PAYLOAD_LEN);
-  LOG_HCK("eval_config 3 hysteresis %u slot_len %u ucsf_period %u |\n", 
-          RPL_CONF_PARENT_SWITCH_THRESHOLD, 
-          HCK_TSCH_TIMESLOT_LENGTH, ORCHESTRA_CONF_UNICAST_PERIOD);
-#if WITH_UPA
-  LOG_HCK("eval_config 4 with_upa %u |\n", WITH_UPA);
-#endif
-#if WITH_SLA
-  LOG_HCK("eval_config 5 with_sla %u sla_k %u |\n", WITH_SLA, SLA_K_TH_PERCENTILE);
-#endif
+  LOG_HCK("eval_config 3 hysteresis %u ucsf_period %u |\n", 
+          RPL_CONF_PARENT_SWITCH_THRESHOLD, ORCHESTRA_CONF_UNICAST_PERIOD);
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
   LOG_HCK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
 #endif
@@ -305,20 +283,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
         app_seqno = (1 << 28) + ((uint32_t)node_id << 16) + data_count;
         app_magic = (uint16_t)APP_DATA_MAGIC;
 
-#if HCK_ASAP_EVAL_01_SLA_REAL_TIME
-        if((data_count > (APP_UPWARD_MAX_TX / 4)) && (data_count <= (APP_UPWARD_MAX_TX / 4 * 2))) {
-          current_payload_len = APP_PAYLOAD_LEN_SECOND;
-        } else if((data_count > (APP_UPWARD_MAX_TX / 4 * 2)) && (data_count <= (APP_UPWARD_MAX_TX / 4 * 3))) {
-          current_payload_len = APP_PAYLOAD_LEN_THIRD;
-        } else if(data_count > (APP_UPWARD_MAX_TX / 4 * 3)) {
-          current_payload_len = APP_PAYLOAD_LEN_FOURTH;
-        }
-#endif
-
-#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
-        current_payload_len = APP_PAYLOAD_LEN_MIN + (eval_01_count - 1) / NUM_OF_PACKETS_PER_EACH_APP_PAYLOAD_LEN;
-#endif
-
         memcpy(app_payload + current_payload_len - sizeof(app_tx_up_asn) - sizeof(app_seqno) - sizeof(app_magic), 
               &app_tx_up_asn, sizeof(app_tx_up_asn));
         memcpy(app_payload + current_payload_len - sizeof(app_seqno) - sizeof(app_magic), &app_seqno, sizeof(app_seqno));
@@ -339,10 +303,6 @@ PROCESS_THREAD(udp_client_process, ev, data)
         simple_udp_sendto(&udp_conn, app_payload, current_payload_len, &dest_ipaddr);
 
         data_count++;
-
-#if HCK_ASAP_EVAL_02_UPA_SINGLE_HOP
-        eval_01_count++;
-#endif
       }
     }
 #endif
