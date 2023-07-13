@@ -130,17 +130,24 @@ reset_eval(uint8_t phase)
 #if HCK_LOG_EVAL_CONFIG
   LOG_HCK("eval_config 1 lite_log %u |\n", 
           HCK_LOG_LEVEL_LITE);
-  LOG_HCK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
-          WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
-          WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
-          APP_PAYLOAD_LEN);
-  LOG_HCK("eval_config 3 hysteresis %u ucsf_period %u |\n", 
-          RPL_CONF_PARENT_SWITCH_THRESHOLD, ORCHESTRA_CONF_UNICAST_PERIOD);
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-  LOG_HCK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
-#endif
-#if WITH_A3
-  LOG_HCK("eval_config 7 with_a3 %u a3_max_zone %u |\n", WITH_A3, A3_MAX_ZONE);
+  LOG_HCK("eval_config 2 ebsf %u cssf %u ucsf %u |\n",
+          ORCHESTRA_CONF_EBSF_PERIOD, 
+          ORCHESTRA_CONF_COMMON_SHARED_PERIOD, 
+          ORCHESTRA_CONF_UNICAST_PERIOD);
+#if WITH_TRGB
+  LOG_HCK("eval_config 3 with_trgb %u |\n", WITH_TRGB);
+#elif WITH_HNEXT
+  LOG_HCK("eval_config 3 with_top %u ass %u esc %u sel %u bac %u |\n", 
+          WITH_HNEXT,
+          HNEXT_OFFSET_ASSIGNMENT_POLICY,
+          HNEXT_OFFSET_ESCALATION_POLICY,
+          HNEXT_PACKET_SELECTION,
+          HNEXT_POSTPONED_BACKOFF_POLICY);
+  LOG_HCK("eval_config 4 off %u thr %u fco %u nco %u |\n", 
+          HNEXT_OFFSET_ASSIGNMENT_POLICY_1_OFFSETS,
+          HNEXT_OFFSET_ASSIGNMENT_POL5_EB_DIO_THRESH,
+          HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET,
+          HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET);
 #endif
 #endif
 }
@@ -240,17 +247,24 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #if HCK_LOG_EVAL_CONFIG
   LOG_HCK("eval_config 1 lite_log %u |\n", 
           HCK_LOG_LEVEL_LITE);
-  LOG_HCK("eval_config 2 traffic_load %u down_traffic_load %u app_payload_len %u |\n", 
-          WITH_UPWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_UPWARD_SEND_INTERVAL) : 0, 
-          WITH_DOWNWARD_TRAFFIC ? (60 * CLOCK_SECOND / APP_DOWNWARD_SEND_INTERVAL) : 0,
-          APP_PAYLOAD_LEN);
-  LOG_HCK("eval_config 3 hysteresis %u ucsf_period %u |\n", 
-          RPL_CONF_PARENT_SWITCH_THRESHOLD, ORCHESTRA_CONF_UNICAST_PERIOD);
-#if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
-  LOG_HCK("eval_config 6 with_dbt %u |\n", WITH_TSCH_DEFAULT_BURST_TRANSMISSION);
-#endif
-#if WITH_A3
-  LOG_HCK("eval_config 7 with_a3 %u a3_max_zone %u |\n", WITH_A3, A3_MAX_ZONE);
+  LOG_HCK("eval_config 2 ebsf %u cssf %u ucsf %u |\n",
+          ORCHESTRA_CONF_EBSF_PERIOD, 
+          ORCHESTRA_CONF_COMMON_SHARED_PERIOD, 
+          ORCHESTRA_CONF_UNICAST_PERIOD);
+#if WITH_TRGB
+  LOG_HCK("eval_config 3 with_trgb %u |\n", WITH_TRGB);
+#elif WITH_HNEXT
+  LOG_HCK("eval_config 3 with_top %u ass %u esc %u sel %u bac %u |\n", 
+          WITH_HNEXT,
+          HNEXT_OFFSET_ASSIGNMENT_POLICY,
+          HNEXT_OFFSET_ESCALATION_POLICY,
+          HNEXT_PACKET_SELECTION,
+          HNEXT_POSTPONED_BACKOFF_POLICY);
+  LOG_HCK("eval_config 4 off %u thr %u fco %u nco %u |\n", 
+          HNEXT_OFFSET_ASSIGNMENT_POLICY_1_OFFSETS,
+          HNEXT_OFFSET_ASSIGNMENT_POL5_EB_DIO_THRESH,
+          HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET,
+          HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET);
 #endif
 #endif
 

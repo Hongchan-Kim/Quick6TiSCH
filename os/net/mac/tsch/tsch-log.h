@@ -113,10 +113,11 @@ struct tsch_log_t {
       uint8_t hnext_backoff_exponent_after;
       uint8_t hnext_backoff_window_after;
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
-      uint8_t hnext_offset;
+      uint8_t hnext_state_based_offset;
+      uint8_t hnext_escalated_offset;
       uint8_t hnext_state;
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#endif /* WITH_HNEXT */
+#endif
+#endif
     } tx;
     struct {
       linkaddr_t  src;
@@ -137,18 +138,10 @@ struct tsch_log_t {
       uint8_t hck_packet_type;
 #endif
 #if WITH_HNEXT
-      uint8_t hnext_collision_count;
-      uint8_t hnext_cssf_postponed_count;
-      uint8_t hnext_noack_count;
-      uint8_t hnext_backoff_exponent_before;
-      uint8_t hnext_backoff_window_before;
-      uint8_t hnext_backoff_exponent_after;
-      uint8_t hnext_backoff_window_after;
 #if HNEXT_OFFSET_ASSIGNMENT_POLICY
       uint8_t hnext_offset;
-      uint8_t hnext_state;
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#endif /* WITH_HNEXT */
+#endif
+#endif
     } rx;
   };
 };

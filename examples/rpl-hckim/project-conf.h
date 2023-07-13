@@ -366,7 +366,7 @@
  * - [TMC'23] TRGB
  * - [Proposed] TOP
  ****************************************************************/
-#define NETWORK_FORMATION_ACCELERATION                      0
+#define NETWORK_FORMATION_ACCELERATION                      1 //
 #if NETWORK_FORMATION_ACCELERATION
 
 /***************************************************************
@@ -381,7 +381,7 @@
 #undef HCK_MOD_RPL_CODE_NO_PATH_DAO
 #define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
 #undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 41
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 17 // 17, 31, 41, 53, 61, ...
 
 /***************************************************************
  * Prerequisite/common logging messages for network formation acceleration
@@ -406,50 +406,44 @@
 /***************************************************************
  * TOP implementation - WITH_HNEXT
  ****************************************************************/
-#define WITH_HNEXT                                          1
+#define WITH_HNEXT                                          0
 #if WITH_HNEXT
 #define HNEXT_LOG                                           1
 #define HNEXT_DBG                                           0
+
 /* HNEXT modules */
 #define HNEXT_PACKET_URGENCY_DETERMINATION                  1
 #define HNEXT_PACKET_OFFSET_ASSIGNMENT                      1
 #define HNEXT_PACKET_OFFSET_ESCALATION                      1
 #define HNEXT_PRIORITY_BASED_PACKET_SELECTION               1
+
 /* HNEXT offset configuration - up to six offsets */
 #define HNEXT_CCA_OFFSET                                    800
 #define HNEXT_TX_OFFSET                                     1300 /* 1300 ~ 3100 */
 #define HNEXT_RX_OFFSET_LEFT                                500  /* 800  ~ 1300, 500 margin */
 #define HNEXT_RX_OFFSET_RIGHT                               2900 /* 1300 ~ 4200, 500 margin */
 #define HNEXT_OFFSET_GAP                                    600
+
 /* Offset assignment policy */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY                      HNEXT_OFFSET_ASSIGNMENT_POLICY_1 /* Fix to 2 or 4 */ ////////////////////
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_0                    0 /* Baseline */
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY                      HNEXT_OFFSET_ASSIGNMENT_POLICY_5 /* Fix to 2 or 4 */ ////////////////////
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY_0                    0 /* No offset assignment */
 #define HNEXT_OFFSET_ASSIGNMENT_POLICY_1                    1 /* Random */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_2                    2 /* BC / UC / BC / UC */ /* HNEXT TODO */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_3                    3 /* BC / UC / UC / BC */ /* HNEXT TODO */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_4                    4 /* BC / UC / UC / BC / UC */ /* HNEXT TODO */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_5                    5 /* Two-tiered */
+#define HNEXT_OFFSET_ASSIGNMENT_POLICY_5                    5 /* Two-tiered - 2, 4 */
 
 #define HNEXT_OFFSET_ASSIGNMENT_POLICY_1_OFFSETS            5
-#define HNEXT_OFFSET_ASSIGNMENT_FIXED_EB_OFFSET             1
-#define HNEXT_OFFSET_ASSIGNMENT_DYNAMIC_DIO_OFFSET          1
-#define HNEXT_OFFSET_ASSIGNMENT_FIXED_DIS_OFFSET            1
 
+#define HNEXT_OFFSET_ASSIGNMENT_POL5_EB_DIO_THRESH          2
 #define HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET        2 /* 0, 1, 2 */
 #define HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET    4 /* 3, 4 */
 
-#define HNEXT_OFFSET_ASSIGNMENT_DIO_INT_THRESH              2
-
 /* Offset escalation policy for postponed packets */
-#define HNEXT_OFFSET_ESCALATION_POLICY                      HNEXT_OFFSET_ESCALATION_POLICY_2 /* Fix to 2 */ ////////////////////
-#define HNEXT_OFFSET_ESCALATION_POLICY_0                    0
-#define HNEXT_OFFSET_ESCALATION_POLICY_1                    1 /* Naive implementation */
-#define HNEXT_OFFSET_ESCALATION_POLICY_2                    2 /* Bcast packets only */
-#define HNEXT_OFFSET_ESCALATION_POLICY_3                    3 /* Ucast packets too */
+#define HNEXT_OFFSET_ESCALATION_POLICY                      HNEXT_OFFSET_ESCALATION_POLICY_6 /* Fix to 2 */ ////////////////////
+#define HNEXT_OFFSET_ESCALATION_POLICY_0                    0 /* No escalation */
 #define HNEXT_OFFSET_ESCALATION_POLICY_4                    4 /* All gradual increment */
+#define HNEXT_OFFSET_ESCALATION_POLICY_5                    5 /* All gradual increment */
+#define HNEXT_OFFSET_ESCALATION_POLICY_6                    6 /* All gradual increment */
 
-#if (HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_0) || \
-    (HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_1)  
+#if HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_1
 #undef HNEXT_OFFSET_ESCALATION_POLICY
 #define HNEXT_OFFSET_ESCALATION_POLICY                      HNEXT_OFFSET_ESCALATION_POLICY_0
 #endif
