@@ -156,7 +156,7 @@ rpl_timers_dio_reset(const char *str)
      * don't reset the DIO timer if the current interval is Imin; see
      * Section 4.2, RFC 6206.
      */
-    LOG_INFO("reset DIO timer (%s)\n", str);    
+    LOG_INFO("reset DIO timer (%s)\n", str);
     if(!rpl_get_leaf_only()) {
         curr_instance.dag.dio_counter = 0;
         curr_instance.dag.dio_intcurrent = curr_instance.dio_intmin;

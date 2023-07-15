@@ -885,7 +885,6 @@ tsch_tx_process_pending(void)
 
     /* Put packet into packetbuf for packet_sent callback */
     queuebuf_to_packetbuf(p->qb);
-
     LOG_INFO("packet sent to ");
     LOG_INFO_LLADDR(packetbuf_addr(PACKETBUF_ADDR_RECEIVER));
     LOG_INFO_(", seqno %u, status %d, tx %d\n",
@@ -1303,7 +1302,6 @@ PROCESS_THREAD(tsch_process, ev, data)
         PROCESS_PT_SPAWN(&scan_pt, tsch_scan(&scan_pt));
       }
     }
-
 
     //hckim record the asn when association is achieved
     TSCH_ASN_COPY(tsch_last_asn_associated, tsch_current_asn);

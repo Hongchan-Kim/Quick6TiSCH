@@ -143,7 +143,7 @@ tsch_queue_change_attr_of_packets_in_queue(struct tsch_neighbor *target_nbr,
       if(i >= ringbufindex_size(&target_nbr->tx_ringbuf)) { /* default size: 16 */
         index = i - ringbufindex_size(&target_nbr->tx_ringbuf);
       } else {
-        index = i;  
+        index = i;
       }
 
       queuebuf_update_attr(target_nbr->tx_array[index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME, sf_handle);
@@ -295,7 +295,6 @@ tsch_queue_get_nbr_from_id(const uint16_t id)
   return NULL;
 }
 #endif
-
 
 /*---------------------------------------------------------------------------*/
 /* Add a TSCH neighbor */

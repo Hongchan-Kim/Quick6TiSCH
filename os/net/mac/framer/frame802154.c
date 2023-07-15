@@ -95,6 +95,7 @@ typedef struct {
 #endif
 
 } field_length_t;
+
 /*----------------------------------------------------------------------------*/
 CC_INLINE static uint8_t
 addr_len(uint8_t mode)
@@ -334,7 +335,7 @@ field_len(frame802154_t *p, field_length_t *flen)
 #if OST_ON_DEMAND_PROVISION
   flen->ost_pigg2_len = 2; /* for on-demand provisioning */
 #endif
-#endif  
+#endif
 
   /* determine address lengths */
   flen->dest_addr_len = addr_len(p->fcf.dest_addr_mode & 3);
@@ -430,7 +431,7 @@ frame802154_create(frame802154_t *p, uint8_t *buf)
   /* OK, now we have field lengths.  Time to actually construct */
   /* the outgoing frame, and store it in buf */
   frame802154_create_fcf(&p->fcf, buf);
-  pos = 2; // hckim: pos 0 and 1 are for fcf
+  pos = 2;
 
 #if WITH_OST /* OST-03-05: Piggyback N */
   if(flen.ost_pigg1_len == 2) { /* for N or t_offset */
@@ -565,8 +566,8 @@ frame802154_parse(uint8_t *data, int len, frame802154_t *pf)
 #if OST_ON_DEMAND_PROVISION
   pf->ost_pigg2 = p[0] + (p[1] << 8);
   p +=2;
-#endif   
-#endif      
+#endif
+#endif
 
   if(fcf.sequence_number_suppression == 0) {
     pf->seq = p[0];

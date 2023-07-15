@@ -1372,6 +1372,7 @@ tsch_calculate_channel(struct tsch_asn_t *asn, uint16_t channel_offset)
   index_of_offset = (index_of_0 + channel_offset) % tsch_hopping_sequence_length.val;
   return tsch_hopping_sequence[index_of_offset];
 }
+
 /*---------------------------------------------------------------------------*/
 /* Timing utility functions */
 
@@ -1407,6 +1408,7 @@ tsch_schedule_slot_operation(struct rtimer *tm, rtimer_clock_t ref_time, rtimer_
   /* Subtract RTIMER_GUARD before checking for deadline miss
    * because we can not schedule rtimer less than RTIMER_GUARD in the future */
   int missed = check_timer_miss(ref_time, offset - RTIMER_GUARD, now);
+
   if(missed) {
     TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
@@ -1442,6 +1444,7 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
 {
   struct tsch_packet *p = NULL;
   struct tsch_neighbor *n = NULL;
+
   /* Is this a Tx link? */
   if(link->link_options & LINK_OPTION_TX) {
     /* is it for advertisement of EB? */
@@ -2786,8 +2789,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         current_input->rx_asn = tsch_current_asn;
         current_input->rssi = (signed)radio_last_rssi;
         current_input->channel = tsch_current_channel;
-
-        /* OST-04-01: Parse received N */
         header_len = frame802154_parse((uint8_t *)current_input->payload, current_input->len, &frame);
         frame_valid = header_len > 0 &&
           frame802154_check_dest_panid(&frame) &&
@@ -2802,7 +2803,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         NETSTACK_RADIO.get_object(RADIO_PARAM_LAST_PACKET_TIMESTAMP, &rx_start_time, sizeof(rtimer_clock_t));
 #endif
 
-        /* calculate RX duration based on input packet len */
         packet_duration = TSCH_PACKET_DURATION(current_input->len);
         /* limit packet_duration to its max value */
         packet_duration = MIN(packet_duration, tsch_timing[tsch_ts_max_tx]);
@@ -3219,7 +3219,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
       tsch_radio_off(TSCH_RADIO_CMD_OFF_END_OF_TIMESLOT);
-
     }
 
     if(input_queue_drop != 0) {
@@ -3566,7 +3565,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
 #else /* HCK_MOD_TSCH_APPLY_LATEST_CONTIKI */
       /* There is no packet to send, and this link does not have Rx flag. Instead of doing
-        * nothing, switch to the backup link (has Rx flag) if any. */
+       * nothing, switch to the backup link (has Rx flag) if any. */
       if(current_packet == NULL && !(current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         current_link = backup_link;
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
@@ -3660,13 +3659,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
 #endif
 
-#if HNEXT_TEMP_RANDOM_RX
-      int random_rx_value = random_rand() % 10;
-      if(random_rx_value < 3) {
-        current_packet = NULL;
-      }
-#endif
-
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
 
@@ -3729,7 +3721,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif
 
         /* If we are in a burst, we stick to current channel instead of
-        * doing channel hopping, as per IEEE 802.15.4-2015 */
+         * doing channel hopping, as per IEEE 802.15.4-2015 */
         tsch_current_timeslot = current_link->timeslot; // hckim
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
         if(burst_link_scheduled) {

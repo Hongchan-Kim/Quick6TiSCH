@@ -61,6 +61,10 @@
 #include "orchestra.h"
 #endif
 
+#if WITH_TRGB
+#include "sys/node-id.h"
+#endif
+
 #include "sys/log.h"
 
 #include <limits.h>
@@ -68,10 +72,6 @@
 
 #define LOG_MODULE "RPL"
 #define LOG_LEVEL LOG_LEVEL_RPL
-
-#if WITH_TRGB
-#include "sys/node-id.h"
-#endif
 
 static uint16_t rpl_dis_recv_count;
 static uint16_t rpl_dis_send_count;
@@ -916,7 +916,7 @@ dao_input_storing(void)
         uint8_t out_seq;
         out_seq = prepare_for_dao_fwd(sequence, rep);
 
-        LOG_DBG("Forwarding No-path DAO to parent - out_seq:%d ",
+        LOG_DBG("Forwarding No-path DAO to parent - out_seq:%d",
                out_seq);
         LOG_DBG_6ADDR(rpl_parent_get_ipaddr(dag->preferred_parent));
         LOG_DBG_("\n");
@@ -942,7 +942,6 @@ dao_input_storing(void)
       dao_ack_output(instance, &dao_sender_addr, sequence,
                      RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
     }
-
     return;
   }
 
@@ -1047,7 +1046,6 @@ fwd_dao:
                      RPL_DAO_ACK_UNCONDITIONAL_ACCEPT);
     }
   }
-
 #endif /* RPL_WITH_STORING */
 }
 /*---------------------------------------------------------------------------*/

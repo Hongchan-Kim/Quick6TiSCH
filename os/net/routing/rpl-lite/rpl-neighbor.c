@@ -296,7 +296,7 @@ void
 rpl_neighbor_set_preferred_parent(rpl_nbr_t *nbr)
 {
   if(curr_instance.dag.preferred_parent != nbr) {
-    LOG_INFO("parent switch: ");    
+    LOG_INFO("parent switch: ");
     LOG_INFO_6ADDR(rpl_neighbor_get_ipaddr(curr_instance.dag.preferred_parent));
     LOG_INFO_(" -> ");
     LOG_INFO_6ADDR(rpl_neighbor_get_ipaddr(nbr));

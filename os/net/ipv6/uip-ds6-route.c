@@ -529,7 +529,6 @@ uip_ds6_route_rm(uip_ds6_route_t *route)
           (const linkaddr_t *)nbr_table_get_lladdr(nbr_routes, route->neighbor_routes->route_list));
 #endif
     }
-
     memb_free(&routememb, route);
     memb_free(&neighborroutememb, neighbor_route);
 

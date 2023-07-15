@@ -317,7 +317,6 @@ dio_input(void)
   LOG_INFO_6ADDR(&from);
   LOG_INFO_(", instance_id %u, DAG ID ", (unsigned)dio.instance_id);
   LOG_INFO_6ADDR(&dio.dag_id);
-
   LOG_INFO_(", version %u, dtsn %u, rank %u\n",
          (unsigned)dio.version,
          (unsigned)dio.dtsn,

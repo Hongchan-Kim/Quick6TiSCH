@@ -60,7 +60,6 @@
 #include "orchestra.h"
 #endif
 
-
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "TSCH Pkt"
