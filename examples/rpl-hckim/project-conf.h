@@ -420,9 +420,10 @@
 #define HNEXT_OFFSET_GAP                                    600
 
 /* Offset assignment policy */
-#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
 #define HNEXT_OFFSET_ASSIGNMENT_RANDOM                      1 /* Random */
 #define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED                 2 /* Two-tiered - 1, 4 */
+//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_RANDOM
+#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
 
 #if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
 

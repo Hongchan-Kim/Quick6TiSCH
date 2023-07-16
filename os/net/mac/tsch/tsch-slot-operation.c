@@ -1601,23 +1601,25 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
 #if WITH_HNEXT && \
     (HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED)
   enum HNEXT_OFFSET hnext_curr_offset = HNEXT_OFFSET_NULL;
-  if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-    if((*target_neighbor)->is_time_source) {
-      hnext_curr_offset = hnext_offset_assignment_parent[p->hck_packet_type];
-    } else {
-      hnext_curr_offset = hnext_offset_assignment_others[p->hck_packet_type];
-    }
+  if(n != NULL && p != NULL) {
+    if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+      if((*target_neighbor)->is_time_source) {
+        hnext_curr_offset = hnext_offset_assignment_parent[p->hck_packet_type];
+      } else {
+        hnext_curr_offset = hnext_offset_assignment_others[p->hck_packet_type];
+      }
 
 #if HNEXT_OFFSET_ESCALATION
-    int hnext_quotient = (p->hnext_cssf_postponed_count) / ((p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
-    if(hnext_curr_offset < hnext_quotient) {
-      hnext_curr_offset = HNEXT_OFFSET_0;
-    } else {
-      hnext_curr_offset = hnext_curr_offset - hnext_quotient;
-    }
+      int hnext_quotient = (p->hnext_cssf_postponed_count) / ((p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
+      if(hnext_curr_offset < hnext_quotient) {
+        hnext_curr_offset = HNEXT_OFFSET_0;
+      } else {
+        hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+      }
 #endif
 
-    p->hnext_offset = hnext_curr_offset;
+      p->hnext_offset = hnext_curr_offset;
+    }
   }
 #endif
 
