@@ -3440,9 +3440,24 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           }
         }
 
+#if HNEXT_DBG
+      TSCH_LOG_ADD(tsch_log_message,
+                      snprintf(log->message, sizeof(log->message),
+                          "H-D st %d | %d %d %d %d", hnext_tx_current_state,
+                          tsch_is_coordinator,
+                          tsch_is_associated,
+                          tsch_rpl_check_dodag_joined(),
+                          orchestra_parent_knows_us);
+      );
+#endif
+
         /* Next determine offset for each packet */
 #if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_RANDOM /* Random */
         hnext_tx_current_offset = random_rand() % HNEXT_NUM_OF_OFFSETS;
+
+#if HNEXT_DBG
+        LOG_INFO("hnext-dbg offset-rand %u\n", hnext_tx_current_offset);
+#endif
 
 #elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED /* Formaion-critical / non-critical */
         /* HCK_PACKET_TYPE_EB */
@@ -3493,6 +3508,42 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         hnext_offset_assignment_parent[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         hnext_offset_assignment_others[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
 
+#if HNEXT_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "H-D op1 %d %d %d %d %d",
+                            hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB],
+                            hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA],
+                            hnext_offset_assignment_parent[HCK_PACKET_TYPE_DIS],
+                            hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO],
+                            hnext_offset_assignment_parent[HCK_PACKET_TYPE_U_DIO]);
+        );
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "H-D op2 %d %d %d %d",
+                            hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO],
+                            hnext_offset_assignment_parent[HCK_PACKET_TYPE_NP_DAO],
+                            hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAOA],
+                            hnext_offset_assignment_parent[HCK_PACKET_TYPE_DATA]);
+        );
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "H-D oo1 %d %d %d %d %d",
+                            hnext_offset_assignment_others[HCK_PACKET_TYPE_EB],
+                            hnext_offset_assignment_others[HCK_PACKET_TYPE_KA],
+                            hnext_offset_assignment_others[HCK_PACKET_TYPE_DIS],
+                            hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO],
+                            hnext_offset_assignment_others[HCK_PACKET_TYPE_U_DIO]);
+        );
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "H-D oo2 %d %d %d %d",
+                            hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO],
+                            hnext_offset_assignment_others[HCK_PACKET_TYPE_NP_DAO],
+                            hnext_offset_assignment_others[HCK_PACKET_TYPE_DAOA],
+                            hnext_offset_assignment_others[HCK_PACKET_TYPE_DATA]);
+        );
+#endif
 #endif /* HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_X */
       }
 #endif /* WITH_HNEXT */
@@ -3529,14 +3580,36 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         update_link_backoff(current_link);
 
         current_link = backup_link;
+#if WITH_HNEXT && HNEXT_OFFSET_BASED_PACKET_SELECTION
+        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+          /* Get a packet ready to be sent */
+          current_packet = hnext_tsch_queue_get_best_packet_and_nbr(current_link, &current_neighbor);
+        } else {
+          /* Get a packet ready to be sent */
+          current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+        }
+#else
+        /* Get a packet ready to be sent */
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+#endif
       }
 #else /* HCK_MOD_TSCH_APPLY_LATEST_CONTIKI */
       /* There is no packet to send, and this link does not have Rx flag. Instead of doing
        * nothing, switch to the backup link (has Rx flag) if any. */
       if(current_packet == NULL && !(current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         current_link = backup_link;
+#if WITH_HNEXT && HNEXT_OFFSET_BASED_PACKET_SELECTION
+        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+          /* Get a packet ready to be sent */
+          current_packet = hnext_tsch_queue_get_best_packet_and_nbr(current_link, &current_neighbor);
+        } else {
+          /* Get a packet ready to be sent */
+          current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+        }
+#else
+        /* Get a packet ready to be sent */
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+#endif
       }
 
 #if WITH_OST
