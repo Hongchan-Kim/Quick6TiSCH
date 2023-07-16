@@ -104,7 +104,7 @@ struct tsch_log_t {
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
       uint8_t hck_packet_type;
 #endif
-#if WITH_HNEXT
+#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
       uint8_t hnext_collision_count;
       uint8_t hnext_cssf_postponed_count;
       uint8_t hnext_noack_count;
@@ -112,11 +112,9 @@ struct tsch_log_t {
       uint8_t hnext_backoff_window_before;
       uint8_t hnext_backoff_exponent_after;
       uint8_t hnext_backoff_window_after;
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
       uint8_t hnext_state_based_offset;
       uint8_t hnext_escalated_offset;
       uint8_t hnext_state;
-#endif
 #endif
     } tx;
     struct {
@@ -137,10 +135,8 @@ struct tsch_log_t {
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
       uint8_t hck_packet_type;
 #endif
-#if WITH_HNEXT
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
       uint8_t hnext_offset;
-#endif
 #endif
     } rx;
   };

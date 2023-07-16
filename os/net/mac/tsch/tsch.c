@@ -1514,10 +1514,6 @@ tsch_init(void)
   LOG_INFO("nbr_tbl_reg: sync_stats %d\n", sync_stats->index);
 #endif /* TSCH_AUTOSELECT_TIME_SOURCE */
 
-#if WITH_HNEXT
-  LOG_HCK_FORMATION("hnext %u |\n", HNEXT_OFFSET_ASSIGNMENT_POLICY);
-#endif
-
   tsch_packet_seqno = random_rand();
   tsch_is_initialized = 1;
 

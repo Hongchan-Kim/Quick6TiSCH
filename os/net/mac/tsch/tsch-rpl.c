@@ -62,6 +62,7 @@
 
 #if WITH_HNEXT
 /*---------------------------------------------------------------------------*/
+#if RPL_CONF_WITH_PROBING
 int
 tsch_rpl_is_urgent_probing_target_null()
 {
@@ -74,6 +75,7 @@ tsch_rpl_is_urgent_probing_target_null()
     return 0;
   }
 }
+#endif
 /*---------------------------------------------------------------------------*/
 int
 tsch_rpl_callback_dio_interval_increment()
@@ -87,7 +89,7 @@ tsch_rpl_callback_dio_interval_increment()
     return 0xFF;
   }
 }
-#endif /* WITH_HNEXT */
+#endif
 
 /*---------------------------------------------------------------------------*/
 #if TSCH_DBT_QUEUE_AWARENESS || WITH_TRGB

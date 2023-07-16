@@ -150,17 +150,19 @@ reset_eval(uint8_t phase)
 #if WITH_TRGB
   LOG_HCK("eval_config 3 with_trgb %u |\n", WITH_TRGB);
 #elif WITH_HNEXT
-  LOG_HCK("eval_config 3 with_top %u ass %u esc %u sel %u bac %u |\n", 
-          WITH_HNEXT,
-          HNEXT_OFFSET_ASSIGNMENT_POLICY,
-          HNEXT_OFFSET_ESCALATION_POLICY,
-          HNEXT_PACKET_SELECTION,
+#if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_RANDOM
+  LOG_HCK("eval_config 3 with_top rand offs %u |\n",
+          HNEXT_NUM_OF_OFFSETS);
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
+  LOG_HCK("eval_config 3 with_top s_b offs %u thr %u fco %u nco %u esc %u sel %u bac %u |\n", 
+          HNEXT_NUM_OF_OFFSETS,
+          HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH,
+          HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET,
+          HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET,
+          HNEXT_OFFSET_ESCALATION,
+          HNEXT_OFFSET_BASED_PACKET_SELECTION,
           HNEXT_POSTPONED_BACKOFF_POLICY);
-  LOG_HCK("eval_config 4 off %u thr %u fco %u nco %u |\n", 
-          HNEXT_OFFSET_ASSIGNMENT_POLICY_1_OFFSETS,
-          HNEXT_OFFSET_ASSIGNMENT_POL5_EB_DIO_THRESH,
-          HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET,
-          HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET);
+#endif
 #endif
 #endif
 }
@@ -278,17 +280,19 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #if WITH_TRGB
   LOG_HCK("eval_config 3 with_trgb %u |\n", WITH_TRGB);
 #elif WITH_HNEXT
-  LOG_HCK("eval_config 3 with_top %u ass %u esc %u sel %u bac %u |\n", 
-          WITH_HNEXT,
-          HNEXT_OFFSET_ASSIGNMENT_POLICY,
-          HNEXT_OFFSET_ESCALATION_POLICY,
-          HNEXT_PACKET_SELECTION,
+#if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_RANDOM
+  LOG_HCK("eval_config 3 with_top rand offs %u |\n",
+          HNEXT_NUM_OF_OFFSETS);
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
+  LOG_HCK("eval_config 3 with_top s_b offs %u thr %u fco %u nco %u esc %u sel %u bac %u |\n", 
+          HNEXT_NUM_OF_OFFSETS,
+          HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH,
+          HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET,
+          HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET,
+          HNEXT_OFFSET_ESCALATION,
+          HNEXT_OFFSET_BASED_PACKET_SELECTION,
           HNEXT_POSTPONED_BACKOFF_POLICY);
-  LOG_HCK("eval_config 4 off %u thr %u fco %u nco %u |\n", 
-          HNEXT_OFFSET_ASSIGNMENT_POLICY_1_OFFSETS,
-          HNEXT_OFFSET_ASSIGNMENT_POL5_EB_DIO_THRESH,
-          HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET,
-          HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET);
+#endif
 #endif
 #endif
 

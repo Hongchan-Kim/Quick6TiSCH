@@ -174,20 +174,17 @@ hash_for_trgb(uint8_t value)
 #endif
 
 #if WITH_HNEXT
-static uint8_t hnext_tx_backoff_exponent_before;
-static uint8_t hnext_tx_backoff_window_before;
+static enum HNEXT_STATE hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
 static enum HCK_PACKET_TYPE hnext_tx_packet_type = HCK_PACKET_TYPE_NULL;
 static enum HCK_PACKET_TYPE hnext_rx_packet_type = HCK_PACKET_TYPE_NULL;
-static enum HNEXT_STATE hnext_tx_current_state = HNEXT_STATE_1_NEW_NODE;
-static uint8_t hnext_sent_ok_m_dio;
-static uint8_t hnext_eb_sent_count;
-static uint8_t hnext_m_dio_sent_count;
 enum HNEXT_OFFSET hnext_offset_assignment_parent[HCK_PACKET_TYPE_NULL];
 enum HNEXT_OFFSET hnext_offset_assignment_others[HCK_PACKET_TYPE_NULL];
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
 static enum HNEXT_OFFSET hnext_tx_current_offset = HNEXT_OFFSET_NULL;
 static enum HNEXT_OFFSET hnext_rx_current_offset = HNEXT_OFFSET_NULL;
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+static uint8_t hnext_eb_sent_count;
+static uint8_t hnext_m_dio_sent_count;
+static uint8_t hnext_tx_backoff_exponent_before;
+static uint8_t hnext_tx_backoff_window_before;
 #endif
 
 /* A ringbuf storing outgoing packets after they were dequeued.
@@ -1601,6 +1598,29 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
     *target_neighbor = n;
   }
 
+#if WITH_HNEXT && \
+    (HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED)
+  enum HNEXT_OFFSET hnext_curr_offset = HNEXT_OFFSET_NULL;
+  if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+    if((*target_neighbor)->is_time_source) {
+      hnext_curr_offset = hnext_offset_assignment_parent[p->hck_packet_type];
+    } else {
+      hnext_curr_offset = hnext_offset_assignment_others[p->hck_packet_type];
+    }
+
+#if HNEXT_OFFSET_ESCALATION
+    int hnext_quotient = (p->hnext_cssf_postponed_count) / ((p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
+    if(hnext_curr_offset < hnext_quotient) {
+      hnext_curr_offset = HNEXT_OFFSET_0;
+    } else {
+      hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+    }
+#endif
+
+    p->hnext_offset = hnext_curr_offset;
+  }
+#endif
+
   return p;
 }
 /*---------------------------------------------------------------------------*/
@@ -1811,7 +1831,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       do_wait_for_ack = !current_neighbor->is_broadcast;
 
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
-      formation_tx_packet_type = current_packet->hck_packet_type;
 #if !WITH_TRGB && !WITH_HNEXT
       formation_tx_packet_type = current_packet->hck_packet_type;
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
@@ -1842,33 +1861,17 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if WITH_HNEXT
       hnext_tx_packet_type = current_packet->hck_packet_type;
       if(hnext_tx_packet_type != HCK_PACKET_TYPE_EB) {
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
         if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_1
+#if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_RANDOM
           /* Random policy -> hnext_tx_current_offset is already determined! */
-
-#elif HNEXT_OFFSET_ESCALATION_POLICY >= HNEXT_OFFSET_ESCALATION_POLICY_4
-          if(current_neighbor->is_time_source) {
-            hnext_tx_current_offset = hnext_offset_assignment_parent[hnext_tx_packet_type];
-          } else {
-            hnext_tx_current_offset = hnext_offset_assignment_others[hnext_tx_packet_type];
-          }
-#if HNEXT_PACKET_SELECTION == 0
-#elif HNEXT_PACKET_SELECTION == 1
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
           hnext_tx_current_offset = current_packet->hnext_offset;
-#endif /* HNEXT_PACKET_SELECTION */
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-
+#endif
         } else {
           hnext_tx_current_offset = HNEXT_OFFSET_NULL;
         }
-#endif
         uint16_t hnext_tx_info = 0;
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
         hnext_tx_info = (hnext_tx_packet_type << 8) + hnext_tx_current_offset;
-#else
-        hnext_tx_info = (hnext_tx_packet_type << 8) + 0;
-#endif
         frame802154_t hnext_frame;
         int hnext_hdr_len;
         hnext_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &hnext_frame);
@@ -2036,7 +2039,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
 #if TSCH_CCA_ENABLED
         cca_status = 1;
-#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY
+
+#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
         if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
           if(hnext_tx_current_offset == HNEXT_OFFSET_3) {
             /* delay before CCA */
@@ -2097,26 +2101,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                               + HNEXT_OFFSET_3 * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP)
                               + tsch_timing[tsch_ts_cca]);
           }
+
           /* delay before CCA */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
                                   US_TO_RTIMERTICKS(HNEXT_CCA_OFFSET) 
                                   + hnext_tx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP), "ccaHN");
           TSCH_DEBUG_TX_EVENT();
-        } else {
-          /* delay before CCA */
-          TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
-          TSCH_DEBUG_TX_EVENT();
-        }
-#else /* WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY */
-        /* delay before CCA */
-        TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
-        TSCH_DEBUG_TX_EVENT();
-#endif /* WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY */
 
-        tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
-
-#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY
-        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+          tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
           /* CCA */
           RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
                             current_slot_start, 
@@ -2124,21 +2116,30 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                             + hnext_tx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP)
                             + tsch_timing[tsch_ts_cca]);
           TSCH_DEBUG_TX_EVENT();
-
         } else {
+          /* delay before CCA */
+          TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
+          TSCH_DEBUG_TX_EVENT();
+
+          tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+
           /* CCA */
           RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
                             current_slot_start, tsch_timing[tsch_ts_cca_offset] + tsch_timing[tsch_ts_cca]);
           TSCH_DEBUG_TX_EVENT();
         }
+#else /* WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT */
+        /* delay before CCA */
+        TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
+        TSCH_DEBUG_TX_EVENT();
 
-#else /* WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY */
+        tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
+
         /* CCA */
         RTIMER_BUSYWAIT_UNTIL_ABS(!(cca_status &= NETSTACK_RADIO.channel_clear()),
                            current_slot_start, tsch_timing[tsch_ts_cca_offset] + tsch_timing[tsch_ts_cca]);
         TSCH_DEBUG_TX_EVENT();
-
-#endif /* WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#endif /* WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT */
 
         /* there is not enough time to turn radio off */
         /*  NETSTACK_RADIO.off(); */
@@ -2147,7 +2148,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         } else
 #endif /* TSCH_CCA_ENABLED */
         {
-#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
           if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
             /* delay before TX */
             TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
@@ -2155,24 +2156,21 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                                     + hnext_tx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP) 
                                     - RADIO_DELAY_BEFORE_TX, 
                                     "TxBeforeTxHN");
-
           } else {
             /* delay before TX */
             TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
           }
-
-#else /* WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#else
           /* delay before TX */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_tx_offset] - RADIO_DELAY_BEFORE_TX, "TxBeforeTx");
-
-#endif /* WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#endif
 
           TSCH_DEBUG_TX_EVENT();
           /* send packet already in radio tx buffer */
           mac_tx_status = NETSTACK_RADIO.transmit(packet_len);
           tx_count++;
 
-#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
           if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
             /* Save tx timestamp */
             tx_start_time = current_slot_start + US_TO_RTIMERTICKS(HNEXT_TX_OFFSET) 
@@ -2181,12 +2179,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             /* Save tx timestamp */
             tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
           }
-
-#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#else
           /* Save tx timestamp */
           tx_start_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
-
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#endif
 
           /* calculate TX duration based on sent packet len */
           tx_duration = TSCH_PACKET_DURATION(packet_len);
@@ -2217,7 +2213,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               NETSTACK_RADIO.set_value(RADIO_PARAM_RX_MODE, radio_rx_mode & (~RADIO_RX_MODE_ADDRESS_FILTER));
 #endif /* TSCH_HW_FRAME_FILTERING */
 
-#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
               if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
                 /* Unicast: wait for ack after tx: sleep until ack time */
                 TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
@@ -2229,13 +2225,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                 TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
                     tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
               }
-
-#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#else
               /* Unicast: wait for ack after tx: sleep until ack time */
               TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start,
                   tsch_timing[tsch_ts_tx_offset] + tx_duration + tsch_timing[tsch_ts_rx_ack_delay] - RADIO_DELAY_BEFORE_RX, "TxBeforeAck");
-
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#endif
 
               TSCH_DEBUG_TX_EVENT();
               tsch_radio_on(TSCH_RADIO_CMD_ON_WITHIN_TIMESLOT);
@@ -2388,9 +2382,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if WITH_HNEXT
     if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
       && current_packet->ret == MAC_TX_OK) {
-      if(hnext_tx_packet_type == HCK_PACKET_TYPE_M_DIO) {
-        hnext_sent_ok_m_dio += 1;
-      }
       if(hnext_tx_packet_type == HCK_PACKET_TYPE_EB) {
         hnext_eb_sent_count += 1;
       }
@@ -2398,14 +2389,13 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         hnext_m_dio_sent_count += 1;
       }
     }
-#if HNEXT_NO_TRANS_COUNT_INCREASE_FOR_CSSF_POSTPONED_PACKETS
+#if HNEXT_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS
     if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
       && current_packet->ret == MAC_TX_COLLISION) {
       current_packet->transmissions--;
       current_packet->hnext_cssf_postponed_count++;
     }
 #endif
-
     if(mac_tx_status == MAC_TX_COLLISION) {
       current_packet->hnext_collision_count++;
     } else if(mac_tx_status == MAC_TX_NOACK) {
@@ -2517,14 +2507,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         log->tx.hnext_backoff_window_before = hnext_tx_backoff_window_before;
         log->tx.hnext_backoff_exponent_after = current_neighbor->backoff_exponent;
         log->tx.hnext_backoff_window_after = current_neighbor->backoff_window;
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if HNEXT_OFFSET_ASSIGNMENT
         log->tx.hnext_state_based_offset = current_neighbor->is_time_source ? 
                                            hnext_offset_assignment_parent[hnext_tx_packet_type] : 
                                            hnext_offset_assignment_others[hnext_tx_packet_type];
         log->tx.hnext_escalated_offset = hnext_tx_current_offset;
         log->tx.hnext_state = hnext_tx_current_state;
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#endif /* WITH_HNEXT */
+#endif
+#endif
     );
 
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
@@ -2666,7 +2656,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 
     current_input = &input_array[input_index];
 
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
     if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
       /* Wait before starting to listen */
       TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
@@ -2678,12 +2668,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       /* Wait before starting to listen */
       TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
     }
-
-#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#else
     /* Wait before starting to listen */
     TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_rx_offset] - RADIO_DELAY_BEFORE_RX, "RxBeforeListen");
-
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#endif
 
     TSCH_DEBUG_RX_EVENT();
 
@@ -2705,7 +2693,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
     packet_seen = NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet();
 
     if(!packet_seen) {
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
         /* Check if receiving within guard time */
         RTIMER_BUSYWAIT_UNTIL_ABS((packet_seen = (NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet())),
@@ -2716,13 +2704,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         RTIMER_BUSYWAIT_UNTIL_ABS((packet_seen = (NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet())),
             current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + RADIO_DELAY_BEFORE_DETECT);
       }
-
-#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#else
       /* Check if receiving within guard time */
       RTIMER_BUSYWAIT_UNTIL_ABS((packet_seen = (NETSTACK_RADIO.receiving_packet() || NETSTACK_RADIO.pending_packet())),
           current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + RADIO_DELAY_BEFORE_DETECT);
-
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#endif
 
     }
     if(!packet_seen) {
@@ -2752,7 +2738,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
       /* Save packet timestamp */
       rx_start_time = RTIMER_NOW() - RADIO_DELAY_BEFORE_DETECT;
 
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
         /* Wait until packet is received, turn radio off */
         RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
@@ -2765,13 +2751,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
             current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]);
       }
-
-#else /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#else
       /* Wait until packet is received, turn radio off */
       RTIMER_BUSYWAIT_UNTIL_ABS(!NETSTACK_RADIO.receiving_packet(),
           current_slot_start, tsch_timing[tsch_ts_rx_offset] + tsch_timing[tsch_ts_rx_wait] + tsch_timing[tsch_ts_max_tx]);
-
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#endif
 
       TSCH_DEBUG_RX_EVENT();
       tsch_radio_off(TSCH_RADIO_CMD_OFF_WITHIN_TIMESLOT);
@@ -2887,16 +2871,16 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 hnext_rx_packet_type = HCK_PACKET_TYPE_NULL;
               }
 
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if HNEXT_OFFSET_ASSIGNMENT
               if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
                 hnext_rx_current_offset = (uint8_t)(hnext_rx_info & 0xFF);
               } else {
                 hnext_rx_current_offset = HNEXT_OFFSET_NULL;
               }
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
+#endif
             }
 
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if HNEXT_OFFSET_ASSIGNMENT
             if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
               // modify expected_rx_time
               // originally: expected_rx_time = current_slot_start + tsch_timing[tsch_ts_tx_offset];
@@ -2904,8 +2888,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                                + US_TO_RTIMERTICKS(HNEXT_TX_OFFSET)  
                                + hnext_rx_current_offset * US_TO_RTIMERTICKS(HNEXT_OFFSET_GAP);
             }
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#endif /* WITH_HNEXT */
+#endif
+#endif
 
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
 #if !WITH_TRGB && !WITH_HNEXT
@@ -3151,10 +3135,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 #if WITH_HNEXT
               log->rx.hck_packet_type = hnext_rx_packet_type;
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
+#if HNEXT_OFFSET_ASSIGNMENT
               log->rx.hnext_offset = hnext_rx_current_offset;
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
-#endif /* WITH_HNEXT */
+#endif
+#endif
             );
 
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
@@ -3433,9 +3417,9 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
 #else
 
-#if WITH_HNEXT
-      /* First determine current state */
+#if WITH_HNEXT /* HNEXT: determine current state and packet class*/
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+        /* First determine current state */
         if(tsch_is_coordinator) { /* Coordinator -> final state */
           hnext_tx_current_state = HNEXT_STATE_4_CELL_ALLOCATED;
         } else { /* Non-coordinator */
@@ -3453,83 +3437,65 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
             }
           }
         }
-      }
 
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY
-      /* Next determine offset for each packet */
-      if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+        /* Next determine offset for each packet */
+#if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_RANDOM /* Random */
+        hnext_tx_current_offset = random_rand() % HNEXT_NUM_OF_OFFSETS;
 
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_1 /* Random */
-        hnext_tx_current_offset = random_rand() % HNEXT_OFFSET_ASSIGNMENT_POLICY_1_OFFSETS;
-
-#elif HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_5 /* Formaion-critical / non-critical */
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED /* Formaion-critical / non-critical */
         /* HCK_PACKET_TYPE_EB */
-        if(hnext_eb_sent_count < HNEXT_OFFSET_ASSIGNMENT_POL5_EB_DIO_THRESH) {
-          hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET;
-          hnext_offset_assignment_others[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET;
+        if(hnext_eb_sent_count < HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
         } else {
-          hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-          hnext_offset_assignment_others[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         }
-
         /* HCK_PACKET_TYPE_KA */
         if(sync_count == 0) {
-          hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET;
-          hnext_offset_assignment_others[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         } else {
-          hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-          hnext_offset_assignment_others[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         }
-
         /* HCK_PACKET_TYPE_DIS */
-        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DIS] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-        hnext_offset_assignment_others[HCK_PACKET_TYPE_DIS] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DIS] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DIS] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         /* HCK_PACKET_TYPE_M_DIO */
-        if(hnext_m_dio_sent_count < HNEXT_OFFSET_ASSIGNMENT_POL5_EB_DIO_THRESH) {
-          hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET;
-          hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET;
+        if(hnext_m_dio_sent_count < HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
         } else {
-          hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-          hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         }
-
         /* HCK_PACKET_TYPE_U_DIO */
-        if(!tsch_rpl_is_urgent_probing_target_null()) {
-          hnext_offset_assignment_parent[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-          hnext_offset_assignment_others[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-        } else {
-          hnext_offset_assignment_parent[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-          hnext_offset_assignment_others[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-        }
-
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         /* HCK_PACKET_TYPE_DAO */
         if(hnext_tx_current_state <= HNEXT_STATE_3_RPL_JOINED) {
-          hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET;
-          hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         } else {
-          hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-          hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         }
-
         /* HCK_PACKET_TYPE_NP_DAO */
-        hnext_offset_assignment_parent[HCK_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-        hnext_offset_assignment_others[HCK_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         /* HCK_PACKET_TYPE_DAOA */
-        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAOA] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-        hnext_offset_assignment_others[HCK_PACKET_TYPE_DAOA] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAOA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DAOA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
         /* HCK_PACKET_TYPE_DATA */
-        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
-        hnext_offset_assignment_others[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET;
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
 
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_X */
+#endif /* HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_X */
       }
-#endif /* HNEXT_OFFSET_ASSIGNMENT_POLICY */
 #endif /* WITH_HNEXT */
 
-#if HNEXT_PACKET_SELECTION
+#if WITH_HNEXT && HNEXT_OFFSET_BASED_PACKET_SELECTION
       if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
         /* Get a packet ready to be sent */
         current_packet = hnext_tsch_queue_get_best_packet_and_nbr(current_link, &current_neighbor);
@@ -3537,10 +3503,10 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         /* Get a packet ready to be sent */
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
       }
-#else /* HNEXT_PACKET_SELECTION */
+#else
       /* Get a packet ready to be sent */
       current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
-#endif /* HNEXT_PACKET_SELECTION */
+#endif
 
 #endif
 

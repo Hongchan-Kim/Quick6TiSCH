@@ -26,7 +26,7 @@
 #define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF       1
 #define HCK_MOD_TSCH_SYNC_COUNT                             1
 
-#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0 /////////////////
+#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0
 
 #define HCK_MOD_TSCH_DEACTIVATE_RADIO_INTERRUPT_MODE        1
 #define HCK_MOD_TSCH_SWAP_TX_RX_PROCESS_PENDING             1 /* swap order of rx_process_pending and tx_process_pending */
@@ -155,7 +155,7 @@
 /* RPL layer */
 #define RPL_CONF_MOP                                        RPL_MOP_STORING_NO_MULTICAST
 #define RPL_CONF_WITH_DAO_ACK                               1
-#define RPL_CONF_WITH_PROBING                               1
+#define RPL_CONF_WITH_PROBING                               0 //
 #define RPL_CONF_PROBING_INTERVAL                           (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
 #define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT                 (20 * CLOCK_SECOND) /* originally 5 seconds */
 #define RPL_CONF_PARENT_SWITCH_THRESHOLD                    96 /* 96 (0.75, default), 127 (0.99), 128 (1) */
@@ -354,7 +354,7 @@
    0dBm, 0_7dBm, 1_3dBm, 1_8dBm, 2_3dBm, 2_8dBm, 3dBm */
 #define RF2XX_TX_POWER                                      PHY_POWER_m17dBm
 /* m101dBm, m90dBm, m87dBm, m84dBm, m81dBm, m78dBm, m75dBm, m72dBm, 
-   m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */ //
+   m69dBm, m66dBm, m63dBm, m60dBm, m57dBm, m54dBm, m51dBm, m48dBm */
 #define RF2XX_RX_RSSI_THRESHOLD                             RF2XX_PHY_RX_THRESHOLD__m87dBm
 #endif
 
@@ -366,7 +366,7 @@
  * - [TMC'23] TRGB
  * - [Proposed] TOP
  ****************************************************************/
-#define NETWORK_FORMATION_ACCELERATION                      1 //
+#define NETWORK_FORMATION_ACCELERATION                      1
 #if NETWORK_FORMATION_ACCELERATION
 
 /***************************************************************
@@ -381,7 +381,7 @@
 #undef HCK_MOD_RPL_CODE_NO_PATH_DAO
 #define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
 #undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 17 // 17, 31, 41, 53, 61, ...
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 23 // 11, 23, 31, 41, 53, 61, ...
 
 /***************************************************************
  * Prerequisite/common logging messages for network formation acceleration
@@ -406,18 +406,13 @@
 /***************************************************************
  * TOP implementation - WITH_HNEXT
  ****************************************************************/
-#define WITH_HNEXT                                          0
+#define WITH_HNEXT                                          1
 #if WITH_HNEXT
 #define HNEXT_LOG                                           1
-#define HNEXT_DBG                                           0
-
-/* HNEXT modules */
-#define HNEXT_PACKET_URGENCY_DETERMINATION                  1
-#define HNEXT_PACKET_OFFSET_ASSIGNMENT                      1
-#define HNEXT_PACKET_OFFSET_ESCALATION                      1
-#define HNEXT_PRIORITY_BASED_PACKET_SELECTION               1
+#define HNEXT_DBG                                           1
 
 /* HNEXT offset configuration - up to six offsets */
+#define HNEXT_NUM_OF_OFFSETS                                5 /* The 6th offset is available only for broadcast packets */
 #define HNEXT_CCA_OFFSET                                    800
 #define HNEXT_TX_OFFSET                                     1300 /* 1300 ~ 3100 */
 #define HNEXT_RX_OFFSET_LEFT                                500  /* 800  ~ 1300, 500 margin */
@@ -425,60 +420,37 @@
 #define HNEXT_OFFSET_GAP                                    600
 
 /* Offset assignment policy */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY                      HNEXT_OFFSET_ASSIGNMENT_POLICY_5 /* Fix to 2 or 4 */ ////////////////////
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_0                    0 /* No offset assignment */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_1                    1 /* Random */
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_5                    5 /* Two-tiered - 2, 4 */
+#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
+#define HNEXT_OFFSET_ASSIGNMENT_RANDOM                      1 /* Random */
+#define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED                 2 /* Two-tiered - 1, 4 */
 
-#define HNEXT_OFFSET_ASSIGNMENT_POLICY_1_OFFSETS            5
+#if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
 
-#define HNEXT_OFFSET_ASSIGNMENT_POL5_EB_DIO_THRESH          2
-#define HNEXT_OFFSET_ASSIGNMENT_POL5_CRITICAL_OFFSET        2 /* 0, 1, 2 */
-#define HNEXT_OFFSET_ASSIGNMENT_POL5_NON_CRITICAL_OFFSET    4 /* 3, 4 */
+/* Parameters for HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
+#define HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
+#define HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        1 /* 0, 1 */
+#define HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
+
+/* Enqueue only one packet for each packet type */
+#define HNEXT_QUEUE_MANAGEMENT                              0
+
+/* Offset-based packet selection */
+#define HNEXT_OFFSET_BASED_PACKET_SELECTION                 1
 
 /* Offset escalation policy for postponed packets */
-#define HNEXT_OFFSET_ESCALATION_POLICY                      HNEXT_OFFSET_ESCALATION_POLICY_6 /* Fix to 2 */ ////////////////////
-#define HNEXT_OFFSET_ESCALATION_POLICY_0                    0 /* No escalation */
-#define HNEXT_OFFSET_ESCALATION_POLICY_4                    4 /* All gradual increment */
-#define HNEXT_OFFSET_ESCALATION_POLICY_5                    5 /* All gradual increment */
-#define HNEXT_OFFSET_ESCALATION_POLICY_6                    6 /* All gradual increment */
+#define HNEXT_OFFSET_ESCALATION                             1
+#define HNEXT_OFFSET_ESCALATION_LEVEL                       4
 
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_1
-#undef HNEXT_OFFSET_ESCALATION_POLICY
-#define HNEXT_OFFSET_ESCALATION_POLICY                      HNEXT_OFFSET_ESCALATION_POLICY_0
-#endif
-
-/* Offset-based packet selection policy */
-#define HNEXT_PACKET_SELECTION                              1
-
-#if (HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_0) || \
-    (HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_1)  
-#undef HNEXT_PACKET_SELECTION
-#define HNEXT_PACKET_SELECTION                              0
-#endif
+#endif /* HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
 
 /* Backoff policy for postponed packets */
+#define HNEXT_POSTPONED_BACKOFF_POLICY                      1
+#if HNEXT_POSTPONED_BACKOFF_POLICY
 #define HNEXT_TSCH_MAC_BCAST_MAX_BE                         5
-#define HNEXT_TEMP_RANDOM_RX                                0
-
-#define HNEXT_POSTPONED_BACKOFF_POLICY                      HNEXT_POSTPONED_BACKOFF_POLICY_1 /* Fix to 1 */ ////////////////////
-#define HNEXT_POSTPONED_BACKOFF_POLICY_0                    0
-#define HNEXT_POSTPONED_BACKOFF_POLICY_1                    1
-
-#if HNEXT_OFFSET_ASSIGNMENT_POLICY == HNEXT_OFFSET_ASSIGNMENT_POLICY_0
-#undef HNEXT_POSTPONED_BACKOFF_POLICY
-#define HNEXT_POSTPONED_BACKOFF_POLICY                      HNEXT_POSTPONED_BACKOFF_POLICY_0
+#define HNEXT_BACKOFF_FOR_BCAST_PACKETS                     1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
+#define HNEXT_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
 #endif
 
-#if HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_0
-#define HNEXT_BACKOFF_FOR_BCAST_PACKETS                      0 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_NO_TRANS_COUNT_INCREASE_FOR_CSSF_POSTPONED_PACKETS  0
-
-#elif HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_1
-#define HNEXT_BACKOFF_FOR_BCAST_PACKETS                      1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_NO_TRANS_COUNT_INCREASE_FOR_CSSF_POSTPONED_PACKETS  1
-
-#endif /* HNEXT_POSTPONED_BACKOFF_POLICY == HNEXT_POSTPONED_BACKOFF_POLICY_X */
 #endif /* WITH_HNEXT */
 
 #endif /* NETWORK_FORMATION_ACCELERATION */

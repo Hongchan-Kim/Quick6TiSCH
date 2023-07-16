@@ -49,7 +49,7 @@
 
 /***** External Variables *****/
 
-#if HNEXT_PACKET_SELECTION
+#if HNEXT_OFFSET_BASED_PACKET_SELECTION
 struct tsch_packet * hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_neighbor **n);
 #endif
 

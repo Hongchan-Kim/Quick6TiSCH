@@ -68,6 +68,7 @@ frequency hopping for enhanced reliability.
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
 void keepalive_packet_sent(void *ptr, int status, int transmissions);
 #endif
+
 #if WITH_HNEXT
 extern enum HNEXT_OFFSET hnext_offset_assignment_parent[HCK_PACKET_TYPE_NULL];
 extern enum HNEXT_OFFSET hnext_offset_assignment_others[HCK_PACKET_TYPE_NULL];

@@ -174,10 +174,10 @@ struct tsch_packet {
 #endif
 
 #if WITH_HNEXT
-  uint8_t hnext_offset; // Delete later
+  uint8_t hnext_offset;
   uint8_t hnext_collision_count;
   uint8_t hnext_noack_count;
-  uint8_t hnext_cssf_postponed_count; // Delete later
+  uint8_t hnext_cssf_postponed_count;
 #endif
 
 #if WITH_OST
