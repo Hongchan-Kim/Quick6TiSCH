@@ -1833,8 +1833,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       do_wait_for_ack = !current_neighbor->is_broadcast;
 
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
-#if !WITH_TRGB && !WITH_HNEXT
       formation_tx_packet_type = current_packet->hck_packet_type;
+#if !WITH_TRGB && !WITH_HNEXT
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
         uint16_t formation_tx_info = 0;
         formation_tx_info = (formation_tx_packet_type << 8) + 0;

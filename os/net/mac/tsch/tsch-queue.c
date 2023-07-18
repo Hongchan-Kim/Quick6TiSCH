@@ -109,6 +109,12 @@ static struct ctimer ost_select_N_timer;
 #endif
 
 /*---------------------------------------------------------------------------*/
+#if WITH_HNEXT &&  HNEXT_OFFSET_BASED_PACKET_SELECTION /* Remove specific packet */
+/* Remove specific packet from a neighbor queue */
+static struct tsch_packet *
+hnext_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p);
+#endif
+/*---------------------------------------------------------------------------*/
 #if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF \
     || HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
 void
@@ -502,9 +508,84 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
 #endif
 
+#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+  uint8_t hck_is_broadcast = (linkaddr_cmp(addr, &tsch_eb_address) 
+                              || linkaddr_cmp(addr, &tsch_broadcast_address));
+  uint8_t hck_current_packet_type = HCK_PACKET_TYPE_NULL;
+  if(packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) == FRAME802154_BEACONFRAME) {
+    hck_current_packet_type = HCK_PACKET_TYPE_EB;
+  } else {
+    if(sent == keepalive_packet_sent) {
+      hck_current_packet_type = HCK_PACKET_TYPE_KA;
+    } else {
+      if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
+        if(packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIS)) {
+          hck_current_packet_type = HCK_PACKET_TYPE_DIS;
+        } else if(packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)) {
+          if(hck_is_broadcast) {
+            hck_current_packet_type = HCK_PACKET_TYPE_M_DIO;
+          } else {
+            hck_current_packet_type = HCK_PACKET_TYPE_U_DIO;
+          }
+        } else if(packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
+          hck_current_packet_type = HCK_PACKET_TYPE_DAO;
+#if HCK_MOD_RPL_CODE_NO_PATH_DAO
+        } else if(packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)) {
+          hck_current_packet_type = HCK_PACKET_TYPE_NP_DAO;
+#endif
+        } else if(packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
+          hck_current_packet_type = HCK_PACKET_TYPE_DAOA;
+        }
+      } else {
+        hck_current_packet_type = HCK_PACKET_TYPE_DATA;
+      }
+    }
+  }
+#endif
+
   if(!tsch_is_locked()) {
     n = tsch_queue_add_nbr(addr);
     if(n != NULL) {
+
+#if HNEXT_QUEUE_MANAGEMENT
+      uint8_t hnext_same_type_packet_exist_or_not = 0;
+      uint8_t hnext_current_postponed_count = 0;
+      int16_t hnext_same_type_packet_get_index = -1;
+
+      if(hck_current_packet_type == HCK_PACKET_TYPE_KA ||
+         hck_current_packet_type == HCK_PACKET_TYPE_DIS ||
+         hck_current_packet_type == HCK_PACKET_TYPE_M_DIO ||
+         hck_current_packet_type == HCK_PACKET_TYPE_U_DIO) {
+        int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
+        if(get_index == -1) {
+          hnext_same_type_packet_exist_or_not = 0;
+        } else {
+          int16_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
+          int i;
+          for(i = get_index; i < get_index + num_elements; i++) {
+            int16_t temp_index;
+            if(i >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
+              temp_index = i - ringbufindex_size(&n->tx_ringbuf);
+            } else {
+              temp_index = i;
+            }
+            if(n->tx_array[temp_index]->hck_packet_type == hck_current_packet_type) {
+              hnext_same_type_packet_exist_or_not = 1;
+              hnext_current_postponed_count = n->tx_array[temp_index]->hnext_cssf_postponed_count;
+              hnext_same_type_packet_get_index = temp_index;
+              break;
+            }
+          }
+          if(hnext_same_type_packet_exist_or_not) {
+            LOG_INFO("hck-dbg delete overlapped packet %u %u\n", hck_current_packet_type, hnext_current_postponed_count);
+            struct tsch_packet *hnext_overlapped_packet = n->tx_array[hnext_same_type_packet_get_index];
+            hnext_tsch_queue_remove_specific_packet_from_queue(n, n->tx_array[hnext_same_type_packet_get_index]);
+            tsch_queue_free_packet(hnext_overlapped_packet);
+          }
+        }
+      }
+#endif
+
       put_index = ringbufindex_peek_put(&n->tx_ringbuf);
       if(put_index != -1) {
         p = memb_alloc(&packet_memb);
@@ -519,38 +600,6 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             p->max_transmissions = max_transmissions;
 
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
-            uint8_t hck_is_broadcast = (linkaddr_cmp(addr, &tsch_eb_address) 
-                                        || linkaddr_cmp(addr, &tsch_broadcast_address));
-            uint8_t hck_current_packet_type = HCK_PACKET_TYPE_NULL;
-            if(((((uint8_t *)(queuebuf_dataptr(p->qb)))[0]) & 7) == FRAME802154_BEACONFRAME) {
-              hck_current_packet_type = HCK_PACKET_TYPE_EB;
-            } else {
-              if(p->sent == keepalive_packet_sent) {
-                hck_current_packet_type = HCK_PACKET_TYPE_KA;
-              } else {
-                if(queuebuf_attr(p->qb, PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6) {
-                  if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIS)) {
-                    hck_current_packet_type = HCK_PACKET_TYPE_DIS;
-                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)) {
-                    if(hck_is_broadcast) {
-                      hck_current_packet_type = HCK_PACKET_TYPE_M_DIO;
-                    } else {
-                      hck_current_packet_type = HCK_PACKET_TYPE_U_DIO;
-                    }
-                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
-                    hck_current_packet_type = HCK_PACKET_TYPE_DAO;
-#if HCK_MOD_RPL_CODE_NO_PATH_DAO
-                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_NO_PATH_DAO)) {
-                    hck_current_packet_type = HCK_PACKET_TYPE_NP_DAO;
-#endif
-                  } else if(queuebuf_attr(p->qb, PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO_ACK)) {
-                    hck_current_packet_type = HCK_PACKET_TYPE_DAOA;
-                  }
-                } else {
-                  hck_current_packet_type = HCK_PACKET_TYPE_DATA;
-                }
-              }
-            }
             p->hck_packet_type = hck_current_packet_type;
 #endif
 
@@ -558,7 +607,15 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             p->hnext_offset = 0;
             p->hnext_collision_count = 0;
             p->hnext_noack_count = 0;
+#if HNEXT_QUEUE_MANAGEMENT
+            if(hnext_same_type_packet_exist_or_not) {
+              p->hnext_cssf_postponed_count = hnext_current_postponed_count;
+            } else {
+              p->hnext_cssf_postponed_count = 0;
+            }
+#else
             p->hnext_cssf_postponed_count = 0;
+#endif
 #endif
 
             /* Add to ringbuf (actual add committed through atomic operation) */
@@ -645,7 +702,7 @@ hnext_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, stru
           if(i >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
             temp_index = i - ringbufindex_size(&n->tx_ringbuf);
           } else {
-            temp_index = i;  
+            temp_index = i;
           }
           if(p == n->tx_array[temp_index]) {
             matched_index = temp_index;
@@ -1099,7 +1156,7 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
             if(i >= ringbufindex_size(&curr_nbr->tx_ringbuf)) { /* default size: 16 */
               temp_index = i - ringbufindex_size(&curr_nbr->tx_ringbuf);
             } else {
-              temp_index = i;  
+              temp_index = i;
             }
 
             int packet_attr_slotframe = queuebuf_attr(curr_nbr->tx_array[temp_index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);

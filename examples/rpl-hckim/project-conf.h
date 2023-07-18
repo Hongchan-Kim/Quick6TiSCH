@@ -56,7 +56,7 @@
 #define HCK_LOG_TSCH_PACKET_ADD_REMOVE                      1
 #define HCK_LOG_TSCH_SLOT                                   1
 #define HCK_LOG_TSCH_SLOT_APP_SEQNO                         1
-#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      1
+#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      0
 //
 #define SIMPLE_ENERGEST_CONF_PERIOD                         (1 * 60 * CLOCK_SECOND)
 #define RPL_FIRST_MEASURE_PERIOD                            (1 * 60)
@@ -381,7 +381,7 @@
 #undef HCK_MOD_RPL_CODE_NO_PATH_DAO
 #define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
 #undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 23 // 11, 23, 31, 41, 53, 61, ...
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 31 // 11, 23, 31, 41, 53, 61, 83, 101 ...
 
 /***************************************************************
  * Prerequisite/common logging messages for network formation acceleration
@@ -409,7 +409,7 @@
 #define WITH_HNEXT                                          1
 #if WITH_HNEXT
 #define HNEXT_LOG                                           1
-#define HNEXT_DBG                                           1
+#define HNEXT_DBG                                           0
 
 /* HNEXT offset configuration - up to six offsets */
 #define HNEXT_NUM_OF_OFFSETS                                5 /* The 6th offset is available only for broadcast packets */
@@ -422,8 +422,8 @@
 /* Offset assignment policy */
 #define HNEXT_OFFSET_ASSIGNMENT_RANDOM                      1 /* Random */
 #define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED                 2 /* Two-tiered - 1, 4 */
-//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_RANDOM
-#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
+#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_RANDOM
+//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
 
 #if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
 
@@ -433,7 +433,7 @@
 #define HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
 
 /* Enqueue only one packet for each packet type */
-#define HNEXT_QUEUE_MANAGEMENT                              0
+#define HNEXT_QUEUE_MANAGEMENT                              1
 
 /* Offset-based packet selection */
 #define HNEXT_OFFSET_BASED_PACKET_SELECTION                 1
