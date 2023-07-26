@@ -186,6 +186,10 @@ static uint8_t hnext_m_dio_sent_count;
 static uint8_t hnext_tx_backoff_exponent_before;
 static uint8_t hnext_tx_backoff_window_before;
 #endif
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+static uint8_t hnext_tx_cssf_backoff_exponent_before;
+static uint8_t hnext_tx_cssf_backoff_window_before;
+#endif
 
 /* A ringbuf storing outgoing packets after they were dequeued.
  * Will be processed layer by tsch_tx_process_pending */
@@ -1635,6 +1639,11 @@ void update_link_backoff(struct tsch_link *link) {
     /* Decrement the backoff window for all neighbors able to transmit over
      * this Tx, Shared link. */
     tsch_queue_update_all_backoff_windows(&link->addr);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+    if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+      tsch_queue_update_all_cssf_backoff_windows(&link->addr);
+    }
+#endif
   }
 }
 #endif
@@ -2464,6 +2473,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
     hnext_tx_backoff_exponent_before = current_neighbor->backoff_exponent;
     hnext_tx_backoff_window_before = current_neighbor->backoff_window;
 #endif
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+    hnext_tx_cssf_backoff_exponent_before = current_neighbor->cssf_backoff_exponent;
+    hnext_tx_cssf_backoff_window_before = current_neighbor->cssf_backoff_window;
+#endif
+
 
     /* Post TX: Update neighbor queue state */
     in_queue = tsch_queue_packet_sent(current_neighbor, current_packet, current_link, mac_tx_status);
@@ -2517,6 +2531,13 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         log->tx.hnext_state = hnext_tx_current_state;
 #endif
 #endif
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+        log->tx.hnext_cssf_backoff_exponent_before = hnext_tx_cssf_backoff_exponent_before;
+        log->tx.hnext_cssf_backoff_window_before = hnext_tx_cssf_backoff_window_before;
+        log->tx.hnext_cssf_backoff_exponent_after = current_neighbor->cssf_backoff_exponent;
+        log->tx.hnext_cssf_backoff_window_after = current_neighbor->cssf_backoff_window;
+#endif
+
     );
 
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
@@ -4000,6 +4021,12 @@ ost_donothing:
           /* Decrement the backoff window for all neighbors able to transmit over
           * this Tx, Shared link. */
           tsch_queue_update_all_backoff_windows(&current_link->addr);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+          if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+            tsch_queue_update_all_cssf_backoff_windows(&current_link->addr);
+          }
+#endif
+
         }
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HANDLE_MISSED_DBT_SLOT

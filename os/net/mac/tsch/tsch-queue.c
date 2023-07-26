@@ -133,6 +133,9 @@ tsch_queue_change_attr_of_packets_in_queue(struct tsch_neighbor *target_nbr,
 
     if(sf_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
       tsch_queue_backoff_reset(target_nbr);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+      tsch_queue_cssf_backoff_reset(target_nbr);
+#endif
     }
 
     get_index = ringbufindex_peek_get(&target_nbr->tx_ringbuf);
@@ -325,6 +328,9 @@ tsch_queue_add_nbr(const linkaddr_t *addr)
         n->is_broadcast = linkaddr_cmp(addr, &tsch_eb_address)
           || linkaddr_cmp(addr, &tsch_broadcast_address);
         tsch_queue_backoff_reset(n);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+        tsch_queue_cssf_backoff_reset(n);
+#endif
       }
       tsch_release_lock();
     }
@@ -825,6 +831,12 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
         /* If this is a shared link, reset backoff on success.
          * Otherwise, do so only is the queue is empty */
         tsch_queue_backoff_reset(n);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE
+          || tsch_queue_is_empty(n)) {
+          tsch_queue_cssf_backoff_reset(n);
+        }
+#endif
       }
     }
 #if WITH_HNEXT && HNEXT_BACKOFF_FOR_BCAST_PACKETS
@@ -833,6 +845,12 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
         /* If this is a shared link, reset backoff on success.
          * Otherwise, do so only is the queue is empty */
         tsch_queue_backoff_reset(n);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE
+          || tsch_queue_is_empty(n)) {
+          tsch_queue_cssf_backoff_reset(n);
+        }
+#endif
       }
     }
 #endif
@@ -854,6 +872,11 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
       if(is_shared_link) {
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+          tsch_queue_cssf_backoff_inc(n);
+        }
+#endif
       }
     }
 #if WITH_HNEXT && HNEXT_BACKOFF_FOR_BCAST_PACKETS
@@ -861,6 +884,12 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
       if(is_shared_link) {
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+          tsch_queue_cssf_backoff_inc(n);
+        }
+#endif
+
       }
     }
 #endif
@@ -878,6 +907,9 @@ tsch_queue_drop_packets(struct tsch_neighbor *n)
     tsch_queue_flush_nbr_queue(n);
     /* Reset backoff exponent */
     tsch_queue_backoff_reset(n);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+    tsch_queue_cssf_backoff_reset(n);
+#endif
   }
 }
 #endif
@@ -912,6 +944,9 @@ tsch_queue_reset_except_n_eb(void)
         tsch_queue_flush_nbr_queue(n);
         /* Reset backoff exponent */
         tsch_queue_backoff_reset(n);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+        tsch_queue_cssf_backoff_reset(n);
+#endif
       }
       n = next_n;
     }
@@ -942,6 +977,9 @@ tsch_queue_reset(void)
       tsch_queue_flush_nbr_queue(n);
       /* Reset backoff exponent */
       tsch_queue_backoff_reset(n);
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+      tsch_queue_cssf_backoff_reset(n);
+#endif
       n = next_n;
     }
   }
@@ -1009,6 +1047,14 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
       if(get_index != -1 &&
           !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
                                                                     make sure the backoff has expired */
+
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE &&
+          !tsch_queue_cssf_backoff_expired(n)) {
+          return NULL;
+        }
+#endif
+
 #if TSCH_WITH_LINK_SELECTOR
 #if WITH_OST && OST_ON_DEMAND_PROVISION
         if(link->slotframe_handle > SSQ_SCHEDULE_HANDLE_OFFSET && link->link_options == LINK_OPTION_TX) {
@@ -1148,7 +1194,11 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
           || (!curr_nbr->is_broadcast && curr_nbr->tx_links_count == 0)) { // ucast nbr using cssf
         int16_t get_index = ringbufindex_peek_get(&curr_nbr->tx_ringbuf);
 
-        if(get_index != -1 && tsch_queue_backoff_expired(curr_nbr)) {
+        if(get_index != -1 && tsch_queue_backoff_expired(curr_nbr)
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+          && tsch_queue_cssf_backoff_expired(curr_nbr)
+#endif
+          ) {
           int16_t num_elements = ringbufindex_elements(&curr_nbr->tx_ringbuf);
           int i;
           for(i = get_index; i < get_index + num_elements; i++) {
@@ -1358,6 +1408,83 @@ tsch_queue_update_all_backoff_windows(const linkaddr_t *dest_addr)
     }
   }
 }
+/*---------------------------------------------------------------------------*/
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+/* May the neighbor transmit over a shared link? */
+int
+tsch_queue_cssf_backoff_expired(const struct tsch_neighbor *n)
+{
+  return n->cssf_backoff_window == 0;
+}
+/*---------------------------------------------------------------------------*/
+/* Reset neighbor backoff */
+void
+tsch_queue_cssf_backoff_reset(struct tsch_neighbor *n)
+{
+  n->cssf_backoff_window = 0;
+  n->cssf_backoff_exponent = HNEXT_TSCH_MAC_MIN_CSSF_BE;
+}
+/*---------------------------------------------------------------------------*/
+/* Increment backoff exponent, pick a new window */
+void
+tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n)
+{
+#if WITH_HNEXT && HNEXT_BACKOFF_FOR_BCAST_PACKETS
+  if(n == n_broadcast) {
+    /* Increment exponent */
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP
+    n->cssf_backoff_exponent = n->backoff_exponent;
+#else
+    n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, HNEXT_TSCH_MAC_MAX_CSSF_BE);
+#endif
+  } else {
+    /* Increment exponent */
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP
+    n->cssf_backoff_exponent = n->backoff_exponent;
+#else
+    n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, HNEXT_TSCH_MAC_MAX_CSSF_BE);
+#endif
+  }
+#else
+  /* Increment exponent */
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP
+  n->cssf_backoff_exponent = n->backoff_exponent;
+#else
+  n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, HNEXT_TSCH_MAC_MAX_CSSF_BE);
+#endif
+#endif
+
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP
+  n->cssf_backoff_window = n->backoff_window;
+#else
+  /* Pick a window (number of shared slots to skip). Ignore least significant
+   * few bits, which, on some embedded implementations of rand (e.g. msp430-libc),
+   * are known to have poor pseudo-random properties. */
+  n->cssf_backoff_window = (random_rand() >> 6) % (1 << n->cssf_backoff_exponent);
+  /* Add one to the window as we will decrement it at the end of the current slot
+   * through tsch_queue_update_all_backoff_windows */
+  n->cssf_backoff_window++;
+#endif
+}
+/*---------------------------------------------------------------------------*/
+/* Decrement backoff window for all queues directed at dest_addr */
+void
+tsch_queue_update_all_cssf_backoff_windows(const linkaddr_t *dest_addr)
+{
+  if(!tsch_is_locked()) {
+    int is_broadcast = linkaddr_cmp(dest_addr, &tsch_broadcast_address);
+    struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
+    while(n != NULL) {
+      if(n->cssf_backoff_window != 0 /* Is the queue in backoff state? */
+         && ((n->tx_links_count == 0 && is_broadcast)
+             || (n->tx_links_count > 0 && linkaddr_cmp(dest_addr, tsch_queue_get_nbr_address(n))))) {
+        n->cssf_backoff_window--;
+      }
+      n = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, n);
+    }
+  }
+}
+#endif
 /*---------------------------------------------------------------------------*/
 /* Initialize TSCH queue module */
 void

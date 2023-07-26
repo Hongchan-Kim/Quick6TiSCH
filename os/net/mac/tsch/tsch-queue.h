@@ -82,6 +82,13 @@ struct tsch_neighbor *tsch_queue_get_nbr_from_id(const uint16_t id);
 void ost_update_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N);
 #endif
 
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+int tsch_queue_cssf_backoff_expired(const struct tsch_neighbor *n);
+void tsch_queue_cssf_backoff_reset(struct tsch_neighbor *n);
+void tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n);
+void tsch_queue_update_all_cssf_backoff_windows(const linkaddr_t *dest_addr);
+#endif
+
 /**
  * \brief Add a TSCH neighbor queue
  * \param addr The link-layer address of the neighbor to be added

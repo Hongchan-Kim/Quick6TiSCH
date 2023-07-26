@@ -116,6 +116,12 @@ struct tsch_log_t {
       uint8_t hnext_escalated_offset;
       uint8_t hnext_state;
 #endif
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+      uint8_t hnext_cssf_backoff_exponent_before;
+      uint8_t hnext_cssf_backoff_window_before;
+      uint8_t hnext_cssf_backoff_exponent_after;
+      uint8_t hnext_cssf_backoff_window_after;
+#endif
     } tx;
     struct {
       linkaddr_t  src;

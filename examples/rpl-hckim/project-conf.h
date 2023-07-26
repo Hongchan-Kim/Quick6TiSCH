@@ -455,6 +455,11 @@
 #define HNEXT_BACKOFF_FOR_BCAST_PACKETS                     1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
 #define HNEXT_TSCH_MAC_BCAST_MAX_BE                         5
 
+#define HNEXT_SLOTFRAME_LEVEL_BACKOFF                       1
+#define HNEXT_TSCH_MAC_MIN_CSSF_BE                          1
+#define HNEXT_TSCH_MAC_MAX_CSSF_BE                          5
+#define HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP                  1
+
 #endif /* WITH_HNEXT */
 
 #endif /* NETWORK_FORMATION_ACCELERATION */

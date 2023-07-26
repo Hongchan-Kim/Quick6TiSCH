@@ -142,6 +142,13 @@ tsch_log_process_pending(void)
               log->tx.hnext_state_based_offset,
               log->tx.hnext_escalated_offset);
 #endif
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+      printf(" %u %u %u %u", 
+              log->tx.hnext_cssf_backoff_exponent_before,
+              log->tx.hnext_cssf_backoff_window_before,
+              log->tx.hnext_cssf_backoff_exponent_after,
+              log->tx.hnext_cssf_backoff_window_after);
+#endif
 #if HCK_LOG_TSCH_SLOT
         printf(" HK-T");
 #endif

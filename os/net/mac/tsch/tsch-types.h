@@ -197,6 +197,11 @@ struct tsch_neighbor {
   uint8_t backoff_exponent; /* CSMA backoff exponent */
   uint8_t backoff_window; /* CSMA backoff window (number of slots to skip) */
   uint8_t last_backoff_window; /* Last CSMA backoff window */
+#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+  uint8_t cssf_backoff_exponent; /* CSMA backoff exponent */
+  uint8_t cssf_backoff_window; /* CSMA backoff window (number of slots to skip) */
+  uint8_t cssf_last_backoff_window; /* Last CSMA backoff window */
+#endif
   uint8_t tx_links_count; /* How many links do we have to this neighbor? */
   uint8_t dedicated_tx_links_count; /* How many dedicated links do we have to this neighbor? */
   /* Array for the ringbuf. Contains pointers to packets.
