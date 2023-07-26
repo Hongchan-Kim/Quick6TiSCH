@@ -381,7 +381,11 @@
 #undef HCK_MOD_RPL_CODE_NO_PATH_DAO
 #define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
 #undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 31 // 11, 23, 31, 41, 53, 61, 83, 101 ...
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 41 // 11, 23, 31, 41, 53, 61, 83, 101 ...
+//
+#define RPL_CONF_DIS_SEND                                   0 /* Turn on/off DIS */
+#undef RPL_CONF_WITH_PROBING
+#define RPL_CONF_WITH_PROBING                               0 /* Turn on/off RPL probing */
 
 /***************************************************************
  * Prerequisite/common logging messages for network formation acceleration
@@ -422,8 +426,8 @@
 /* Offset assignment policy */
 #define HNEXT_OFFSET_ASSIGNMENT_RANDOM                      1 /* Random */
 #define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED                 2 /* Two-tiered - 1, 4 */
-#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_RANDOM
-//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
+//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_RANDOM
+#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
 
 #if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
 
@@ -444,13 +448,12 @@
 
 #endif /* HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
 
-/* Backoff policy for postponed packets */
-#define HNEXT_POSTPONED_BACKOFF_POLICY                      1
-#if HNEXT_POSTPONED_BACKOFF_POLICY
-#define HNEXT_TSCH_MAC_BCAST_MAX_BE                         5
-#define HNEXT_BACKOFF_FOR_BCAST_PACKETS                     1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
+/* Retransmission policy for postponed packets */
 #define HNEXT_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
-#endif
+
+/* Backoff policy for postponed packets */
+#define HNEXT_BACKOFF_FOR_BCAST_PACKETS                     1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
+#define HNEXT_TSCH_MAC_BCAST_MAX_BE                         5
 
 #endif /* WITH_HNEXT */
 

@@ -204,7 +204,11 @@
 #define RPL_ROUTE_FROM_DIO              3
 
 /* DIS related */
+#ifdef RPL_CONF_DIS_SEND
+#define RPL_DIS_SEND                    RPL_CONF_DIS_SEND
+#else /* RPL_CONF_DIS_SEND */
 #define RPL_DIS_SEND                    1
+#endif /* RPL_CONF_DIS_SEND */
 
 /*---------------------------------------------------------------------------*/
 /* Lollipop counters */

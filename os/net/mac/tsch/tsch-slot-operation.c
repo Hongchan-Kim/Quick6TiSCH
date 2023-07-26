@@ -2853,6 +2853,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 trgb_rx_info = 0;
                 trgb_rx_packet_type = HCK_PACKET_TYPE_NULL;
               }
+            } else {
+              trgb_rx_packet_type = HCK_PACKET_TYPE_EB;
             }
 #endif
 
@@ -2861,6 +2863,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             hnext_rx_packet_type = HCK_PACKET_TYPE_NULL;
 
             int hnext_rx_info = 0;
+            hnext_rx_packet_type = HCK_PACKET_TYPE_NULL;
+            hnext_rx_current_offset = HNEXT_OFFSET_NULL;
 
             if(frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
               if(frame.fcf.ie_list_present) {
@@ -2880,6 +2884,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 hnext_rx_current_offset = HNEXT_OFFSET_NULL;
               }
 #endif
+            } else {
+              hnext_rx_packet_type = HCK_PACKET_TYPE_EB;
             }
 
 #if HNEXT_OFFSET_ASSIGNMENT
@@ -2908,6 +2914,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 formation_rx_info = 0;
                 formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
               }
+            } else {
+              formation_rx_packet_type = HCK_PACKET_TYPE_EB;
             }
 #endif
 #if WITH_TRGB
@@ -3441,14 +3449,14 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         }
 
 #if HNEXT_DBG
-      TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                          "H-D st %d | %d %d %d %d", hnext_tx_current_state,
-                          tsch_is_coordinator,
-                          tsch_is_associated,
-                          tsch_rpl_check_dodag_joined(),
-                          orchestra_parent_knows_us);
-      );
+        TSCH_LOG_ADD(tsch_log_message,
+                        snprintf(log->message, sizeof(log->message),
+                            "H-D st %d | %d %d %d %d", hnext_tx_current_state,
+                            tsch_is_coordinator,
+                            tsch_is_associated,
+                            tsch_rpl_check_dodag_joined(),
+                            orchestra_parent_knows_us);
+        );
 #endif
 
         /* Next determine offset for each packet */

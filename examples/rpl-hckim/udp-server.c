@@ -154,7 +154,7 @@ reset_eval(uint8_t phase)
   LOG_HCK("eval_config 3 with_top rand offs %u |\n",
           HNEXT_NUM_OF_OFFSETS);
 #elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
-  LOG_HCK("eval_config 3 with_top s_b offs %u thr %u fco %u nco %u que %u esc %u sel %u bac %u |\n", 
+  LOG_HCK("eval_config 3 with_top s_b offs %u thr %u fco %u nco %u que %u esc %u sel %u retx %u bac %u |\n", 
           HNEXT_NUM_OF_OFFSETS,
           HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH,
           HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET,
@@ -162,7 +162,8 @@ reset_eval(uint8_t phase)
           HNEXT_QUEUE_MANAGEMENT,
           HNEXT_OFFSET_ESCALATION,
           HNEXT_OFFSET_BASED_PACKET_SELECTION,
-          HNEXT_POSTPONED_BACKOFF_POLICY);
+          HNEXT_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS,
+          HNEXT_BACKOFF_FOR_BCAST_PACKETS);
 #endif
 #endif
 #endif
@@ -285,7 +286,7 @@ PROCESS_THREAD(udp_server_process, ev, data)
   LOG_HCK("eval_config 3 with_top rand offs %u |\n",
           HNEXT_NUM_OF_OFFSETS);
 #elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
-  LOG_HCK("eval_config 3 with_top s_b offs %u thr %u fco %u nco %u que %u esc %u sel %u bac %u |\n", 
+  LOG_HCK("eval_config 3 with_top s_b offs %u thr %u fco %u nco %u que %u esc %u sel %u retx %u bac %u |\n", 
           HNEXT_NUM_OF_OFFSETS,
           HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH,
           HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET,
@@ -293,7 +294,8 @@ PROCESS_THREAD(udp_server_process, ev, data)
           HNEXT_QUEUE_MANAGEMENT,
           HNEXT_OFFSET_ESCALATION,
           HNEXT_OFFSET_BASED_PACKET_SELECTION,
-          HNEXT_POSTPONED_BACKOFF_POLICY);
+          HNEXT_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS,
+          HNEXT_BACKOFF_FOR_BCAST_PACKETS);
 #endif
 #endif
 #endif
