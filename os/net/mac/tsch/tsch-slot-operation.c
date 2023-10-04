@@ -1625,6 +1625,91 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
       p->hnext_offset = hnext_curr_offset;
     }
   }
+
+#elif WITH_HNEXT && \
+      (HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM)
+
+  enum HNEXT_OFFSET hnext_curr_offset = HNEXT_OFFSET_NULL;
+  if(n != NULL && p != NULL) {
+    if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+      if((*target_neighbor)->is_time_source) {
+        hnext_curr_offset = hnext_offset_assignment_parent[p->hck_packet_type];
+      } else {
+        hnext_curr_offset = hnext_offset_assignment_others[p->hck_packet_type];
+      }
+
+    //uint8_t original_offset = hnext_curr_offset;
+
+#if HNEXT_OFFSET_ESCALATION
+      int hnext_quotient = (p->hnext_cssf_postponed_count) / (p->max_transmissions);
+      if(hnext_quotient >= 1) {
+        hnext_curr_offset = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+      }
+#endif
+
+      p->hnext_offset = hnext_curr_offset;
+/*
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "hck dbg3 %u %u %u %u %u", original_offset, 
+                                     p->hnext_cssf_postponed_count,
+                                     hnext_quotient,
+                                     hnext_curr_offset,
+                                     p->hnext_offset));
+                                     */
+    }
+  }
+
+#elif WITH_HNEXT && \
+      (HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2)
+
+  enum HNEXT_OFFSET hnext_curr_offset = HNEXT_OFFSET_NULL;
+  if(n != NULL && p != NULL) {
+    if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+      if((*target_neighbor)->is_time_source) {
+        hnext_curr_offset = hnext_offset_assignment_parent[p->hck_packet_type];
+      } else {
+        hnext_curr_offset = hnext_offset_assignment_others[p->hck_packet_type];
+      }
+
+#if HNEXT_OFFSET_ESCALATION
+      int hnext_quotient = (p->hnext_cssf_postponed_count) / ((p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
+      if(hnext_curr_offset < hnext_quotient) {
+        hnext_curr_offset = HNEXT_OFFSET_0;
+      } else {
+        hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+      }
+#endif
+
+      p->hnext_offset = hnext_curr_offset;
+    }
+  }
+
+
+#elif WITH_HNEXT && \
+      (HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3)
+
+  enum HNEXT_OFFSET hnext_curr_offset = HNEXT_OFFSET_NULL;
+  if(n != NULL && p != NULL) {
+    if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+      if((*target_neighbor)->is_time_source) {
+        hnext_curr_offset = hnext_offset_assignment_parent[p->hck_packet_type];
+      } else {
+        hnext_curr_offset = hnext_offset_assignment_others[p->hck_packet_type];
+      }
+
+#if HNEXT_OFFSET_ESCALATION
+      int hnext_quotient = (p->hnext_cssf_postponed_count) / ((p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
+      if(hnext_curr_offset < hnext_quotient) {
+        hnext_curr_offset = HNEXT_OFFSET_0;
+      } else {
+        hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+      }
+#endif
+
+      p->hnext_offset = hnext_curr_offset;
+    }
+  }
 #endif
 
   return p;
@@ -1877,6 +1962,27 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           /* Random policy -> hnext_tx_current_offset is already determined! */
 #elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
           hnext_tx_current_offset = current_packet->hnext_offset;
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
+          if(current_packet->hnext_offset == HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET) {
+            hnext_tx_current_offset = random_rand() % HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          } else {
+            hnext_tx_current_offset = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          }
+/*
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "hck dbg2 %u %u", current_packet->hnext_offset, hnext_tx_current_offset));
+*/
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
+          hnext_tx_current_offset = random_rand() % (current_packet->hnext_offset + 1);
+
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
+          if(current_packet->hnext_offset != HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET) {
+            hnext_tx_current_offset = random_rand() % (current_packet->hnext_offset + 1);
+          } else {
+            hnext_tx_current_offset = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          }
+
 #endif
         } else {
           hnext_tx_current_offset = HNEXT_OFFSET_NULL;
@@ -3573,6 +3679,155 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                             hnext_offset_assignment_others[HCK_PACKET_TYPE_DATA]);
         );
 #endif
+
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM /* Formaion-critical / non-critical */
+        /* HCK_PACKET_TYPE_EB */
+        if(hnext_eb_sent_count < HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_KA */
+        if(sync_count == 0) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_DIS */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DIS] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DIS] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_M_DIO */
+        if(hnext_m_dio_sent_count < HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_U_DIO */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_DAO */
+        if(hnext_tx_current_state <= HNEXT_STATE_3_RPL_JOINED) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_NP_DAO */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_DAOA */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAOA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DAOA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_DATA */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2 /* Formaion-critical / non-critical */
+        /* HCK_PACKET_TYPE_EB */
+        if(hnext_eb_sent_count < HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_KA */
+        if(sync_count == 0) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_DIS */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DIS] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DIS] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_M_DIO */
+        if(hnext_m_dio_sent_count < HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_U_DIO */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_DAO */
+        if(hnext_tx_current_state <= HNEXT_STATE_3_RPL_JOINED) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_NP_DAO */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_DAOA */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAOA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DAOA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_DATA */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3 /* Formaion-critical / non-critical */
+        /* HCK_PACKET_TYPE_EB */
+        if(hnext_eb_sent_count < HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_EB] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_KA */
+        if(sync_count == 0) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_KA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_DIS */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DIS] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DIS] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_M_DIO */
+        if(hnext_m_dio_sent_count < HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_M_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_U_DIO */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_U_DIO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_DAO */
+        if(hnext_tx_current_state <= HNEXT_STATE_3_RPL_JOINED) {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        } else {
+          hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+          hnext_offset_assignment_others[HCK_PACKET_TYPE_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        }
+        /* HCK_PACKET_TYPE_NP_DAO */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_NP_DAO] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_DAOA */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DAOA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DAOA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        /* HCK_PACKET_TYPE_DATA */
+        hnext_offset_assignment_parent[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+        hnext_offset_assignment_others[HCK_PACKET_TYPE_DATA] = HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET;
+
+
 #endif /* HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_X */
       }
 #endif /* WITH_HNEXT */

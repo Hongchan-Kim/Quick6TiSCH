@@ -583,9 +583,12 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             }
           }
           if(hnext_same_type_packet_exist_or_not) {
-            LOG_INFO("hck-dbg delete overlapped packet %u %u\n", hck_current_packet_type, hnext_current_postponed_count);
+            LOG_INFO("hck-dbg delete overlapped packet %u %u %u\n", 
+                    hck_current_packet_type, hnext_current_postponed_count, hnext_same_type_packet_get_index);
             struct tsch_packet *hnext_overlapped_packet = n->tx_array[hnext_same_type_packet_get_index];
+#if !HNEXT_QUEUE_MANAGEMENT_TEMP
             hnext_tsch_queue_remove_specific_packet_from_queue(n, n->tx_array[hnext_same_type_packet_get_index]);
+#endif
             tsch_queue_free_packet(hnext_overlapped_packet);
           }
         }
@@ -593,6 +596,13 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 #endif
 
       put_index = ringbufindex_peek_put(&n->tx_ringbuf);
+
+#if HNEXT_QUEUE_MANAGEMENT_TEMP
+      if(hnext_same_type_packet_exist_or_not) {
+        put_index = hnext_same_type_packet_get_index;
+      }
+#endif
+
       if(put_index != -1) {
         p = memb_alloc(&packet_memb);
         if(p != NULL) {
@@ -626,7 +636,13 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 
             /* Add to ringbuf (actual add committed through atomic operation) */
             n->tx_array[put_index] = p;
+#if HNEXT_QUEUE_MANAGEMENT_TEMP
+            if(!hnext_same_type_packet_exist_or_not) {
+              ringbufindex_put(&n->tx_ringbuf);
+            }
+#else
             ringbufindex_put(&n->tx_ringbuf);
+#endif
             LOG_DBG("packet is added put_index %u, packet %p\n",
                    put_index, p);
 
@@ -1232,14 +1248,50 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
             }
 
 #if HNEXT_OFFSET_ESCALATION
+#if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
             int hnext_quotient = (curr_p->hnext_cssf_postponed_count) / ((curr_p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
             if(hnext_curr_offset < hnext_quotient) {
               hnext_curr_offset = HNEXT_OFFSET_0;
             } else {
               hnext_curr_offset = hnext_curr_offset - hnext_quotient;
             }
-            curr_p->hnext_offset = hnext_curr_offset; /* Update metadat!!! */
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
+            //uint8_t original_offset = hnext_curr_offset;
+
+            int hnext_quotient = (curr_p->hnext_cssf_postponed_count) / (curr_p->max_transmissions);
+            if(hnext_quotient >= 1) {
+              hnext_curr_offset = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+            }
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
+            //uint8_t original_offset = hnext_curr_offset;
+
+            int hnext_quotient = (curr_p->hnext_cssf_postponed_count) / ((curr_p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
+            if(hnext_curr_offset < hnext_quotient) {
+              hnext_curr_offset = HNEXT_OFFSET_0;
+            } else {
+              hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+            }
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
+            int hnext_quotient = (curr_p->hnext_cssf_postponed_count) / ((curr_p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
+            if(hnext_curr_offset < hnext_quotient) {
+              hnext_curr_offset = HNEXT_OFFSET_0;
+            } else {
+              hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+            }
+
 #endif
+#endif
+
+            curr_p->hnext_offset = hnext_curr_offset; /* Update metadat!!! */
+/*
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "hck dbg1 %u %u %u %u %u", original_offset, 
+                                     curr_p->hnext_cssf_postponed_count,
+                                     hnext_quotient,
+                                     hnext_curr_offset,
+                                     curr_p->hnext_offset));
+*/
 
             if(best_nbr == NULL && best_p == NULL) {
               best_nbr = curr_nbr;

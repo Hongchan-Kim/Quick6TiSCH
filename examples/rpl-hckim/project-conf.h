@@ -381,7 +381,7 @@
 #undef HCK_MOD_RPL_CODE_NO_PATH_DAO
 #define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
 #undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 41 // 11, 23, 31, 41, 53, 61, 83, 101 ...
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 61 // 11, 23, 31, 41, 53, 61, 83, 101 ...
 //
 #define RPL_CONF_DIS_SEND                                   0 /* Turn on/off DIS */
 #undef RPL_CONF_WITH_PROBING
@@ -423,21 +423,67 @@
 #define HNEXT_RX_OFFSET_RIGHT                               2900 /* 1300 ~ 4200, 500 margin */
 #define HNEXT_OFFSET_GAP                                    600
 
+/* Retransmission policy for postponed packets */
+#define HNEXT_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
+
+/* Backoff policy for postponed packets */
+#define HNEXT_BACKOFF_FOR_BCAST_PACKETS                     1 ///* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
+#define HNEXT_TSCH_MAC_BCAST_MAX_BE                         5
+//
+#define HNEXT_SLOTFRAME_LEVEL_BACKOFF                       1 //
+#define HNEXT_TSCH_MAC_MIN_CSSF_BE                          1
+#define HNEXT_TSCH_MAC_MAX_CSSF_BE                          5
+#define HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP                  1
+
+/* Enqueue only one packet for each packet type */
+#define HNEXT_QUEUE_MANAGEMENT                              1
+#define HNEXT_QUEUE_MANAGEMENT_TEMP                         1
+
 /* Offset assignment policy */
 #define HNEXT_OFFSET_ASSIGNMENT_RANDOM                      1 /* Random */
 #define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED                 2 /* Two-tiered - 1, 4 */
+#define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM          3 /* Two-tiered - 0-3, 4 */
+#define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2        4 /* Two-tiered - 0-3, 4 */
+#define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3        5 /* Two-tiered - 0-3, 4 */
 //#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_RANDOM
-#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
+//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
+//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
+//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
+#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
 
 #if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
+
+/* Parameters for HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
+#define HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
+#define HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        3 ///////////* 0, 1 */
+#define HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
+
+/* Offset-based packet selection */
+#define HNEXT_OFFSET_BASED_PACKET_SELECTION                 1
+
+/* Offset escalation policy for postponed packets */
+#define HNEXT_OFFSET_ESCALATION                             1
+#define HNEXT_OFFSET_ESCALATION_LEVEL                       1 //////////
+
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
 
 /* Parameters for HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
 #define HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
 #define HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        1 /* 0, 1 */
 #define HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
 
-/* Enqueue only one packet for each packet type */
-#define HNEXT_QUEUE_MANAGEMENT                              1
+/* Offset-based packet selection */
+#define HNEXT_OFFSET_BASED_PACKET_SELECTION                 1
+
+/* Offset escalation policy for postponed packets */
+#define HNEXT_OFFSET_ESCALATION                             1
+
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
+
+/* Parameters for HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
+#define HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
+#define HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        1 /* 0, 1 */
+#define HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
 
 /* Offset-based packet selection */
 #define HNEXT_OFFSET_BASED_PACKET_SELECTION                 1
@@ -446,19 +492,22 @@
 #define HNEXT_OFFSET_ESCALATION                             1
 #define HNEXT_OFFSET_ESCALATION_LEVEL                       4
 
-#endif /* HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
+#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
 
-/* Retransmission policy for postponed packets */
-#define HNEXT_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
+/* Parameters for HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
+#define HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
+#define HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        3 /* 0, 1 */
+#define HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
 
-/* Backoff policy for postponed packets */
-#define HNEXT_BACKOFF_FOR_BCAST_PACKETS                     1 /* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_TSCH_MAC_BCAST_MAX_BE                         5
+/* Offset-based packet selection */
+#define HNEXT_OFFSET_BASED_PACKET_SELECTION                 1
 
-#define HNEXT_SLOTFRAME_LEVEL_BACKOFF                       1
-#define HNEXT_TSCH_MAC_MIN_CSSF_BE                          1
-#define HNEXT_TSCH_MAC_MAX_CSSF_BE                          5
-#define HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP                  1
+/* Offset escalation policy for postponed packets */
+#define HNEXT_OFFSET_ESCALATION                             1
+#define HNEXT_OFFSET_ESCALATION_LEVEL                       1
+
+
+#endif /* HNEXT_OFFSET_ASSIGNMENT */
 
 #endif /* WITH_HNEXT */
 
