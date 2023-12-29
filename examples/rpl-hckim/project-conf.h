@@ -98,7 +98,7 @@
 #define IOTLAB_LILLE_79_CORNER                              3 /* 79 nodes */
 #define IOTLAB_LILLE_2_CORNER                               4 /* 2 nodes */
 //
-#define IOTLAB_SITE                                         IOTLAB_LILLE_79_CORNER
+#define IOTLAB_SITE                                         IOTLAB_LILLE_2_CORNER
 //
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 #define NODE_NUM                                            79
@@ -170,7 +170,6 @@
 #define TSCH_CONF_MAX_INCOMING_PACKETS                      8 /* 8 in OST, originally 4 */
 #define TSCH_CONF_CCA_ENABLED                               1
 //#define TSCH_CONF_AUTOSTART                                0
-//#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                  3
 #ifndef WITH_SECURITY
 #define WITH_SECURITY                                       0
 #endif /* WITH_SECURITY */
@@ -199,6 +198,26 @@
 #define ORCHESTRA_RULE_OST { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
                           &default_common }
+//
+
+#define TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL              1
+
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   7 // default: 7
+
+#undef HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF
+#define HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF                  1 // TODO
+#undef HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF
+#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF       0
+#undef HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
+#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF       0
+//
+#define TSCH_SCHED_EB_SF_HANDLE                             0 // TODO - delete
+#define TSCH_SCHED_COMMON_SF_HANDLE                         1
+#define TSCH_SCHED_UNICAST_SF_HANDLE                        2
+#define PACKETBUF_ATTR_TSCH_SLOTFRAME                       1
+#define PACKETBUF_ATTR_TSCH_TIMESLOT                        1
+#else
 //
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA /* Neighbor-based Orchestra configuration */
 #define WITH_ORCHESTRA                                      1
@@ -285,6 +304,7 @@
 #define OST_NODE_ID_FROM_IPADDR(addr)                       ((((addr)->u8[14]) << 8) | (addr)->u8[15])
 #define OST_NODE_ID_FROM_LINKADDR(addr)                     ((((addr)->u8[LINKADDR_SIZE - 2]) << 8) | (addr)->u8[LINKADDR_SIZE - 1]) 
 #endif /* CURRENT_TSCH_SCHEDULER */
+#endif /* !TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 
 /***************************************************************
  * Default burst transmission (DBT)
@@ -410,7 +430,7 @@
 /***************************************************************
  * TOP implementation - WITH_HNEXT
  ****************************************************************/
-#define WITH_HNEXT                                          1
+#define WITH_HNEXT                                          0
 #if WITH_HNEXT
 #define HNEXT_LOG                                           1
 #define HNEXT_DBG                                           0

@@ -12,7 +12,9 @@
 #include "net/mac/tsch/tsch.h"
 #include "net/routing/rpl-classic/rpl.h"
 #include "services/simple-energest/simple-energest.h"
+#if !TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
 #include "orchestra.h"
+#endif
 
 #include "sys/log.h"
 #define LOG_MODULE "App"
@@ -133,20 +135,33 @@ reset_eval(uint8_t phase)
   reset_log_simple_energest();    /* simple-energest.c */
 
   uint64_t app_server_reset_log_asn = tsch_calculate_current_asn();
+#if !TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
   LOG_HCK("reset_eval %u rs_opku %u rs_q %d | rs_q_eb %d at %llx\n", 
         phase,
         orchestra_parent_knows_us,
         tsch_queue_global_packet_count(),
         tsch_queue_nbr_packet_count(n_eb),
         app_server_reset_log_asn);
+#else /* !TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
+  LOG_HCK("reset_eval %u rs_q %d | rs_q_eb %d at %llx\n", 
+        phase,
+        tsch_queue_global_packet_count(),
+        tsch_queue_nbr_packet_count(n_eb),
+        app_server_reset_log_asn);
+#endif /* !TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 
 #if HCK_LOG_EVAL_CONFIG
   LOG_HCK("eval_config 1 lite_log %u |\n", 
           HCK_LOG_LEVEL_LITE);
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+  LOG_HCK("eval_config 2 mcsf %u |\n",
+          TSCH_SCHEDULE_DEFAULT_LENGTH);
+#else
   LOG_HCK("eval_config 2 ebsf %u cssf %u ucsf %u |\n",
           ORCHESTRA_CONF_EBSF_PERIOD, 
           ORCHESTRA_CONF_COMMON_SHARED_PERIOD, 
           ORCHESTRA_CONF_UNICAST_PERIOD);
+#endif /* !TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 #if WITH_TRGB
   LOG_HCK("eval_config 3 with_trgb %u |\n", WITH_TRGB);
 #elif WITH_HNEXT
@@ -275,10 +290,15 @@ PROCESS_THREAD(udp_server_process, ev, data)
 #if HCK_LOG_EVAL_CONFIG
   LOG_HCK("eval_config 1 lite_log %u |\n", 
           HCK_LOG_LEVEL_LITE);
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+  LOG_HCK("eval_config 2 mcsf %u |\n",
+          TSCH_SCHEDULE_DEFAULT_LENGTH);
+#else
   LOG_HCK("eval_config 2 ebsf %u cssf %u ucsf %u |\n",
           ORCHESTRA_CONF_EBSF_PERIOD, 
           ORCHESTRA_CONF_COMMON_SHARED_PERIOD, 
           ORCHESTRA_CONF_UNICAST_PERIOD);
+#endif /* !TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 #if WITH_TRGB
   LOG_HCK("eval_config 3 with_trgb %u |\n", WITH_TRGB);
 #elif WITH_HNEXT
