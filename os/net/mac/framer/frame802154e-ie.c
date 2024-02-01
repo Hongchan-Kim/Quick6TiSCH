@@ -71,6 +71,9 @@ enum ieee802154e_payload_ie_id {
 
 /* c.f. IEEE 802.15.4e Table 4d */
 enum ieee802154e_mlme_short_subie_id {
+#if WITH_TEMP_EB_PIGGYBACKING
+  MLME_SHORT_IE_TSCH_TOP_OFFSET = 0x10,
+#endif
   MLME_SHORT_IE_TSCH_SYNCHRONIZATION = 0x1a,
   MLME_SHORT_IE_TSCH_SLOFTRAME_AND_LINK,
   MLME_SHORT_IE_TSCH_TIMESLOT,
@@ -270,6 +273,23 @@ frame80215e_create_ie_tsch_synchronization(uint8_t *buf, int len,
   }
 }
 
+#if WITH_TEMP_EB_PIGGYBACKING
+int
+frame80215e_create_ie_tsch_top_offset(uint8_t *buf, int len, 
+    struct ieee802154_ies *ies)
+{
+  int ie_len = 2; /* 16 bits */
+  if(len >= 2 + ie_len && ies != NULL) {
+    uint16_t top_offset = ies->ie_top_offset;
+    WRITE16(buf+2, top_offset);
+    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_TOP_OFFSET, ie_len);
+    return 2 + ie_len;
+  } else {
+    return -1;
+  }
+}
+#endif
+
 /* MLME sub-IE. TSCH slotframe and link. Used in EBs: initial schedule */
 int
 frame80215e_create_ie_tsch_slotframe_and_link(uint8_t *buf, int len,
@@ -466,6 +486,18 @@ frame802154e_parse_mlme_short_ie(const uint8_t *buf, int len,
         return len;
       }
       break;
+#if WITH_TEMP_EB_PIGGYBACKING
+    case MLME_SHORT_IE_TSCH_TOP_OFFSET:
+      if(len == 2) {
+        if(ies != NULL) {
+          uint16_t top_offset = 0;
+          READ16(buf, top_offset);
+          ies->ie_top_offset = top_offset;
+        }
+        return len;
+      }
+      break;
+#endif
   }
   return -1;
 }

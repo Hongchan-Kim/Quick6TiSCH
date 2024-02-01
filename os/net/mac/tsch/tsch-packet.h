@@ -48,6 +48,10 @@
 
 /********** Functions *********/
 
+#if WITH_TEMP_EB_PIGGYBACKING
+int top_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset);
+#endif
+
 /**
  * \brief Construct Enhanced ACK packet
  * \param buf The buffer where to build the EACK

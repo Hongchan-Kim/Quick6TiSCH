@@ -77,6 +77,9 @@ struct ieee802154_ies {
   uint8_t ie_payload_ie_offset;
   uint16_t ie_mlme_len;
   /* Payload Short MLME IEs */
+#if WITH_TEMP_EB_PIGGYBACKING
+  uint16_t ie_top_offset;
+#endif
   uint8_t ie_tsch_synchronization_offset;
   struct tsch_asn_t ie_asn;
   uint8_t ie_join_priority;
@@ -134,6 +137,11 @@ int frame80215e_create_ie_tsch_timeslot(uint8_t *buf, int len,
 /* MLME sub-IE. TSCH channel hopping sequence. Used in EBs: hopping sequence */
 int frame80215e_create_ie_tsch_channel_hopping_sequence(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
+
+#if WITH_TEMP_EB_PIGGYBACKING
+int frame80215e_create_ie_tsch_top_offset(uint8_t *buf, int len,
+    struct ieee802154_ies *ies);
+#endif
 
 /* Parse all Information Elements of a frame */
 int frame802154e_parse_information_elements(const uint8_t *buf, uint8_t buf_size,

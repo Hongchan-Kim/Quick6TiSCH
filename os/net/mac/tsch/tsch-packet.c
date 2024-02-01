@@ -286,6 +286,11 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
   p.ost_pigg1 = 0xffff;
 #endif
 
+#if WITH_TEMP_EB_PIGGYBACKING
+  //ies.ie_top_offset = top_offset;
+  ies.ie_top_offset = 159;
+#endif
+
   /* Add TSCH timeslot timing IE. */
 #if TSCH_PACKET_EB_WITH_TIMESLOT_TIMING
   {
@@ -337,6 +342,17 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
   }
   p += ie_len;
   packetbuf_set_datalen(packetbuf_datalen() + ie_len);
+
+#if WITH_TEMP_EB_PIGGYBACKING
+  ie_len = frame80215e_create_ie_tsch_top_offset(p,
+                                                 packetbuf_remaininglen(),
+                                                 &ies);
+  if(ie_len < 0) {
+    return -1;
+  }
+  p += ie_len;
+  packetbuf_set_datalen(packetbuf_datalen() + ie_len);
+#endif
 
   ie_len = frame80215e_create_ie_tsch_timeslot(p,
                                                packetbuf_remaininglen(),
@@ -438,6 +454,18 @@ tsch_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
   ies.ie_join_priority = tsch_join_priority;
   return frame80215e_create_ie_tsch_synchronization(buf+tsch_sync_ie_offset, buf_size-tsch_sync_ie_offset, &ies) != -1;
 }
+/*---------------------------------------------------------------------------*/
+#if WITH_TEMP_EB_PIGGYBACKING
+/* Update TOP offset in EB packet */
+int
+top_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
+{
+  struct ieee802154_ies ies;
+  ies.ie_top_offset = 250;
+  uint8_t result = frame80215e_create_ie_tsch_top_offset(buf+tsch_sync_ie_offset+8, buf_size-tsch_sync_ie_offset-8, &ies) != -1;
+  return result;
+}
+#endif
 /*---------------------------------------------------------------------------*/
 /* Parse a IEEE 802.15.4e TSCH Enhanced Beacon (EB) */
 int

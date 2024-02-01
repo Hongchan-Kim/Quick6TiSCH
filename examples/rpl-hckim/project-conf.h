@@ -389,6 +389,8 @@
 #define NETWORK_FORMATION_ACCELERATION                      1
 #if NETWORK_FORMATION_ACCELERATION
 
+#define WITH_TEMP_EB_PIGGYBACKING                           1
+
 /***************************************************************
  * Prerequisite modifications of Contiki-NG for network formation acceleration
  ****************************************************************/

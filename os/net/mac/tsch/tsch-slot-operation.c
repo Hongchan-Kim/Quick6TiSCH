@@ -2133,6 +2133,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* if this is an EB, then update its Sync-IE */
       if(current_neighbor == n_eb) {
         packet_ready = tsch_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset);
+#if WITH_TEMP_EB_PIGGYBACKING /* Coordinator/non-coordinator: update information in EB before transmission */
+        if(packet_ready && top_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset)) {
+          packet_ready = 1;
+        } else {
+          packet_ready = 0;
+        }
+#endif
+
       } else {
         packet_ready = 1;
       }
