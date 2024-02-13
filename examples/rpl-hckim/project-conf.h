@@ -179,6 +179,27 @@
 /***************************************************************
  * HCK's TSCH scheduler implementation
  ****************************************************************/
+#define TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL              1
+
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   7 // default: 7
+
+#undef HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF
+#define HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF                  1 // TODO
+#undef HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF
+#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF       0 // TODO
+#undef HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
+#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF       0 // TODO
+//
+#define TSCH_SCHED_EB_SF_HANDLE                             0 // TODO - delete
+#define TSCH_SCHED_COMMON_SF_HANDLE                         1
+#define TSCH_SCHED_UNICAST_SF_HANDLE                        2
+#define PACKETBUF_ATTR_TSCH_SLOTFRAME                       1
+#define PACKETBUF_ATTR_TSCH_TIMESLOT                        1
+
+#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
+//
+
 #define TSCH_SCHEDULER_NB_ORCHESTRA                         1 // 1: NB-Orchestra-storing
 #define TSCH_SCHEDULER_LB_ORCHESTRA                         2 // 2: LB-Orchestra
 #define TSCH_SCHEDULER_ALICE                                3 // 3: ALICE
@@ -200,25 +221,6 @@
                           &default_common }
 //
 
-#define TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL              1
-
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
-#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   7 // default: 7
-
-#undef HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF
-#define HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF                  1 // TODO
-#undef HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF
-#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF       0
-#undef HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
-#define HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF       0
-//
-#define TSCH_SCHED_EB_SF_HANDLE                             0 // TODO - delete
-#define TSCH_SCHED_COMMON_SF_HANDLE                         1
-#define TSCH_SCHED_UNICAST_SF_HANDLE                        2
-#define PACKETBUF_ATTR_TSCH_SLOTFRAME                       1
-#define PACKETBUF_ATTR_TSCH_TIMESLOT                        1
-#else
-//
 #if CURRENT_TSCH_SCHEDULER == TSCH_SCHEDULER_NB_ORCHESTRA /* Neighbor-based Orchestra configuration */
 #define WITH_ORCHESTRA                                      1
 #define ORCHESTRA_CONF_RULES                                ORCHESTRA_RULE_NB // neighbor-storing
@@ -419,6 +421,24 @@
 #undef HCK_LOG_TSCH_SLOT_APP_SEQNO
 #define HCK_LOG_TSCH_SLOT_APP_SEQNO                         1
 #define FORMATION_COMMON_LOG                                1
+
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+#define FORMATION_LOG_6TISCH_MINIMAL                        1
+#endif
+
+/***************************************************************
+ * Dynamic resource allocation implementation - WITH_DRA
+ ****************************************************************/
+#define WITH_DRA                                            0
+#if WITH_DRA
+#define DRA_LOG                                             1
+#define DRA_DBG                                             0
+
+#undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 31
+#define DRA_M_MAX                                           4 /* 2 ^ DRA_M_MAX < ORCHESTRA_CONF_COMMON_SHARED_PERIOD */
+#define DRA_M_MIN                                           0
+#endif /* WITH_TRGB */
 
 /***************************************************************
  * TRGB implementation - WITH_TRGB

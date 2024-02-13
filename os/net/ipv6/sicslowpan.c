@@ -76,6 +76,12 @@
 
 #include "net/routing/routing.h"
 
+#if FORMATION_LOG_6TISCH_MINIMAL
+#include "net/ipv6/uip-icmp6.h"
+#include "net/routing/rpl-classic/rpl-private.h"
+#include "net/mac/tsch/tsch.h"
+#endif
+
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "6LoWPAN"
@@ -113,6 +119,61 @@ void reset_log_sicslowpan()
   ip_ucast_udp_noack_count = 0;
   ip_ucast_udp_error_count = 0;
 }
+
+/*---------------------------------------------------------------------------*/
+#if FORMATION_LOG_6TISCH_MINIMAL
+static void mc_packet_received(void);
+static void mc_packet_sent(int mac_status);
+NETSTACK_SNIFFER(mc_sniffer, mc_packet_received, mc_packet_sent);
+/*---------------------------------------------------------------------------*/
+/* The current RPL preferred parent's link-layer address */
+static linkaddr_t mc_parent_linkaddr;
+/* Set to one only after getting an ACK for a DAO sent to our preferred parent */
+static int mc_parent_knows_us = 0;
+/*---------------------------------------------------------------------------*/
+static void
+mc_packet_received(void)
+{
+}
+/*---------------------------------------------------------------------------*/
+static void
+mc_packet_sent(int mac_status)
+{
+  /* Check if our parent just ACKed a DAO */
+  if(mc_parent_knows_us == 0
+     && mac_status == MAC_TX_OK
+     && packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6
+     && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DAO)) {
+    if(!linkaddr_cmp(&mc_parent_linkaddr, &linkaddr_null)
+       && linkaddr_cmp(&mc_parent_linkaddr, packetbuf_addr(PACKETBUF_ADDR_RECEIVER))) {
+      mc_parent_knows_us = 1;
+
+      uint64_t mc_one_parent_knows_us_asn = tsch_calculate_current_asn();
+      LOG_HCK("mpku %u | at %llx\n", mc_parent_knows_us, mc_one_parent_knows_us_asn);
+    }
+  }
+}
+/*--------------------------------------------------------------------*/
+void
+mc_callback_new_time_source(const struct tsch_neighbor *old, 
+                            const struct tsch_neighbor *new)
+{
+  if(new != old) {
+    mc_parent_knows_us = 0;
+  
+    uint64_t mc_zero_parent_knows_us_asn = tsch_calculate_current_asn();
+    LOG_HCK("mpku %u | at %llx\n", mc_parent_knows_us, mc_zero_parent_knows_us_asn);
+
+    const linkaddr_t *new_addr = tsch_queue_get_nbr_address(new);
+    if(new_addr != NULL) {
+      linkaddr_copy(&mc_parent_linkaddr, new_addr);
+    } else {
+      linkaddr_copy(&mc_parent_linkaddr, &linkaddr_null);
+    }
+  }
+}
+#endif
+/*--------------------------------------------------------------------*/
 
 #define GET16(ptr,index) (((uint16_t)((ptr)[index] << 8)) | ((ptr)[(index) + 1]))
 #define SET16(ptr,index,value) do {     \
@@ -2161,6 +2222,12 @@ input(void)
 void
 sicslowpan_init(void)
 {
+#if FORMATION_LOG_6TISCH_MINIMAL
+  /* Snoop on packet transmission to know if our parent knows about us
+   * (i.e. has ACKed at one of our DAOs since we decided to use it as a parent) */
+  netstack_sniffer_add(&mc_sniffer);
+  linkaddr_copy(&mc_parent_linkaddr, &linkaddr_null);
+#endif
 
 #if SICSLOWPAN_COMPRESSION == SICSLOWPAN_COMPRESSION_IPHC
 /* Preinitialize any address contexts for better header compression

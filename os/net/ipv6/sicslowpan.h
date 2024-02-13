@@ -54,6 +54,12 @@
 
 void reset_log_sicslowpan();
 
+/*--------------------------------------------------------------------*/
+#if FORMATION_LOG_6TISCH_MINIMAL
+void mc_callback_new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new);
+#endif
+/*--------------------------------------------------------------------*/
+
 /**
  * \name General sicslowpan defines
  * @{

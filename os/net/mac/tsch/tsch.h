@@ -171,6 +171,12 @@ void reset_log_tsch();
 
 #endif /* BUILD_WITH_ORCHESTRA */
 
+#if FORMATION_LOG_6TISCH_MINIMAL
+#ifndef TSCH_CALLBACK_NEW_TIME_SOURCE
+#define TSCH_CALLBACK_NEW_TIME_SOURCE mc_callback_new_time_source
+#endif /* TSCH_CALLBACK_NEW_TIME_SOURCE */
+#endif
+
 /* Called by TSCH when joining a network */
 #ifdef TSCH_CALLBACK_JOINING_NETWORK
 void TSCH_CALLBACK_JOINING_NETWORK();
