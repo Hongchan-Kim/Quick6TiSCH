@@ -63,6 +63,13 @@
 
 #endif /* BUILD_WITH_ORCHESTRA */
 
+#if FORMATION_LOG_6TISCH_MINIMAL
+#include "net/mac/tsch/tsch.h"
+#ifndef NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK
+#define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK mc_callback_child_removed
+#endif /* NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK */
+#endif
+
 /* A configurable function called after adding a new neighbor as next hop */
 #ifdef NETSTACK_CONF_ROUTING_NEIGHBOR_ADDED_CALLBACK
 void NETSTACK_CONF_ROUTING_NEIGHBOR_ADDED_CALLBACK(const linkaddr_t *addr);
@@ -102,6 +109,17 @@ MEMB(defaultroutermemb, uip_ds6_defrt_t, UIP_DS6_DEFRT_NB);
 LIST(notificationlist);
 #endif
 
+/*--------------------------------------------------------------------*/
+#if FORMATION_LOG_6TISCH_MINIMAL
+void
+mc_callback_child_removed(const linkaddr_t *addr)
+{
+#if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR
+  struct tsch_neighbor *temp_nbr = tsch_queue_get_nbr(addr);
+  tsch_queue_drop_packets(temp_nbr);
+#endif
+}
+#endif
 /*---------------------------------------------------------------------------*/
 static void
 assert_nbr_routes_list_sane(void)
