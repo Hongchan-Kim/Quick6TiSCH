@@ -287,8 +287,8 @@ tsch_packet_create_eb(uint8_t *hdr_len, uint8_t *tsch_sync_ie_offset)
 #endif
 
 #if WITH_TEMP_EB_PIGGYBACKING
-  //ies.ie_top_offset = top_offset;
-  ies.ie_top_offset = 159;
+  ies.ie_top_offset_1 = 159;
+  ies.ie_top_offset_2 = 175;
 #endif
 
   /* Add TSCH timeslot timing IE. */
@@ -461,7 +461,8 @@ int
 top_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
 {
   struct ieee802154_ies ies;
-  ies.ie_top_offset = 250;
+  ies.ie_top_offset_1 = 250;
+  ies.ie_top_offset_2 = 128;
   uint8_t result = frame80215e_create_ie_tsch_top_offset(buf+tsch_sync_ie_offset+8, buf_size-tsch_sync_ie_offset-8, &ies) != -1;
   return result;
 }

@@ -78,7 +78,8 @@ struct ieee802154_ies {
   uint16_t ie_mlme_len;
   /* Payload Short MLME IEs */
 #if WITH_TEMP_EB_PIGGYBACKING
-  uint16_t ie_top_offset;
+  uint16_t ie_top_offset_1;
+  uint16_t ie_top_offset_2;
 #endif
   uint8_t ie_tsch_synchronization_offset;
   struct tsch_asn_t ie_asn;
