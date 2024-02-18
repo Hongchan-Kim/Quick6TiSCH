@@ -67,13 +67,13 @@ struct tsch_packet *tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, str
 struct tsch_packet * tsch_queue_burst_get_next_packet_for_nbr(const struct tsch_neighbor *n);
 #endif
 
-#if HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF
+#if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR
 void tsch_queue_drop_packets(struct tsch_neighbor *n);
 #endif
 
 void tsch_queue_reset_except_n_eb(void);
-#if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF \
-    || HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
+#if HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR \
+    || HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
 void tsch_queue_change_attr_of_packets_in_queue(struct tsch_neighbor *target_nbr, 
                                            uint16_t sf_handle, uint16_t timeslot);
 #endif

@@ -90,6 +90,11 @@ orchestra_packet_sent(int mac_status)
 
       uint64_t orchestra_one_parent_knows_us_asn = tsch_calculate_current_asn();
       LOG_HCK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_one_parent_knows_us_asn);
+
+#if HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
+      struct tsch_neighbor *orchestra_parent_nbr = tsch_queue_get_nbr(&orchestra_parent_linkaddr);
+      tsch_queue_change_attr_of_packets_in_queue(orchestra_parent_nbr, TSCH_SCHED_UNICAST_SF_HANDLE, 0);
+#endif
     }
   }
 }

@@ -168,6 +168,11 @@ mc_callback_new_time_source(const struct tsch_neighbor *old, const struct tsch_n
     } else {
       linkaddr_copy(&mc_parent_linkaddr, &linkaddr_null);
     }
+#if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR
+    linkaddr_t *old_addr = tsch_queue_get_nbr_address(old);
+    struct tsch_neighbor *old_temp = tsch_queue_get_nbr(old_addr);
+    tsch_queue_drop_packets(old_temp);
+#endif
   }
 }
 #endif

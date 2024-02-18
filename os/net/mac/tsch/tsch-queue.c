@@ -115,8 +115,8 @@ static struct tsch_packet *
 hnext_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p);
 #endif
 /*---------------------------------------------------------------------------*/
-#if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF \
-    || HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
+#if HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR \
+    || HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
 void
 tsch_queue_change_attr_of_packets_in_queue(struct tsch_neighbor *target_nbr, 
                                            uint16_t sf_handle, uint16_t timeslot)
@@ -914,7 +914,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
   return in_queue;
 }
 /*---------------------------------------------------------------------------*/
-#if HCK_MOD_TSCH_DROP_PACKET_FROM_UCSF
+#if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR
 void
 tsch_queue_drop_packets(struct tsch_neighbor *n)
 {

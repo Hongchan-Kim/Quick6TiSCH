@@ -457,8 +457,8 @@ queuebuf_attr(struct queuebuf *b, uint8_t type)
   return buframptr->attrs[type].val;
 }
 /*---------------------------------------------------------------------------*/
-#if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF \
-    || HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_CSSF_TO_UCSF
+#if HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR \
+    || HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
 void
 queuebuf_update_attr(struct queuebuf *b, uint8_t type, packetbuf_attr_t val)
 {

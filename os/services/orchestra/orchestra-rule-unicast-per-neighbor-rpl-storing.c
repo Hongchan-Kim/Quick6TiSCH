@@ -174,12 +174,20 @@ static void
 child_added(const linkaddr_t *linkaddr)
 {
   add_uc_link(linkaddr);
+
+#if HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
+  struct tsch_neighbor *child_nbr = tsch_queue_get_nbr(linkaddr);
+  tsch_queue_change_attr_of_packets_in_queue(child_nbr, TSCH_SCHED_UNICAST_SF_HANDLE, 0);
+#endif
 }
 /*---------------------------------------------------------------------------*/
 static void
 child_removed(const linkaddr_t *linkaddr)
 {
-#if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF
+#if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR
+  struct tsch_neighbor *temp_nbr = tsch_queue_get_nbr(linkaddr);
+  tsch_queue_drop_packets(temp_nbr);
+#elif HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR
     const struct tsch_neighbor *removed_child = tsch_queue_get_nbr(linkaddr);
     tsch_queue_change_attr_of_packets_in_queue(removed_child, TSCH_SCHED_COMMON_SF_HANDLE, 0);
 #endif
@@ -219,7 +227,11 @@ new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new
     } else {
       linkaddr_copy(&orchestra_parent_linkaddr, &linkaddr_null);
     }
-#if HCK_MOD_TSCH_OFFLOAD_PACKET_FROM_UCSF_TO_CSSF
+#if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR
+    linkaddr_t *old_addr = tsch_queue_get_nbr_address(old);
+    struct tsch_neighbor *old_temp = tsch_queue_get_nbr(old_addr);
+    tsch_queue_drop_packets(old_temp);
+#elif HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR
     tsch_queue_change_attr_of_packets_in_queue(old, TSCH_SCHED_COMMON_SF_HANDLE, 0);
 #endif
     remove_uc_link(old_addr);
