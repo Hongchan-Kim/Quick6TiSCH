@@ -79,7 +79,6 @@
 #if FORMATION_LOG_6TISCH_MINIMAL
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
-#include "net/mac/tsch/tsch.h"
 #endif
 
 /* Log configuration */
@@ -155,8 +154,7 @@ mc_packet_sent(int mac_status)
 }
 /*--------------------------------------------------------------------*/
 void
-mc_callback_new_time_source(const struct tsch_neighbor *old, 
-                            const struct tsch_neighbor *new)
+mc_callback_new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new)
 {
   if(new != old) {
     mc_parent_knows_us = 0;

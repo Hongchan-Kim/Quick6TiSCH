@@ -52,13 +52,14 @@
 #include "net/ipv6/uip.h"
 #include "net/mac/mac.h"
 
-void reset_log_sicslowpan();
-
 /*--------------------------------------------------------------------*/
 #if FORMATION_LOG_6TISCH_MINIMAL
+#include "net/mac/tsch/tsch.h"
 void mc_callback_new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new);
 #endif
 /*--------------------------------------------------------------------*/
+
+void reset_log_sicslowpan();
 
 /**
  * \name General sicslowpan defines
