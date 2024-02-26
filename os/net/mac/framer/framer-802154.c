@@ -52,7 +52,7 @@
 #include "net/mac/tsch/tsch-schedule.h"
 #endif
 
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
 #include "net/mac/framer/frame802154e-ie.h"
 #endif
 
@@ -143,18 +143,17 @@ create_frame(int do_create)
     return hdr_len;
   } else if(packetbuf_hdralloc(hdr_len)) {
 
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
     int hck_hdr_len_increment = 0;
     if(packetbuf_attr(PACKETBUF_ATTR_MAC_METADATA) == 1 
        && packetbuf_attr(PACKETBUF_ATTR_FRAME_TYPE) != FRAME802154_BEACONFRAME) {
-      struct ieee802154_ies formation_ies;
-      memset(&formation_ies, 0, sizeof(formation_ies));
-      formation_ies.ie_formation_info = 0;
+      struct ieee802154_ies hck_piggybacking_ies;
+      memset(&hck_piggybacking_ies, 0, sizeof(hck_piggybacking_ies));
 
       if(packetbuf_hdralloc(2)) {
         /* HCK: the second parameter must be revised */
         if(frame80215e_create_ie_header_list_termination_2((uint8_t *)packetbuf_hdrptr() + hdr_len,
-                                                          PACKETBUF_SIZE - hdr_len, &formation_ies) < 0) {
+                                                          PACKETBUF_SIZE - hdr_len, &hck_piggybacking_ies) < 0) {
           return FRAMER_FAILED;
         }
         hck_hdr_len_increment += 2;
@@ -163,8 +162,8 @@ create_frame(int do_create)
       }
       if(packetbuf_hdralloc(4)) {
         /* HCK: the second parameter must be revised */
-        if(frame80215e_create_ie_header_formation_info((uint8_t *)packetbuf_hdrptr() + hdr_len,
-                                                                PACKETBUF_SIZE - hdr_len, &formation_ies) < 0) {
+        if(frame80215e_create_ie_header_hck_piggybacking((uint8_t *)packetbuf_hdrptr() + hdr_len,
+                                                                PACKETBUF_SIZE - hdr_len, &hck_piggybacking_ies) < 0) {
           return FRAMER_FAILED;
         }
         hck_hdr_len_increment += 4;
@@ -307,10 +306,10 @@ parse(void)
     packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, frame.fcf.frame_type);
     packetbuf_set_attr(PACKETBUF_ATTR_MAC_ACK, frame.fcf.ack_required);
 
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
     if(frame.fcf.ie_list_present) {
       /* hckim: must be revised */
-      packetbuf_hdrreduce(6); /* 2 for termination, 4 for formation info ie */
+      packetbuf_hdrreduce(6); /* 2 for termination, 4 for piggybacking info ie */
       packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, frame.fcf.ie_list_present);
     }
 #endif

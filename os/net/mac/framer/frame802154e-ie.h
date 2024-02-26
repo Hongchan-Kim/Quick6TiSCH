@@ -68,8 +68,9 @@ struct tsch_slotframe_and_links {
 /* The information elements that we currently support */
 struct ieee802154_ies {
   /* Header IEs */
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
-  uint16_t ie_formation_info;
+#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
+  uint16_t ie_header_piggybacking_info_1;
+  uint16_t ie_header_piggybacking_info_2;
 #endif
   int16_t ie_time_correction;
   uint8_t ie_is_nack;
@@ -77,9 +78,9 @@ struct ieee802154_ies {
   uint8_t ie_payload_ie_offset;
   uint16_t ie_mlme_len;
   /* Payload Short MLME IEs */
-#if WITH_TEMP_EB_PIGGYBACKING
-  uint16_t ie_top_offset_1;
-  uint16_t ie_top_offset_2;
+#if HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
+  uint16_t ie_eb_piggybacking_info_1;
+  uint16_t ie_eb_piggybacking_info_2;
 #endif
   uint8_t ie_tsch_synchronization_offset;
   struct tsch_asn_t ie_asn;
@@ -100,8 +101,8 @@ struct ieee802154_ies {
 };
 
 /** Insert various Information Elements **/
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
-int frame80215e_create_ie_header_formation_info(uint8_t *buf, int len,
+#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
+int frame80215e_create_ie_header_hck_piggybacking(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #endif
 /* Header IE. ACK/NACK time correction. Used in enhanced ACKs */
@@ -139,8 +140,8 @@ int frame80215e_create_ie_tsch_timeslot(uint8_t *buf, int len,
 int frame80215e_create_ie_tsch_channel_hopping_sequence(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 
-#if WITH_TEMP_EB_PIGGYBACKING
-int frame80215e_create_ie_tsch_top_offset(uint8_t *buf, int len,
+#if HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
+int frame80215e_create_ie_eb_hck_piggybacking(uint8_t *buf, int len,
     struct ieee802154_ies *ies);
 #endif
 

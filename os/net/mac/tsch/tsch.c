@@ -1568,6 +1568,10 @@ send_packet(mac_callback_t sent, void *ptr)
 
   packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
 
+#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
+  packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
+#endif
+
 #if HCK_MOD_TSCH_PACKET_TYPE_INFO
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
 #endif

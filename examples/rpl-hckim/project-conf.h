@@ -25,9 +25,10 @@
 #define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR   0
 #define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR       1
 #define HCK_MOD_TSCH_SYNC_COUNT                             1
-
-#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0
-
+//
+#define HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS          1
+#define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1
+//
 #define HCK_MOD_TSCH_DEACTIVATE_RADIO_INTERRUPT_MODE        1
 #define HCK_MOD_TSCH_SWAP_TX_RX_PROCESS_PENDING             1 /* swap order of rx_process_pending and tx_process_pending */
 #define HCK_MOD_TSCH_FILTER_PACKETS_WITH_INVALID_RX_TIMING  1
@@ -391,8 +392,6 @@
 #define NETWORK_FORMATION_ACCELERATION                      1
 #if NETWORK_FORMATION_ACCELERATION
 
-#define WITH_TEMP_EB_PIGGYBACKING                           1
-
 /***************************************************************
  * Prerequisite modifications of Contiki-NG for network formation acceleration
  ****************************************************************/
@@ -400,8 +399,15 @@
 #define HCK_MOD_TSCH_SYNC_COUNT                             1
 #undef HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
 #define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR       1
-#undef HCK_MOD_TSCH_PACKET_TYPE_INFO
-#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       1
+
+#undef HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
+#define HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS          1
+
+#undef HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
+#define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1
+
+#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0
+
 #undef HCK_MOD_RPL_CODE_NO_PATH_DAO
 #define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
 #undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD

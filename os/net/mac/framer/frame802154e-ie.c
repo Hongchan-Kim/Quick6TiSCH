@@ -47,8 +47,8 @@
 
 /* c.f. IEEE 802.15.4e Table 4b */
 enum ieee802154e_header_ie_id {
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
-  HEADER_IE_FORMATION_INFO = 0x02,
+#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
+  HEADER_IE_HCK_PIGGYBACKING = 0x02,
 #endif
   HEADER_IE_LE_CSL = 0x1a,
   HEADER_IE_LE_RIT,
@@ -71,8 +71,8 @@ enum ieee802154e_payload_ie_id {
 
 /* c.f. IEEE 802.15.4e Table 4d */
 enum ieee802154e_mlme_short_subie_id {
-#if WITH_TEMP_EB_PIGGYBACKING
-  MLME_SHORT_IE_TSCH_TOP_OFFSET = 0x10,
+#if HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
+  MLME_SHORT_IE_HCK_PIGGYBACKING = 0x10,
 #endif
   MLME_SHORT_IE_TSCH_SYNCHRONIZATION = 0x1a,
   MLME_SHORT_IE_TSCH_SLOFTRAME_AND_LINK,
@@ -140,16 +140,18 @@ create_mlme_long_ie_descriptor(uint8_t *buf, uint8_t sub_id, int ie_len)
   WRITE16(buf, ie_desc);
 }
 
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
 int
-frame80215e_create_ie_header_formation_info(uint8_t *buf, int len,
+frame80215e_create_ie_header_hck_piggybacking(uint8_t *buf, int len,
     struct ieee802154_ies *ies)
 {
-  int ie_len = 2; /* 16 bits */
+  int ie_len = 4; /* 2 * 16 bits */
   if(len >= 2 + ie_len && ies != NULL) {
-    uint16_t formation_info = ies->ie_formation_info;
-    WRITE16(buf+2, formation_info);
-    create_header_ie_descriptor(buf, HEADER_IE_FORMATION_INFO, ie_len);
+    uint16_t piggybacking_info_1 = ies->ie_header_piggybacking_info_1;
+    WRITE16(buf+2, piggybacking_info_1);
+    uint16_t piggybacking_info_2 = ies->ie_header_piggybacking_info_2;
+    WRITE16(buf+4, piggybacking_info_2);
+    create_header_ie_descriptor(buf, HEADER_IE_HCK_PIGGYBACKING, ie_len);
     return 2 + ie_len;
   } else {
     return -1;
@@ -273,18 +275,18 @@ frame80215e_create_ie_tsch_synchronization(uint8_t *buf, int len,
   }
 }
 
-#if WITH_TEMP_EB_PIGGYBACKING
+#if HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
 int
-frame80215e_create_ie_tsch_top_offset(uint8_t *buf, int len, 
+frame80215e_create_ie_eb_hck_piggybacking(uint8_t *buf, int len, 
     struct ieee802154_ies *ies)
 {
   int ie_len = 4; /* 2 * 16 bits */
   if(len >= 2 + ie_len && ies != NULL) {
-    uint16_t top_offset_1 = ies->ie_top_offset_1;
-    WRITE16(buf+2, top_offset_1);
-    uint16_t top_offset_2 = ies->ie_top_offset_2;
-    WRITE16(buf+4, top_offset_2);
-    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_TSCH_TOP_OFFSET, ie_len);
+    uint16_t piggybacking_info_1 = ies->ie_eb_piggybacking_info_1;
+    WRITE16(buf+2, piggybacking_info_1);
+    uint16_t piggybacking_info_2 = ies->ie_eb_piggybacking_info_2;
+    WRITE16(buf+4, piggybacking_info_2);
+    create_mlme_short_ie_descriptor(buf, MLME_SHORT_IE_HCK_PIGGYBACKING, ie_len);
     return 2 + ie_len;
   } else {
     return -1;
@@ -388,13 +390,16 @@ frame802154e_parse_header_ie(const uint8_t *buf, int len,
     uint8_t element_id, struct ieee802154_ies *ies)
 {
   switch(element_id) {
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
-    case HEADER_IE_FORMATION_INFO:
-      if(len == 2) {
+#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
+    case HEADER_IE_HCK_PIGGYBACKING:
+      if(len == 4) {
         if(ies != NULL) {
-          uint16_t formation_info = 0;
-          READ16(buf, formation_info);
-          ies->ie_formation_info = formation_info;
+          uint16_t piggybacking_info_1 = 0;
+          READ16(buf, piggybacking_info_1);
+          ies->ie_header_piggybacking_info_1 = piggybacking_info_1;
+          uint16_t piggybacking_info_2 = 0;
+          READ16(buf+2, piggybacking_info_2);
+          ies->ie_header_piggybacking_info_2 = piggybacking_info_2;
         }
         return len;
       }
@@ -488,16 +493,16 @@ frame802154e_parse_mlme_short_ie(const uint8_t *buf, int len,
         return len;
       }
       break;
-#if WITH_TEMP_EB_PIGGYBACKING
-    case MLME_SHORT_IE_TSCH_TOP_OFFSET:
+#if HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
+    case MLME_SHORT_IE_HCK_PIGGYBACKING:
       if(len == 4) {
         if(ies != NULL) {
-          uint16_t top_offset_1 = 0;
-          READ16(buf, top_offset_1);
-          ies->ie_top_offset_1 = top_offset_1;
-          uint16_t top_offset_2 = 0;
-          READ16(buf+2, top_offset_2);
-          ies->ie_top_offset_2 = top_offset_2;
+          uint16_t piggybacking_info_1 = 0;
+          READ16(buf, piggybacking_info_1);
+          ies->ie_eb_piggybacking_info_1 = piggybacking_info_1;
+          uint16_t piggybacking_info_2 = 0;
+          READ16(buf+2, piggybacking_info_2);
+          ies->ie_eb_piggybacking_info_2 = piggybacking_info_2;
         }
         return len;
       }

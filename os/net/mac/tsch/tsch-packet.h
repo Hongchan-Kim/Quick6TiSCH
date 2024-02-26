@@ -48,8 +48,8 @@
 
 /********** Functions *********/
 
-#if WITH_TEMP_EB_PIGGYBACKING
-int top_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset);
+#if HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
+int tsch_hck_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset);
 #endif
 
 /**
