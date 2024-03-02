@@ -49,7 +49,8 @@
 /********** Functions *********/
 
 #if HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
-int tsch_hck_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset);
+int tsch_hck_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset,
+                              uint16_t hckim_eb_formation_tx_info_1, uint16_t hckim_eb_formation_tx_info_2);
 #endif
 
 /**

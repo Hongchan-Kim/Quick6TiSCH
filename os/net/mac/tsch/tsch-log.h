@@ -101,7 +101,7 @@ struct tsch_log_t {
       uint16_t app_magic;
       uint32_t app_seqno;
 #endif
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+#if HCK_FORMATION_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
       uint8_t hck_packet_type;
 #endif
 #if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
@@ -138,7 +138,7 @@ struct tsch_log_t {
       uint16_t app_magic;
       uint32_t app_seqno;
 #endif
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+#if HCK_FORMATION_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
       uint8_t hck_packet_type;
 #endif
 #if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT

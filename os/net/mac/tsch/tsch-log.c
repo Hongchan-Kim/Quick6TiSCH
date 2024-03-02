@@ -120,7 +120,7 @@ tsch_log_process_pending(void)
           printf(" a_seq %lx", log->tx.app_seqno);
         }
 #endif
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+#if HCK_FORMATION_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
         printf(" PT %u %lu %u %u %u %u", 
               log->tx.hck_packet_type,
               log->asn.ls4b,
@@ -220,7 +220,7 @@ tsch_log_process_pending(void)
           printf(" a_seq %lx", log->rx.app_seqno);
         }
 #endif
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+#if HCK_FORMATION_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
         printf(" PT %u %lu %u %u", 
               log->rx.hck_packet_type, 
               log->asn.ls4b, 

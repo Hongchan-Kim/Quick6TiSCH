@@ -613,7 +613,7 @@ resynchronize(const linkaddr_t *original_time_source_addr)
 
 /*---------------------------------------------------------------------------*/
 /* Tx callback for keepalive messages */
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_FORMATION_PACKET_TYPE_INFO
 void
 #else
 static void
@@ -1568,11 +1568,7 @@ send_packet(mac_callback_t sent, void *ptr)
 
   packetbuf_set_attr(PACKETBUF_ATTR_FRAME_TYPE, FRAME802154_DATAFRAME);
 
-#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
-  packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
-#endif
-
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS || HCK_FORMATION_PACKET_TYPE_INFO
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
 #endif
 

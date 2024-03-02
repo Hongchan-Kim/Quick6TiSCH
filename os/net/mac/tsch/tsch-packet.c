@@ -458,9 +458,12 @@ tsch_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
 #if HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
 /* Update TOP offset in EB packet */
 int
-tsch_hck_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset)
+tsch_hck_packet_update_eb(uint8_t *buf, int buf_size, uint8_t tsch_sync_ie_offset,
+                          uint16_t hckim_eb_formation_tx_info_1, uint16_t hckim_eb_formation_tx_info_2)
 {
   struct ieee802154_ies ies;
+  ies.ie_eb_piggybacking_info_1 = hckim_eb_formation_tx_info_1;
+  ies.ie_eb_piggybacking_info_2 = hckim_eb_formation_tx_info_2;
   uint8_t result = frame80215e_create_ie_eb_hck_piggybacking(buf+tsch_sync_ie_offset+8, buf_size-tsch_sync_ie_offset-8, &ies) != -1;
   return result;
 }

@@ -65,7 +65,7 @@
 #include "orchestra.h"
 #endif
 
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_FORMATION_PACKET_TYPE_INFO
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
 #endif
@@ -514,7 +514,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
   }
 #endif
 
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_FORMATION_PACKET_TYPE_INFO
   uint8_t hck_is_broadcast = (linkaddr_cmp(addr, &tsch_eb_address) 
                               || linkaddr_cmp(addr, &tsch_broadcast_address));
   uint8_t hck_current_packet_type = HCK_PACKET_TYPE_NULL;
@@ -615,7 +615,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             p->transmissions = 0;
             p->max_transmissions = max_transmissions;
 
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_FORMATION_PACKET_TYPE_INFO
             p->hck_packet_type = hck_current_packet_type;
 #endif
 

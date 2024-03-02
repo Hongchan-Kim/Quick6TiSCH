@@ -21,20 +21,19 @@
 #define HCK_MOD_RPL_DAO_PARENT_NULLIFICATION                1 /* nullify old preferred parent before sending no-path dao, this makes no-path dao sent through common shared slotframe */
 //
 #define HCK_MOD_TSCH_APPLY_LATEST_CONTIKI                   1
-#define HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR      1
-#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR   0
-#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR       1
-#define HCK_MOD_TSCH_SYNC_COUNT                             1
-//
-#define HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS          1 /* piggyback information of 32 bits to header IE of non-EB packets */
-#define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1 /* piggyback information of 32 bits to IE of EB packets */
-//
 #define HCK_MOD_TSCH_DEACTIVATE_RADIO_INTERRUPT_MODE        1
 #define HCK_MOD_TSCH_SWAP_TX_RX_PROCESS_PENDING             1 /* swap order of rx_process_pending and tx_process_pending */
 #define HCK_MOD_TSCH_FILTER_PACKETS_WITH_INVALID_RX_TIMING  1
 #define HCK_MOD_TSCH_HANDLE_OVERFULL_SLOT_OPERATION         1
 //
-#define HCK_MOD_ORCHESTRA_NO_PATH_DAO_HANDLING              1
+#define HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR      1
+#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR   0
+#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR       1
+//
+#define HCK_MOD_TSCH_SYNC_COUNT                             1
+//
+#define HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS          1 /* piggyback information of 32 bits to header IE of non-EB packets */
+#define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1 /* piggyback information of 32 bits to IE of EB packets */
 //
 #if HCK_MOD_APP_SEQNO_DUPLICATE_CHECK
 #define APP_SEQNO_MAX_AGE                                   (20 * CLOCK_SECOND)
@@ -208,7 +207,7 @@
 #define TSCH_SCHEDULER_ALICE                                3 // 3: ALICE
 #define TSCH_SCHEDULER_OST                                  4 // 4: OST
 //
-#define CURRENT_TSCH_SCHEDULER                              TSCH_SCHEDULER_ALICE
+#define CURRENT_TSCH_SCHEDULER                              TSCH_SCHEDULER_NB_ORCHESTRA
 //
 #define ORCHESTRA_RULE_NB { &eb_per_time_source, \
                           &unicast_per_neighbor_rpl_storing, \
@@ -391,33 +390,36 @@
  * - [TMC'23] TRGB
  * - [Proposed] TOP
  ****************************************************************/
-#define NETWORK_FORMATION_ACCELERATION                      0
+#define NETWORK_FORMATION_ACCELERATION                      1
 #if NETWORK_FORMATION_ACCELERATION
 
 /***************************************************************
  * Prerequisite modifications of Contiki-NG for network formation acceleration
+ * - Configurations that must be fixed regardless of definitions above
  ****************************************************************/
-#undef HCK_MOD_TSCH_SYNC_COUNT
-#define HCK_MOD_TSCH_SYNC_COUNT                             1
-#undef HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
-#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR       1
-
-#undef HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
-#define HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS          1
-
-#undef HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
-#define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1
-
-#define HCK_MOD_TSCH_PACKET_TYPE_INFO                       0
-
-#undef HCK_MOD_RPL_CODE_NO_PATH_DAO
-#define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
-#undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 61 // 11, 23, 31, 41, 53, 61, 83, 101 ...
-//
 #define RPL_CONF_DIS_SEND                                   0 /* Turn on/off DIS */
 #undef RPL_CONF_WITH_PROBING
 #define RPL_CONF_WITH_PROBING                               0 /* Turn on/off RPL probing */
+//
+#undef HCK_MOD_RPL_CODE_NO_PATH_DAO
+#define HCK_MOD_RPL_CODE_NO_PATH_DAO                        1
+//
+#undef HCK_MOD_TSCH_SYNC_COUNT
+#define HCK_MOD_TSCH_SYNC_COUNT                             1
+//
+#undef HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS
+#define HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS          1
+//
+#undef HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
+#define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1
+//
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+#undef TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
+#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   7 // default: 7
+#else /* Orchestra */
+#undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
+#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 61 // 11, 23, 31, 41, 53, 61, 83, 101 ...
+#endif
 
 /***************************************************************
  * Prerequisite/common logging messages for network formation acceleration
@@ -428,11 +430,15 @@
 #define HCK_LOG_TSCH_SLOT                                   1
 #undef HCK_LOG_TSCH_SLOT_APP_SEQNO
 #define HCK_LOG_TSCH_SLOT_APP_SEQNO                         1
-#define FORMATION_COMMON_LOG                                1
 
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
-#define FORMATION_LOG_6TISCH_MINIMAL                        1
-#endif
+/***************************************************************
+ * Prerequisite macros for network formation acceleration study
+ * - HCK_FORMATION_PACKET_TYPE_INFO and FORMATION_COMMON_LOG require
+ * - HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS and 
+ * - HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS to be 1
+ ****************************************************************/
+#define HCK_FORMATION_PACKET_TYPE_INFO                      1
+#define FORMATION_COMMON_LOG                                1
 
 /***************************************************************
  * Dynamic resource allocation implementation - WITH_DRA

@@ -147,7 +147,7 @@ enum tsch_radio_state_off_cmd {
   TSCH_RADIO_CMD_OFF_FORCE,
 };
 
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_FORMATION_PACKET_TYPE_INFO
 static enum HCK_PACKET_TYPE formation_tx_packet_type = HCK_PACKET_TYPE_NULL;
 static enum HCK_PACKET_TYPE formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
 #endif
@@ -1926,7 +1926,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       /* if is this a broadcast packet, don't wait for ack */
       do_wait_for_ack = !current_neighbor->is_broadcast;
 
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_FORMATION_PACKET_TYPE_INFO
       formation_tx_packet_type = current_packet->hck_packet_type;
 #if !WITH_TRGB && !WITH_HNEXT
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
@@ -1937,9 +1937,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         formation_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &hnext_frame);
         ((uint8_t *)(packet))[formation_hdr_len + 2] = (uint8_t)(formation_tx_info & 0xFF);
         ((uint8_t *)(packet))[formation_hdr_len + 3] = (uint8_t)((formation_tx_info >> 8) & 0xFF);
+      } else {
+        /* Piggybacking to EB will be performed at EB update below */
       }
 #endif
-#endif /* HCK_MOD_TSCH_PACKET_TYPE_INFO */
+#endif /* HCK_FORMATION_PACKET_TYPE_INFO */
 
 #if WITH_TRGB
       trgb_tx_packet_type = current_packet->hck_packet_type;
@@ -2134,7 +2136,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       if(current_neighbor == n_eb) {
         packet_ready = tsch_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset);
 #if HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS /* Coordinator/non-coordinator: update information in EB before transmission */
-        if(packet_ready && tsch_hck_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset)) {
+        uint16_t hckim_eb_formation_tx_info_1 = 0;
+        uint16_t hckim_eb_formation_tx_info_2 = 0;
+#if HCK_FORMATION_PACKET_TYPE_INFO
+        formation_tx_packet_type = current_packet->hck_packet_type;
+        hckim_eb_formation_tx_info_1 = (formation_tx_packet_type << 8) + 0;
+#endif
+        if(packet_ready && tsch_hck_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset,
+                                                    hckim_eb_formation_tx_info_1, hckim_eb_formation_tx_info_2)) {
           packet_ready = 1;
         } else {
           packet_ready = 0;
@@ -2626,7 +2635,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
         memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+#if HCK_FORMATION_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
         log->tx.hck_packet_type = formation_tx_packet_type;
 #endif
 #if WITH_HNEXT
@@ -3038,7 +3047,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 #endif
 
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO
+#if HCK_FORMATION_PACKET_TYPE_INFO
 #if !WITH_TRGB && !WITH_HNEXT
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
@@ -3047,14 +3056,21 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               if(frame.fcf.ie_list_present) {
                 struct ieee802154_ies formation_ies;
                 frame802154e_parse_information_elements(frame.payload, frame.payload_len, &formation_ies);
-                formation_rx_info = (int)formation_ies.ie_formation_info;
+                formation_rx_info = (int)formation_ies.ie_header_piggybacking_info_1;
                 formation_rx_packet_type = (uint8_t)((formation_rx_info >> 8) & 0xFF);
               } else {
                 formation_rx_info = 0;
                 formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
               }
-            } else {
-              formation_rx_packet_type = HCK_PACKET_TYPE_EB;
+            } else { /* EB case */
+              if(frame.fcf.ie_list_present) {
+                struct ieee802154_ies formation_ies;
+                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &formation_ies);
+                formation_rx_info = (int)formation_ies.ie_eb_piggybacking_info_1;
+                formation_rx_packet_type = (uint8_t)((formation_rx_info >> 8) & 0xFF);
+              } else {
+                formation_rx_packet_type = HCK_PACKET_TYPE_EB;
+              }
             }
 #endif
 #if WITH_TRGB
@@ -3063,7 +3079,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if WITH_HNEXT
             formation_rx_packet_type = hnext_rx_packet_type;
 #endif
-#endif /* HCK_MOD_TSCH_PACKET_TYPE_INFO */
+#endif /* HCK_FORMATION_PACKET_TYPE_INFO */
 
             estimated_drift = RTIMER_CLOCK_DIFF(expected_rx_time, rx_start_time);
             tsch_stats_on_time_synchronization(estimated_drift);
@@ -3279,7 +3295,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               memcpy(&log->rx.app_magic, (uint8_t *)current_input->payload + current_input->len - 2, 2);
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
-#if HCK_MOD_TSCH_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+#if HCK_FORMATION_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
               log->rx.hck_packet_type = formation_rx_packet_type;
 #endif
 #if WITH_HNEXT
