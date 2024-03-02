@@ -63,7 +63,7 @@
 
 #endif /* BUILD_WITH_ORCHESTRA */
 
-#if FORMATION_LOG_6TISCH_MINIMAL
+#if HCK_MOD_6TISCH_MINIMAL_CALLBACK
 #include "net/mac/tsch/tsch.h"
 #ifndef NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK
 #define NETSTACK_CONF_ROUTING_NEIGHBOR_REMOVED_CALLBACK mc_callback_child_removed
@@ -110,11 +110,11 @@ LIST(notificationlist);
 #endif
 
 /*--------------------------------------------------------------------*/
-#if FORMATION_LOG_6TISCH_MINIMAL
+#if HCK_MOD_6TISCH_MINIMAL_CALLBACK
 void
 mc_callback_child_removed(const linkaddr_t *addr)
 {
-#if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR
+#if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR /* 6TiSCH-MC */
   struct tsch_neighbor *temp_nbr = tsch_queue_get_nbr(addr);
   tsch_queue_drop_packets(temp_nbr);
 #endif

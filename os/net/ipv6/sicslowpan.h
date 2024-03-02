@@ -53,7 +53,7 @@
 #include "net/mac/mac.h"
 
 /*--------------------------------------------------------------------*/
-#if FORMATION_LOG_6TISCH_MINIMAL
+#if HCK_MOD_6TISCH_MINIMAL_CALLBACK
 #include "net/mac/tsch/tsch.h"
 void mc_callback_new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new);
 #endif

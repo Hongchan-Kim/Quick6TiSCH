@@ -76,7 +76,7 @@
 
 #include "net/routing/routing.h"
 
-#if FORMATION_LOG_6TISCH_MINIMAL
+#if HCK_MOD_6TISCH_MINIMAL_CALLBACK
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
 #endif
@@ -120,7 +120,7 @@ void reset_log_sicslowpan()
 }
 
 /*---------------------------------------------------------------------------*/
-#if FORMATION_LOG_6TISCH_MINIMAL
+#if HCK_MOD_6TISCH_MINIMAL_CALLBACK
 static void mc_packet_received(void);
 static void mc_packet_sent(int mac_status);
 NETSTACK_SNIFFER(mc_sniffer, mc_packet_received, mc_packet_sent);
@@ -168,14 +168,14 @@ mc_callback_new_time_source(const struct tsch_neighbor *old, const struct tsch_n
     } else {
       linkaddr_copy(&mc_parent_linkaddr, &linkaddr_null);
     }
-#if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR
+#if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR /* 6TiSCH-MC */
     linkaddr_t *old_addr = tsch_queue_get_nbr_address(old);
     struct tsch_neighbor *old_temp = tsch_queue_get_nbr(old_addr);
     tsch_queue_drop_packets(old_temp);
 #endif
   }
 }
-#endif
+#endif /* HCK_MOD_6TISCH_MINIMAL_CALLBACK */
 /*--------------------------------------------------------------------*/
 
 #define GET16(ptr,index) (((uint16_t)((ptr)[index] << 8)) | ((ptr)[(index) + 1]))
@@ -2225,7 +2225,7 @@ input(void)
 void
 sicslowpan_init(void)
 {
-#if FORMATION_LOG_6TISCH_MINIMAL
+#if HCK_MOD_6TISCH_MINIMAL_CALLBACK
   /* Snoop on packet transmission to know if our parent knows about us
    * (i.e. has ACKed at one of our DAOs since we decided to use it as a parent) */
   netstack_sniffer_add(&mc_sniffer);

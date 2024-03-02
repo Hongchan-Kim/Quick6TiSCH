@@ -26,8 +26,8 @@
 #define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR       1
 #define HCK_MOD_TSCH_SYNC_COUNT                             1
 //
-#define HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS          1
-#define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1
+#define HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS          1 /* piggyback information of 32 bits to header IE of non-EB packets */
+#define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1 /* piggyback information of 32 bits to IE of EB packets */
 //
 #define HCK_MOD_TSCH_DEACTIVATE_RADIO_INTERRUPT_MODE        1
 #define HCK_MOD_TSCH_SWAP_TX_RX_PROCESS_PENDING             1 /* swap order of rx_process_pending and tx_process_pending */
@@ -156,7 +156,7 @@
 /* RPL layer */
 #define RPL_CONF_MOP                                        RPL_MOP_STORING_NO_MULTICAST
 #define RPL_CONF_WITH_DAO_ACK                               1
-#define RPL_CONF_WITH_PROBING                               0 //
+#define RPL_CONF_WITH_PROBING                               1
 #define RPL_CONF_PROBING_INTERVAL                           (2 * 60 * CLOCK_SECOND) /* originally 60 seconds */
 #define RPL_CONF_DAO_RETRANSMISSION_TIMEOUT                 (20 * CLOCK_SECOND) /* originally 5 seconds */
 #define RPL_CONF_PARENT_SWITCH_THRESHOLD                    96 /* 96 (0.75, default), 127 (0.99), 128 (1) */
@@ -185,21 +185,23 @@
 #if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
 #define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   7 // default: 7
 
+#define HCK_MOD_6TISCH_MINIMAL_CALLBACK                     1
+
 #undef HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR
-#define HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR      1 // TODO
+#define HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR      1 /* HCK_MOD_6TISCH_MINIMAL_CALLBACK should be 1 */
 #undef HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR
-#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR   0 // TODO
+#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR   0 /* This should be 0, if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR is 1 */
 #undef HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
-#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR       0 // TODO
-//
-#define TSCH_SCHED_EB_SF_HANDLE                             0 // TODO - delete
-#define TSCH_SCHED_COMMON_SF_HANDLE                         1
-#define TSCH_SCHED_UNICAST_SF_HANDLE                        2
-#define PACKETBUF_ATTR_TSCH_SLOTFRAME                       1
-#define PACKETBUF_ATTR_TSCH_TIMESLOT                        1
+#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR       0 /* Not applicable to 6TiSCH-MC */
 
 #else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-//
+
+#undef HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR
+#define HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR      1
+#undef HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR
+#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR   0 /* This should be 0, if HCK_MOD_TSCH_DROP_UCAST_PACKET_FOR_NON_RPL_NBR is 1 */
+#undef HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
+#define HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR       1 /* Applicable to 6TiSCH-MC */
 
 #define TSCH_SCHEDULER_NB_ORCHESTRA                         1 // 1: NB-Orchestra-storing
 #define TSCH_SCHEDULER_LB_ORCHESTRA                         2 // 2: LB-Orchestra
@@ -389,7 +391,7 @@
  * - [TMC'23] TRGB
  * - [Proposed] TOP
  ****************************************************************/
-#define NETWORK_FORMATION_ACCELERATION                      1
+#define NETWORK_FORMATION_ACCELERATION                      0
 #if NETWORK_FORMATION_ACCELERATION
 
 /***************************************************************

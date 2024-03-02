@@ -2654,6 +2654,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
     );
 
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+    ++tsch_common_sf_tx_operation_count;
+#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
     /* hckim measure tx operation counts */
     if(current_link->slotframe_handle == TSCH_SCHED_EB_SF_HANDLE) {
@@ -2701,6 +2704,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #endif
     }
 #endif
+#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 
     /* Poll process for later processing of packet sent events and logs */
     process_poll(&tsch_pending_events_process);
@@ -3286,6 +3290,9 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
             );
 
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+            ++tsch_common_sf_rx_operation_count;
+#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
             /* hckim measure rx operation counts */
             if(current_link->slotframe_handle == TSCH_SCHED_EB_SF_HANDLE) {
@@ -3333,6 +3340,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
             }
 #endif
+#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
           }
 
           /* Poll process for processing of pending input and logs */
@@ -3920,7 +3928,9 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif
 #endif /* HCK_MOD_TSCH_APPLY_LATEST_CONTIKI */
 
-
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+      ++tsch_scheduled_common_sf_cell_count;
+#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
       /* hckim measure cell utilization from current_link */
       if(current_link->slotframe_handle == TSCH_SCHED_EB_SF_HANDLE) {
@@ -3991,7 +4001,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 #endif
       }
 #endif
-
+#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
       is_active_slot = current_packet != NULL || (current_link->link_options & LINK_OPTION_RX);
       if(is_active_slot) {
 
