@@ -58,7 +58,7 @@
 #include "sys/ctimer.h"
 #include "sys/log.h"
 
-#if FORMATION_COMMON_LOG
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
 #include "net/mac/tsch/tsch.h"
 #endif
 
@@ -266,14 +266,38 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
     }
     LOG_INFO_("\n");
 
-#if FORMATION_COMMON_LOG
-    uint64_t ps_asn = tsch_calculate_current_asn();
-    LOG_HCK_FORMATION("ps %u | at %llu\n", 
-              (p == NULL) ? 0 : 
-              (rpl_parent_get_ipaddr(p)->u8[14] << 8) + (rpl_parent_get_ipaddr(p)->u8[15]),
-              ps_asn);
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+    uint8_t prev_bootstrap_state;
+    uint64_t prev_state_transition_asn;
+    if(p != NULL) {
+      prev_bootstrap_state = hck_formation_bootstrap_state;
+      prev_state_transition_asn = hck_formation_state_transition_asn;
+      hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_2_RPL_JOINED;
+      hck_formation_state_transition_asn = tsch_calculate_current_asn();
+    }
+    /* else {
+      prev_bootstrap_state = hck_formation_bootstrap_state;
+      prev_state_transition_asn = hck_formation_state_transition_asn;
+      hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_0_NEW_NODE;
+      hck_formation_state_transition_asn = tsch_calculate_current_asn();
+    } */
+    if(p != NULL) {
+      LOG_HCK_FORMATION("ps_o %u bs %u at %llx pbs %u pat %llx\n", 
+                        rpl_parent_switch_count + 1,
+                        hck_formation_bootstrap_state, 
+                        hck_formation_state_transition_asn,
+                        prev_bootstrap_state,
+                        prev_state_transition_asn);
+    } else {
+      LOG_HCK_FORMATION("ps_n %u\n", rpl_parent_switch_count + 1);
+      /* LOG_HCK_FORMATION("ps_n %u bs %u at %llx pbs %u pat %llx\n", 
+                        rpl_parent_switch_count + 1,
+                        hck_formation_bootstrap_state, 
+                        hck_formation_state_transition_asn,
+                        prev_bootstrap_state,
+                        prev_state_transition_asn); */
+    }
 #endif
-
 
     ++rpl_parent_switch_count;
     LOG_HCK("ps %u lastP %u |\n", 

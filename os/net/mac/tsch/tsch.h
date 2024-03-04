@@ -69,6 +69,11 @@ frequency hopping for enhanced reliability.
 void keepalive_packet_sent(void *ptr, int status, int transmissions);
 #endif
 
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+extern uint8_t hck_formation_bootstrap_state;
+extern uint64_t hck_formation_state_transition_asn;
+#endif
+
 #if WITH_HNEXT
 extern enum HNEXT_OFFSET hnext_offset_assignment_parent[HCK_PACKET_TYPE_NULL];
 extern enum HNEXT_OFFSET hnext_offset_assignment_others[HCK_PACKET_TYPE_NULL];

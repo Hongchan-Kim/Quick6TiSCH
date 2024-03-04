@@ -433,12 +433,13 @@
 
 /***************************************************************
  * Prerequisite macros for network formation acceleration study
- * - HCK_FORMATION_PACKET_TYPE_INFO and FORMATION_COMMON_LOG require
+ * - HCK_FORMATION_PACKET_TYPE_INFO and 
+ * - HCK_FORMATION_BOOTSTRAP_STATE_INFO require
  * - HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS and 
  * - HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS to be 1
  ****************************************************************/
 #define HCK_FORMATION_PACKET_TYPE_INFO                      1
-#define FORMATION_COMMON_LOG                                1
+#define HCK_FORMATION_BOOTSTRAP_STATE_INFO                  1
 
 /***************************************************************
  * Dynamic resource allocation implementation - WITH_DRA

@@ -254,7 +254,7 @@ extern struct log_module all_modules[];
 #define LOG_HCK_ORCHESTRA_LLADDR(...)    LOG_LLADDR(0, __VA_ARGS__)
 #define LOG_HCK_ORCHESTRA_6ADDR(...)     LOG_6ADDR(0, __VA_ARGS__)
 
-#if FORMATION_COMMON_LOG
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
 #define LOG_HCK_FORMATION(...)            LOG(1, 0, "HK-F", LOG_COLOR_PRI, __VA_ARGS__)
 #define LOG_HCK_FORMATION_(...)           LOG(0, 0, "HK-F", LOG_COLOR_PRI, __VA_ARGS__)
 #define LOG_HCK_FORMATION_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)

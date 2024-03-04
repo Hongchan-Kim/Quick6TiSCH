@@ -2635,8 +2635,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         memcpy(&log->tx.app_magic, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2, 2);
         memcpy(&log->tx.app_seqno, (uint8_t *)queuebuf_dataptr(current_packet->qb) + queuebuf_datalen(current_packet->qb) - 2 - 4, 4);
 #endif
-#if HCK_FORMATION_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+#if HCK_FORMATION_PACKET_TYPE_INFO
         log->tx.hck_packet_type = formation_tx_packet_type;
+#endif
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+        log->tx.hck_bootstrap_state = hck_formation_bootstrap_state;
 #endif
 #if WITH_HNEXT
         log->tx.hnext_collision_count = current_packet->hnext_collision_count;
@@ -3295,8 +3298,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               memcpy(&log->rx.app_magic, (uint8_t *)current_input->payload + current_input->len - 2, 2);
               memcpy(&log->rx.app_seqno, (uint8_t *)current_input->payload + current_input->len - 2 - 4, 4);
 #endif
-#if HCK_FORMATION_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+#if HCK_FORMATION_PACKET_TYPE_INFO
               log->rx.hck_packet_type = formation_rx_packet_type;
+#endif
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+              log->rx.hck_bootstrap_state = hck_formation_bootstrap_state;
 #endif
 #if WITH_HNEXT
               log->rx.hck_packet_type = hnext_rx_packet_type;

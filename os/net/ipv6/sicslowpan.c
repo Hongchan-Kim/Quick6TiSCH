@@ -86,6 +86,10 @@
 #define LOG_MODULE "6LoWPAN"
 #define LOG_LEVEL LOG_LEVEL_6LOWPAN
 
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+static uint16_t mc_new_time_source_count;
+#endif
+
 static uint32_t ip_ucast_transmission_count;
 static uint16_t ip_ucast_ok_count;
 static uint16_t ip_ucast_noack_count;
@@ -128,7 +132,7 @@ NETSTACK_SNIFFER(mc_sniffer, mc_packet_received, mc_packet_sent);
 /* The current RPL preferred parent's link-layer address */
 static linkaddr_t mc_parent_linkaddr;
 /* Set to one only after getting an ACK for a DAO sent to our preferred parent */
-static int mc_parent_knows_us = 0;
+int mc_parent_knows_us = 0;
 /*---------------------------------------------------------------------------*/
 static void
 mc_packet_received(void)
@@ -147,8 +151,18 @@ mc_packet_sent(int mac_status)
        && linkaddr_cmp(&mc_parent_linkaddr, packetbuf_addr(PACKETBUF_ADDR_RECEIVER))) {
       mc_parent_knows_us = 1;
 
-      uint64_t mc_one_parent_knows_us_asn = tsch_calculate_current_asn();
-      LOG_HCK("mpku %u | at %llx\n", mc_parent_knows_us, mc_one_parent_knows_us_asn);
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+      uint8_t prev_bootstrap_state = hck_formation_bootstrap_state;
+      uint64_t prev_state_transition_asn = hck_formation_state_transition_asn;
+      hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_3_BI_DI_LINK_ESTABLISHED;
+      hck_formation_state_transition_asn = tsch_calculate_current_asn();
+      LOG_HCK_FORMATION("rpku %u bs %u at %llx pbs %u pat %llx\n",
+                        mc_parent_knows_us, 
+                        hck_formation_bootstrap_state, 
+                        hck_formation_state_transition_asn,
+                        prev_bootstrap_state,
+                        prev_state_transition_asn);
+#endif
     }
   }
 }
@@ -159,8 +173,14 @@ mc_callback_new_time_source(const struct tsch_neighbor *old, const struct tsch_n
   if(new != old) {
     mc_parent_knows_us = 0;
   
-    uint64_t mc_zero_parent_knows_us_asn = tsch_calculate_current_asn();
-    LOG_HCK("mpku %u | at %llx\n", mc_parent_knows_us, mc_zero_parent_knows_us_asn);
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+    mc_new_time_source_count++;
+    if(new != NULL) {
+      LOG_HCK_FORMATION("nts_o %u\n", mc_new_time_source_count);
+    } else {
+      LOG_HCK_FORMATION("nts_n %u\n", mc_new_time_source_count);
+    }
+#endif
 
     const linkaddr_t *new_addr = tsch_queue_get_nbr_address(new);
     if(new_addr != NULL) {

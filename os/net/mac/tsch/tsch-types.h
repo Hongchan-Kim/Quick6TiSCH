@@ -69,6 +69,15 @@ enum HCK_PACKET_TYPE {
 };
 #endif
 
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+enum HCK_BOOTSTRAP_STATE {
+  HCK_BOOTSTRAP_STATE_0_NEW_NODE,              // 0
+  HCK_BOOTSTRAP_STATE_1_TSCH_JOINED,           // 1
+  HCK_BOOTSTRAP_STATE_2_RPL_JOINED,            // 2
+  HCK_BOOTSTRAP_STATE_3_BI_DI_LINK_ESTABLISHED // 3, both bidirectional routes and resources
+};
+#endif
+
 #if WITH_TRGB
 enum TRGB_CELL {
   TRGB_CELL_RED,                              // 0

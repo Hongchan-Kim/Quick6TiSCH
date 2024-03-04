@@ -71,6 +71,11 @@
 #define LOG_MODULE "TSCH"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+uint8_t hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_0_NEW_NODE;
+uint64_t hck_formation_state_transition_asn = 0;
+#endif
+
 /* hckim measure associated cell counts */
 static uint32_t tsch_timeslots_until_last_session;
 static int32_t tsch_timeslots_in_current_session; // timeslots in current session
@@ -1171,9 +1176,17 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
       LOG_INFO_LLADDR((const linkaddr_t *)&frame.src_addr);
       LOG_INFO_("\n");
 
-#if FORMATION_COMMON_LOG
-      uint64_t asso_asn = (uint64_t)(tsch_current_asn.ls4b) + ((uint64_t)(tsch_current_asn.ms1b) << 32);
-      LOG_HCK_FORMATION("asso %u | at %llu\n", tsch_association_count, asso_asn);
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+      uint8_t prev_bootstrap_state = hck_formation_bootstrap_state;
+      uint64_t prev_state_transition_asn = hck_formation_state_transition_asn;
+      hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_1_TSCH_JOINED;
+      hck_formation_state_transition_asn = tsch_calculate_current_asn();
+      LOG_HCK_FORMATION("asso %u bs %u at %llx pbs %u pat %llx\n", 
+                        tsch_association_count,
+                        hck_formation_bootstrap_state, 
+                        hck_formation_state_transition_asn,
+                        prev_bootstrap_state,
+                        prev_state_transition_asn);
 #endif
 
       tsch_log_association_count++;
@@ -1313,11 +1326,17 @@ PROCESS_THREAD(tsch_process, ev, data)
      * as long as we are associated */
     PROCESS_YIELD_UNTIL(!tsch_is_associated);
 
-#if FORMATION_COMMON_LOG
-    uint64_t leaving_asn = tsch_calculate_current_asn();
-    LOG_HCK_FORMATION("leave %u | at %llu\n", 
-              tsch_leaving_count + 1,
-              leaving_asn);
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+    uint8_t prev_bootstrap_state = hck_formation_bootstrap_state;
+    uint64_t prev_state_transition_asn = hck_formation_state_transition_asn;
+    hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_0_NEW_NODE;
+    hck_formation_state_transition_asn = tsch_calculate_current_asn();
+    LOG_HCK_FORMATION("leave %u bs %u at %llx pbs %u pat %llx\n", 
+                      tsch_leaving_count + 1,
+                      hck_formation_bootstrap_state,
+                      hck_formation_state_transition_asn,
+                      prev_bootstrap_state,
+                      prev_state_transition_asn);
 #endif
 
     print_log_tsch();

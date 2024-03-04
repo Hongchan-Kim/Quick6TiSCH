@@ -56,6 +56,10 @@
 #error "Mismatched scheduler configuration. See Makefile and project-conf.h"
 #endif
 
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+static uint16_t orchestra_new_time_source_count;
+#endif
+
 /* A net-layer sniffer for packets sent and received */
 static void orchestra_packet_received(void);
 static void orchestra_packet_sent(int mac_status);
@@ -88,8 +92,18 @@ orchestra_packet_sent(int mac_status)
        && linkaddr_cmp(&orchestra_parent_linkaddr, packetbuf_addr(PACKETBUF_ADDR_RECEIVER))) {
       orchestra_parent_knows_us = 1;
 
-      uint64_t orchestra_one_parent_knows_us_asn = tsch_calculate_current_asn();
-      LOG_HCK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_one_parent_knows_us_asn);
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+      uint8_t prev_bootstrap_state = hck_formation_bootstrap_state;
+      uint64_t prev_state_transition_asn = hck_formation_state_transition_asn;
+      hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_3_BI_DI_LINK_ESTABLISHED;
+      hck_formation_state_transition_asn = tsch_calculate_current_asn();
+      LOG_HCK_FORMATION("rpku %u bs %u at %llx pbs %u pat %llx\n",
+                        orchestra_parent_knows_us, 
+                        hck_formation_bootstrap_state, 
+                        hck_formation_state_transition_asn,
+                        prev_bootstrap_state,
+                        prev_state_transition_asn);
+#endif
 
 #if HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
       struct tsch_neighbor *orchestra_parent_nbr = tsch_queue_get_nbr(&orchestra_parent_linkaddr);
@@ -167,8 +181,14 @@ orchestra_callback_new_time_source(const struct tsch_neighbor *old, const struct
   if(new != old) {
     orchestra_parent_knows_us = 0;
 
-    uint64_t orchestra_zero_parent_knows_us_asn = tsch_calculate_current_asn();
-    LOG_HCK("opku %u | at %llx\n", orchestra_parent_knows_us, orchestra_zero_parent_knows_us_asn);
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+    orchestra_new_time_source_count++;
+    if(new != NULL) {
+      LOG_HCK_FORMATION("nts_o %u\n", orchestra_new_time_source_count);
+    } else {
+      LOG_HCK_FORMATION("nts_n %u\n", orchestra_new_time_source_count);
+    }
+#endif
   }
   for(i = 0; i < NUM_RULES; i++) {
     if(all_rules[i]->new_time_source != NULL) {

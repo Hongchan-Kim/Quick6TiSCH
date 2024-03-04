@@ -120,7 +120,7 @@ tsch_log_process_pending(void)
           printf(" a_seq %lx", log->tx.app_seqno);
         }
 #endif
-#if HCK_FORMATION_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+#if HCK_FORMATION_PACKET_TYPE_INFO
         printf(" PT %u %lu %u %u %u %u", 
               log->tx.hck_packet_type,
               log->asn.ls4b,
@@ -128,6 +128,9 @@ tsch_log_process_pending(void)
               linkaddr_cmp(&log->tx.dest, &linkaddr_null) ? 0 : 1,
               log->tx.mac_tx_status,
               log->tx.num_tx);
+#endif
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+        printf(" BS %u", log->tx.hck_bootstrap_state);
 #endif
 #if HNEXT_LOG
         printf(" HN %u %u %u %u %u %u %u %u %u %u",
@@ -220,12 +223,15 @@ tsch_log_process_pending(void)
           printf(" a_seq %lx", log->rx.app_seqno);
         }
 #endif
-#if HCK_FORMATION_PACKET_TYPE_INFO && FORMATION_COMMON_LOG
+#if HCK_FORMATION_PACKET_TYPE_INFO
         printf(" PT %u %lu %u %u", 
               log->rx.hck_packet_type, 
               log->asn.ls4b, 
               log->link->slotframe_handle,
               log->rx.is_unicast == 0 ? 0 : 1);
+#endif
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+        printf(" BS %u", log->rx.hck_bootstrap_state);
 #endif
 #if HNEXT_LOG
         printf(" HN %u", log->rx.hnext_offset);

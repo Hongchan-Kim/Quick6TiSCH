@@ -55,6 +55,7 @@
 /*--------------------------------------------------------------------*/
 #if HCK_MOD_6TISCH_MINIMAL_CALLBACK
 #include "net/mac/tsch/tsch.h"
+extern int mc_parent_knows_us;
 void mc_callback_new_time_source(const struct tsch_neighbor *old, const struct tsch_neighbor *new);
 #endif
 /*--------------------------------------------------------------------*/

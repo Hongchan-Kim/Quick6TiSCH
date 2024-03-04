@@ -136,15 +136,16 @@ reset_eval(uint8_t phase)
 
   uint64_t app_server_reset_log_asn = tsch_calculate_current_asn();
 #if !TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
-  LOG_HCK("reset_eval %u rs_opku %u rs_q %d | rs_q_eb %d at %llx\n", 
+  LOG_HCK("reset_eval %u rs_rpku %u rs_q %d | rs_q_eb %d at %llx\n", 
         phase,
         orchestra_parent_knows_us,
         tsch_queue_global_packet_count(),
         tsch_queue_nbr_packet_count(n_eb),
         app_server_reset_log_asn);
 #else /* !TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-  LOG_HCK("reset_eval %u rs_q %d | rs_q_eb %d at %llx\n", 
+  LOG_HCK("reset_eval %u rs_rpku %u rs_q %d | rs_q_eb %d at %llx\n", 
         phase,
+        mc_parent_knows_us,
         tsch_queue_global_packet_count(),
         tsch_queue_nbr_packet_count(n_eb),
         app_server_reset_log_asn);
