@@ -234,6 +234,11 @@ int TSCH_CALLBACK_PACKET_READY(void);
 
 /***** External Variables *****/
 
+#if WITH_DRA
+extern struct tsch_asn_t dra_current_asn;
+extern uint64_t dra_lastly_scheduled_asfn;
+#endif
+
 #if WITH_ALICE
 #ifdef ALICE_TIME_VARYING_SCHEDULING
 /* ALICE: ASN at the start of the ongoing slot operation. */

@@ -549,6 +549,11 @@ PROCESS(tsch_pending_events_process, "pending events process");
 /* Other function prototypes */
 static void packet_input(void);
 
+#if WITH_DRA
+struct tsch_asn_t dra_current_asn;
+uint64_t dra_lastly_scheduled_asfn = 0;
+#endif
+
 /*---------------------------------------------------------------------------*/
 #if WITH_ALICE
 #ifdef ALICE_TIME_VARYING_SCHEDULING
@@ -1148,6 +1153,10 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
 
   tsch_current_asn = ies.ie_asn;
   tsch_join_priority = ies.ie_join_priority + 1;
+
+#if WITH_DRA
+  dra_current_asn = ies.ie_asn;
+#endif
 
 #if WITH_ALICE
   alice_current_asn = ies.ie_asn;

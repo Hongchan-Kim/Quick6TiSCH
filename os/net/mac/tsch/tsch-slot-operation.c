@@ -4512,6 +4512,10 @@ ost_donothing:
         /* Update ASN */
         TSCH_ASN_INC(tsch_current_asn, timeslot_diff);
 
+#if WITH_DRA
+        TSCH_ASN_COPY(dra_current_asn, tsch_current_asn);
+#endif
+
 #if WITH_ALICE
 #if !WITH_TSCH_DEFAULT_BURST_TRANSMISSION
         TSCH_ASN_COPY(alice_current_asn, tsch_current_asn);
@@ -4574,6 +4578,10 @@ tsch_slot_operation_start(void)
     }
     /* Update ASN */
     TSCH_ASN_INC(tsch_current_asn, timeslot_diff);
+
+#if WITH_DRA
+    TSCH_ASN_COPY(dra_current_asn, tsch_current_asn);
+#endif
 
 #if WITH_ALICE
     TSCH_ASN_COPY(alice_current_asn, tsch_current_asn);

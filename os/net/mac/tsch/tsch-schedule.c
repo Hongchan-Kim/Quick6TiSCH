@@ -952,6 +952,19 @@ struct tsch_link *
 tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset,
     struct tsch_link **backup_link)
 {
+#if WITH_DRA
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+  uint64_t dra_current_asfn = 0;
+  struct tsch_slotframe *dra_mc_sf = tsch_schedule_get_slotframe_by_handle(0);
+  struct tsch_asn_t temp_asn;
+  TSCH_ASN_COPY(temp_asn, dra_current_asn);
+  uint16_t mod1 = TSCH_ASN_MOD(temp_asn, dra_mc_sf->size);
+  TSCH_ASN_DEC(temp_asn, mod1);
+  dra_current_asfn = TSCH_ASN_DIVISION(temp_asn, dra_mc_sf->size);
+#else
+#endif
+#endif
+
 #if WITH_ALICE
   /*
    * ALICE: First, derive 'alice_current_asfn', which is the ASFN at the start of the ongoing slot operation
@@ -976,6 +989,73 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
     struct tsch_slotframe *sf = list_head(slotframe_list);
     /* For each slotframe, look for the earliest occurring link */
     while(sf != NULL) {
+
+#if WITH_DRA
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+      if(sf->handle == 0) {
+        int dra_remaining_uicast_sf_link_exists = 0;
+
+        uint16_t timeslot = TSCH_ASN_MOD(dra_current_asn, sf->size);
+        struct tsch_link *l = list_head(sf->links_list);
+        while(l != NULL) {
+          /* Check if any link exists after this timeslot in the current unicast slotframe */
+          if(l->timeslot > timeslot) {
+            /* In the current unicast slotframe schedule, the current timeslot is not a last one. */
+            dra_remaining_uicast_sf_link_exists = 1;
+            break;
+          }
+          l = list_item_next(l);
+        }
+
+        int dra_remaining_uicast_sf_link_exists_at_tsch_current_asn = 0;
+
+        timeslot = TSCH_ASN_MOD(*asn, sf->size);
+        l = list_head(sf->links_list);
+        while(l != NULL) {
+          /* Check if any link exists after this timeslot in the current unicast slotframe */
+          if(l->timeslot > timeslot) {
+            /* In the current unicast slotframe schedule, the current timeslot is not a last one. */
+            dra_remaining_uicast_sf_link_exists_at_tsch_current_asn = 1;
+            break;
+          }
+          l = list_item_next(l);
+        }
+
+        uint64_t dra_current_asfn_at_tsch_current_asn = 0;
+        struct tsch_asn_t temp_asn_at_tsch_current_asn;
+        TSCH_ASN_COPY(temp_asn_at_tsch_current_asn, *asn);
+        uint16_t mod1_at_tsch_current_asn = TSCH_ASN_MOD(temp_asn_at_tsch_current_asn, sf->size);
+        TSCH_ASN_DEC(temp_asn_at_tsch_current_asn, mod1_at_tsch_current_asn);
+        dra_current_asfn_at_tsch_current_asn = TSCH_ASN_DIVISION(temp_asn_at_tsch_current_asn, sf->size);
+
+        if(dra_remaining_uicast_sf_link_exists == 0 
+          || dra_remaining_uicast_sf_link_exists_at_tsch_current_asn == 0
+          || dra_current_asfn_at_tsch_current_asn != dra_current_asfn) {
+          uint64_t dra_next_asfn = 0;
+          struct tsch_asn_t asn_of_next_asfn;
+          TSCH_ASN_COPY(asn_of_next_asfn, dra_current_asn);
+          TSCH_ASN_INC(asn_of_next_asfn, sf->size.val);
+          uint16_t mod2 = TSCH_ASN_MOD(asn_of_next_asfn, sf->size);
+          TSCH_ASN_DEC(asn_of_next_asfn, mod2);
+          dra_next_asfn = TSCH_ASN_DIVISION(asn_of_next_asfn, sf->size);
+
+          if(dra_next_asfn != dra_lastly_scheduled_asfn) {
+            dra_lastly_scheduled_asfn = dra_next_asfn;
+
+            /* TODO: reschedule at here! */
+
+#if DRA_DBG
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "dra sched %llu", dra_lastly_scheduled_asfn));
+#endif
+
+          }
+        }
+      }
+#else
+#endif
+#endif /* WITH_DRA */
 
 #if WITH_ALICE /* alice implementation */
 #ifdef ALICE_TIME_VARYING_SCHEDULING
@@ -1470,6 +1550,17 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
           l->timeslot - timeslot :
           sf->size.val + l->timeslot - timeslot;
 
+#if WITH_DRA
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+        if(sf->handle == 0 
+            && dra_current_asfn != dra_lastly_scheduled_asfn
+            && l->timeslot > timeslot) {
+          time_to_timeslot += sf->size.val;
+        }
+#else
+#endif
+#endif
+
 #if WITH_ALICE
 #ifdef ALICE_TIME_VARYING_SCHEDULING
         /* 
@@ -1620,6 +1711,13 @@ tsch_schedule_create_minimal(void)
       (LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED | LINK_OPTION_TIME_KEEPING),
       LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
       0, 0, 1);
+
+#if 0 //DRA_DBG
+  tsch_schedule_add_link(sf_min,
+      (LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED | LINK_OPTION_TIME_KEEPING),
+      LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
+      3, 0, 1);
+#endif
 }
 /*---------------------------------------------------------------------------*/
 struct tsch_slotframe *
