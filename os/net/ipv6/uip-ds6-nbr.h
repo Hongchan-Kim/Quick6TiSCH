@@ -120,6 +120,11 @@ typedef struct uip_ds6_nbr {
 #define UIP_DS6_NBR_PACKET_LIFETIME CLOCK_SECOND * 4
 #endif                          /*UIP_CONF_QUEUE_PKT */
 
+#if WITH_DRA
+  uint8_t dra_mbr_last_m;
+  uint16_t dra_nbr_last_seq;
+#endif
+
 #if WITH_A3
   uint8_t a3_c_num_tx_slot;
   uint8_t a3_c_num_rx_slot;

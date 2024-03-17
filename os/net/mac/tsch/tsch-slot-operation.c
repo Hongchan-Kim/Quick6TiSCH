@@ -1928,18 +1928,53 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
 #if HCK_FORMATION_PACKET_TYPE_INFO
       formation_tx_packet_type = current_packet->hck_packet_type;
-#if !WITH_TRGB && !WITH_HNEXT
+#if !WITH_DRA && !WITH_TRGB && !WITH_HNEXT
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
         uint16_t formation_tx_info = 0;
         formation_tx_info = (formation_tx_packet_type << 8) + 0;
-        frame802154_t hnext_frame;
+        frame802154_t formation_tx_frame;
         int formation_hdr_len;
-        formation_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &hnext_frame);
+        formation_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &formation_tx_frame);
         ((uint8_t *)(packet))[formation_hdr_len + 2] = (uint8_t)(formation_tx_info & 0xFF);
         ((uint8_t *)(packet))[formation_hdr_len + 3] = (uint8_t)((formation_tx_info >> 8) & 0xFF);
       } else {
         /* Piggybacking to EB will be performed at EB update below */
       }
+#elif WITH_DRA
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+      if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
+        uint16_t hckim_header_formation_tx_info_1 = 0; /* Store packet type and dra m */
+        uint16_t hckim_header_formation_tx_info_2 = 0; /* Store dra seq */
+
+        uint8_t tx_dra_m = current_packet->dra_m;
+        uint16_t tx_dra_seq = current_packet->dra_seq;
+        
+
+        hckim_header_formation_tx_info_1 = (formation_tx_packet_type << 8) + tx_dra_m;
+        hckim_header_formation_tx_info_2 = tx_dra_seq;
+
+#if DRA_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "dra tx %u %u %u %u", formation_tx_packet_type, 
+                                  tx_dra_m, 
+                                  hckim_header_formation_tx_info_1, 
+                                  hckim_header_formation_tx_info_2));
+#endif
+
+        frame802154_t formation_tx_frame;
+        int formation_hdr_len;
+        formation_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &formation_tx_frame);
+        ((uint8_t *)(packet))[formation_hdr_len + 2] = (uint8_t)(hckim_header_formation_tx_info_1 & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 3] = (uint8_t)((hckim_header_formation_tx_info_1 >> 8) & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 4] = (uint8_t)(hckim_header_formation_tx_info_2 & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 5] = (uint8_t)((hckim_header_formation_tx_info_2 >> 8) & 0xFF);
+
+      } else {
+        /* Piggybacking to EB will be performed at EB update below */
+      }
+#else
+#endif
 #endif
 #endif /* HCK_FORMATION_PACKET_TYPE_INFO */
 
@@ -2140,7 +2175,29 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         uint16_t hckim_eb_formation_tx_info_2 = 0;
 #if HCK_FORMATION_PACKET_TYPE_INFO
         formation_tx_packet_type = current_packet->hck_packet_type;
+
+#if !WITH_DRA && !WITH_TRGB && !WITH_HNEXT
         hckim_eb_formation_tx_info_1 = (formation_tx_packet_type << 8) + 0;
+#elif WITH_DRA
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+        uint8_t tx_dra_m = current_packet->dra_m;
+        uint16_t tx_dra_seq = current_packet->dra_seq;
+
+        hckim_eb_formation_tx_info_1 = (formation_tx_packet_type << 8) + tx_dra_m;
+        hckim_eb_formation_tx_info_2 = tx_dra_seq;
+
+#if DRA_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "dra txE %u %u %u %u", formation_tx_packet_type, 
+                                  tx_dra_m, 
+                                  hckim_eb_formation_tx_info_1,
+                                  hckim_eb_formation_tx_info_2));
+#endif /* DRA_DBG */
+#else
+#endif
+#endif
+
 #endif
         if(packet_ready && tsch_hck_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset,
                                                     hckim_eb_formation_tx_info_1, hckim_eb_formation_tx_info_2)) {
@@ -3051,7 +3108,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
 
 #if HCK_FORMATION_PACKET_TYPE_INFO
-#if !WITH_TRGB && !WITH_HNEXT
+#if !WITH_DRA && !WITH_TRGB && !WITH_HNEXT
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
             int formation_rx_info = 0;
@@ -3075,6 +3132,59 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 formation_rx_packet_type = HCK_PACKET_TYPE_EB;
               }
             }
+#elif WITH_DRA
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+            formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
+
+            uint16_t hckim_formation_rx_info_1 = 0; /* Store packet type and dra m */
+            uint16_t hckim_formation_rx_info_2 = 0; /* Store dra seq */
+
+            uint8_t rx_dra_m = 0; 
+            uint16_t rx_dra_seq = 0;
+
+            if(frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
+              if(frame.fcf.ie_list_present) {
+                struct ieee802154_ies formation_ies;
+                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &formation_ies);
+
+                hckim_formation_rx_info_1 = (int)formation_ies.ie_header_piggybacking_info_1;
+                formation_rx_packet_type = (uint8_t)((hckim_formation_rx_info_1 >> 8) & 0xFF);
+                rx_dra_m = (uint8_t)(hckim_formation_rx_info_1 & 0xFF);
+
+                hckim_formation_rx_info_2 = (int)formation_ies.ie_header_piggybacking_info_2;
+                rx_dra_seq = hckim_formation_rx_info_2;
+              } else {
+                formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
+              }
+            } else { /* EB case */
+              if(frame.fcf.ie_list_present) {
+                struct ieee802154_ies formation_ies;
+                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &formation_ies);
+                
+                hckim_formation_rx_info_1 = (int)formation_ies.ie_eb_piggybacking_info_1;
+                formation_rx_packet_type = (uint8_t)((hckim_formation_rx_info_1 >> 8) & 0xFF);
+                rx_dra_m = (uint8_t)(hckim_formation_rx_info_1 & 0xFF);
+
+                hckim_formation_rx_info_2 = (int)formation_ies.ie_eb_piggybacking_info_2;
+                rx_dra_seq = hckim_formation_rx_info_2;
+              } else {
+                formation_rx_packet_type = HCK_PACKET_TYPE_EB;
+              }
+            }
+
+#if DRA_DBG
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "dra rx %u %u %u %u", formation_rx_packet_type, 
+                                      rx_dra_m, 
+                                      hckim_formation_rx_info_1, 
+                                      rx_dra_seq));
+#endif
+
+#else
+#endif
+
 #endif
 #if WITH_TRGB
             formation_rx_packet_type = trgb_rx_packet_type;

@@ -74,6 +74,13 @@ extern uint8_t hck_formation_bootstrap_state;
 extern uint64_t hck_formation_state_transition_asn;
 #endif
 
+#if WITH_DRA
+extern uint8_t dra_m_max;
+extern uint8_t dra_my_m;
+extern uint8_t dra_nbr_m_mxa;
+extern uint16_t dra_my_seq;
+#endif
+
 #if WITH_HNEXT
 extern enum HNEXT_OFFSET hnext_offset_assignment_parent[HCK_PACKET_TYPE_NULL];
 extern enum HNEXT_OFFSET hnext_offset_assignment_others[HCK_PACKET_TYPE_NULL];

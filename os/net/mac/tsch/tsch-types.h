@@ -182,6 +182,11 @@ struct tsch_packet {
   uint8_t hck_packet_type;
 #endif
 
+#if WITH_DRA
+  uint8_t  dra_m;
+  uint16_t dra_seq;
+#endif
+
 #if WITH_HNEXT
   uint8_t hnext_offset;
   uint8_t hnext_collision_count;

@@ -62,6 +62,12 @@
 #include "net/mac/tsch/sixtop/sixtop.h"
 #endif
 
+#if WITH_DRA
+#include "net/ipv6/uip.h"
+#include "net/ipv6/uip-icmp6.h"
+#include "net/routing/rpl-classic/rpl-private.h"
+#endif
+
 #if FRAME802154_VERSION < FRAME802154_IEEE802154_2015
 #error TSCH: FRAME802154_VERSION must be at least FRAME802154_IEEE802154_2015
 #endif
@@ -74,6 +80,15 @@
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
 uint8_t hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_0_NEW_NODE;
 uint64_t hck_formation_state_transition_asn = 0;
+#endif
+
+#if WITH_DRA
+uint8_t dra_m_max = 0;
+uint8_t dra_my_m = 0;
+uint8_t dra_nbr_m_max = 0;
+uint16_t dra_my_seq = 0; /* In the case of 6TiSCH-MC, include all packets 
+                          * In the case of Orchestra, includes packets allocated for 
+                          * common shared slotframe */
 #endif
 
 /* hckim measure associated cell counts */
@@ -1390,6 +1405,15 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
       /* don't send when in leaf mode */
       && !NETSTACK_ROUTING.is_in_leaf_mode()
         ) {
+#if WITH_DRA
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+      dra_my_seq++; /* All the packets are transmitted via minimal slotframe */
+#else
+#endif
+#if DRA_DBG
+      LOG_INFO("dra send EB seq %u\n", dra_my_seq);
+#endif
+#endif
       /* Enqueue EB only if there isn't already one in queue */
       if(tsch_queue_nbr_packet_count(n_eb) == 0) {
         uint8_t hdr_len = 0;
@@ -1589,6 +1613,21 @@ send_packet(mac_callback_t sent, void *ptr)
 
 #if HCK_MOD_TSCH_PIGGYBACKING_HEADER_IE_32BITS || HCK_FORMATION_PACKET_TYPE_INFO
   packetbuf_set_attr(PACKETBUF_ATTR_MAC_METADATA, 1);
+#endif
+
+#if WITH_DRA
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+    dra_my_seq++; /* All the packets are transmitted via minimal slotframe */
+#if DRA_DBG
+    LOG_INFO("dra send non-EB seq %u\n", dra_my_seq);
+#endif
+#else
+  if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6
+    && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)
+    && linkaddr_cmp(addr, &tsch_broadcast_address) /* HCKIM-TODO: multicast DIO only ??? */) {
+    dra_my_control_packet_seq++;
+  }
+#endif
 #endif
 
 #if LLSEC802154_ENABLED

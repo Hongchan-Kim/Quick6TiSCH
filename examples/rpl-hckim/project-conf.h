@@ -99,7 +99,7 @@
 #define IOTLAB_LILLE_2_CORNER                               4 /* 2 nodes */
 #define IOTLAB_LILLE_87_CORNER                              5 /* 87 nodes */
 //
-#define IOTLAB_SITE                                         IOTLAB_LILLE_87_CORNER
+#define IOTLAB_SITE                                         IOTLAB_LILLE_2_CORNER
 //
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 #define NODE_NUM                                            79
@@ -447,15 +447,16 @@
 /***************************************************************
  * Dynamic resource allocation implementation - WITH_DRA
  ****************************************************************/
-#define WITH_DRA                                            0
+#define WITH_DRA                                            1
 #if WITH_DRA
 #define DRA_LOG                                             1
-#define DRA_DBG                                             0
+#define DRA_DBG                                             1
 
 #undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 31
-#define DRA_M_MAX                                           4 /* 2 ^ DRA_M_MAX < ORCHESTRA_CONF_COMMON_SHARED_PERIOD */
 #define DRA_M_MIN                                           0
+#define DRA_T_SLOTFRAMES                                    5
+
 #endif /* WITH_TRGB */
 
 /***************************************************************
