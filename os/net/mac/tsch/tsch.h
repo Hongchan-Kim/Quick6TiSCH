@@ -79,6 +79,9 @@ extern uint8_t dra_m_max;
 extern uint8_t dra_my_m;
 extern uint8_t dra_nbr_m_mxa;
 extern uint16_t dra_my_seq;
+extern uint16_t dra_my_num_of_pkts;
+
+int dra_update_nbr_info(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dra_seq);
 #endif
 
 #if WITH_HNEXT

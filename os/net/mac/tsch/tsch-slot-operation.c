@@ -3182,6 +3182,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                                       rx_dra_seq));
 #endif
 
+          /* Update nbr */
+          int dra_nbr_id = HCK_GET_NODE_ID_FROM_LINKADDR(&source_address);
+          dra_update_nbr_info(dra_nbr_id, rx_dra_m, rx_dra_seq);
+
 #else
 #endif
 

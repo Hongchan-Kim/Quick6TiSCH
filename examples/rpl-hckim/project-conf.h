@@ -56,7 +56,7 @@
 #define HCK_LOG_TSCH_PACKET_ADD_REMOVE                      1
 #define HCK_LOG_TSCH_SLOT                                   1
 #define HCK_LOG_TSCH_SLOT_APP_SEQNO                         1
-#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      0
+#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      1
 //
 #define SIMPLE_ENERGEST_CONF_PERIOD                         (1 * 60 * CLOCK_SECOND)
 #define RPL_FIRST_MEASURE_PERIOD                            (1 * 60)
@@ -451,6 +451,8 @@
 #if WITH_DRA
 #define DRA_LOG                                             1
 #define DRA_DBG                                             1
+
+#define DRA_NBR_NUM                                         MAX_NBR_NODE_NUM
 
 #undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
 #define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 31

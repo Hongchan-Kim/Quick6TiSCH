@@ -89,7 +89,62 @@ uint8_t dra_nbr_m_max = 0;
 uint16_t dra_my_seq = 0; /* In the case of 6TiSCH-MC, include all packets 
                           * In the case of Orchestra, includes packets allocated for 
                           * common shared slotframe */
+uint16_t dra_my_num_of_pkts = 0;
+
+struct dra_nbr_info {
+  uint8_t dra_nbr_id;
+  uint8_t dra_nbr_last_m;
+  uint16_t dra_nbr_last_seq;
+  uint16_t dra_nbr_num_of_pkts;
+};
+static struct dra_nbr_info dra_nbr_info_table[DRA_NBR_NUM];
+
+int dra_update_nbr_info(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dra_seq)
+{
+  /* First, get matched/available index */
+  int nbr_index = -1;
+  int i = 0;
+  for(i = 0; i < DRA_NBR_NUM; i++) {
+    if(dra_nbr_info_table[i].dra_nbr_id == 0 
+      || dra_nbr_info_table[i].dra_nbr_id == dra_nbr_id) {
+      nbr_index = i;
+      dra_nbr_info_table[nbr_index].dra_nbr_id = dra_nbr_id;
+      break;
+    }
+  }
+
+  /* Second, update corresponding info */
+  if(nbr_index != -1) {
+    uint16_t dra_nbr_last_seq = dra_nbr_info_table[nbr_index].dra_nbr_last_seq;
+
+    uint16_t dra_nbr_accum_pkts = rx_dra_seq - dra_nbr_last_seq;
+    dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts += dra_nbr_accum_pkts;
+
+    dra_nbr_info_table[nbr_index].dra_nbr_last_m = rx_dra_m;
+    dra_nbr_info_table[nbr_index].dra_nbr_last_seq = rx_dra_seq;
+
+#if DRA_DBG
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "dra nbr %u %u %u %u %u", nbr_index,
+                                  dra_nbr_info_table[nbr_index].dra_nbr_id,
+                                  dra_nbr_info_table[nbr_index].dra_nbr_last_m,
+                                  dra_nbr_info_table[nbr_index].dra_nbr_last_seq,
+                                  dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts));
 #endif
+
+    return 1;
+  } else {
+#if DRA_DBG
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "dra nbr N/A"));
+#endif
+
+    return -1;
+  }
+}
+#endif /* WITH_DRA */
 
 /* hckim measure associated cell counts */
 static uint32_t tsch_timeslots_until_last_session;
@@ -590,6 +645,16 @@ tsch_reset(void)
 #endif /* TSCH_AUTOSELECT_TIME_SOURCE */
   tsch_set_eb_period(TSCH_EB_PERIOD);
   keepalive_status = KEEPALIVE_SCHEDULING_UNCHANGED;
+
+#if WITH_DRA
+  int j = 0;
+  for(j = 0; j < DRA_NBR_NUM; j++) {
+    dra_nbr_info_table[j].dra_nbr_id = 0;
+    dra_nbr_info_table[j].dra_nbr_last_m = 0;
+    dra_nbr_info_table[j].dra_nbr_last_seq = 0;
+    dra_nbr_info_table[j].dra_nbr_num_of_pkts = 0;
+  }
+#endif
 }
 /* TSCH keep-alive functions */
 
