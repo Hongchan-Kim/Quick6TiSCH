@@ -454,11 +454,6 @@
 
 #define DRA_NBR_NUM                                         MAX_NBR_NODE_NUM
 
-#undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 31
-#define DRA_M_MIN                                           0
-#define DRA_T_SLOTFRAMES                                    5
-
 #endif /* WITH_TRGB */
 
 /***************************************************************

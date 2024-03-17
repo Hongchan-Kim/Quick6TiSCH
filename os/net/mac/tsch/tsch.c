@@ -83,13 +83,19 @@ uint64_t hck_formation_state_transition_asn = 0;
 #endif
 
 #if WITH_DRA
-uint8_t dra_m_max = 0;
+uint8_t dra_m_max = 0; /* Set as the maximum number of slots that can be 
+                          allocated in the slotframe at intervals of 2 slots 
+                          in powers of 2 */
+uint8_t dra_t_slotframes = 0; /* Set as the minimum number of slotframes 
+                                 that ensures a period of at least one second. */
+
 uint8_t dra_my_m = 0;
-uint8_t dra_nbr_m_max = 0;
 uint16_t dra_my_seq = 0; /* In the case of 6TiSCH-MC, include all packets 
-                          * In the case of Orchestra, includes packets allocated for 
+                          * In the case of Orchestra, include packets allocated for 
                           * common shared slotframe */
 uint16_t dra_my_num_of_pkts = 0;
+
+uint8_t dra_nbr_m_max = 0;
 
 struct dra_nbr_info {
   uint8_t dra_nbr_id;
@@ -647,6 +653,46 @@ tsch_reset(void)
   keepalive_status = KEEPALIVE_SCHEDULING_UNCHANGED;
 
 #if WITH_DRA
+  /* First, set DRA maximum m */
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+  int dra_power_of_two = 1;
+  int dra_exponent = 0;
+
+  while(dra_power_of_two * 2 < TSCH_SCHEDULE_CONF_DEFAULT_LENGTH) {
+    dra_power_of_two *= 2;
+    dra_exponent++;
+  }
+
+  dra_m_max = dra_exponent;
+#else
+  int dra_power_of_two = 1;
+  int dra_exponent = 0;
+
+  while(dra_power_of_two * 2 < ORCHESTRA_CONF_COMMON_SHARED_PERIOD) {
+    dra_power_of_two *= 2;
+    dra_exponent++;
+  }
+
+  dra_m_max = dra_exponent;
+#endif
+
+  /* Second, set as the minimum number of slotframes 
+     that ensures a period of at least one second. */
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+  dra_t_slotframes = 1000 / TSCH_SCHEDULE_CONF_DEFAULT_LENGTH + 1;
+#else
+  dra_t_slotframes = 1000 / ORCHESTRA_CONF_COMMON_SHARED_PERIOD + 1;
+#endif
+
+#if DRA_DBG
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+  LOG_INFO("dra param %u %u %u\n", TSCH_SCHEDULE_CONF_DEFAULT_LENGTH, dra_m_max, dra_t_slotframes);
+#else
+  LOG_INFO("dra param %u %u %u\n", ORCHESTRA_CONF_COMMON_SHARED_PERIOD, dra_m_max, dra_t_slotframes);
+#endif
+#endif
+
+  /* Third, initialize DRA neighbor information */
   int j = 0;
   for(j = 0; j < DRA_NBR_NUM; j++) {
     dra_nbr_info_table[j].dra_nbr_id = 0;

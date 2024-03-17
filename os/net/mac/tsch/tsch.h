@@ -76,13 +76,16 @@ extern uint64_t hck_formation_state_transition_asn;
 
 #if WITH_DRA
 extern uint8_t dra_m_max;
+extern uint8_t dra_t_slotframes;
+
 extern uint8_t dra_my_m;
-extern uint8_t dra_nbr_m_mxa;
 extern uint16_t dra_my_seq;
 extern uint16_t dra_my_num_of_pkts;
 
+extern uint8_t dra_nbr_m_mxa;
+
 int dra_update_nbr_info(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dra_seq);
-#endif
+#endif /* WITH_DRA */
 
 #if WITH_HNEXT
 extern enum HNEXT_OFFSET hnext_offset_assignment_parent[HCK_PACKET_TYPE_NULL];
