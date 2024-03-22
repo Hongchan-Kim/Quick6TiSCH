@@ -75,8 +75,8 @@ extern uint64_t hck_formation_state_transition_asn;
 #endif
 
 #if WITH_DRA
-extern uint8_t dra_m_max;
-extern uint8_t dra_t_slotframes;
+extern uint8_t DRA_MAX_M;
+extern uint8_t DRA_T_SLOTFRAMES;
 
 extern uint8_t dra_my_m;
 extern uint16_t dra_my_seq;
@@ -84,7 +84,12 @@ extern uint16_t dra_my_num_of_pkts;
 
 extern uint8_t dra_nbr_m_mxa;
 
-int dra_update_nbr_info(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dra_seq);
+extern uint16_t dra_total_num_of_pkts;
+extern uint16_t dra_avg_num_of_pkts;
+extern uint8_t dra_total_max_m;
+
+int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dra_seq);
+void dra_allocate_shared_slots();
 #endif /* WITH_DRA */
 
 #if WITH_HNEXT

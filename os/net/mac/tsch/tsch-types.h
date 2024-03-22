@@ -183,7 +183,7 @@ struct tsch_packet {
 #endif
 
 #if WITH_DRA
-  uint8_t  dra_m;
+  uint8_t dra_m;
   uint16_t dra_seq;
 #endif
 

@@ -1930,13 +1930,18 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       formation_tx_packet_type = current_packet->hck_packet_type;
 #if !WITH_DRA && !WITH_TRGB && !WITH_HNEXT
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
-        uint16_t formation_tx_info = 0;
-        formation_tx_info = (formation_tx_packet_type << 8) + 0;
+        uint16_t hckim_header_formation_tx_info_1 = 0; /* Store packet type and dra m */
+        uint16_t hckim_header_formation_tx_info_2 = 0; /* Store dra seq */
+
+        hckim_header_formation_tx_info_1 = (formation_tx_packet_type << 8) + 0;
+
         frame802154_t formation_tx_frame;
         int formation_hdr_len;
         formation_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &formation_tx_frame);
-        ((uint8_t *)(packet))[formation_hdr_len + 2] = (uint8_t)(formation_tx_info & 0xFF);
-        ((uint8_t *)(packet))[formation_hdr_len + 3] = (uint8_t)((formation_tx_info >> 8) & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 2] = (uint8_t)(hckim_header_formation_tx_info_1 & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 3] = (uint8_t)((hckim_header_formation_tx_info_1 >> 8) & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 4] = (uint8_t)(hckim_header_formation_tx_info_2 & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 5] = (uint8_t)((hckim_header_formation_tx_info_2 >> 8) & 0xFF);
       } else {
         /* Piggybacking to EB will be performed at EB update below */
       }
@@ -1949,7 +1954,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         uint8_t tx_dra_m = current_packet->dra_m;
         uint16_t tx_dra_seq = current_packet->dra_seq;
         
-
         hckim_header_formation_tx_info_1 = (formation_tx_packet_type << 8) + tx_dra_m;
         hckim_header_formation_tx_info_2 = tx_dra_seq;
 
@@ -1973,7 +1977,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       } else {
         /* Piggybacking to EB will be performed at EB update below */
       }
-#else
+#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 #endif
 #endif
 #endif /* HCK_FORMATION_PACKET_TYPE_INFO */
@@ -2194,11 +2198,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                                   hckim_eb_formation_tx_info_1,
                                   hckim_eb_formation_tx_info_2));
 #endif /* DRA_DBG */
-#else
+#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 #endif
 #endif
 
-#endif
+#endif /* HCK_FORMATION_PACKET_TYPE_INFO */
         if(packet_ready && tsch_hck_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset,
                                                     hckim_eb_formation_tx_info_1, hckim_eb_formation_tx_info_2)) {
           packet_ready = 1;
@@ -3133,10 +3137,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               }
             }
 #elif WITH_DRA
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
-
             uint16_t hckim_formation_rx_info_1 = 0; /* Store packet type and dra m */
             uint16_t hckim_formation_rx_info_2 = 0; /* Store dra seq */
 
@@ -3172,7 +3174,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                 formation_rx_packet_type = HCK_PACKET_TYPE_EB;
               }
             }
-
+            if(current_link->slotframe_handle == DRA_SLOTFRAME_HANDLE) {
 #if DRA_DBG
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
@@ -3181,15 +3183,12 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                                       hckim_formation_rx_info_1, 
                                       rx_dra_seq));
 #endif
-
-          /* Update nbr */
-          int dra_nbr_id = HCK_GET_NODE_ID_FROM_LINKADDR(&source_address);
-          dra_update_nbr_info(dra_nbr_id, rx_dra_m, rx_dra_seq);
-
-#else
+              /* Update nbr */
+              int dra_nbr_id = HCK_GET_NODE_ID_FROM_LINKADDR(&source_address);
+              dra_receive_control_message(dra_nbr_id, rx_dra_m, rx_dra_seq);
+            }
 #endif
 
-#endif
 #if WITH_TRGB
             formation_rx_packet_type = trgb_rx_packet_type;
 #endif

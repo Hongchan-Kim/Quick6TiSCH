@@ -617,18 +617,18 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 
 #if HCK_FORMATION_PACKET_TYPE_INFO
             p->hck_packet_type = hck_current_packet_type;
+#endif /* HCK_FORMATION_PACKET_TYPE_INFO */
+
 #if WITH_DRA
 #if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
             /* All the packets are transmitted via minimal slotframe */
             p->dra_m = dra_my_m;
             p->dra_seq = dra_my_seq;
-#else
-            // HCKIM-TODO, utilize TSCH_CALLBACK_PACKET_READY() result
+#else // DRA-TODO, utilize TSCH_CALLBACK_PACKET_READY() result
             if(hck_current_packet_type == HCK_PACKET_TYPE_M_DIO) {
-              p->dra_control_packet_seq = dra_my_control_packet_seq;
               p->dra_m = dra_my_m;
+              p->dra_seq = dra_my_seq;
             }
-#endif
 #endif
 #endif
 

@@ -84,6 +84,48 @@ MEMB(slotframe_memb, struct tsch_slotframe, TSCH_SCHEDULE_MAX_SLOTFRAMES);
 /* List of slotframes (each slotframe holds its own list of links) */
 LIST(slotframe_list);
 
+/*---------------------------------------------------------------------------*/
+#if WITH_DRA
+void dra_allocate_timeslots()
+{
+  struct tsch_slotframe *dra_mc_sf = tsch_schedule_get_slotframe_by_handle(0);
+  struct tsch_link *l;
+  while((l = list_head(dra_mc_sf->links_list))) {
+    tsch_schedule_remove_link(dra_mc_sf, l);
+  }
+
+  int dra_larger_m = MAX(dra_my_m, dra_total_max_m);
+
+  int dra_inter_slot_interval = 1 << (DRA_MAX_M - dra_larger_m + 1);
+  int dra_num_of_tx_slots = 1 << dra_my_m;
+  int dra_num_of_slots = 1 << dra_larger_m;
+
+  int i = 0;
+  for(i = 0; i < dra_num_of_slots; i++) {
+    if(i < dra_num_of_tx_slots) {
+      tsch_schedule_add_link(dra_mc_sf,
+          (LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED | LINK_OPTION_TIME_KEEPING),
+          LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
+          i * dra_inter_slot_interval, 0, 1);
+    } else {
+      tsch_schedule_add_link(dra_mc_sf,
+          (LINK_OPTION_RX | LINK_OPTION_SHARED | LINK_OPTION_TIME_KEEPING),
+          LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
+          i * dra_inter_slot_interval, 0, 1);
+    }
+  }
+
+#if DRA_DBG
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+      "dra alloc %u %u %u", dra_inter_slot_interval, 
+                            dra_num_of_tx_slots, 
+                            dra_num_of_slots));
+#endif
+}
+#endif /* WITH_DRA */
+/*---------------------------------------------------------------------------*/
+
 /* Adds and returns a slotframe (NULL if failure) */
 struct tsch_slotframe *
 tsch_schedule_add_slotframe(uint16_t handle, uint16_t size)
@@ -647,7 +689,11 @@ tsch_schedule_add_link(struct tsch_slotframe *slotframe,
        * to keep neighbor state in sync with link options etc.) */
       tsch_schedule_remove_link_by_timeslot(slotframe, timeslot, channel_offset);
     }
+#if WITH_DRA
+    if(0) {
+#else
     if(!tsch_get_lock()) {
+#endif
       LOG_ERR("! add_link memb_alloc couldn't take lock\n");
     } else {
       l = memb_alloc(&link_memb);
@@ -822,6 +868,9 @@ int
 tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link *l)
 {
   if(slotframe != NULL && l != NULL && l->slotframe_handle == slotframe->handle) {
+#if WITH_DRA
+    if(1) {
+#else /* WITH_DRA */
 #if WITH_ALICE /* alice implementation */
 #ifdef ALICE_TIME_VARYING_SCHEDULING
     if(1) { //original: if(tsch_get_lock()) {
@@ -831,6 +880,7 @@ tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link *l)
 #else
     if(tsch_get_lock()) {
 #endif
+#endif /* WITH_DRA */
       uint8_t link_options;
       linkaddr_t addr;
 
@@ -953,16 +1003,13 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
     struct tsch_link **backup_link)
 {
 #if WITH_DRA
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
   uint64_t dra_current_asfn = 0;
-  struct tsch_slotframe *dra_mc_sf = tsch_schedule_get_slotframe_by_handle(0);
+  struct tsch_slotframe *dra_mc_sf = tsch_schedule_get_slotframe_by_handle(DRA_SLOTFRAME_HANDLE);
   struct tsch_asn_t temp_asn;
   TSCH_ASN_COPY(temp_asn, dra_current_asn);
   uint16_t mod1 = TSCH_ASN_MOD(temp_asn, dra_mc_sf->size);
   TSCH_ASN_DEC(temp_asn, mod1);
   dra_current_asfn = TSCH_ASN_DIVISION(temp_asn, dra_mc_sf->size);
-#else
-#endif
 #endif
 
 #if WITH_ALICE
@@ -991,8 +1038,7 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
     while(sf != NULL) {
 
 #if WITH_DRA
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
-      if(sf->handle == 0) {
+      if(sf->handle == DRA_SLOTFRAME_HANDLE) {
         int dra_remaining_uicast_sf_link_exists = 0;
 
         uint16_t timeslot = TSCH_ASN_MOD(dra_current_asn, sf->size);
@@ -1043,18 +1089,19 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
             dra_lastly_scheduled_asfn = dra_next_asfn;
 
             /* TODO: reschedule at here! */
+            if((dra_lastly_scheduled_asfn % DRA_T_SLOTFRAMES) == 0) {
+              dra_allocate_shared_slots();
+              dra_allocate_timeslots();
 
 #if DRA_DBG
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                "dra sched %llu", dra_lastly_scheduled_asfn));
+              TSCH_LOG_ADD(tsch_log_message,
+                  snprintf(log->message, sizeof(log->message),
+                  "dra sched %llu", dra_lastly_scheduled_asfn));
 #endif
-
+            }
           }
         }
       }
-#else
-#endif
 #endif /* WITH_DRA */
 
 #if WITH_ALICE /* alice implementation */
@@ -1551,14 +1598,11 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
           sf->size.val + l->timeslot - timeslot;
 
 #if WITH_DRA
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
-        if(sf->handle == 0 
+        if(sf->handle == DRA_SLOTFRAME_HANDLE
             && dra_current_asfn != dra_lastly_scheduled_asfn
             && l->timeslot > timeslot) {
           time_to_timeslot += sf->size.val;
         }
-#else
-#endif
 #endif
 
 #if WITH_ALICE

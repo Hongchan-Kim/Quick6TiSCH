@@ -453,8 +453,14 @@
 #define DRA_DBG                                             1
 
 #define DRA_NBR_NUM                                         MAX_NBR_NODE_NUM
-
-#endif /* WITH_TRGB */
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+#define DRA_SLOTFRAME_LENGTH                                TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
+#define DRA_SLOTFRAME_HANDLE                                0
+#else /* Orchestra */
+#define DRA_SLOTFRAME_LENGTH                                ORCHESTRA_CONF_COMMON_SHARED_PERIOD
+#define DRA_SLOTFRAME_HANDLE                                TSCH_SCHED_COMMON_SF_HANDLE
+#endif
+#endif /* WITH_DRA */
 
 /***************************************************************
  * TRGB implementation - WITH_TRGB

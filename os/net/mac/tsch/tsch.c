@@ -82,11 +82,12 @@ uint8_t hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_0_NEW_NODE;
 uint64_t hck_formation_state_transition_asn = 0;
 #endif
 
+/*---------------------------------------------------------------------------*/
 #if WITH_DRA
-uint8_t dra_m_max = 0; /* Set as the maximum number of slots that can be 
+uint8_t DRA_MAX_M = 0; /* Set as the maximum number of slots that can be 
                           allocated in the slotframe at intervals of 2 slots 
                           in powers of 2 */
-uint8_t dra_t_slotframes = 0; /* Set as the minimum number of slotframes 
+uint8_t DRA_T_SLOTFRAMES = 0; /* Set as the minimum number of slotframes 
                                  that ensures a period of at least one second. */
 
 uint8_t dra_my_m = 0;
@@ -95,7 +96,9 @@ uint16_t dra_my_seq = 0; /* In the case of 6TiSCH-MC, include all packets
                           * common shared slotframe */
 uint16_t dra_my_num_of_pkts = 0;
 
-uint8_t dra_nbr_m_max = 0;
+uint16_t dra_total_num_of_pkts = 0;
+uint16_t dra_avg_num_of_pkts = 0;
+uint8_t dra_total_max_m = 0;
 
 struct dra_nbr_info {
   uint8_t dra_nbr_id;
@@ -104,8 +107,8 @@ struct dra_nbr_info {
   uint16_t dra_nbr_num_of_pkts;
 };
 static struct dra_nbr_info dra_nbr_info_table[DRA_NBR_NUM];
-
-int dra_update_nbr_info(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dra_seq)
+/*---------------------------------------------------------------------------*/
+int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dra_seq)
 {
   /* First, get matched/available index */
   int nbr_index = -1;
@@ -150,7 +153,44 @@ int dra_update_nbr_info(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dra_seq)
     return -1;
   }
 }
+/*---------------------------------------------------------------------------*/
+void dra_allocate_shared_slots()
+{
+  dra_total_num_of_pkts = 0;
+  dra_total_max_m = 0;
+
+  dra_total_num_of_pkts += dra_my_num_of_pkts;
+  dra_my_num_of_pkts = 0;
+
+  dra_total_max_m = dra_my_m;
+  dra_my_m = 0;
+
+  int i = 0;
+  for(i = 0; i < DRA_NBR_NUM; i++) {
+    dra_total_num_of_pkts += dra_nbr_info_table[i].dra_nbr_num_of_pkts;
+    dra_nbr_info_table[i].dra_nbr_num_of_pkts = 0;
+
+    if(dra_total_max_m < dra_nbr_info_table[i].dra_nbr_last_m) {
+      dra_total_max_m = dra_nbr_info_table[i].dra_nbr_last_m;
+    }
+    dra_nbr_info_table[i].dra_nbr_last_m = 0;
+  }
+
+  dra_avg_num_of_pkts = dra_total_num_of_pkts / DRA_T_SLOTFRAMES;
+
+  int dra_power_of_two = 1;
+  int dra_exponent = 0;
+
+  while(dra_power_of_two * 2 < dra_avg_num_of_pkts) {
+    dra_power_of_two *= 2;
+    dra_exponent++;
+  }
+
+  dra_my_m = dra_exponent + 1;
+  dra_my_m = MIN(dra_my_m, DRA_MAX_M);
+}
 #endif /* WITH_DRA */
+/*---------------------------------------------------------------------------*/
 
 /* hckim measure associated cell counts */
 static uint32_t tsch_timeslots_until_last_session;
@@ -659,42 +699,22 @@ tsch_reset(void)
 
 #if WITH_DRA
   /* First, set DRA maximum m */
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
   int dra_power_of_two = 1;
   int dra_exponent = 0;
 
-  while(dra_power_of_two * 2 < TSCH_SCHEDULE_CONF_DEFAULT_LENGTH) {
+  while(dra_power_of_two * 2 < DRA_SLOTFRAME_LENGTH) {
     dra_power_of_two *= 2;
     dra_exponent++;
   }
 
-  dra_m_max = dra_exponent;
-#else
-  int dra_power_of_two = 1;
-  int dra_exponent = 0;
-
-  while(dra_power_of_two * 2 < ORCHESTRA_CONF_COMMON_SHARED_PERIOD) {
-    dra_power_of_two *= 2;
-    dra_exponent++;
-  }
-
-  dra_m_max = dra_exponent;
-#endif
+  DRA_MAX_M = dra_exponent;
 
   /* Second, set as the minimum number of slotframes 
      that ensures a period of at least one second. */
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
-  dra_t_slotframes = 1000 / TSCH_SCHEDULE_CONF_DEFAULT_LENGTH + 1;
-#else
-  dra_t_slotframes = 1000 / ORCHESTRA_CONF_COMMON_SHARED_PERIOD + 1;
-#endif
+  DRA_T_SLOTFRAMES = 1000 / DRA_SLOTFRAME_LENGTH + 1;
 
 #if DRA_DBG
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
-  LOG_INFO("dra param %u %u %u\n", TSCH_SCHEDULE_CONF_DEFAULT_LENGTH, dra_m_max, dra_t_slotframes);
-#else
-  LOG_INFO("dra param %u %u %u\n", ORCHESTRA_CONF_COMMON_SHARED_PERIOD, dra_m_max, dra_t_slotframes);
-#endif
+  LOG_INFO("dra param %u %u %u\n", DRA_SLOTFRAME_LENGTH, DRA_MAX_M, DRA_T_SLOTFRAMES);
 #endif
 
   /* Third, initialize DRA neighbor information */
@@ -1527,7 +1547,8 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
         ) {
 #if WITH_DRA
 #if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
-      dra_my_seq++; /* All the packets are transmitted via minimal slotframe */
+      dra_my_seq++; /* All the EB packets are transmitted via minimal slotframe */
+      dra_my_num_of_pkts++;
 #else
 #endif
 #if DRA_DBG
@@ -1738,13 +1759,14 @@ send_packet(mac_callback_t sent, void *ptr)
 #if WITH_DRA
 #if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
     dra_my_seq++; /* All the packets are transmitted via minimal slotframe */
+    dra_my_num_of_pkts++;
 #if DRA_DBG
     LOG_INFO("dra send non-EB seq %u\n", dra_my_seq);
 #endif
-#else
+#else /* DRA-TODO: multicast DIO only ??? */
   if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6
     && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)
-    && linkaddr_cmp(addr, &tsch_broadcast_address) /* HCKIM-TODO: multicast DIO only ??? */) {
+    && linkaddr_cmp(addr, &tsch_broadcast_address) ) {
     dra_my_control_packet_seq++;
   }
 #endif
