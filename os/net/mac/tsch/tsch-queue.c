@@ -70,11 +70,6 @@
 #include "net/routing/rpl-classic/rpl-private.h"
 #endif
 
-#if WITH_TRGB
-#include "net/ipv6/uip-icmp6.h"
-#include "net/routing/rpl-classic/rpl-private.h"
-#endif
-
 #if WITH_HNEXT
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
@@ -1357,7 +1352,7 @@ tsch_queue_get_unicast_packet_for_any(struct tsch_neighbor **n, struct tsch_link
 #if WITH_TRGB
 struct tsch_packet *
 tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link, 
-                              uint8_t trgb_current_state, uint8_t trgb_current_cell)
+                              uint8_t trgb_current_cell)
 {
   int16_t get_index = 0;
 
@@ -1377,8 +1372,6 @@ tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link,
 #if HCK_MOD_RPL_CODE_NO_PATH_DAO
               || (trgb_current_packet_type == HCK_PACKET_TYPE_NP_DAO)
 #endif
-              || ((trgb_current_packet_type == HCK_PACKET_TYPE_KA) 
-                  && (trgb_current_state == TRGB_STATE_GREEN_OR_BLUE_UNAVAILABLE))
               ) {
               p = curr_nbr->tx_array[get_index];
               if(p != NULL) {
@@ -1389,10 +1382,11 @@ tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link,
               }
             }
           } else { /* Get packet for TRGB GREEN or BLUE cells */
-            if((trgb_current_packet_type == HCK_PACKET_TYPE_DAO)
-              || ((trgb_current_packet_type == HCK_PACKET_TYPE_KA) 
-                  && (trgb_current_state == TRGB_STATE_GREEN_OR_BLUE_AVAILABLE))
-              ) {
+            if((trgb_current_packet_type == HCK_PACKET_TYPE_EB)
+              || (trgb_current_packet_type == HCK_PACKET_TYPE_DAO)
+              || (trgb_current_packet_type == HCK_PACKET_TYPE_KA)
+              || (trgb_current_packet_type == HCK_PACKET_TYPE_DAOA)
+              || (trgb_current_packet_type == HCK_PACKET_TYPE_DATA)) {
               p = curr_nbr->tx_array[get_index];
               if(p != NULL) {
                 if(n != NULL) {

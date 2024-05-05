@@ -98,6 +98,8 @@
 #define IOTLAB_LILLE_79_CORNER                              3 /* 79 nodes */
 #define IOTLAB_LILLE_2_CORNER                               4 /* 2 nodes */
 #define IOTLAB_LILLE_87_CORNER                              5 /* 87 nodes */
+#define IOTLAB_LILLE_3_CORNER                               6 /* 3 nodes */
+#define IOTLAB_GRENOBLE_3_CORNER                            7 /* 3 nodes */
 //
 #define IOTLAB_SITE                                         IOTLAB_LILLE_2_CORNER
 //
@@ -111,6 +113,10 @@
 #define NODE_NUM                                            2
 #elif IOTLAB_SITE == IOTLAB_LILLE_87_CORNER
 #define NODE_NUM                                            87
+#elif IOTLAB_SITE == IOTLAB_LILLE_3_CORNER
+#define NODE_NUM                                            3
+#elif IOTLAB_SITE == IOTLAB_GRENOBLE_3_CORNER
+#define NODE_NUM                                            3
 #endif
 #endif
 
@@ -447,7 +453,7 @@
 /***************************************************************
  * Dynamic resource allocation implementation - WITH_DRA
  ****************************************************************/
-#define WITH_DRA                                            1
+#define WITH_DRA                                            0
 #if WITH_DRA
 #define DRA_LOG                                             1
 #define DRA_DBG                                             1
@@ -468,7 +474,16 @@
 #define WITH_TRGB                                           0
 #if WITH_TRGB
 #define TRGB_LOG                                            1
-#define TRGB_DBG                                            0
+#define TRGB_DBG                                            1
+
+#define TRGB_ROOT_ID                                        1
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+#define TRGB_SLOTFRAME_LENGTH                               TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
+#define TRGB_SLOTFRAME_HANDLE                               0
+#else /* Orchestra */
+#define TRGB_SLOTFRAME_LENGTH                               ORCHESTRA_CONF_COMMON_SHARED_PERIOD
+#define TRGB_SLOTFRAME_HANDLE                               TSCH_SCHED_COMMON_SF_HANDLE
+#endif
 #endif /* WITH_TRGB */
 
 /***************************************************************

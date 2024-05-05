@@ -85,19 +85,18 @@ enum TRGB_CELL {
   TRGB_CELL_BLUE,                             // 2
   TRGB_CELL_NULL                              // 3
 };
-enum TRGB_STATE {
-  TRGB_STATE_ALL_UNAVAILABLE,                 // 0
-  TRGB_STATE_GREEN_OR_BLUE_UNAVAILABLE,       // 1
-  TRGB_STATE_GREEN_OR_BLUE_AVAILABLE,         // 2
-  TRGB_STATE_NULL                             // 3 
-};
 enum TRGB_OPERATION {
   TRGB_OPERATION_RED,                         // 0
-  TRGB_OPERATION_GREEN_OR_BLUE_RX,            // 1
-  TRGB_OPERATION_GREEN_OR_BLUE_TX,            // 2
-  TRGB_OPERATION_GREEN_OR_BLUE_TX_NO_PACKET,  // 3
-  TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE,   // 4
-  TRGB_OPERATION_NULL                         // 5
+  TRGB_OPERATION_RED_TX,                      // 1
+  TRGB_OPERATION_RED_RX,                      // 2
+  TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE,   // 3
+  TRGB_OPERATION_GREEN_TX,                    // 4
+  TRGB_OPERATION_GREEN_RX,                    // 5
+  TRGB_OPERATION_GREEN_TX_NO_PACKET,          // 6
+  TRGB_OPERATION_BLUE_TX,                     // 7
+  TRGB_OPERATION_BLUE_RX,                     // 8
+  TRGB_OPERATION_BLUE_TX_NO_PACKET,           // 9
+  TRGB_OPERATION_NULL                         // 10
 };
 #endif
 

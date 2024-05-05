@@ -252,7 +252,7 @@ struct rpl_dio {
   struct rpl_metric_container mc;
   uint8_t hop_distance; /* hckim to measure hop distance accurately */
 #if WITH_TRGB
-  int8_t gparent_id;
+  uint8_t trgb_rpl_grandP_id;
 #endif
 };
 typedef struct rpl_dio rpl_dio_t;

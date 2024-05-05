@@ -60,7 +60,7 @@ extern struct tsch_neighbor *n_eb;
 /********** Functions *********/
 #if WITH_TRGB
 struct tsch_packet *tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link, 
-                                                uint8_t trgb_current_state, uint8_t trgb_current_cell);
+                                                   uint8_t trgb_current_cell);
 #endif
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HOLD_CURRENT_NBR

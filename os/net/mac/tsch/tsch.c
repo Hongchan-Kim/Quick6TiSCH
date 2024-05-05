@@ -192,6 +192,14 @@ void dra_allocate_shared_slots()
 #endif /* WITH_DRA */
 /*---------------------------------------------------------------------------*/
 
+/*---------------------------------------------------------------------------*/
+#if WITH_TRGB
+uint8_t trgb_parent_id = 0;
+uint8_t trgb_grandP_id = 0;
+enum TRGB_CELL trgb_my_tx_cell = TRGB_CELL_NULL;
+#endif
+/*---------------------------------------------------------------------------*/
+
 /* hckim measure associated cell counts */
 static uint32_t tsch_timeslots_until_last_session;
 static int32_t tsch_timeslots_in_current_session; // timeslots in current session
@@ -631,6 +639,31 @@ tsch_set_coordinator(int enable)
   }
   tsch_is_coordinator = enable;
   tsch_set_eb_period(TSCH_EB_PERIOD);
+
+#if WITH_TRGB
+  int trgb_rand_num = random_rand();
+  int trgb_rand_mod = trgb_rand_num % 2;
+
+  if(tsch_is_coordinator) { /* Coordinator */
+    if(trgb_my_tx_cell == TRGB_CELL_NULL) {
+      /* Configure trgb_my_tx_cell, if it is not configured */
+      if(trgb_rand_mod == 0) {
+        trgb_my_tx_cell = TRGB_CELL_GREEN;
+      } else {
+        trgb_my_tx_cell = TRGB_CELL_BLUE;
+      }
+    } else {
+      /* Maintain previously configured trgb_my_tx_cell */
+    }
+  } else { /* Not coordinator - reset trgb_my_tx_cell */
+    trgb_my_tx_cell = TRGB_CELL_NULL;
+  }
+
+#if TRGB_DBG
+  LOG_INFO("TRGB tx_cell_init tsch_set_coord %u %d %d %u\n", 
+            tsch_is_coordinator, trgb_rand_num, trgb_rand_mod, trgb_my_tx_cell);
+#endif
+#endif
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -725,6 +758,31 @@ tsch_reset(void)
     dra_nbr_info_table[j].dra_nbr_last_seq = 0;
     dra_nbr_info_table[j].dra_nbr_num_of_pkts = 0;
   }
+#endif
+
+#if WITH_TRGB
+  int trgb_rand_num = random_rand();
+  int trgb_rand_mod = trgb_rand_num % 2;
+  
+  if(tsch_is_coordinator) { /* Coordinator */
+    if(trgb_my_tx_cell == TRGB_CELL_NULL) {
+      /* Configure trgb_my_tx_cell, if it is not configured */
+      if(trgb_rand_mod == 0) {
+        trgb_my_tx_cell = TRGB_CELL_GREEN;
+      } else {
+        trgb_my_tx_cell = TRGB_CELL_BLUE;
+      }
+    } else {
+      /* Maintain previously configured trgb_my_tx_cell */
+    }
+  } else { /* Not coordinator - reset trgb_my_tx_cell */
+    trgb_my_tx_cell = TRGB_CELL_NULL;
+  }
+
+#if TRGB_DBG
+  LOG_INFO("TRGB tx_cell_init tsch_reset %u %d %d %u\n", 
+            tsch_is_coordinator, trgb_rand_num, trgb_rand_mod, trgb_my_tx_cell);
+#endif
 #endif
 }
 /* TSCH keep-alive functions */

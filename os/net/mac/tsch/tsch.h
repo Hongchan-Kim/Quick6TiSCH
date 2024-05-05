@@ -92,6 +92,12 @@ int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dr
 void dra_allocate_shared_slots();
 #endif /* WITH_DRA */
 
+#if WITH_TRGB
+extern uint8_t trgb_parent_id;
+extern uint8_t trgb_grandP_id;
+extern enum TRGB_CELL trgb_my_tx_cell;
+#endif
+
 #if WITH_HNEXT
 extern enum HNEXT_OFFSET hnext_offset_assignment_parent[HCK_PACKET_TYPE_NULL];
 extern enum HNEXT_OFFSET hnext_offset_assignment_others[HCK_PACKET_TYPE_NULL];

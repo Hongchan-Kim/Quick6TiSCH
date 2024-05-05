@@ -384,9 +384,9 @@ dio_input(void)
   dio.dtsn = buffer[i++];
   /* two reserved bytes */
 #if WITH_TRGB
-  dio.gparent_id = buffer[i++];
+  dio.trgb_rpl_grandP_id = buffer[i++];
 #if TRGB_DBG
-  LOG_INFO("TRGB dio_i GP ID %d\n", dio.gparent_id);
+  LOG_INFO("TRGB dio_i GP ID %d\n", dio.trgb_rpl_grandP_id);
 #endif
 #else
   i += 1;
@@ -586,7 +586,7 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
   /* reserved 2 bytes */
 #if WITH_TRGB
   if(dag->rank == ROOT_RANK(instance)) {
-    buffer[pos++] = 1;
+    buffer[pos++] = node_id;
 #if TRGB_DBG
     LOG_INFO("TRGB dio_o root GP ID %d\n", node_id);
 #endif

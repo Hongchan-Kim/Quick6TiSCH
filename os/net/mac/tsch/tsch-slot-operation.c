@@ -74,6 +74,7 @@
 #if WITH_TRGB
 #include "net/routing/rpl-classic/rpl.h"
 #include "net/routing/rpl-classic/rpl-private.h"
+#include "sys/node-id.h"
 #endif
 
 #if WITH_HNEXT
@@ -153,12 +154,9 @@ static enum HCK_PACKET_TYPE formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
 #endif
 
 #if WITH_TRGB
-static enum TRGB_STATE trgb_current_state = TRGB_STATE_NULL;
 static enum TRGB_CELL trgb_current_cell = TRGB_CELL_NULL;
 static enum TRGB_OPERATION trgb_current_operation = TRGB_OPERATION_NULL;
-
-static enum HCK_PACKET_TYPE trgb_tx_packet_type = HCK_PACKET_TYPE_NULL;
-static enum HCK_PACKET_TYPE trgb_rx_packet_type = HCK_PACKET_TYPE_NULL;
+static uint8_t trgb_skip_slot = 0;
 
 uint8_t
 hash_for_trgb(uint8_t value)
@@ -1449,6 +1447,87 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
   /* Is this a Tx link? */
   if(link->link_options & LINK_OPTION_TX) {
     /* is it for advertisement of EB? */
+
+#if WITH_TRGB && TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+    if(link->slotframe_handle == TRGB_SLOTFRAME_HANDLE) { /* Common shared cell only */
+      /* First, initialize current TRGB cell type and operation */
+      trgb_current_cell = TRGB_CELL_NULL;
+      trgb_current_operation = TRGB_OPERATION_NULL;
+
+      /* Second, determine current TRGB cell type based on ASN */
+      if((tsch_current_asn.ls4b % 3) == TRGB_CELL_RED) {
+        trgb_current_cell = TRGB_CELL_RED;
+      } else if((tsch_current_asn.ls4b % 3) == TRGB_CELL_GREEN) {
+        trgb_current_cell = TRGB_CELL_GREEN;
+      } else if((tsch_current_asn.ls4b % 3) == TRGB_CELL_BLUE) {
+        trgb_current_cell = TRGB_CELL_BLUE;
+      }
+
+      /* Third, compare trgb_my_tx_cell with the current cell type 
+         and determine trgb_current_operation */
+      if(trgb_current_cell == TRGB_CELL_RED) { /* RED cell */
+        trgb_current_operation = TRGB_OPERATION_RED; /* RED cell is always available */
+      } else { /* GREEN or BLUE cell */
+        if(trgb_my_tx_cell == TRGB_CELL_NULL) {
+          trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE; /* Do Rx operation */
+        } else {
+          if(trgb_current_cell == TRGB_CELL_GREEN) {
+            if(trgb_my_tx_cell == TRGB_CELL_GREEN) {
+              trgb_current_operation = TRGB_OPERATION_GREEN_TX;
+            } else if(trgb_my_tx_cell == TRGB_CELL_BLUE) {
+              trgb_current_operation = TRGB_OPERATION_GREEN_RX;
+            }
+          } else if(trgb_current_cell == TRGB_CELL_BLUE) {
+            if(trgb_my_tx_cell == TRGB_CELL_BLUE) {
+              trgb_current_operation = TRGB_OPERATION_BLUE_TX;
+            } else if(trgb_my_tx_cell == TRGB_CELL_GREEN) {
+              trgb_current_operation = TRGB_OPERATION_BLUE_RX;
+            }
+          }
+        }
+      }
+
+      /* Fourth, get packet and update trgb_current_operation */
+      if(trgb_current_operation == TRGB_OPERATION_RED) {
+        p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_cell);
+        if(p != NULL) {
+          trgb_current_operation = TRGB_OPERATION_RED_TX;
+        } else {
+          trgb_current_operation = TRGB_OPERATION_RED_RX;
+        }
+      } else if(trgb_current_operation == TRGB_OPERATION_GREEN_TX) {
+        p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_cell);
+        if(p == NULL) {
+          trgb_current_operation = TRGB_OPERATION_GREEN_TX_NO_PACKET;
+        }
+      } else if(trgb_current_operation == TRGB_OPERATION_BLUE_TX) {
+        p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_cell);
+        if(p == NULL) {
+          trgb_current_operation = TRGB_OPERATION_BLUE_TX_NO_PACKET;
+        }
+      }
+
+      /* The final value of trgb_current_operation should be one of the belows 
+       * TRGB_OPERATION_RED_TX
+       * TRGB_OPERATION_RED_RX
+       * TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE
+       * TRGB_OPERATION_GREEN_TX
+       * TRGB_OPERATION_GREEN_RX
+       * TRGB_OPERATION_GREEN_TX_NO_PACKET
+       * TRGB_OPERATION_BLUE_TX
+       * TRGB_OPERATION_BLUE_RX
+       * TRGB_OPERATION_BLUE_TX_NO_PACKET
+       */
+
+#if TRGB_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "TRGB get pkt %u %u", trgb_current_cell, trgb_current_operation));
+#endif
+    }
+
+#else /* WITH_TRGB && TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
+
     if(link->link_type == LINK_TYPE_ADVERTISING || link->link_type == LINK_TYPE_ADVERTISING_ONLY) {
       /* fetch EB packets */
       n = n_eb;
@@ -1460,143 +1539,16 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
         /* Get neighbor queue associated to the link and get packet from it */
         n = tsch_queue_get_nbr(&link->addr);
         p = tsch_queue_get_packet_for_nbr(n, link);
-
-#if WITH_TRGB
-        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) { /* Common shared cell only */
-          /* First, initialize current TRGB cell type and operation */
-          trgb_current_state = TRGB_STATE_NULL;
-          trgb_current_cell = TRGB_CELL_NULL;
-          trgb_current_operation = TRGB_OPERATION_NULL;
-
-          /* Second, determine current TRGB cell type based on ASN */          
-          if((tsch_current_asn.ls4b % 3) == TRGB_CELL_RED) {
-            trgb_current_cell = TRGB_CELL_RED;
-          } else if((tsch_current_asn.ls4b % 3) == TRGB_CELL_GREEN) {
-            trgb_current_cell = TRGB_CELL_GREEN;
-          } else if((tsch_current_asn.ls4b % 3) == TRGB_CELL_BLUE) {
-            trgb_current_cell = TRGB_CELL_BLUE;
-          }
-
-          /* Third, determine current hop distance */
-          uint8_t trgb_current_hops = 0xFF;
-          int trgb_is_root = tsch_rpl_callback_is_root();
-          if(trgb_is_root == 1) { /* Root node */
-            trgb_current_hops = 0;
-          } else { /* Non-root node */
-            if(tsch_is_associated == 1 && tsch_rpl_check_dodag_joined()) {
-              rpl_instance_t *trgb_instance = rpl_get_default_instance();
-              rpl_dag_t *trgb_dag = trgb_instance->current_dag;
-              if(trgb_dag->preferred_parent != NULL
-                && trgb_dag->preferred_parent->rank != RPL_INFINITE_RANK
-                && trgb_dag->preferred_parent->hop_distance != 0xFF) {
-                trgb_current_hops = trgb_dag->preferred_parent->hop_distance + 1;
-              }
-            }
-          }
-
-          /* Fourth, get packet and determine TRGB cell operation */
-          if(trgb_current_hops == 0xFF) { /* If it is impossible to determine hop distance 
-                                            -> TRGB_CELL_RED is only executable */
-            trgb_current_state = TRGB_STATE_GREEN_OR_BLUE_UNAVAILABLE;
-            if(trgb_current_cell == TRGB_CELL_GREEN || trgb_current_cell == TRGB_CELL_BLUE) {
-              trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE;
-            }
-          } else {
-            trgb_current_state = TRGB_STATE_GREEN_OR_BLUE_AVAILABLE;
-          }
-          if(trgb_current_cell == TRGB_CELL_RED) { /* TRGB RED cell operation */
-            p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_state, trgb_current_cell);
-            trgb_current_operation = TRGB_OPERATION_RED;
-#if TRGB_DBG
-            if(p == NULL) {
-              TSCH_LOG_ADD(tsch_log_message,
-                          snprintf(log->message, sizeof(log->message),
-                          "TRGB R Rx"));
-            } else {
-              TSCH_LOG_ADD(tsch_log_message,
-                          snprintf(log->message, sizeof(log->message),
-                          "TRGB R Tx"));
-            }
-#endif
-          } else if(trgb_current_operation 
-                  != TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE) { /* Available GREEN or BLUE cell */
-            if(trgb_current_cell == TRGB_CELL_GREEN) { /* GREEN cell */
-              if((trgb_current_hops % 2) == 0) { /* GREEN cell with even hop count -> Rx */
-                p = NULL;
-                trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_RX;
-#if TRGB_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                            snprintf(log->message, sizeof(log->message),
-                            "TRGB G Rx"));
-#endif
-              } else { /* GREEN cell with odd hop count -> Tx */
-                p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_state, trgb_current_cell);
-                if(p != NULL) { /* Tx GREEN cell with packet */
-                  trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_TX;
-#if TRGB_DBG
-                  TSCH_LOG_ADD(tsch_log_message,
-                              snprintf(log->message, sizeof(log->message),
-                              "TRGB G Tx Pkt"));
-#endif
-                } else { /* Tx GREEN cell without packet */
-                  trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_TX_NO_PACKET;
-#if TRGB_DBG
-                  TSCH_LOG_ADD(tsch_log_message,
-                              snprintf(log->message, sizeof(log->message),
-                              "TRGB G Tx no Pkt"));
-#endif
-                }
-              }
-            } else if(trgb_current_cell == TRGB_CELL_BLUE) { /* BLUE cell */
-              if((trgb_current_hops % 2) == 1) { /* BLUE cell with odd hop count -> Rx */
-                p = NULL;
-                trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_RX;
-#if TRGB_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                            snprintf(log->message, sizeof(log->message),
-                            "TRGB B Rx"));
-#endif
-              } else { /* BLUE cell with even hop count -> Tx */
-                p = tsch_queue_get_packet_for_trgb(&n, link, trgb_current_state, trgb_current_cell);
-                if(p != NULL) { /* Tx BLUE cell with packet */
-                  trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_TX;
-#if TRGB_DBG
-                  TSCH_LOG_ADD(tsch_log_message,
-                              snprintf(log->message, sizeof(log->message),
-                              "TRGB B Tx Pkt"));
-#endif
-                } else { /* Tx BLUE cell without packet */
-                  trgb_current_operation = TRGB_OPERATION_GREEN_OR_BLUE_TX_NO_PACKET;
-#if TRGB_DBG
-                  TSCH_LOG_ADD(tsch_log_message,
-                              snprintf(log->message, sizeof(log->message),
-                              "TRGB B Tx no Pkt"));
-#endif
-                }
-              }
-            }
-          }
-#if TRGB_DBG
-          TSCH_LOG_ADD(tsch_log_message,
-                      snprintf(log->message, sizeof(log->message),
-                      "TRGB %u %u %u %u", trgb_current_state, trgb_current_cell, 
-                                          trgb_current_hops, trgb_current_operation));
-#endif
-        } else {
-          /* if it is a broadcast slot and there were no broadcast packets, pick any unicast packet */
-          if(p == NULL && n == n_broadcast) {
-            p = tsch_queue_get_unicast_packet_for_any(&n, link);
-          }
-        }
-#else
         /* if it is a broadcast slot and there were no broadcast packets, pick any unicast packet */
         if(p == NULL && n == n_broadcast) {
           p = tsch_queue_get_unicast_packet_for_any(&n, link);
         }
-#endif
       }
     }
+
+#endif /* WITH_TRGB && TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
   }
+
   /* return nbr (by reference) */
   if(target_neighbor != NULL) {
     *target_neighbor = n;
@@ -1930,8 +1882,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       formation_tx_packet_type = current_packet->hck_packet_type;
 #if !WITH_DRA && !WITH_TRGB && !WITH_HNEXT
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
-        uint16_t hckim_header_formation_tx_info_1 = 0; /* Store packet type and dra m */
-        uint16_t hckim_header_formation_tx_info_2 = 0; /* Store dra seq */
+        uint16_t hckim_header_formation_tx_info_1 = 0; /* Store packet type */
+        uint16_t hckim_header_formation_tx_info_2 = 0; /* Store nothing */
 
         hckim_header_formation_tx_info_1 = (formation_tx_packet_type << 8) + 0;
 
@@ -1973,27 +1925,46 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         ((uint8_t *)(packet))[formation_hdr_len + 3] = (uint8_t)((hckim_header_formation_tx_info_1 >> 8) & 0xFF);
         ((uint8_t *)(packet))[formation_hdr_len + 4] = (uint8_t)(hckim_header_formation_tx_info_2 & 0xFF);
         ((uint8_t *)(packet))[formation_hdr_len + 5] = (uint8_t)((hckim_header_formation_tx_info_2 >> 8) & 0xFF);
-
       } else {
         /* Piggybacking to EB will be performed at EB update below */
       }
 #else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-#endif
-#endif
-#endif /* HCK_FORMATION_PACKET_TYPE_INFO */
+#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 
-#if WITH_TRGB
-      trgb_tx_packet_type = current_packet->hck_packet_type;
-      if(trgb_tx_packet_type != HCK_PACKET_TYPE_EB) {
-        uint16_t trgb_tx_info = 0;
-        trgb_tx_info = (trgb_tx_packet_type << 8) + 0;
-        frame802154_t hnext_frame;
-        int trgb_hdr_len;
-        trgb_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &hnext_frame);
-        ((uint8_t *)(packet))[trgb_hdr_len + 2] = (uint8_t)(trgb_tx_info & 0xFF);
-        ((uint8_t *)(packet))[trgb_hdr_len + 3] = (uint8_t)((trgb_tx_info >> 8) & 0xFF);
+#elif WITH_TRGB
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+      if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
+        uint16_t hckim_header_formation_tx_info_1 = 0; /* Store packet type and trgb_my_tx_cell */
+        uint16_t hckim_header_formation_tx_info_2 = 0; /* Store trgb_parent_id and trgb_granP_id */
+
+        hckim_header_formation_tx_info_1 = (formation_tx_packet_type << 8) + trgb_my_tx_cell;
+        hckim_header_formation_tx_info_2 = (trgb_parent_id << 8) + 0;
+
+        frame802154_t formation_tx_frame;
+        int formation_hdr_len;
+        formation_hdr_len = frame802154_parse((uint8_t *)packet, packet_len, &formation_tx_frame);
+        ((uint8_t *)(packet))[formation_hdr_len + 2] = (uint8_t)(hckim_header_formation_tx_info_1 & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 3] = (uint8_t)((hckim_header_formation_tx_info_1 >> 8) & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 4] = (uint8_t)(hckim_header_formation_tx_info_2 & 0xFF);
+        ((uint8_t *)(packet))[formation_hdr_len + 5] = (uint8_t)((hckim_header_formation_tx_info_2 >> 8) & 0xFF);
+
+#if TRGB_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "TRGB tx info %u %u %u", formation_tx_packet_type, 
+                                        trgb_my_tx_cell, 
+                                        trgb_parent_id));
+#endif /* DRA_DBG */
+
+      } else {
+        /* Piggybacking to EB will be performed at EB update below */
       }
-#endif
+
+#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
+#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
+
+#endif /* !WITH_DRA && !WITH_TRGB && !WITH_HNEXT */
+#endif /* HCK_FORMATION_PACKET_TYPE_INFO */
 
 #if WITH_HNEXT
       hnext_tx_packet_type = current_packet->hck_packet_type;
@@ -2135,7 +2106,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
               } else {
                 /* "ERROR: No tx link in tx sf */
               }
-            }            
+            }
 
 #if WITH_OST_LOG_INFO
             TSCH_LOG_ADD(tsch_log_message,
@@ -2175,15 +2146,18 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       if(current_neighbor == n_eb) {
         packet_ready = tsch_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset);
 #if HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS /* Coordinator/non-coordinator: update information in EB before transmission */
-        uint16_t hckim_eb_formation_tx_info_1 = 0;
-        uint16_t hckim_eb_formation_tx_info_2 = 0;
 #if HCK_FORMATION_PACKET_TYPE_INFO
         formation_tx_packet_type = current_packet->hck_packet_type;
-
 #if !WITH_DRA && !WITH_TRGB && !WITH_HNEXT
+        uint16_t hckim_eb_formation_tx_info_1 = 0;
+        uint16_t hckim_eb_formation_tx_info_2 = 0;
+
         hckim_eb_formation_tx_info_1 = (formation_tx_packet_type << 8) + 0;
 #elif WITH_DRA
 #if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+        uint16_t hckim_eb_formation_tx_info_1 = 0;
+        uint16_t hckim_eb_formation_tx_info_2 = 0;
+
         uint8_t tx_dra_m = current_packet->dra_m;
         uint16_t tx_dra_seq = current_packet->dra_seq;
 
@@ -2199,16 +2173,36 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                                   hckim_eb_formation_tx_info_2));
 #endif /* DRA_DBG */
 #else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-#endif
-#endif
+#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 
-#endif /* HCK_FORMATION_PACKET_TYPE_INFO */
+#elif WITH_TRGB
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+        uint16_t hckim_eb_formation_tx_info_1 = 0;
+        uint16_t hckim_eb_formation_tx_info_2 = 0;
+
+        hckim_eb_formation_tx_info_1 = (formation_tx_packet_type << 8) + trgb_my_tx_cell;
+        hckim_eb_formation_tx_info_2 = (trgb_parent_id << 8) + 0;
+
+#if TRGB_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "TRGB tx info %u %u %u", formation_tx_packet_type, 
+                                        trgb_my_tx_cell, 
+                                        trgb_parent_id));
+#endif /* DRA_DBG */
+
+#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
+#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
+
+#endif /* !WITH_DRA && !WITH_TRGB && !WITH_HNEXT */
+
         if(packet_ready && tsch_hck_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset,
                                                     hckim_eb_formation_tx_info_1, hckim_eb_formation_tx_info_2)) {
           packet_ready = 1;
         } else {
           packet_ready = 0;
         }
+#endif /* HCK_FORMATION_PACKET_TYPE_INFO */
 #endif
 
       } else {
@@ -3051,25 +3045,6 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             int do_nack = 0;
             rx_count++;
 
-#if WITH_TRGB
-            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
-            trgb_rx_packet_type = HCK_PACKET_TYPE_NULL;
-            int trgb_rx_info = 0;
-            if(frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
-              if(frame.fcf.ie_list_present) {
-                struct ieee802154_ies trgb_ies;
-                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &trgb_ies);
-                trgb_rx_info = (int)trgb_ies.ie_formation_info;
-                trgb_rx_packet_type = (uint8_t)((trgb_rx_info >> 8) & 0xFF);
-              } else {
-                trgb_rx_info = 0;
-                trgb_rx_packet_type = HCK_PACKET_TYPE_NULL;
-              }
-            } else {
-              trgb_rx_packet_type = HCK_PACKET_TYPE_EB;
-            }
-#endif
-
 #if WITH_HNEXT /* Needs to be modified for 6TiSCH-MC */
             /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
             hnext_rx_packet_type = HCK_PACKET_TYPE_NULL;
@@ -3187,11 +3162,77 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
               int dra_nbr_id = HCK_GET_NODE_ID_FROM_LINKADDR(&source_address);
               dra_receive_control_message(dra_nbr_id, rx_dra_m, rx_dra_seq);
             }
-#endif
+#elif WITH_TRGB
+            /* 0: EB, 1: KA, 2: DIS, 3: m-DIO, 4: u-DIO, 5: DAO, 6: DAO-ACK, 7: Data */
+            formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
+            uint16_t hckim_formation_rx_info_1 = 0; /* Store packet type and trgb_tx_cell */
+            uint16_t hckim_formation_rx_info_2 = 0; /* Store trgb_parent_id and trgb_granP_id */
 
-#if WITH_TRGB
-            formation_rx_packet_type = trgb_rx_packet_type;
-#endif
+            uint8_t trgb_received_tx_cell = 0;
+            uint8_t trgb_received_parent_id = 0;
+
+            if(frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
+              if(frame.fcf.ie_list_present) {
+                struct ieee802154_ies formation_ies;
+                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &formation_ies);
+
+                hckim_formation_rx_info_1 = (int)formation_ies.ie_header_piggybacking_info_1;
+                formation_rx_packet_type = (uint8_t)((hckim_formation_rx_info_1 >> 8) & 0xFF);
+                trgb_received_tx_cell = (uint8_t)(hckim_formation_rx_info_1 & 0xFF);
+
+                hckim_formation_rx_info_2 = (int)formation_ies.ie_header_piggybacking_info_2;
+                trgb_received_parent_id = (uint8_t)((hckim_formation_rx_info_2 >> 8) & 0xFF);
+              } else {
+                formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
+              }
+            } else { /* EB case */
+              if(frame.fcf.ie_list_present) {
+                struct ieee802154_ies formation_ies;
+                frame802154e_parse_information_elements(frame.payload, frame.payload_len, &formation_ies);
+                
+                hckim_formation_rx_info_1 = (int)formation_ies.ie_eb_piggybacking_info_1;
+                formation_rx_packet_type = (uint8_t)((hckim_formation_rx_info_1 >> 8) & 0xFF);
+                trgb_received_tx_cell = (uint8_t)(hckim_formation_rx_info_1 & 0xFF);
+
+                hckim_formation_rx_info_2 = (int)formation_ies.ie_eb_piggybacking_info_2;
+                trgb_received_parent_id = (uint8_t)((hckim_formation_rx_info_2 >> 8) & 0xFF);
+              } else {
+                formation_rx_packet_type = HCK_PACKET_TYPE_EB;
+              }
+            }
+
+            struct tsch_neighbor *trgb_n = tsch_queue_get_nbr(&source_address);
+            rpl_instance_t *trgb_instance = rpl_get_default_instance();
+
+            if(trgb_n != NULL 
+              && trgb_n->is_time_source
+              && trgb_instance != NULL 
+              && trgb_instance->current_dag->preferred_parent != NULL
+              && HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent)) 
+                 == HCK_GET_NODE_ID_FROM_LINKADDR(&source_address)) {
+              if(formation_rx_packet_type == HCK_PACKET_TYPE_EB
+                || formation_rx_packet_type == HCK_PACKET_TYPE_M_DIO) {
+                if(trgb_received_tx_cell == TRGB_CELL_GREEN) {
+                  trgb_my_tx_cell = TRGB_CELL_BLUE;
+                } else if(trgb_received_tx_cell == TRGB_CELL_BLUE) {
+                  trgb_my_tx_cell = TRGB_CELL_GREEN;
+                } else {
+                  trgb_my_tx_cell = TRGB_CELL_NULL;
+                }
+                trgb_grandP_id = trgb_received_parent_id;
+              }
+            }
+
+#if TRGB_DBG
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "TRGB rx info %u %u %u %u", formation_rx_packet_type, 
+                                            trgb_received_tx_cell, 
+                                            trgb_received_parent_id,
+                                            trgb_my_tx_cell));
+#endif /* DRA_DBG */
+#endif /* !WITH_DRA && !WITH_TRGB && !WITH_HNEXT */
+
 #if WITH_HNEXT
             formation_rx_packet_type = hnext_rx_packet_type;
 #endif
@@ -4218,70 +4259,87 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
           tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
 
 #if WITH_TRGB
-          if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) { /* TRGB: common shared cell only */
+          trgb_skip_slot = 0;
+
+          if(current_link->slotframe_handle == TRGB_SLOTFRAME_HANDLE) { /* TRGB: common shared cell only */
             /* calulcate ASFN */
             uint64_t trgb_asfn = 0;
-            struct tsch_slotframe *cs_sf = tsch_schedule_get_slotframe_by_handle(TSCH_SCHED_COMMON_SF_HANDLE);
+            struct tsch_slotframe *cs_sf = tsch_schedule_get_slotframe_by_handle(TRGB_SLOTFRAME_HANDLE);
             struct tsch_asn_t trgb_asn;
             TSCH_ASN_COPY(trgb_asn, tsch_current_asn);
             uint16_t trgb_mod = TSCH_ASN_MOD(tsch_current_asn, cs_sf->size);
             TSCH_ASN_DEC(trgb_asn, trgb_mod);
             trgb_asfn = TSCH_ASN_DIVISION(trgb_asn, cs_sf->size);
 
-            /* Initialize channel with the channel of RED cell */
-            tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(0 + trgb_asfn)];
+            if(trgb_current_operation == TRGB_OPERATION_RED_TX
+              || trgb_current_operation == TRGB_OPERATION_RED_RX) {
+              tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(0 + trgb_asfn)];
 
-            /* Assign channel */
-            int trgb_is_root = tsch_rpl_callback_is_root();
-            if(trgb_is_root == 1) { /* Root node */
-              if(trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_RX
-                || trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_TX) {
-                tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(1 + trgb_asfn)]; /* Root: [0, own] */
-#if TRGB_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                            snprintf(log->message, sizeof(log->message),
-                            "TRGB root G/B Tx/Rx"));
-#endif
-              }
-            } else { /* Non-root node */
-              rpl_instance_t *trgb_instance = rpl_get_default_instance();
-              if(trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_RX) {
-                tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent)) + trgb_asfn)]; 
-#if TRGB_DBG
-                TSCH_LOG_ADD(tsch_log_message,
-                            snprintf(log->message, sizeof(log->message),
-                            "TRGB n-root G/B Rx"));
-#endif
-              } else if(trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_TX) {
-                if(linkaddr_cmp(queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER),
-                  rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent))) { /* Packet for parent */
-                  if(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent)) == 1) { /* Paretn is root */
-                    tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent)) + trgb_asfn)]; 
-#if TRGB_DBG
-                    TSCH_LOG_ADD(tsch_log_message,
-                                snprintf(log->message, sizeof(log->message),
-                                "TRGB n-root G/B Tx PR"));
-#endif
-                  } else { /* Parent is non-root */
-                    tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(trgb_instance->current_dag->preferred_parent->gparent_id + trgb_asfn)]; 
-#if TRGB_DBG
-                    TSCH_LOG_ADD(tsch_log_message,
-                                snprintf(log->message, sizeof(log->message),
-                                "TRGB n-root G/B Tx PnR"));
-#endif
+            } else { /* GREEN or BLUE cell operation */
+              int trgb_is_root = tsch_rpl_callback_is_root();
+
+              if(trgb_is_root) {
+
+                if(trgb_current_operation == TRGB_OPERATION_GREEN_TX
+                  || trgb_current_operation == TRGB_OPERATION_BLUE_TX) {
+                  // Tx on Channel(ROOT_ID)
+                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(TRGB_ROOT_ID + trgb_asfn)];
+
+                } else if(trgb_current_operation == TRGB_OPERATION_GREEN_RX
+                  || trgb_current_operation == TRGB_OPERATION_BLUE_RX) {
+                  // Rx on Channel(ROOT_ID)
+                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(TRGB_ROOT_ID + trgb_asfn)];
+
+                } else if(trgb_current_operation == TRGB_OPERATION_GREEN_TX_NO_PACKET
+                  || trgb_current_operation == TRGB_OPERATION_BLUE_TX_NO_PACKET) {
+                  // Sikp this slot operation
+                  trgb_skip_slot = 1;
+
+                } else if(trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE) {
+                  // ROOT never experiences this case
+                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(TRGB_ROOT_ID + trgb_asfn)];
+                }
+
+              } else { /* Non-root nodes */
+
+                if(trgb_current_operation == TRGB_OPERATION_GREEN_TX
+                  || trgb_current_operation == TRGB_OPERATION_BLUE_TX) {
+
+                  rpl_instance_t *trgb_instance = rpl_get_default_instance();
+
+                  if(linkaddr_cmp(queuebuf_addr(current_packet->qb, PACKETBUF_ADDR_RECEIVER),
+                    rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent))) { /* Packet toward parent */
+                    if(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent)) 
+                        == TRGB_ROOT_ID) { /* Paretn is root */
+                      // Tx on Channel(Root_ID)
+                      tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(TRGB_ROOT_ID + trgb_asfn)]; 
+                    } else { /* Parent is non-root */
+                      // Tx on Channel(granP_ID)
+                      tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(trgb_grandP_id + trgb_asfn)];
+                    }
+                  } else { /* Packet toward non-parent */
+                    // Tx on Channel(own_ID)
+                    tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(node_id + trgb_asfn)];
                   }
-                } else { /* Packet for non-parent */
-                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(HCK_GET_NODE_ID_FROM_LINKADDR(&linkaddr_node_addr) + trgb_asfn)];
-#if TRGB_DBG
-                  TSCH_LOG_ADD(tsch_log_message,
-                              snprintf(log->message, sizeof(log->message),
-                              "TRGB n-root G/B Tx nP"));
-#endif
+
+                } else if(trgb_current_operation == TRGB_OPERATION_GREEN_RX
+                  || trgb_current_operation == TRGB_OPERATION_BLUE_RX) {
+                  // Rx on Channel(parent_ID)
+                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(trgb_parent_id + trgb_asfn)];
+
+                } else if(trgb_current_operation == TRGB_OPERATION_GREEN_TX_NO_PACKET
+                  || trgb_current_operation == TRGB_OPERATION_BLUE_TX_NO_PACKET) {
+                  // Sikp this slot operation
+                  trgb_skip_slot = 1;
+
+                } else if(trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE) {
+                  // Do Rx operation
+                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(trgb_parent_id + trgb_asfn)];
                 }
               }
             }
           }
-#endif
+#endif /* WITH_TRGB */
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
           is_burst_slot = 0;
@@ -4289,12 +4347,6 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         }
 
 #if WITH_TRGB
-        uint8_t trgb_skip_slot = 0;
-        if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE 
-          && (trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_TX_NO_PACKET
-              || trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE)) {
-          trgb_skip_slot = 1;
-        }
         if(!trgb_skip_slot) {
 #endif
 
@@ -4310,22 +4362,22 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
            * 3. post tx callback
            **/
           static struct pt slot_tx_pt;
-#if TRGB_DBG
-          if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+#if WITH_TRGB && TRGB_DBG
+          if(current_link->slotframe_handle == TRGB_SLOTFRAME_HANDLE) {
             TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                        "TRGB tx_slot"));
+                        "TRGB tx slot"));
           }
 #endif
           PT_SPAWN(&slot_operation_pt, &slot_tx_pt, tsch_tx_slot(&slot_tx_pt, t));
         } else {
           /* Listen */
           static struct pt slot_rx_pt;
-#if TRGB_DBG
-          if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE){
+#if WITH_TRGB && TRGB_DBG
+          if(current_link->slotframe_handle == TRGB_SLOTFRAME_HANDLE){
             TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                        "TRGB rx_slot"));
+                        "TRGB rx slot"));
           }
 #endif
           PT_SPAWN(&slot_operation_pt, &slot_rx_pt, tsch_rx_slot(&slot_rx_pt, t));
@@ -4341,11 +4393,13 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       else {
         TSCH_LOG_ADD(tsch_log_message,
                     snprintf(log->message, sizeof(log->message),
-                    "TRGB skip Tx/Rx slot"));
+                    "TRGB skip tx slot"));
       }
 #endif
-      if(current_link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+      if(current_link->slotframe_handle == TRGB_SLOTFRAME_HANDLE) {
+        trgb_current_cell = TRGB_CELL_NULL;
         trgb_current_operation = TRGB_OPERATION_NULL;
+        trgb_skip_slot = 0;
       }
 #endif
       } else {

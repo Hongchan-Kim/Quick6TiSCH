@@ -305,8 +305,21 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
           (p == NULL) ? 0 : 
           (rpl_parent_get_ipaddr(p)->u8[14] << 8) + (rpl_parent_get_ipaddr(p)->u8[15]));
 
+#if WITH_TRGB
+    if(p != NULL) {
+      trgb_parent_id = HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(p));
+      trgb_grandP_id = p->trgb_rpl_grandP_id;
+      trgb_my_tx_cell = TRGB_CELL_NULL; // TRGB-TODO: further optimization (direct assignment) is possible
+    } else {
+      trgb_parent_id = 0;
+      trgb_grandP_id = 0;
+      trgb_my_tx_cell = TRGB_CELL_NULL;
+    }
+
 #if TRGB_DBG
-    LOG_INFO("TRGB ps GP ID %u\n", p->gparent_id);
+    LOG_INFO("TRGB ps p %u gp %u cell %u\n", 
+            trgb_parent_id, trgb_grandP_id, trgb_my_tx_cell);
+#endif
 #endif
 
 #ifdef RPL_CALLBACK_PARENT_SWITCH
@@ -784,7 +797,7 @@ rpl_add_parent(rpl_dag_t *dag, rpl_dio_t *dio, uip_ipaddr_t *addr)
       p->rank = dio->rank;
       p->hop_distance = dio->hop_distance; /* hckim to measure hop distance accurately */
 #if WITH_TRGB
-      p->gparent_id = dio->gparent_id;
+      p->trgb_rpl_grandP_id = dio->trgb_rpl_grandP_id;
 #endif
       p->dtsn = dio->dtsn;
 #if RPL_WITH_MC
@@ -1334,7 +1347,7 @@ rpl_add_dag(uip_ipaddr_t *from, rpl_dio_t *dio)
   p->rank = dio->rank;
   p->hop_distance = dio->hop_distance; /* hckim to measure hop distance accurately */
 #if WITH_TRGB
-  p->gparent_id = dio->gparent_id;
+  p->trgb_rpl_grandP_id = dio->trgb_rpl_grandP_id;
 #endif
 
   /* Determine the objective function by using the
@@ -1714,7 +1727,13 @@ rpl_process_dio(uip_ipaddr_t *from, rpl_dio_t *dio)
   p->rank = dio->rank;
   p->hop_distance = dio->hop_distance; /* hckim to measure hop distance accurately */
 #if WITH_TRGB
-  p->gparent_id = dio->gparent_id;
+  /* TRGB-TODO: what if parnet is maintained, but grandP is changed,
+   * Then, G or B configuration can be invalid ... */
+  p->trgb_rpl_grandP_id = dio->trgb_rpl_grandP_id;
+  if(p == dag->preferred_parent) {
+    trgb_parent_id = HCK_GET_NODE_ID_FROM_IPADDR(rpl_parent_get_ipaddr(p));
+    trgb_grandP_id = p->trgb_rpl_grandP_id;
+  }
 #endif
   if(dio->rank == RPL_INFINITE_RANK && p == dag->preferred_parent) {
     /* Our preferred parent advertised an infinite rank, reset DIO timer */
