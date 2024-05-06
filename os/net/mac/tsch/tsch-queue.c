@@ -65,7 +65,7 @@
 #include "orchestra.h"
 #endif
 
-#if HCK_FORMATION_PACKET_TYPE_INFO || WITH_QUICK
+#if HCK_FORMATION_PACKET_TYPE_INFO
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
 #endif
@@ -99,8 +99,9 @@ static struct ctimer ost_select_N_timer;
 #endif
 
 /*---------------------------------------------------------------------------*/
-#if WITH_QUICK &&  QUICK_OFFSET_BASED_PACKET_SELECTION /* Remove specific packet */
-/* Remove specific packet from a neighbor queue */
+#if WITH_QUICK && QUICK_OFFSET_BASED_PACKET_SELECTION
+/* Remove specific packet from ringbuf and return pointer address of the packet 
+ * To completely remove the packet, run tsch_queue_free_packet() after this. */
 static struct tsch_packet *
 quick_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p);
 #endif
@@ -123,7 +124,7 @@ tsch_queue_change_attr_of_packets_in_queue(struct tsch_neighbor *target_nbr,
 
     if(sf_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
       tsch_queue_backoff_reset(target_nbr);
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
+#if WITH_QUICK && QUICK_SLOTFRAME_LEVEL_BACKOFF
       tsch_queue_cssf_backoff_reset(target_nbr);
 #endif
     }
@@ -318,7 +319,7 @@ tsch_queue_add_nbr(const linkaddr_t *addr)
         n->is_broadcast = linkaddr_cmp(addr, &tsch_eb_address)
           || linkaddr_cmp(addr, &tsch_broadcast_address);
         tsch_queue_backoff_reset(n);
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
+#if WITH_QUICK && QUICK_SLOTFRAME_LEVEL_BACKOFF
         tsch_queue_cssf_backoff_reset(n);
 #endif
       }
@@ -543,7 +544,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     n = tsch_queue_add_nbr(addr);
     if(n != NULL) {
 
-#if QUICK_QUEUE_MANAGEMENT
+#if WITH_QUICK && QUICK_DUPLICATE_PACKET_MANAGEMENT /* Enqueue only one packet for each packet type */
       uint8_t quick_same_type_packet_exist_or_not = 0;
       uint8_t quick_current_postponed_count = 0;
       int16_t quick_same_type_packet_get_index = -1;
@@ -576,21 +577,18 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             LOG_INFO("hck-dbg delete overlapped packet %u %u %u\n", 
                     hck_current_packet_type, quick_current_postponed_count, quick_same_type_packet_get_index);
             struct tsch_packet *quick_overlapped_packet = n->tx_array[quick_same_type_packet_get_index];
-#if !QUICK_QUEUE_MANAGEMENT_TEMP
-            quick_tsch_queue_remove_specific_packet_from_queue(n, n->tx_array[quick_same_type_packet_get_index]);
-#endif
             tsch_queue_free_packet(quick_overlapped_packet);
           }
         }
       }
-#endif
 
-      put_index = ringbufindex_peek_put(&n->tx_ringbuf);
-
-#if QUICK_QUEUE_MANAGEMENT_TEMP
       if(quick_same_type_packet_exist_or_not) {
         put_index = quick_same_type_packet_get_index;
+      } else {
+        put_index = ringbufindex_peek_put(&n->tx_ringbuf);
       }
+#else
+      put_index = ringbufindex_peek_put(&n->tx_ringbuf);
 #endif
 
       if(put_index != -1) {
@@ -626,7 +624,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
             p->quick_offset = 0;
             p->quick_collision_count = 0;
             p->quick_noack_count = 0;
-#if QUICK_QUEUE_MANAGEMENT
+#if QUICK_DUPLICATE_PACKET_MANAGEMENT
             if(quick_same_type_packet_exist_or_not) {
               p->quick_cssf_postponed_count = quick_current_postponed_count;
             } else {
@@ -639,7 +637,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 
             /* Add to ringbuf (actual add committed through atomic operation) */
             n->tx_array[put_index] = p;
-#if QUICK_QUEUE_MANAGEMENT_TEMP
+#if QUICK_DUPLICATE_PACKET_MANAGEMENT
             if(!quick_same_type_packet_exist_or_not) {
               ringbufindex_put(&n->tx_ringbuf);
             }
@@ -708,8 +706,9 @@ tsch_queue_nbr_packet_count(const struct tsch_neighbor *n)
   return -1;
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_QUICK &&  QUICK_OFFSET_BASED_PACKET_SELECTION /* Remove specific packet */
-/* Remove specific packet from a neighbor queue */
+#if WITH_QUICK &&  QUICK_OFFSET_BASED_PACKET_SELECTION
+/* Remove specific packet from ringbuf and return pointer address of the packet 
+ * To completely remove the packet, run tsch_queue_free_packet() after this. */
 static struct tsch_packet *
 quick_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p)
 {
@@ -749,7 +748,7 @@ quick_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, stru
               if(i >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
                 src_index = i - ringbufindex_size(&n->tx_ringbuf);
               } else {
-                src_index = i;  
+                src_index = i;
               }
               int16_t dest_index;
               if((i + 1) >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */

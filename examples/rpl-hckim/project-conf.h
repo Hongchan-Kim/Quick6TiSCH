@@ -510,6 +510,10 @@
 #define QUICK_RX_OFFSET_RIGHT                               2900 /* 1300 ~ 4200, 500 right margin from the tx timing */
 #define QUICK_OFFSET_GAP                                    600
 
+/* Quick6TiSCH additional features */
+#define QUICK_DUPLICATE_PACKET_MANAGEMENT                   1 /* Replace duplicate packet within neighbor queue, while maintaining the position within the ringbuf.*/
+
+
 /* Retransmission policy for postponed packets */
 #define QUICK_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
 
@@ -522,9 +526,6 @@
 #define QUICK_TSCH_MAC_MAX_CSSF_BE                          5
 #define QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP                  1
 
-/* Enqueue only one packet for each packet type */
-#define QUICK_QUEUE_MANAGEMENT                              1
-#define QUICK_QUEUE_MANAGEMENT_TEMP                         1
 
 /* Offset assignment policy */
 #define QUICK_OFFSET_ASSIGNMENT_RANDOM                      1 /* Random */
