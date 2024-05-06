@@ -2378,6 +2378,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
           /* limit tx_time to its max value */
           tx_duration = MIN(tx_duration, tsch_timing[tsch_ts_max_tx]);
 
+#if HCK_FORMATION_PACKET_TYPE_INFO
+          tx_duration = tsch_timing[tsch_ts_max_tx];
+#endif
+
 #if WITH_OST
           tx_duration = tsch_timing[tsch_ts_max_tx];
 #endif
@@ -2998,6 +3002,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
         packet_duration = TSCH_PACKET_DURATION(current_input->len);
         /* limit packet_duration to its max value */
         packet_duration = MIN(packet_duration, tsch_timing[tsch_ts_max_tx]);
+
+#if HCK_FORMATION_PACKET_TYPE_INFO
+        packet_duration = tsch_timing[tsch_ts_max_tx];
+#endif
 
 #if WITH_OST
         packet_duration = tsch_timing[tsch_ts_max_tx];
