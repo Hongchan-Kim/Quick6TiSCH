@@ -65,12 +65,7 @@
 #include "orchestra.h"
 #endif
 
-#if HCK_FORMATION_PACKET_TYPE_INFO
-#include "net/ipv6/uip-icmp6.h"
-#include "net/routing/rpl-classic/rpl-private.h"
-#endif
-
-#if WITH_HNEXT
+#if HCK_FORMATION_PACKET_TYPE_INFO || WITH_QUICK
 #include "net/ipv6/uip-icmp6.h"
 #include "net/routing/rpl-classic/rpl-private.h"
 #endif
@@ -104,10 +99,10 @@ static struct ctimer ost_select_N_timer;
 #endif
 
 /*---------------------------------------------------------------------------*/
-#if WITH_HNEXT &&  HNEXT_OFFSET_BASED_PACKET_SELECTION /* Remove specific packet */
+#if WITH_QUICK &&  QUICK_OFFSET_BASED_PACKET_SELECTION /* Remove specific packet */
 /* Remove specific packet from a neighbor queue */
 static struct tsch_packet *
-hnext_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p);
+quick_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p);
 #endif
 /*---------------------------------------------------------------------------*/
 #if HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR \
@@ -128,7 +123,7 @@ tsch_queue_change_attr_of_packets_in_queue(struct tsch_neighbor *target_nbr,
 
     if(sf_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
       tsch_queue_backoff_reset(target_nbr);
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
       tsch_queue_cssf_backoff_reset(target_nbr);
 #endif
     }
@@ -323,7 +318,7 @@ tsch_queue_add_nbr(const linkaddr_t *addr)
         n->is_broadcast = linkaddr_cmp(addr, &tsch_eb_address)
           || linkaddr_cmp(addr, &tsch_broadcast_address);
         tsch_queue_backoff_reset(n);
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
         tsch_queue_cssf_backoff_reset(n);
 #endif
       }
@@ -548,10 +543,10 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     n = tsch_queue_add_nbr(addr);
     if(n != NULL) {
 
-#if HNEXT_QUEUE_MANAGEMENT
-      uint8_t hnext_same_type_packet_exist_or_not = 0;
-      uint8_t hnext_current_postponed_count = 0;
-      int16_t hnext_same_type_packet_get_index = -1;
+#if QUICK_QUEUE_MANAGEMENT
+      uint8_t quick_same_type_packet_exist_or_not = 0;
+      uint8_t quick_current_postponed_count = 0;
+      int16_t quick_same_type_packet_get_index = -1;
 
       if(hck_current_packet_type == HCK_PACKET_TYPE_KA ||
          hck_current_packet_type == HCK_PACKET_TYPE_DIS ||
@@ -559,7 +554,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
          hck_current_packet_type == HCK_PACKET_TYPE_U_DIO) {
         int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
         if(get_index == -1) {
-          hnext_same_type_packet_exist_or_not = 0;
+          quick_same_type_packet_exist_or_not = 0;
         } else {
           int16_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
           int i;
@@ -571,20 +566,20 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
               temp_index = i;
             }
             if(n->tx_array[temp_index]->hck_packet_type == hck_current_packet_type) {
-              hnext_same_type_packet_exist_or_not = 1;
-              hnext_current_postponed_count = n->tx_array[temp_index]->hnext_cssf_postponed_count;
-              hnext_same_type_packet_get_index = temp_index;
+              quick_same_type_packet_exist_or_not = 1;
+              quick_current_postponed_count = n->tx_array[temp_index]->quick_cssf_postponed_count;
+              quick_same_type_packet_get_index = temp_index;
               break;
             }
           }
-          if(hnext_same_type_packet_exist_or_not) {
+          if(quick_same_type_packet_exist_or_not) {
             LOG_INFO("hck-dbg delete overlapped packet %u %u %u\n", 
-                    hck_current_packet_type, hnext_current_postponed_count, hnext_same_type_packet_get_index);
-            struct tsch_packet *hnext_overlapped_packet = n->tx_array[hnext_same_type_packet_get_index];
-#if !HNEXT_QUEUE_MANAGEMENT_TEMP
-            hnext_tsch_queue_remove_specific_packet_from_queue(n, n->tx_array[hnext_same_type_packet_get_index]);
+                    hck_current_packet_type, quick_current_postponed_count, quick_same_type_packet_get_index);
+            struct tsch_packet *quick_overlapped_packet = n->tx_array[quick_same_type_packet_get_index];
+#if !QUICK_QUEUE_MANAGEMENT_TEMP
+            quick_tsch_queue_remove_specific_packet_from_queue(n, n->tx_array[quick_same_type_packet_get_index]);
 #endif
-            tsch_queue_free_packet(hnext_overlapped_packet);
+            tsch_queue_free_packet(quick_overlapped_packet);
           }
         }
       }
@@ -592,9 +587,9 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 
       put_index = ringbufindex_peek_put(&n->tx_ringbuf);
 
-#if HNEXT_QUEUE_MANAGEMENT_TEMP
-      if(hnext_same_type_packet_exist_or_not) {
-        put_index = hnext_same_type_packet_get_index;
+#if QUICK_QUEUE_MANAGEMENT_TEMP
+      if(quick_same_type_packet_exist_or_not) {
+        put_index = quick_same_type_packet_get_index;
       }
 #endif
 
@@ -627,25 +622,25 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 #endif
 #endif
 
-#if WITH_HNEXT
-            p->hnext_offset = 0;
-            p->hnext_collision_count = 0;
-            p->hnext_noack_count = 0;
-#if HNEXT_QUEUE_MANAGEMENT
-            if(hnext_same_type_packet_exist_or_not) {
-              p->hnext_cssf_postponed_count = hnext_current_postponed_count;
+#if WITH_QUICK
+            p->quick_offset = 0;
+            p->quick_collision_count = 0;
+            p->quick_noack_count = 0;
+#if QUICK_QUEUE_MANAGEMENT
+            if(quick_same_type_packet_exist_or_not) {
+              p->quick_cssf_postponed_count = quick_current_postponed_count;
             } else {
-              p->hnext_cssf_postponed_count = 0;
+              p->quick_cssf_postponed_count = 0;
             }
 #else
-            p->hnext_cssf_postponed_count = 0;
+            p->quick_cssf_postponed_count = 0;
 #endif
 #endif
 
             /* Add to ringbuf (actual add committed through atomic operation) */
             n->tx_array[put_index] = p;
-#if HNEXT_QUEUE_MANAGEMENT_TEMP
-            if(!hnext_same_type_packet_exist_or_not) {
+#if QUICK_QUEUE_MANAGEMENT_TEMP
+            if(!quick_same_type_packet_exist_or_not) {
               ringbufindex_put(&n->tx_ringbuf);
             }
 #else
@@ -713,10 +708,10 @@ tsch_queue_nbr_packet_count(const struct tsch_neighbor *n)
   return -1;
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_HNEXT &&  HNEXT_OFFSET_BASED_PACKET_SELECTION /* Remove specific packet */
+#if WITH_QUICK &&  QUICK_OFFSET_BASED_PACKET_SELECTION /* Remove specific packet */
 /* Remove specific packet from a neighbor queue */
 static struct tsch_packet *
-hnext_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p)
+quick_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p)
 {
   if(!tsch_is_locked()) {
     if(n != NULL) {
@@ -842,8 +837,8 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 
   if(mac_tx_status == MAC_TX_OK) {
     /* Successful transmission */
-#if WITH_HNEXT && HNEXT_OFFSET_BASED_PACKET_SELECTION
-    hnext_tsch_queue_remove_specific_packet_from_queue(n, p);
+#if WITH_QUICK && QUICK_OFFSET_BASED_PACKET_SELECTION
+    quick_tsch_queue_remove_specific_packet_from_queue(n, p);
 #else
     tsch_queue_remove_packet_from_queue(n);
 #endif
@@ -855,22 +850,22 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
         /* If this is a shared link, reset backoff on success.
          * Otherwise, do so only is the queue is empty */
         tsch_queue_backoff_reset(n);
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
-        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
+        if(link->slotframe_handle == QUICK_SLOTFRAME_HANDLE
           || tsch_queue_is_empty(n)) {
           tsch_queue_cssf_backoff_reset(n);
         }
 #endif
       }
     }
-#if WITH_HNEXT && HNEXT_BACKOFF_FOR_BCAST_PACKETS
+#if WITH_QUICK && QUICK_BACKOFF_FOR_BCAST_PACKETS
     else { // broadcast neirhbor
       if(is_shared_link || tsch_queue_is_empty(n)) {
         /* If this is a shared link, reset backoff on success.
          * Otherwise, do so only is the queue is empty */
         tsch_queue_backoff_reset(n);
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
-        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
+        if(link->slotframe_handle == QUICK_SLOTFRAME_HANDLE
           || tsch_queue_is_empty(n)) {
           tsch_queue_cssf_backoff_reset(n);
         }
@@ -882,8 +877,8 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
     /* Failed transmission */
     if(p->transmissions >= p->max_transmissions) {
       /* Drop packet */
-#if WITH_HNEXT && HNEXT_OFFSET_BASED_PACKET_SELECTION
-      hnext_tsch_queue_remove_specific_packet_from_queue(n, p);
+#if WITH_QUICK && QUICK_OFFSET_BASED_PACKET_SELECTION
+      quick_tsch_queue_remove_specific_packet_from_queue(n, p);
 #else
       tsch_queue_remove_packet_from_queue(n);
 #endif
@@ -896,20 +891,20 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
       if(is_shared_link) {
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n);
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
-        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
+        if(link->slotframe_handle == QUICK_SLOTFRAME_HANDLE) {
           tsch_queue_cssf_backoff_inc(n);
         }
 #endif
       }
     }
-#if WITH_HNEXT && HNEXT_BACKOFF_FOR_BCAST_PACKETS
+#if WITH_QUICK && QUICK_BACKOFF_FOR_BCAST_PACKETS
     else { /* Broadcast neighbor */
       if(is_shared_link) {
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n);
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
-        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE) {
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
+        if(link->slotframe_handle == QUICK_SLOTFRAME_HANDLE) {
           tsch_queue_cssf_backoff_inc(n);
         }
 #endif
@@ -931,7 +926,7 @@ tsch_queue_drop_packets(struct tsch_neighbor *n)
     tsch_queue_flush_nbr_queue(n);
     /* Reset backoff exponent */
     tsch_queue_backoff_reset(n);
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
     tsch_queue_cssf_backoff_reset(n);
 #endif
   }
@@ -968,7 +963,7 @@ tsch_queue_reset_except_n_eb(void)
         tsch_queue_flush_nbr_queue(n);
         /* Reset backoff exponent */
         tsch_queue_backoff_reset(n);
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
         tsch_queue_cssf_backoff_reset(n);
 #endif
       }
@@ -1001,7 +996,7 @@ tsch_queue_reset(void)
       tsch_queue_flush_nbr_queue(n);
       /* Reset backoff exponent */
       tsch_queue_backoff_reset(n);
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
       tsch_queue_cssf_backoff_reset(n);
 #endif
       n = next_n;
@@ -1072,8 +1067,8 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
                                                                     make sure the backoff has expired */
 
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
-        if(link->slotframe_handle == TSCH_SCHED_COMMON_SF_HANDLE &&
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
+        if(link->slotframe_handle == QUICK_SLOTFRAME_HANDLE &&
           !tsch_queue_cssf_backoff_expired(n)) {
           return NULL;
         }
@@ -1200,18 +1195,18 @@ tsch_queue_get_packet_for_dest_addr(const linkaddr_t *addr, struct tsch_link *li
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_HNEXT && HNEXT_OFFSET_BASED_PACKET_SELECTION /* Get best packet according to the hnext policy */
+#if WITH_QUICK && QUICK_OFFSET_BASED_PACKET_SELECTION /* Get best packet according to the quick policy */
 struct tsch_packet *
-hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_neighbor **n)
+quick_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_neighbor **n)
 {
   if(!tsch_is_locked()) {
     struct tsch_neighbor *best_nbr = NULL;
     struct tsch_packet *best_p = NULL;
-    enum HNEXT_OFFSET hnext_best_offset = HNEXT_OFFSET_NULL;
+    enum QUICK_OFFSET quick_best_offset = QUICK_OFFSET_NULL;
 
     struct tsch_neighbor *curr_nbr = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
     struct tsch_packet *curr_p = NULL;
-    enum HNEXT_OFFSET hnext_curr_offset = HNEXT_OFFSET_NULL;
+    enum QUICK_OFFSET quick_curr_offset = QUICK_OFFSET_NULL;
 
     while(curr_nbr != NULL) {
       if((curr_nbr == n_broadcast) // bcast nbr
@@ -1219,7 +1214,7 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
         int16_t get_index = ringbufindex_peek_get(&curr_nbr->tx_ringbuf);
 
         if(get_index != -1 && tsch_queue_backoff_expired(curr_nbr)
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
           && tsch_queue_cssf_backoff_expired(curr_nbr)
 #endif
           ) {
@@ -1250,66 +1245,66 @@ hnext_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_nei
             curr_p = curr_nbr->tx_array[temp_index];
 
             if(curr_nbr->is_time_source) {
-              hnext_curr_offset = hnext_offset_assignment_parent[curr_p->hck_packet_type];
+              quick_curr_offset = quick_offset_assignment_parent[curr_p->hck_packet_type];
             } else {
-              hnext_curr_offset = hnext_offset_assignment_others[curr_p->hck_packet_type];
+              quick_curr_offset = quick_offset_assignment_others[curr_p->hck_packet_type];
             }
 
-#if HNEXT_OFFSET_ESCALATION
-#if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
-            int hnext_quotient = (curr_p->hnext_cssf_postponed_count) / ((curr_p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
-            if(hnext_curr_offset < hnext_quotient) {
-              hnext_curr_offset = HNEXT_OFFSET_0;
+#if QUICK_OFFSET_ESCALATION
+#if QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED
+            int quick_quotient = (curr_p->quick_cssf_postponed_count) / ((curr_p->max_transmissions) / QUICK_OFFSET_ESCALATION_LEVEL);
+            if(quick_curr_offset < quick_quotient) {
+              quick_curr_offset = QUICK_OFFSET_0;
             } else {
-              hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+              quick_curr_offset = quick_curr_offset - quick_quotient;
             }
-#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
-            //uint8_t original_offset = hnext_curr_offset;
+#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
+            //uint8_t original_offset = quick_curr_offset;
 
-            int hnext_quotient = (curr_p->hnext_cssf_postponed_count) / (curr_p->max_transmissions);
-            if(hnext_quotient >= 1) {
-              hnext_curr_offset = HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
+            int quick_quotient = (curr_p->quick_cssf_postponed_count) / (curr_p->max_transmissions);
+            if(quick_quotient >= 1) {
+              quick_curr_offset = QUICK_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
             }
-#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
-            //uint8_t original_offset = hnext_curr_offset;
+#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
+            //uint8_t original_offset = quick_curr_offset;
 
-            int hnext_quotient = (curr_p->hnext_cssf_postponed_count) / ((curr_p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
-            if(hnext_curr_offset < hnext_quotient) {
-              hnext_curr_offset = HNEXT_OFFSET_0;
+            int quick_quotient = (curr_p->quick_cssf_postponed_count) / ((curr_p->max_transmissions) / QUICK_OFFSET_ESCALATION_LEVEL);
+            if(quick_curr_offset < quick_quotient) {
+              quick_curr_offset = QUICK_OFFSET_0;
             } else {
-              hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+              quick_curr_offset = quick_curr_offset - quick_quotient;
             }
-#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
-            int hnext_quotient = (curr_p->hnext_cssf_postponed_count) / ((curr_p->max_transmissions) / HNEXT_OFFSET_ESCALATION_LEVEL);
-            if(hnext_curr_offset < hnext_quotient) {
-              hnext_curr_offset = HNEXT_OFFSET_0;
+#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
+            int quick_quotient = (curr_p->quick_cssf_postponed_count) / ((curr_p->max_transmissions) / QUICK_OFFSET_ESCALATION_LEVEL);
+            if(quick_curr_offset < quick_quotient) {
+              quick_curr_offset = QUICK_OFFSET_0;
             } else {
-              hnext_curr_offset = hnext_curr_offset - hnext_quotient;
+              quick_curr_offset = quick_curr_offset - quick_quotient;
             }
 
 #endif
 #endif
 
-            curr_p->hnext_offset = hnext_curr_offset; /* Update metadat!!! */
+            curr_p->quick_offset = quick_curr_offset; /* Update metadat!!! */
 /*
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
                 "hck dbg1 %u %u %u %u %u", original_offset, 
-                                     curr_p->hnext_cssf_postponed_count,
-                                     hnext_quotient,
-                                     hnext_curr_offset,
-                                     curr_p->hnext_offset));
+                                     curr_p->quick_cssf_postponed_count,
+                                     quick_quotient,
+                                     quick_curr_offset,
+                                     curr_p->quick_offset));
 */
 
             if(best_nbr == NULL && best_p == NULL) {
               best_nbr = curr_nbr;
               best_p = curr_p;
-              hnext_best_offset = hnext_curr_offset;
+              quick_best_offset = quick_curr_offset;
             } else {
-              if(hnext_curr_offset < hnext_best_offset) {
+              if(quick_curr_offset < quick_best_offset) {
                 best_nbr = curr_nbr;
                 best_p = curr_p;
-                hnext_best_offset = hnext_curr_offset;
+                quick_best_offset = quick_curr_offset;
               }
             }
           }
@@ -1428,10 +1423,10 @@ tsch_queue_backoff_reset(struct tsch_neighbor *n)
 void
 tsch_queue_backoff_inc(struct tsch_neighbor *n)
 {
-#if WITH_HNEXT && HNEXT_BACKOFF_FOR_BCAST_PACKETS
+#if WITH_QUICK && QUICK_BACKOFF_FOR_BCAST_PACKETS
   if(n == n_broadcast) {
     /* Increment exponent */
-    n->backoff_exponent = MIN(n->backoff_exponent + 1, HNEXT_TSCH_MAC_BCAST_MAX_BE);
+    n->backoff_exponent = MIN(n->backoff_exponent + 1, QUICK_TSCH_MAC_BCAST_MAX_BE);
   } else {
     /* Increment exponent */
     n->backoff_exponent = MIN(n->backoff_exponent + 1, TSCH_MAC_MAX_BE);
@@ -1468,7 +1463,7 @@ tsch_queue_update_all_backoff_windows(const linkaddr_t *dest_addr)
   }
 }
 /*---------------------------------------------------------------------------*/
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
 /* May the neighbor transmit over a shared link? */
 int
 tsch_queue_cssf_backoff_expired(const struct tsch_neighbor *n)
@@ -1481,39 +1476,39 @@ void
 tsch_queue_cssf_backoff_reset(struct tsch_neighbor *n)
 {
   n->cssf_backoff_window = 0;
-  n->cssf_backoff_exponent = HNEXT_TSCH_MAC_MIN_CSSF_BE;
+  n->cssf_backoff_exponent = QUICK_TSCH_MAC_MIN_CSSF_BE;
 }
 /*---------------------------------------------------------------------------*/
 /* Increment backoff exponent, pick a new window */
 void
 tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n)
 {
-#if WITH_HNEXT && HNEXT_BACKOFF_FOR_BCAST_PACKETS
+#if WITH_QUICK && QUICK_BACKOFF_FOR_BCAST_PACKETS
   if(n == n_broadcast) {
     /* Increment exponent */
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP
     n->cssf_backoff_exponent = n->backoff_exponent;
 #else
-    n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, HNEXT_TSCH_MAC_MAX_CSSF_BE);
+    n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, QUICK_TSCH_MAC_MAX_CSSF_BE);
 #endif
   } else {
     /* Increment exponent */
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP
     n->cssf_backoff_exponent = n->backoff_exponent;
 #else
-    n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, HNEXT_TSCH_MAC_MAX_CSSF_BE);
+    n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, QUICK_TSCH_MAC_MAX_CSSF_BE);
 #endif
   }
 #else
   /* Increment exponent */
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP
   n->cssf_backoff_exponent = n->backoff_exponent;
 #else
-  n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, HNEXT_TSCH_MAC_MAX_CSSF_BE);
+  n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, QUICK_TSCH_MAC_MAX_CSSF_BE);
 #endif
 #endif
 
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP
   n->cssf_backoff_window = n->backoff_window;
 #else
   /* Pick a window (number of shared slots to skip). Ignore least significant

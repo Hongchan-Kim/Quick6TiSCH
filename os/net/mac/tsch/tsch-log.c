@@ -132,25 +132,25 @@ tsch_log_process_pending(void)
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
         printf(" BS %u", log->tx.hck_bootstrap_state);
 #endif
-#if HNEXT_LOG
+#if QUICK_LOG
         printf(" HN %u %u %u %u %u %u %u %u %u %u",
-              log->tx.hnext_collision_count,
-              log->tx.hnext_cssf_postponed_count,
-              log->tx.hnext_noack_count,
-              log->tx.hnext_backoff_exponent_before,
-              log->tx.hnext_backoff_window_before,
-              log->tx.hnext_backoff_exponent_after,
-              log->tx.hnext_backoff_window_after,
-              log->tx.hnext_state,
-              log->tx.hnext_state_based_offset,
-              log->tx.hnext_escalated_offset);
+              log->tx.quick_collision_count,
+              log->tx.quick_cssf_postponed_count,
+              log->tx.quick_noack_count,
+              log->tx.quick_backoff_exponent_before,
+              log->tx.quick_backoff_window_before,
+              log->tx.quick_backoff_exponent_after,
+              log->tx.quick_backoff_window_after,
+              log->tx.quick_state,
+              log->tx.quick_state_based_offset,
+              log->tx.quick_escalated_offset);
 #endif
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
       printf(" %u %u %u %u", 
-              log->tx.hnext_cssf_backoff_exponent_before,
-              log->tx.hnext_cssf_backoff_window_before,
-              log->tx.hnext_cssf_backoff_exponent_after,
-              log->tx.hnext_cssf_backoff_window_after);
+              log->tx.quick_cssf_backoff_exponent_before,
+              log->tx.quick_cssf_backoff_window_before,
+              log->tx.quick_cssf_backoff_exponent_after,
+              log->tx.quick_cssf_backoff_window_after);
 #endif
 #if HCK_LOG_TSCH_SLOT
         printf(" HK-T");
@@ -233,8 +233,8 @@ tsch_log_process_pending(void)
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
         printf(" BS %u", log->rx.hck_bootstrap_state);
 #endif
-#if HNEXT_LOG
-        printf(" HN %u", log->rx.hnext_offset);
+#if QUICK_LOG
+        printf(" HN %u", log->rx.quick_offset);
 #endif
 #if HCK_LOG_TSCH_SLOT
         printf(" HK-T");

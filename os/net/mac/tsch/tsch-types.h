@@ -100,21 +100,21 @@ enum TRGB_OPERATION {
 };
 #endif
 
-#if WITH_HNEXT
-enum HNEXT_STATE {
-  HNEXT_STATE_1_NEW_NODE,       // 0
-  HNEXT_STATE_2_TSCH_JOINED,    // 1
-  HNEXT_STATE_3_RPL_JOINED,     // 2
-  HNEXT_STATE_4_CELL_ALLOCATED, // 3
+#if WITH_QUICK
+enum QUICK_STATE {
+  QUICK_STATE_1_NEW_NODE,       // 0
+  QUICK_STATE_2_TSCH_JOINED,    // 1
+  QUICK_STATE_3_RPL_JOINED,     // 2
+  QUICK_STATE_4_CELL_ALLOCATED, // 3
 };
-enum HNEXT_OFFSET {
-  HNEXT_OFFSET_0,   // 0 
-  HNEXT_OFFSET_1,   // 1
-  HNEXT_OFFSET_2,   // 2
-  HNEXT_OFFSET_3,   // 3
-  HNEXT_OFFSET_4,   // 4
-  HNEXT_OFFSET_5,   // 5
-  HNEXT_OFFSET_NULL // 6
+enum QUICK_OFFSET {
+  QUICK_OFFSET_0,   // 0 
+  QUICK_OFFSET_1,   // 1
+  QUICK_OFFSET_2,   // 2
+  QUICK_OFFSET_3,   // 3
+  QUICK_OFFSET_4,   // 4
+  QUICK_OFFSET_5,   // 5
+  QUICK_OFFSET_NULL // 6
 };
 #endif
 
@@ -186,11 +186,11 @@ struct tsch_packet {
   uint16_t dra_seq;
 #endif
 
-#if WITH_HNEXT
-  uint8_t hnext_offset;
-  uint8_t hnext_collision_count;
-  uint8_t hnext_noack_count;
-  uint8_t hnext_cssf_postponed_count;
+#if WITH_QUICK
+  uint8_t quick_offset;
+  uint8_t quick_collision_count;
+  uint8_t quick_noack_count;
+  uint8_t quick_cssf_postponed_count;
 #endif
 
 #if WITH_OST
@@ -210,7 +210,7 @@ struct tsch_neighbor {
   uint8_t backoff_exponent; /* CSMA backoff exponent */
   uint8_t backoff_window; /* CSMA backoff window (number of slots to skip) */
   uint8_t last_backoff_window; /* Last CSMA backoff window */
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
   uint8_t cssf_backoff_exponent; /* CSMA backoff exponent */
   uint8_t cssf_backoff_window; /* CSMA backoff window (number of slots to skip) */
   uint8_t cssf_last_backoff_window; /* Last CSMA backoff window */

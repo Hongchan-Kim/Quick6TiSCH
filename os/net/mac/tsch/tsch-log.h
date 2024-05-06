@@ -107,23 +107,23 @@ struct tsch_log_t {
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
       uint8_t hck_bootstrap_state;
 #endif
-#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
-      uint8_t hnext_collision_count;
-      uint8_t hnext_cssf_postponed_count;
-      uint8_t hnext_noack_count;
-      uint8_t hnext_backoff_exponent_before;
-      uint8_t hnext_backoff_window_before;
-      uint8_t hnext_backoff_exponent_after;
-      uint8_t hnext_backoff_window_after;
-      uint8_t hnext_state_based_offset;
-      uint8_t hnext_escalated_offset;
-      uint8_t hnext_state;
+#if WITH_QUICK && QUICK_OFFSET_ASSIGNMENT
+      uint8_t quick_collision_count;
+      uint8_t quick_cssf_postponed_count;
+      uint8_t quick_noack_count;
+      uint8_t quick_backoff_exponent_before;
+      uint8_t quick_backoff_window_before;
+      uint8_t quick_backoff_exponent_after;
+      uint8_t quick_backoff_window_after;
+      uint8_t quick_state_based_offset;
+      uint8_t quick_escalated_offset;
+      uint8_t quick_state;
 #endif
-#if HNEXT_SLOTFRAME_LEVEL_BACKOFF
-      uint8_t hnext_cssf_backoff_exponent_before;
-      uint8_t hnext_cssf_backoff_window_before;
-      uint8_t hnext_cssf_backoff_exponent_after;
-      uint8_t hnext_cssf_backoff_window_after;
+#if QUICK_SLOTFRAME_LEVEL_BACKOFF
+      uint8_t quick_cssf_backoff_exponent_before;
+      uint8_t quick_cssf_backoff_window_before;
+      uint8_t quick_cssf_backoff_exponent_after;
+      uint8_t quick_cssf_backoff_window_after;
 #endif
     } tx;
     struct {
@@ -147,8 +147,8 @@ struct tsch_log_t {
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
       uint8_t hck_bootstrap_state;
 #endif
-#if WITH_HNEXT && HNEXT_OFFSET_ASSIGNMENT
-      uint8_t hnext_offset;
+#if WITH_QUICK && QUICK_OFFSET_ASSIGNMENT
+      uint8_t quick_offset;
 #endif
     } rx;
   };

@@ -60,7 +60,7 @@
 #define LOG_MODULE "TSCH RPL"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
-#if WITH_HNEXT
+#if WITH_QUICK
 /*---------------------------------------------------------------------------*/
 #if RPL_CONF_WITH_PROBING
 int

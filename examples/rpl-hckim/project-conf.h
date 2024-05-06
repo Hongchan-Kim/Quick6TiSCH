@@ -487,108 +487,116 @@
 #endif /* WITH_TRGB */
 
 /***************************************************************
- * TOP implementation - WITH_HNEXT
+ * Quick6TiSCH implementation - WITH_QUICK
  ****************************************************************/
-#define WITH_HNEXT                                          0
-#if WITH_HNEXT
-#define HNEXT_LOG                                           1
-#define HNEXT_DBG                                           0
+#define WITH_QUICK                                          1
+#if WITH_QUICK
+#define QUICK_LOG                                           1
+#define QUICK_DBG                                           0
 
-/* HNEXT offset configuration - up to six offsets */
-#define HNEXT_NUM_OF_OFFSETS                                5 /* The 6th offset is available only for broadcast packets */
-#define HNEXT_CCA_OFFSET                                    800
-#define HNEXT_TX_OFFSET                                     1300 /* 1300 ~ 3100 */
-#define HNEXT_RX_OFFSET_LEFT                                500  /* 800  ~ 1300, 500 margin */
-#define HNEXT_RX_OFFSET_RIGHT                               2900 /* 1300 ~ 4200, 500 margin */
-#define HNEXT_OFFSET_GAP                                    600
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+#define QUICK_SLOTFRAME_LENGTH                              TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
+#define QUICK_SLOTFRAME_HANDLE                              0
+#else /* Orchestra */
+#define QUICK_SLOTFRAME_LENGTH                              ORCHESTRA_CONF_COMMON_SHARED_PERIOD
+#define QUICK_SLOTFRAME_HANDLE                              TSCH_SCHED_COMMON_SF_HANDLE
+#endif
+
+/* Quick6TiSCH offset configuration - up to five offsets (the sixth offset is available only for broadcast packets) */
+#define QUICK_NUM_OF_OFFSETS                                5    /* The number of offsets */
+#define QUICK_CCA_OFFSET                                    800  /* */
+#define QUICK_TX_OFFSET                                     1300 /* 1300 ~ 3100 */
+#define QUICK_RX_OFFSET_LEFT                                500  /* 800  ~ 1300, 500 left margin from the tx timing */
+#define QUICK_RX_OFFSET_RIGHT                               2900 /* 1300 ~ 4200, 500 right margin from the tx timing */
+#define QUICK_OFFSET_GAP                                    600
 
 /* Retransmission policy for postponed packets */
-#define HNEXT_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
+#define QUICK_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
 
 /* Backoff policy for postponed packets */
-#define HNEXT_BACKOFF_FOR_BCAST_PACKETS                     1 ///* HNEXT TODO: Need to distinguish EB/broadcast nbrs */
-#define HNEXT_TSCH_MAC_BCAST_MAX_BE                         5
+#define QUICK_BACKOFF_FOR_BCAST_PACKETS                     1 ///* QUICK TODO: Need to distinguish EB/broadcast nbrs */
+#define QUICK_TSCH_MAC_BCAST_MAX_BE                         5
 //
-#define HNEXT_SLOTFRAME_LEVEL_BACKOFF                       1 //
-#define HNEXT_TSCH_MAC_MIN_CSSF_BE                          1
-#define HNEXT_TSCH_MAC_MAX_CSSF_BE                          5
-#define HNEXT_SLOTFRAME_LEVEL_BACKOFF_TEMP                  1
+#define QUICK_SLOTFRAME_LEVEL_BACKOFF                       1 //
+#define QUICK_TSCH_MAC_MIN_CSSF_BE                          1
+#define QUICK_TSCH_MAC_MAX_CSSF_BE                          5
+#define QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP                  1
 
 /* Enqueue only one packet for each packet type */
-#define HNEXT_QUEUE_MANAGEMENT                              1
-#define HNEXT_QUEUE_MANAGEMENT_TEMP                         1
+#define QUICK_QUEUE_MANAGEMENT                              1
+#define QUICK_QUEUE_MANAGEMENT_TEMP                         1
 
 /* Offset assignment policy */
-#define HNEXT_OFFSET_ASSIGNMENT_RANDOM                      1 /* Random */
-#define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED                 2 /* Two-tiered - 1, 4 */
-#define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM          3 /* Two-tiered - 0-3, 4 */
-#define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2        4 /* Two-tiered - 0-3, 4 */
-#define HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3        5 /* Two-tiered - 0-3, 4 */
-//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_RANDOM
-//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
-//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
-//#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
-#define HNEXT_OFFSET_ASSIGNMENT                             HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
+#define QUICK_OFFSET_ASSIGNMENT_RANDOM                      1 /* Random */
+#define QUICK_OFFSET_ASSIGNMENT_STATE_BASED                 2 /* Two-tiered - 1, 4 */
+#define QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM          3 /* Two-tiered - 0-3, 4 */
+#define QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2        4 /* Two-tiered - 0-3, 4 */
+#define QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3        5 /* Two-tiered - 0-3, 4 */
+//#define QUICK_OFFSET_ASSIGNMENT                             QUICK_OFFSET_ASSIGNMENT_RANDOM
+//#define QUICK_OFFSET_ASSIGNMENT                             QUICK_OFFSET_ASSIGNMENT_STATE_BASED
+//#define QUICK_OFFSET_ASSIGNMENT                             QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
+//#define QUICK_OFFSET_ASSIGNMENT                             QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
+#define QUICK_OFFSET_ASSIGNMENT                             QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
 
-#if HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED
+#if QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED
 
-/* Parameters for HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
-#define HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
-#define HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        3 ///////////* 0, 1 */
-#define HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
-
-/* Offset-based packet selection */
-#define HNEXT_OFFSET_BASED_PACKET_SELECTION                 1
-
-/* Offset escalation policy for postponed packets */
-#define HNEXT_OFFSET_ESCALATION                             1
-#define HNEXT_OFFSET_ESCALATION_LEVEL                       1 //////////
-
-#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
-
-/* Parameters for HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
-#define HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
-#define HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        1 /* 0, 1 */
-#define HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
+/* Parameters for QUICK_OFFSET_ASSIGNMENT_STATE_BASED */
+#define QUICK_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
+#define QUICK_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        3 ///////////* 0, 1 */
+#define QUICK_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
 
 /* Offset-based packet selection */
-#define HNEXT_OFFSET_BASED_PACKET_SELECTION                 1
+#define QUICK_OFFSET_BASED_PACKET_SELECTION                 1
 
 /* Offset escalation policy for postponed packets */
-#define HNEXT_OFFSET_ESCALATION                             1
+#define QUICK_OFFSET_ESCALATION                             1
+#define QUICK_OFFSET_ESCALATION_LEVEL                       1 //////////
 
-#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
+#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
 
-/* Parameters for HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
-#define HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
-#define HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        1 /* 0, 1 */
-#define HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
+/* Parameters for QUICK_OFFSET_ASSIGNMENT_STATE_BASED */
+#define QUICK_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
+#define QUICK_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        1 /* 0, 1 */
+#define QUICK_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
 
 /* Offset-based packet selection */
-#define HNEXT_OFFSET_BASED_PACKET_SELECTION                 1
+#define QUICK_OFFSET_BASED_PACKET_SELECTION                 1
 
 /* Offset escalation policy for postponed packets */
-#define HNEXT_OFFSET_ESCALATION                             1
-#define HNEXT_OFFSET_ESCALATION_LEVEL                       4
+#define QUICK_OFFSET_ESCALATION                             1
 
-#elif HNEXT_OFFSET_ASSIGNMENT == HNEXT_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
+#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
 
-/* Parameters for HNEXT_OFFSET_ASSIGNMENT_STATE_BASED */
-#define HNEXT_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
-#define HNEXT_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        3 /* 0, 1 */
-#define HNEXT_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
+/* Parameters for QUICK_OFFSET_ASSIGNMENT_STATE_BASED */
+#define QUICK_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
+#define QUICK_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        1 /* 0, 1 */
+#define QUICK_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
 
 /* Offset-based packet selection */
-#define HNEXT_OFFSET_BASED_PACKET_SELECTION                 1
+#define QUICK_OFFSET_BASED_PACKET_SELECTION                 1
 
 /* Offset escalation policy for postponed packets */
-#define HNEXT_OFFSET_ESCALATION                             1
-#define HNEXT_OFFSET_ESCALATION_LEVEL                       1
+#define QUICK_OFFSET_ESCALATION                             1
+#define QUICK_OFFSET_ESCALATION_LEVEL                       4
+
+#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
+
+/* Parameters for QUICK_OFFSET_ASSIGNMENT_STATE_BASED */
+#define QUICK_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
+#define QUICK_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        3 /* 0, 1 */
+#define QUICK_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
+
+/* Offset-based packet selection */
+#define QUICK_OFFSET_BASED_PACKET_SELECTION                 1
+
+/* Offset escalation policy for postponed packets */
+#define QUICK_OFFSET_ESCALATION                             1
+#define QUICK_OFFSET_ESCALATION_LEVEL                       1
 
 
-#endif /* HNEXT_OFFSET_ASSIGNMENT */
+#endif /* QUICK_OFFSET_ASSIGNMENT */
 
-#endif /* WITH_HNEXT */
+#endif /* WITH_QUICK */
 
 #endif /* NETWORK_FORMATION_ACCELERATION */
 

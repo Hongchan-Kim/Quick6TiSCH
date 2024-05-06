@@ -48,7 +48,7 @@
 #endif
 
 /********** Functions *********/
-#if WITH_HNEXT
+#if WITH_QUICK
 #if RPL_CONF_WITH_PROBING
 int tsch_rpl_is_urgent_probing_target_null(void);
 #endif
