@@ -180,7 +180,7 @@ struct tsch_packet {
 #endif
 
 #if WITH_QUICK6
-  uint8_t quick6_packet_current_offset;
+  uint8_t quick6_packet_offset_upper_bound;
   uint8_t quick6_packet_postponement_count;
   uint8_t quick6_packet_collision_count;
   uint8_t quick6_packet_noack_count;

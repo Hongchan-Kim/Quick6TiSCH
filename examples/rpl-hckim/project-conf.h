@@ -492,7 +492,7 @@
 #define WITH_QUICK6                                         1
 #if WITH_QUICK6
 #define QUICK6_LOG                                          1
-#define QUICK6_DBG                                          0
+#define QUICK6_DBG                                          1 /* duplicate packet mgmt, */
 
 #if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
 #define QUICK6_SLOTFRAME_LENGTH                             TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
@@ -503,7 +503,7 @@
 #endif
 
 /* Quick6TiSCH offset configuration - up to five offsets (the sixth offset is available only for broadcast packets) */
-#define QUICK6_NUM_OF_OFFSETS                               5    /* The number of offsets */
+#define QUICK6_NUM_OF_OFFSETS                               5    /* 0, 1, 2, 3, 4 */
 #define QUICK6_TIMING_CCA_OFFSET                            800  /* */
 #define QUICK6_TIMING_TX_OFFSET                             1300 /* 1300 ~ 3100 */
 #define QUICK6_TIMING_RX_OFFSET_LEFT                        500  /* 800  ~ 1300, 500 left margin from the tx timing */
@@ -511,16 +511,13 @@
 #define QUICK6_TIMING_INTER_OFFSET_INTERVAL                 600
 
 /* Quick6TiSCH offset assignment policy */
-#define QUICK6_OFFSET_ASSIGNMENT_RANDOM                     1 /* Random */
-#define QUICK6_OFFSET_ASSIGNMENT_AUTONOMOUS_PRIORITIZATION  2 /* Autonomous prioritization */
-//#define QUICK6_OFFSET_ASSIGNMENT_POLICY                      QUICK6_OFFSET_ASSIGNMENT_RANDOM
-#define QUICK6_OFFSET_ASSIGNMENT_POLICY                      QUICK6_OFFSET_ASSIGNMENT_AUTONOMOUS_PRIORITIZATION
-
-/* Quick6TiSCH offset assignment parameters */
+#define QUICK6_OFFSET_AUTONOMOUS_PRIORITIZATION             1 /* If 0, simple random is applied */
+#if QUICK6_OFFSET_AUTONOMOUS_PRIORITIZATION
 #define QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH                2 /* Up to two packets */
-#define QUICK6_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET   QUICK6_NUM_OF_OFFSETS /* 0, 1, 2, 3, 4 */
-#define QUICK6_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET       3 /* 0, 1, 2 */
+#define QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL              4 /* 0, 1, 2, 3, 4 */
+#define QUICK6_OFFSET_UPPER_BOUND_CRITICAL                  2 /* 0, 1, 2 */
 #define QUICK6_OFFSET_POSTPONEMENT_SCALING_FACTOR           1
+#endif
 
 /* Quick6TiSCH supplementary features */
 #define QUICK6_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1

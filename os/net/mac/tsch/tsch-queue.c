@@ -616,7 +616,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 #endif
 
 #if WITH_QUICK6
-            p->quick6_packet_current_offset = 0;
+            p->quick6_packet_offset_upper_bound = 0;
             p->quick6_packet_collision_count = 0;
             p->quick6_packet_noack_count = 0;
 #if QUICK6_DUPLICATE_PACKET_MANAGEMENT

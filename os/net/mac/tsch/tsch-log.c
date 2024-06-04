@@ -135,8 +135,8 @@ tsch_log_process_pending(void)
 #if WITH_QUICK6 && QUICK6_LOG
         printf(" Q6 %u %u %u %u %u",
               log->tx.quick6_log_postponement_count,
-              log->tx.quick6_log_tx_initial_offset,
-              log->tx.quick6_log_tx_final_offset,
+              log->tx.quick6_log_tx_offset_upper_bound,
+              log->tx.quick6_log_tx_selected_offset,
               log->tx.quick6_log_collision_count,
               log->tx.quick6_log_noack_count);
 #endif

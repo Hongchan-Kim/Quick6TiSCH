@@ -98,11 +98,6 @@ extern uint8_t trgb_grandP_id;
 extern enum TRGB_CELL trgb_my_tx_cell;
 #endif
 
-#if WITH_QUICK6
-extern enum QUICK6_OFFSET quick6_offset_table_parent[HCK_PACKET_TYPE_NULL];
-extern enum QUICK6_OFFSET quick6_offset_table_others[HCK_PACKET_TYPE_NULL];
-#endif
-
 #if WITH_ALICE && ALICE_EARLY_PACKET_DROP
 extern uint16_t alice_early_packet_drop_count;
 #endif

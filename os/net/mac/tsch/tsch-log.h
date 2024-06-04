@@ -109,8 +109,8 @@ struct tsch_log_t {
 #endif
 #if WITH_QUICK6
       uint8_t quick6_log_postponement_count;
-      uint8_t quick6_log_tx_initial_offset;
-      uint8_t quick6_log_tx_final_offset;
+      uint8_t quick6_log_tx_offset_upper_bound;
+      uint8_t quick6_log_tx_selected_offset;
       uint8_t quick6_log_collision_count;
       uint8_t quick6_log_noack_count;
 #endif
