@@ -95,7 +95,7 @@ orchestra_packet_sent(int mac_status)
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
       uint8_t prev_bootstrap_state = hck_formation_bootstrap_state;
       uint64_t prev_state_transition_asn = hck_formation_state_transition_asn;
-      hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_3_BI_DI_LINK_ESTABLISHED;
+      hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_3_JOINED_NODE;
       hck_formation_state_transition_asn = tsch_calculate_current_asn();
       LOG_HCK_FORMATION("rpku %u bs %u at %llx pbs %u pat %llx\n",
                         orchestra_parent_knows_us, 

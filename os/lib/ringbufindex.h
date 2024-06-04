@@ -48,10 +48,6 @@ struct ringbufindex {
   uint8_t put_ptr, get_ptr;
 };
 
-#if QUICK_OFFSET_BASED_PACKET_SELECTION
-int ringbufindex_shift_get_ptr(struct ringbufindex *r, int shift);
-#endif
-
 /**
  * \brief Initialize a ring buffer. The size must be a power of two
  * \param r Pointer to ringbufindex

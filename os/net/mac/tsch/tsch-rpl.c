@@ -60,37 +60,6 @@
 #define LOG_MODULE "TSCH RPL"
 #define LOG_LEVEL LOG_LEVEL_MAC
 
-#if WITH_QUICK
-/*---------------------------------------------------------------------------*/
-#if RPL_CONF_WITH_PROBING
-int
-tsch_rpl_is_urgent_probing_target_null()
-{
-  rpl_dag_t *dag;
-  dag = rpl_get_any_dag();
-
-  if(dag != NULL) {
-    return dag->instance->urgent_probing_target == NULL;
-  } else {
-    return 0;
-  }
-}
-#endif
-/*---------------------------------------------------------------------------*/
-int
-tsch_rpl_callback_dio_interval_increment()
-{
-  rpl_dag_t *dag;
-  dag = rpl_get_any_dag();
-
-  if(dag != NULL) {
-    return dag->instance->dio_intcurrent - dag->instance->dio_intmin;
-  } else {
-    return 0xFF;
-  }
-}
-#endif
-
 /*---------------------------------------------------------------------------*/
 #if TSCH_DBT_QUEUE_AWARENESS || WITH_TRGB
 int

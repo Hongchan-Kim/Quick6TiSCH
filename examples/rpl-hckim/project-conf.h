@@ -487,117 +487,52 @@
 #endif /* WITH_TRGB */
 
 /***************************************************************
- * Quick6TiSCH implementation - WITH_QUICK
+ * Quick6TiSCH implementation - WITH_QUICK6
  ****************************************************************/
-#define WITH_QUICK                                          1
-#if WITH_QUICK
-#define QUICK_LOG                                           1
-#define QUICK_DBG                                           0
+#define WITH_QUICK6                                         1
+#if WITH_QUICK6
+#define QUICK6_LOG                                          1
+#define QUICK6_DBG                                          0
 
 #if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
-#define QUICK_SLOTFRAME_LENGTH                              TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
-#define QUICK_SLOTFRAME_HANDLE                              0
+#define QUICK6_SLOTFRAME_LENGTH                             TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
+#define QUICK6_SLOTFRAME_HANDLE                             0
 #else /* Orchestra */
-#define QUICK_SLOTFRAME_LENGTH                              ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define QUICK_SLOTFRAME_HANDLE                              TSCH_SCHED_COMMON_SF_HANDLE
+#define QUICK6_SLOTFRAME_LENGTH                             ORCHESTRA_CONF_COMMON_SHARED_PERIOD
+#define QUICK6_SLOTFRAME_HANDLE                             TSCH_SCHED_COMMON_SF_HANDLE
 #endif
 
 /* Quick6TiSCH offset configuration - up to five offsets (the sixth offset is available only for broadcast packets) */
-#define QUICK_NUM_OF_OFFSETS                                5    /* The number of offsets */
-#define QUICK_CCA_OFFSET                                    800  /* */
-#define QUICK_TX_OFFSET                                     1300 /* 1300 ~ 3100 */
-#define QUICK_RX_OFFSET_LEFT                                500  /* 800  ~ 1300, 500 left margin from the tx timing */
-#define QUICK_RX_OFFSET_RIGHT                               2900 /* 1300 ~ 4200, 500 right margin from the tx timing */
-#define QUICK_OFFSET_GAP                                    600
+#define QUICK6_NUM_OF_OFFSETS                               5    /* The number of offsets */
+#define QUICK6_TIMING_CCA_OFFSET                            800  /* */
+#define QUICK6_TIMING_TX_OFFSET                             1300 /* 1300 ~ 3100 */
+#define QUICK6_TIMING_RX_OFFSET_LEFT                        500  /* 800  ~ 1300, 500 left margin from the tx timing */
+#define QUICK6_TIMING_RX_OFFSET_RIGHT                       2900 /* 1300 ~ 4200, 500 right margin from the tx timing */
+#define QUICK6_TIMING_INTER_OFFSET_INTERVAL                 600
 
-/* Quick6TiSCH additional features */
-#define QUICK_DUPLICATE_PACKET_MANAGEMENT                   1 /* Replace duplicate packet within neighbor queue, while maintaining the position within the ringbuf.*/
+/* Quick6TiSCH offset assignment policy */
+#define QUICK6_OFFSET_ASSIGNMENT_RANDOM                     1 /* Random */
+#define QUICK6_OFFSET_ASSIGNMENT_AUTONOMOUS_PRIORITIZATION  2 /* Autonomous prioritization */
+//#define QUICK6_OFFSET_ASSIGNMENT_POLICY                      QUICK6_OFFSET_ASSIGNMENT_RANDOM
+#define QUICK6_OFFSET_ASSIGNMENT_POLICY                      QUICK6_OFFSET_ASSIGNMENT_AUTONOMOUS_PRIORITIZATION
 
+/* Quick6TiSCH offset assignment parameters */
+#define QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH                2 /* Up to two packets */
+#define QUICK6_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET   QUICK6_NUM_OF_OFFSETS /* 0, 1, 2, 3, 4 */
+#define QUICK6_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET       3 /* 0, 1, 2 */
+#define QUICK6_OFFSET_POSTPONEMENT_SCALING_FACTOR           1
 
-/* Retransmission policy for postponed packets */
-#define QUICK_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
-
-/* Backoff policy for postponed packets */
-#define QUICK_BACKOFF_FOR_BCAST_PACKETS                     1 ///* QUICK TODO: Need to distinguish EB/broadcast nbrs */
-#define QUICK_TSCH_MAC_BCAST_MAX_BE                         5
-//
-#define QUICK_SLOTFRAME_LEVEL_BACKOFF                       1 //
-#define QUICK_TSCH_MAC_MIN_CSSF_BE                          1
-#define QUICK_TSCH_MAC_MAX_CSSF_BE                          5
-#define QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP                  1
-
-
-/* Offset assignment policy */
-#define QUICK_OFFSET_ASSIGNMENT_RANDOM                      1 /* Random */
-#define QUICK_OFFSET_ASSIGNMENT_STATE_BASED                 2 /* Two-tiered - 1, 4 */
-#define QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM          3 /* Two-tiered - 0-3, 4 */
-#define QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2        4 /* Two-tiered - 0-3, 4 */
-#define QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3        5 /* Two-tiered - 0-3, 4 */
-//#define QUICK_OFFSET_ASSIGNMENT                             QUICK_OFFSET_ASSIGNMENT_RANDOM
-//#define QUICK_OFFSET_ASSIGNMENT                             QUICK_OFFSET_ASSIGNMENT_STATE_BASED
-//#define QUICK_OFFSET_ASSIGNMENT                             QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
-//#define QUICK_OFFSET_ASSIGNMENT                             QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
-#define QUICK_OFFSET_ASSIGNMENT                             QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
-
-#if QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED
-
-/* Parameters for QUICK_OFFSET_ASSIGNMENT_STATE_BASED */
-#define QUICK_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
-#define QUICK_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        3 ///////////* 0, 1 */
-#define QUICK_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
-
-/* Offset-based packet selection */
-#define QUICK_OFFSET_BASED_PACKET_SELECTION                 1
-
-/* Offset escalation policy for postponed packets */
-#define QUICK_OFFSET_ESCALATION                             1
-#define QUICK_OFFSET_ESCALATION_LEVEL                       1 //////////
-
-#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
-
-/* Parameters for QUICK_OFFSET_ASSIGNMENT_STATE_BASED */
-#define QUICK_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
-#define QUICK_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        1 /* 0, 1 */
-#define QUICK_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
-
-/* Offset-based packet selection */
-#define QUICK_OFFSET_BASED_PACKET_SELECTION                 1
-
-/* Offset escalation policy for postponed packets */
-#define QUICK_OFFSET_ESCALATION                             1
-
-#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
-
-/* Parameters for QUICK_OFFSET_ASSIGNMENT_STATE_BASED */
-#define QUICK_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
-#define QUICK_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        1 /* 0, 1 */
-#define QUICK_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
-
-/* Offset-based packet selection */
-#define QUICK_OFFSET_BASED_PACKET_SELECTION                 1
-
-/* Offset escalation policy for postponed packets */
-#define QUICK_OFFSET_ESCALATION                             1
-#define QUICK_OFFSET_ESCALATION_LEVEL                       4
-
-#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
-
-/* Parameters for QUICK_OFFSET_ASSIGNMENT_STATE_BASED */
-#define QUICK_OFFSET_ASSIGNMENT_BC_PKTS_CRITICAL_THRESH     2
-#define QUICK_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET        3 /* 0, 1 */
-#define QUICK_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET    4 /* 2, 3, 4 */
-
-/* Offset-based packet selection */
-#define QUICK_OFFSET_BASED_PACKET_SELECTION                 1
-
-/* Offset escalation policy for postponed packets */
-#define QUICK_OFFSET_ESCALATION                             1
-#define QUICK_OFFSET_ESCALATION_LEVEL                       1
+/* Quick6TiSCH supplementary features */
+#define QUICK6_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
+#define QUICK6_BACKOFF_FOR_BCAST_PACKETS                     1 /* Backoff policy for postponed packets, QUICK-TODO: Need to distinguish EB/broadcast nbrs */
+#define QUICK6_TSCH_MAC_BCAST_MAX_BE                         5
+#define QUICK6_PER_SLOTFRAME_BACKOFF                         1 /* Slotframe level backoff for contention mitigation */
+#define QUICK6_PER_SLOTFRAME_BACKOFF_MIN_BE                  1 /* Slotframe level backoff configuration */
+#define QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE                  5 /* Slotframe level backoff configuration */
+#define QUICK6_DUPLICATE_PACKET_MANAGEMENT                   1 /* Replace duplicate packet within neighbor queue, while maintaining the position within the ringbuf.*/
 
 
-#endif /* QUICK_OFFSET_ASSIGNMENT */
-
-#endif /* WITH_QUICK */
+#endif /* WITH_QUICK6 */
 
 #endif /* NETWORK_FORMATION_ACCELERATION */
 

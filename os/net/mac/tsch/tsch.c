@@ -640,6 +640,21 @@ tsch_set_coordinator(int enable)
   tsch_is_coordinator = enable;
   tsch_set_eb_period(TSCH_EB_PERIOD);
 
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+  if(tsch_is_coordinator) { /* Coordinator */
+    uint8_t prev_bootstrap_state = hck_formation_bootstrap_state;
+    uint64_t prev_state_transition_asn = hck_formation_state_transition_asn;
+    hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_3_JOINED_NODE;
+    hck_formation_state_transition_asn = tsch_calculate_current_asn();
+    LOG_HCK_FORMATION("rpku %u bs %u at %llx pbs %u pat %llx\n",
+                      1, 
+                      hck_formation_bootstrap_state, 
+                      hck_formation_state_transition_asn,
+                      prev_bootstrap_state,
+                      prev_state_transition_asn);
+  }
+#endif
+
 #if WITH_TRGB
   int trgb_rand_num = random_rand();
   int trgb_rand_mod = trgb_rand_num % 2;

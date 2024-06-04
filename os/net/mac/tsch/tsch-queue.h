@@ -49,10 +49,6 @@
 
 /***** External Variables *****/
 
-#if QUICK_OFFSET_BASED_PACKET_SELECTION
-struct tsch_packet * quick_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_neighbor **n);
-#endif
-
 /* Broadcast and EB virtual neighbors */
 extern struct tsch_neighbor *n_broadcast;
 extern struct tsch_neighbor *n_eb;
@@ -82,11 +78,11 @@ struct tsch_neighbor *tsch_queue_get_nbr_from_id(const uint16_t id);
 void ost_update_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N);
 #endif
 
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-int tsch_queue_cssf_backoff_expired(const struct tsch_neighbor *n);
-void tsch_queue_cssf_backoff_reset(struct tsch_neighbor *n);
-void tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n);
-void tsch_queue_update_all_cssf_backoff_windows(const linkaddr_t *dest_addr);
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
+int quick6_tsch_queue_cssf_backoff_expired(const struct tsch_neighbor *n);
+void quick6_tsch_queue_cssf_backoff_reset(struct tsch_neighbor *n);
+void quick6_tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n);
+void quick6_tsch_queue_update_all_cssf_backoff_windows(const linkaddr_t *dest_addr);
 #endif
 
 /**

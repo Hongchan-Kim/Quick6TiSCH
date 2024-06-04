@@ -132,25 +132,13 @@ tsch_log_process_pending(void)
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
         printf(" BS %u", log->tx.hck_bootstrap_state);
 #endif
-#if QUICK_LOG
-        printf(" HN %u %u %u %u %u %u %u %u %u %u",
-              log->tx.quick_collision_count,
-              log->tx.quick_cssf_postponed_count,
-              log->tx.quick_noack_count,
-              log->tx.quick_backoff_exponent_before,
-              log->tx.quick_backoff_window_before,
-              log->tx.quick_backoff_exponent_after,
-              log->tx.quick_backoff_window_after,
-              log->tx.quick_state,
-              log->tx.quick_state_based_offset,
-              log->tx.quick_escalated_offset);
-#endif
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-      printf(" %u %u %u %u", 
-              log->tx.quick_cssf_backoff_exponent_before,
-              log->tx.quick_cssf_backoff_window_before,
-              log->tx.quick_cssf_backoff_exponent_after,
-              log->tx.quick_cssf_backoff_window_after);
+#if WITH_QUICK6 && QUICK6_LOG
+        printf(" Q6 %u %u %u %u %u",
+              log->tx.quick6_log_postponement_count,
+              log->tx.quick6_log_tx_initial_offset,
+              log->tx.quick6_log_tx_final_offset,
+              log->tx.quick6_log_collision_count,
+              log->tx.quick6_log_noack_count);
 #endif
 #if HCK_LOG_TSCH_SLOT
         printf(" HK-T");
@@ -233,8 +221,8 @@ tsch_log_process_pending(void)
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
         printf(" BS %u", log->rx.hck_bootstrap_state);
 #endif
-#if QUICK_LOG
-        printf(" HN %u", log->rx.quick_offset);
+#if WITH_QUICK6 && QUICK6_LOG
+        printf(" Q6 %u", log->rx.quick6_log_rx_offset);
 #endif
 #if HCK_LOG_TSCH_SLOT
         printf(" HK-T");

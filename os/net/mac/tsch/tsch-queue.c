@@ -99,13 +99,6 @@ static struct ctimer ost_select_N_timer;
 #endif
 
 /*---------------------------------------------------------------------------*/
-#if WITH_QUICK && QUICK_OFFSET_BASED_PACKET_SELECTION
-/* Remove specific packet from ringbuf and return pointer address of the packet 
- * To completely remove the packet, run tsch_queue_free_packet() after this. */
-static struct tsch_packet *
-quick_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p);
-#endif
-/*---------------------------------------------------------------------------*/
 #if HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_NON_RPL_NBR \
     || HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR
 void
@@ -124,8 +117,8 @@ tsch_queue_change_attr_of_packets_in_queue(struct tsch_neighbor *target_nbr,
 
     if(sf_handle == TSCH_SCHED_UNICAST_SF_HANDLE) {
       tsch_queue_backoff_reset(target_nbr);
-#if WITH_QUICK && QUICK_SLOTFRAME_LEVEL_BACKOFF
-      tsch_queue_cssf_backoff_reset(target_nbr);
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
+      quick6_tsch_queue_cssf_backoff_reset(target_nbr);
 #endif
     }
 
@@ -319,8 +312,8 @@ tsch_queue_add_nbr(const linkaddr_t *addr)
         n->is_broadcast = linkaddr_cmp(addr, &tsch_eb_address)
           || linkaddr_cmp(addr, &tsch_broadcast_address);
         tsch_queue_backoff_reset(n);
-#if WITH_QUICK && QUICK_SLOTFRAME_LEVEL_BACKOFF
-        tsch_queue_cssf_backoff_reset(n);
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
+        quick6_tsch_queue_cssf_backoff_reset(n);
 #endif
       }
       tsch_release_lock();
@@ -544,10 +537,10 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
     n = tsch_queue_add_nbr(addr);
     if(n != NULL) {
 
-#if WITH_QUICK && QUICK_DUPLICATE_PACKET_MANAGEMENT /* Enqueue only one packet for each packet type */
-      uint8_t quick_same_type_packet_exist_or_not = 0;
-      uint8_t quick_current_postponed_count = 0;
-      int16_t quick_same_type_packet_get_index = -1;
+#if WITH_QUICK6 && QUICK6_DUPLICATE_PACKET_MANAGEMENT /* Enqueue only one packet for each packet type */
+      uint8_t quick6_same_type_packet_exist_or_not = 0;
+      uint8_t quick6_current_postponed_count = 0;
+      int16_t quick6_same_type_packet_get_index = -1;
 
       if(hck_current_packet_type == HCK_PACKET_TYPE_KA ||
          hck_current_packet_type == HCK_PACKET_TYPE_DIS ||
@@ -555,7 +548,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
          hck_current_packet_type == HCK_PACKET_TYPE_U_DIO) {
         int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf);
         if(get_index == -1) {
-          quick_same_type_packet_exist_or_not = 0;
+          quick6_same_type_packet_exist_or_not = 0;
         } else {
           int16_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
           int i;
@@ -567,23 +560,25 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
               temp_index = i;
             }
             if(n->tx_array[temp_index]->hck_packet_type == hck_current_packet_type) {
-              quick_same_type_packet_exist_or_not = 1;
-              quick_current_postponed_count = n->tx_array[temp_index]->quick_cssf_postponed_count;
-              quick_same_type_packet_get_index = temp_index;
+              quick6_same_type_packet_exist_or_not = 1;
+              quick6_current_postponed_count = n->tx_array[temp_index]->quick6_packet_postponement_count;
+              quick6_same_type_packet_get_index = temp_index;
               break;
             }
           }
-          if(quick_same_type_packet_exist_or_not) {
+          if(quick6_same_type_packet_exist_or_not) {
+#if QUICK6_DBG
             LOG_INFO("hck-dbg delete overlapped packet %u %u %u\n", 
-                    hck_current_packet_type, quick_current_postponed_count, quick_same_type_packet_get_index);
-            struct tsch_packet *quick_overlapped_packet = n->tx_array[quick_same_type_packet_get_index];
-            tsch_queue_free_packet(quick_overlapped_packet);
+                    hck_current_packet_type, quick6_current_postponed_count, quick6_same_type_packet_get_index);
+#endif
+            struct tsch_packet *quick6_overlapped_packet = n->tx_array[quick6_same_type_packet_get_index];
+            tsch_queue_free_packet(quick6_overlapped_packet);
           }
         }
       }
 
-      if(quick_same_type_packet_exist_or_not) {
-        put_index = quick_same_type_packet_get_index;
+      if(quick6_same_type_packet_exist_or_not) {
+        put_index = quick6_same_type_packet_get_index;
       } else {
         put_index = ringbufindex_peek_put(&n->tx_ringbuf);
       }
@@ -620,25 +615,25 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 #endif
 #endif
 
-#if WITH_QUICK
-            p->quick_offset = 0;
-            p->quick_collision_count = 0;
-            p->quick_noack_count = 0;
-#if QUICK_DUPLICATE_PACKET_MANAGEMENT
-            if(quick_same_type_packet_exist_or_not) {
-              p->quick_cssf_postponed_count = quick_current_postponed_count;
+#if WITH_QUICK6
+            p->quick6_packet_current_offset = 0;
+            p->quick6_packet_collision_count = 0;
+            p->quick6_packet_noack_count = 0;
+#if QUICK6_DUPLICATE_PACKET_MANAGEMENT
+            if(quick6_same_type_packet_exist_or_not) {
+              p->quick6_packet_postponement_count = quick6_current_postponed_count;
             } else {
-              p->quick_cssf_postponed_count = 0;
+              p->quick6_packet_postponement_count = 0;
             }
 #else
-            p->quick_cssf_postponed_count = 0;
+            p->quick6_packet_postponement_count = 0;
 #endif
 #endif
 
             /* Add to ringbuf (actual add committed through atomic operation) */
             n->tx_array[put_index] = p;
-#if QUICK_DUPLICATE_PACKET_MANAGEMENT
-            if(!quick_same_type_packet_exist_or_not) {
+#if WITH_QUICK6 && QUICK6_DUPLICATE_PACKET_MANAGEMENT
+            if(!quick6_same_type_packet_exist_or_not) {
               ringbufindex_put(&n->tx_ringbuf);
             }
 #else
@@ -706,73 +701,6 @@ tsch_queue_nbr_packet_count(const struct tsch_neighbor *n)
   return -1;
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_QUICK &&  QUICK_OFFSET_BASED_PACKET_SELECTION
-/* Remove specific packet from ringbuf and return pointer address of the packet 
- * To completely remove the packet, run tsch_queue_free_packet() after this. */
-static struct tsch_packet *
-quick_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p)
-{
-  if(!tsch_is_locked()) {
-    if(n != NULL) {
-      /* Get and remove packet from ringbuf (remove committed through an atomic operation */
-      int16_t get_index = ringbufindex_peek_get(&n->tx_ringbuf); /* Do not remove packet here */
-      if(get_index != -1) {
-        /* First, find matched ringbufindex */
-        int16_t matched_index = -1;
-        int16_t num_elements = ringbufindex_elements(&n->tx_ringbuf);
-        int i;
-        for(i = get_index; i < get_index + num_elements; i++) {
-          int16_t temp_index;
-          if(i >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
-            temp_index = i - ringbufindex_size(&n->tx_ringbuf);
-          } else {
-            temp_index = i;
-          }
-          if(p == n->tx_array[temp_index]) {
-            matched_index = temp_index;
-            break;
-          }
-        }
-        /* Second, remove the matched packet and shift ringbufindex/ringbuf */
-        if(matched_index != -1) {
-          struct tsch_packet *matched_p = n->tx_array[matched_index];
-          if(matched_index == get_index) { /* There are no packets to shift */
-            ringbufindex_get(&n->tx_ringbuf);
-            return matched_p;
-          } else {
-            int16_t gap_of_index = matched_index > get_index ? 
-                                   matched_index - get_index : 
-                                   matched_index + ringbufindex_size(&n->tx_ringbuf) - get_index;
-            for(i = get_index + gap_of_index - 1; i >= get_index; i--) {
-              int16_t src_index;
-              if(i >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
-                src_index = i - ringbufindex_size(&n->tx_ringbuf);
-              } else {
-                src_index = i;
-              }
-              int16_t dest_index;
-              if((i + 1) >= ringbufindex_size(&n->tx_ringbuf)) { /* default size: 16 */
-                dest_index = (i + 1) - ringbufindex_size(&n->tx_ringbuf);
-              } else {
-                dest_index = (i + 1);
-              }
-              n->tx_array[dest_index] = n->tx_array[src_index];
-            }
-            ringbufindex_shift_get_ptr(&n->tx_ringbuf, 1);
-            return matched_p;
-          }
-        } else {
-          return NULL;
-        }
-      } else {
-        return NULL;
-      }
-    }
-  }
-  return NULL;
-}
-#endif
-/*---------------------------------------------------------------------------*/
 /* Remove first packet from a neighbor queue */
 struct tsch_packet *
 tsch_queue_remove_packet_from_queue(struct tsch_neighbor *n)
@@ -836,11 +764,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 
   if(mac_tx_status == MAC_TX_OK) {
     /* Successful transmission */
-#if WITH_QUICK && QUICK_OFFSET_BASED_PACKET_SELECTION
-    quick_tsch_queue_remove_specific_packet_from_queue(n, p);
-#else
     tsch_queue_remove_packet_from_queue(n);
-#endif
     in_queue = 0;
 
     /* Update CSMA state in the unicast case */
@@ -849,24 +773,24 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
         /* If this is a shared link, reset backoff on success.
          * Otherwise, do so only is the queue is empty */
         tsch_queue_backoff_reset(n);
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-        if(link->slotframe_handle == QUICK_SLOTFRAME_HANDLE
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
+        if(link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE
           || tsch_queue_is_empty(n)) {
-          tsch_queue_cssf_backoff_reset(n);
+          quick6_tsch_queue_cssf_backoff_reset(n);
         }
 #endif
       }
     }
-#if WITH_QUICK && QUICK_BACKOFF_FOR_BCAST_PACKETS
+#if WITH_QUICK6 && QUICK6_BACKOFF_FOR_BCAST_PACKETS
     else { // broadcast neirhbor
       if(is_shared_link || tsch_queue_is_empty(n)) {
         /* If this is a shared link, reset backoff on success.
          * Otherwise, do so only is the queue is empty */
         tsch_queue_backoff_reset(n);
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-        if(link->slotframe_handle == QUICK_SLOTFRAME_HANDLE
+#if QUICK6_PER_SLOTFRAME_BACKOFF
+        if(link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE
           || tsch_queue_is_empty(n)) {
-          tsch_queue_cssf_backoff_reset(n);
+          quick6_tsch_queue_cssf_backoff_reset(n);
         }
 #endif
       }
@@ -876,11 +800,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
     /* Failed transmission */
     if(p->transmissions >= p->max_transmissions) {
       /* Drop packet */
-#if WITH_QUICK && QUICK_OFFSET_BASED_PACKET_SELECTION
-      quick_tsch_queue_remove_specific_packet_from_queue(n, p);
-#else
       tsch_queue_remove_packet_from_queue(n);
-#endif
       in_queue = 0;
     }
     /* Update CSMA state in the unicast case */
@@ -890,21 +810,21 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
       if(is_shared_link) {
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n);
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-        if(link->slotframe_handle == QUICK_SLOTFRAME_HANDLE) {
-          tsch_queue_cssf_backoff_inc(n);
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
+        if(link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
+          quick6_tsch_queue_cssf_backoff_inc(n);
         }
 #endif
       }
     }
-#if WITH_QUICK && QUICK_BACKOFF_FOR_BCAST_PACKETS
+#if WITH_QUICK6 && QUICK6_BACKOFF_FOR_BCAST_PACKETS
     else { /* Broadcast neighbor */
       if(is_shared_link) {
         /* Shared link: increment backoff exponent, pick a new window */
         tsch_queue_backoff_inc(n);
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-        if(link->slotframe_handle == QUICK_SLOTFRAME_HANDLE) {
-          tsch_queue_cssf_backoff_inc(n);
+#if QUICK6_PER_SLOTFRAME_BACKOFF
+        if(link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
+          quick6_tsch_queue_cssf_backoff_inc(n);
         }
 #endif
 
@@ -925,8 +845,8 @@ tsch_queue_drop_packets(struct tsch_neighbor *n)
     tsch_queue_flush_nbr_queue(n);
     /* Reset backoff exponent */
     tsch_queue_backoff_reset(n);
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-    tsch_queue_cssf_backoff_reset(n);
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
+    quick6_tsch_queue_cssf_backoff_reset(n);
 #endif
   }
 }
@@ -962,8 +882,8 @@ tsch_queue_reset_except_n_eb(void)
         tsch_queue_flush_nbr_queue(n);
         /* Reset backoff exponent */
         tsch_queue_backoff_reset(n);
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-        tsch_queue_cssf_backoff_reset(n);
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
+        quick6_tsch_queue_cssf_backoff_reset(n);
 #endif
       }
       n = next_n;
@@ -995,8 +915,8 @@ tsch_queue_reset(void)
       tsch_queue_flush_nbr_queue(n);
       /* Reset backoff exponent */
       tsch_queue_backoff_reset(n);
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-      tsch_queue_cssf_backoff_reset(n);
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
+      quick6_tsch_queue_cssf_backoff_reset(n);
 #endif
       n = next_n;
     }
@@ -1066,9 +986,9 @@ tsch_queue_get_packet_for_nbr(const struct tsch_neighbor *n, struct tsch_link *l
           !(is_shared_link && !tsch_queue_backoff_expired(n))) {    /* If this is a shared link,
                                                                     make sure the backoff has expired */
 
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-        if(link->slotframe_handle == QUICK_SLOTFRAME_HANDLE &&
-          !tsch_queue_cssf_backoff_expired(n)) {
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
+        if(link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE &&
+          !quick6_tsch_queue_cssf_backoff_expired(n)) {
           return NULL;
         }
 #endif
@@ -1194,130 +1114,6 @@ tsch_queue_get_packet_for_dest_addr(const linkaddr_t *addr, struct tsch_link *li
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
-#if WITH_QUICK && QUICK_OFFSET_BASED_PACKET_SELECTION /* Get best packet according to the quick policy */
-struct tsch_packet *
-quick_tsch_queue_get_best_packet_and_nbr(struct tsch_link *link, struct tsch_neighbor **n)
-{
-  if(!tsch_is_locked()) {
-    struct tsch_neighbor *best_nbr = NULL;
-    struct tsch_packet *best_p = NULL;
-    enum QUICK_OFFSET quick_best_offset = QUICK_OFFSET_NULL;
-
-    struct tsch_neighbor *curr_nbr = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
-    struct tsch_packet *curr_p = NULL;
-    enum QUICK_OFFSET quick_curr_offset = QUICK_OFFSET_NULL;
-
-    while(curr_nbr != NULL) {
-      if((curr_nbr == n_broadcast) // bcast nbr
-          || (!curr_nbr->is_broadcast && curr_nbr->tx_links_count == 0)) { // ucast nbr using cssf
-        int16_t get_index = ringbufindex_peek_get(&curr_nbr->tx_ringbuf);
-
-        if(get_index != -1 && tsch_queue_backoff_expired(curr_nbr)
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-          && tsch_queue_cssf_backoff_expired(curr_nbr)
-#endif
-          ) {
-          int16_t num_elements = ringbufindex_elements(&curr_nbr->tx_ringbuf);
-          int i;
-          for(i = get_index; i < get_index + num_elements; i++) {
-            int16_t temp_index;
-            if(i >= ringbufindex_size(&curr_nbr->tx_ringbuf)) { /* default size: 16 */
-              temp_index = i - ringbufindex_size(&curr_nbr->tx_ringbuf);
-            } else {
-              temp_index = i;
-            }
-
-            int packet_attr_slotframe = queuebuf_attr(curr_nbr->tx_array[temp_index]->qb, PACKETBUF_ATTR_TSCH_SLOTFRAME);
-            int packet_attr_timeslot = queuebuf_attr(curr_nbr->tx_array[temp_index]->qb, PACKETBUF_ATTR_TSCH_TIMESLOT);
-            int packet_attr_channel_offset = queuebuf_attr(curr_nbr->tx_array[temp_index]->qb, PACKETBUF_ATTR_TSCH_CHANNEL_OFFSET);
-
-            if(packet_attr_slotframe != 0xffff && packet_attr_slotframe != link->slotframe_handle) {
-              continue;
-            }
-            if(packet_attr_timeslot != 0xffff && packet_attr_timeslot != link->timeslot) {
-              continue;
-            }
-            if(packet_attr_channel_offset != link->channel_offset) { 
-              continue;
-            }
-
-            curr_p = curr_nbr->tx_array[temp_index];
-
-            if(curr_nbr->is_time_source) {
-              quick_curr_offset = quick_offset_assignment_parent[curr_p->hck_packet_type];
-            } else {
-              quick_curr_offset = quick_offset_assignment_others[curr_p->hck_packet_type];
-            }
-
-#if QUICK_OFFSET_ESCALATION
-#if QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED
-            int quick_quotient = (curr_p->quick_cssf_postponed_count) / ((curr_p->max_transmissions) / QUICK_OFFSET_ESCALATION_LEVEL);
-            if(quick_curr_offset < quick_quotient) {
-              quick_curr_offset = QUICK_OFFSET_0;
-            } else {
-              quick_curr_offset = quick_curr_offset - quick_quotient;
-            }
-#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM
-            //uint8_t original_offset = quick_curr_offset;
-
-            int quick_quotient = (curr_p->quick_cssf_postponed_count) / (curr_p->max_transmissions);
-            if(quick_quotient >= 1) {
-              quick_curr_offset = QUICK_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET;
-            }
-#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_2
-            //uint8_t original_offset = quick_curr_offset;
-
-            int quick_quotient = (curr_p->quick_cssf_postponed_count) / ((curr_p->max_transmissions) / QUICK_OFFSET_ESCALATION_LEVEL);
-            if(quick_curr_offset < quick_quotient) {
-              quick_curr_offset = QUICK_OFFSET_0;
-            } else {
-              quick_curr_offset = quick_curr_offset - quick_quotient;
-            }
-#elif QUICK_OFFSET_ASSIGNMENT == QUICK_OFFSET_ASSIGNMENT_STATE_BASED_RANDOM_3
-            int quick_quotient = (curr_p->quick_cssf_postponed_count) / ((curr_p->max_transmissions) / QUICK_OFFSET_ESCALATION_LEVEL);
-            if(quick_curr_offset < quick_quotient) {
-              quick_curr_offset = QUICK_OFFSET_0;
-            } else {
-              quick_curr_offset = quick_curr_offset - quick_quotient;
-            }
-
-#endif
-#endif
-
-            curr_p->quick_offset = quick_curr_offset; /* Update metadat!!! */
-/*
-            TSCH_LOG_ADD(tsch_log_message,
-                snprintf(log->message, sizeof(log->message),
-                "hck dbg1 %u %u %u %u %u", original_offset, 
-                                     curr_p->quick_cssf_postponed_count,
-                                     quick_quotient,
-                                     quick_curr_offset,
-                                     curr_p->quick_offset));
-*/
-
-            if(best_nbr == NULL && best_p == NULL) {
-              best_nbr = curr_nbr;
-              best_p = curr_p;
-              quick_best_offset = quick_curr_offset;
-            } else {
-              if(quick_curr_offset < quick_best_offset) {
-                best_nbr = curr_nbr;
-                best_p = curr_p;
-                quick_best_offset = quick_curr_offset;
-              }
-            }
-          }
-        }
-      }
-      curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
-    }
-    *n = best_nbr;
-    return best_p;
-  }
-  return NULL;
-}
-#endif
-/*---------------------------------------------------------------------------*/
 /* Returns the head packet of any neighbor queue with zero backoff counter.
  * Writes pointer to the neighbor in *n */
 struct tsch_packet *
@@ -1422,10 +1218,10 @@ tsch_queue_backoff_reset(struct tsch_neighbor *n)
 void
 tsch_queue_backoff_inc(struct tsch_neighbor *n)
 {
-#if WITH_QUICK && QUICK_BACKOFF_FOR_BCAST_PACKETS
+#if WITH_QUICK6 && QUICK6_BACKOFF_FOR_BCAST_PACKETS
   if(n == n_broadcast) {
     /* Increment exponent */
-    n->backoff_exponent = MIN(n->backoff_exponent + 1, QUICK_TSCH_MAC_BCAST_MAX_BE);
+    n->backoff_exponent = MIN(n->backoff_exponent + 1, QUICK6_TSCH_MAC_BCAST_MAX_BE);
   } else {
     /* Increment exponent */
     n->backoff_exponent = MIN(n->backoff_exponent + 1, TSCH_MAC_MAX_BE);
@@ -1462,76 +1258,60 @@ tsch_queue_update_all_backoff_windows(const linkaddr_t *dest_addr)
   }
 }
 /*---------------------------------------------------------------------------*/
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
 /* May the neighbor transmit over a shared link? */
 int
-tsch_queue_cssf_backoff_expired(const struct tsch_neighbor *n)
+quick6_tsch_queue_cssf_backoff_expired(const struct tsch_neighbor *n)
 {
-  return n->cssf_backoff_window == 0;
+  return n->quick6_cssf_backoff_window == 0;
 }
 /*---------------------------------------------------------------------------*/
 /* Reset neighbor backoff */
 void
-tsch_queue_cssf_backoff_reset(struct tsch_neighbor *n)
+quick6_tsch_queue_cssf_backoff_reset(struct tsch_neighbor *n)
 {
-  n->cssf_backoff_window = 0;
-  n->cssf_backoff_exponent = QUICK_TSCH_MAC_MIN_CSSF_BE;
+  n->quick6_cssf_backoff_window = 0;
+  n->quick6_cssf_backoff_exponent = QUICK6_PER_SLOTFRAME_BACKOFF_MIN_BE;
 }
 /*---------------------------------------------------------------------------*/
 /* Increment backoff exponent, pick a new window */
 void
-tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n)
+quick6_tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n)
 {
-#if WITH_QUICK && QUICK_BACKOFF_FOR_BCAST_PACKETS
+#if WITH_QUICK6 && QUICK6_BACKOFF_FOR_BCAST_PACKETS
   if(n == n_broadcast) {
     /* Increment exponent */
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP
-    n->cssf_backoff_exponent = n->backoff_exponent;
-#else
-    n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, QUICK_TSCH_MAC_MAX_CSSF_BE);
-#endif
+    n->quick6_cssf_backoff_exponent = MIN(n->quick6_cssf_backoff_exponent + 1, QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE);
   } else {
     /* Increment exponent */
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP
-    n->cssf_backoff_exponent = n->backoff_exponent;
-#else
-    n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, QUICK_TSCH_MAC_MAX_CSSF_BE);
-#endif
+    n->quick6_cssf_backoff_exponent = MIN(n->quick6_cssf_backoff_exponent + 1, QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE);
   }
-#else
+#else /* Quick6TiSCH-TODO: unicast neighbors only? */
   /* Increment exponent */
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP
-  n->cssf_backoff_exponent = n->backoff_exponent;
-#else
-  n->cssf_backoff_exponent = MIN(n->cssf_backoff_exponent + 1, QUICK_TSCH_MAC_MAX_CSSF_BE);
-#endif
+  n->quick6_cssf_backoff_exponent = MIN(n->quick6_cssf_backoff_exponent + 1, QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE);
 #endif
 
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF_TEMP
-  n->cssf_backoff_window = n->backoff_window;
-#else
   /* Pick a window (number of shared slots to skip). Ignore least significant
    * few bits, which, on some embedded implementations of rand (e.g. msp430-libc),
    * are known to have poor pseudo-random properties. */
-  n->cssf_backoff_window = (random_rand() >> 6) % (1 << n->cssf_backoff_exponent);
+  n->quick6_cssf_backoff_window = (random_rand() >> 6) % (1 << n->quick6_cssf_backoff_exponent);
   /* Add one to the window as we will decrement it at the end of the current slot
    * through tsch_queue_update_all_backoff_windows */
-  n->cssf_backoff_window++;
-#endif
+  n->quick6_cssf_backoff_window++;
 }
 /*---------------------------------------------------------------------------*/
 /* Decrement backoff window for all queues directed at dest_addr */
 void
-tsch_queue_update_all_cssf_backoff_windows(const linkaddr_t *dest_addr)
+quick6_tsch_queue_update_all_cssf_backoff_windows(const linkaddr_t *dest_addr)
 {
   if(!tsch_is_locked()) {
     int is_broadcast = linkaddr_cmp(dest_addr, &tsch_broadcast_address);
     struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);
     while(n != NULL) {
-      if(n->cssf_backoff_window != 0 /* Is the queue in backoff state? */
+      if(n->quick6_cssf_backoff_window != 0 /* Is the queue in backoff state? */
          && ((n->tx_links_count == 0 && is_broadcast)
              || (n->tx_links_count > 0 && linkaddr_cmp(dest_addr, tsch_queue_get_nbr_address(n))))) {
-        n->cssf_backoff_window--;
+        n->quick6_cssf_backoff_window--;
       }
       n = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, n);
     }

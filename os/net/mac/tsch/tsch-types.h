@@ -71,10 +71,10 @@ enum HCK_PACKET_TYPE {
 
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
 enum HCK_BOOTSTRAP_STATE {
-  HCK_BOOTSTRAP_STATE_0_NEW_NODE,              // 0
-  HCK_BOOTSTRAP_STATE_1_TSCH_JOINED,           // 1
-  HCK_BOOTSTRAP_STATE_2_RPL_JOINED,            // 2
-  HCK_BOOTSTRAP_STATE_3_BI_DI_LINK_ESTABLISHED // 3, both bidirectional routes and resources
+  HCK_BOOTSTRAP_STATE_0_NEW_NODE,             // 0
+  HCK_BOOTSTRAP_STATE_1_TSCH_JOINED,          // 1
+  HCK_BOOTSTRAP_STATE_2_RPL_JOINED,           // 2
+  HCK_BOOTSTRAP_STATE_3_JOINED_NODE           // 3, both bidirectional routes and resources
 };
 #endif
 
@@ -100,21 +100,14 @@ enum TRGB_OPERATION {
 };
 #endif
 
-#if WITH_QUICK
-enum QUICK_STATE {
-  QUICK_STATE_1_NEW_NODE,       // 0
-  QUICK_STATE_2_TSCH_JOINED,    // 1
-  QUICK_STATE_3_RPL_JOINED,     // 2
-  QUICK_STATE_4_CELL_ALLOCATED, // 3
-};
-enum QUICK_OFFSET {
-  QUICK_OFFSET_0,   // 0 
-  QUICK_OFFSET_1,   // 1
-  QUICK_OFFSET_2,   // 2
-  QUICK_OFFSET_3,   // 3
-  QUICK_OFFSET_4,   // 4
-  QUICK_OFFSET_5,   // 5
-  QUICK_OFFSET_NULL // 6
+#if WITH_QUICK6
+enum QUICK6_OFFSET {
+  QUICK6_OFFSET_0,   // 0 
+  QUICK6_OFFSET_1,   // 1
+  QUICK6_OFFSET_2,   // 2
+  QUICK6_OFFSET_3,   // 3
+  QUICK6_OFFSET_4,   // 4
+  QUICK6_OFFSET_NULL // 5
 };
 #endif
 
@@ -186,11 +179,11 @@ struct tsch_packet {
   uint16_t dra_seq;
 #endif
 
-#if WITH_QUICK
-  uint8_t quick_offset;
-  uint8_t quick_collision_count;
-  uint8_t quick_noack_count;
-  uint8_t quick_cssf_postponed_count;
+#if WITH_QUICK6
+  uint8_t quick6_packet_current_offset;
+  uint8_t quick6_packet_postponement_count;
+  uint8_t quick6_packet_collision_count;
+  uint8_t quick6_packet_noack_count;
 #endif
 
 #if WITH_OST
@@ -210,10 +203,9 @@ struct tsch_neighbor {
   uint8_t backoff_exponent; /* CSMA backoff exponent */
   uint8_t backoff_window; /* CSMA backoff window (number of slots to skip) */
   uint8_t last_backoff_window; /* Last CSMA backoff window */
-#if QUICK_SLOTFRAME_LEVEL_BACKOFF
-  uint8_t cssf_backoff_exponent; /* CSMA backoff exponent */
-  uint8_t cssf_backoff_window; /* CSMA backoff window (number of slots to skip) */
-  uint8_t cssf_last_backoff_window; /* Last CSMA backoff window */
+#if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
+  uint8_t quick6_cssf_backoff_exponent; /* CSMA backoff exponent */
+  uint8_t quick6_cssf_backoff_window; /* CSMA backoff window (number of slots to skip) */
 #endif
   uint8_t tx_links_count; /* How many links do we have to this neighbor? */
   uint8_t dedicated_tx_links_count; /* How many dedicated links do we have to this neighbor? */
