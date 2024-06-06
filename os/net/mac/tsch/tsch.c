@@ -78,6 +78,14 @@
 #define LOG_LEVEL LOG_LEVEL_MAC
 
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+uint8_t hck_fitst_transition_to_tsch_joined = 0;
+uint8_t hck_fitst_transition_to_rpl_joined = 0;
+uint8_t hck_fitst_transition_to_joined_node = 0;
+
+uint64_t hck_first_asn_tsch_joined = 0;
+uint64_t hck_first_asn_rpl_joined = 0;
+uint64_t hck_first_asn_joined_node = 0;
+
 uint8_t hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_0_NEW_NODE;
 uint64_t hck_formation_state_transition_asn = 0;
 #endif
@@ -642,16 +650,30 @@ tsch_set_coordinator(int enable)
 
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
   if(tsch_is_coordinator) { /* Coordinator */
-    uint8_t prev_bootstrap_state = hck_formation_bootstrap_state;
-    uint64_t prev_state_transition_asn = hck_formation_state_transition_asn;
-    hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_3_JOINED_NODE;
-    hck_formation_state_transition_asn = tsch_calculate_current_asn();
-    LOG_HCK_FORMATION("rpku %u bs %u at %llx pbs %u pat %llx\n",
-                      1, 
-                      hck_formation_bootstrap_state, 
-                      hck_formation_state_transition_asn,
-                      prev_bootstrap_state,
-                      prev_state_transition_asn);
+    if(hck_fitst_transition_to_joined_node == 0) {
+      hck_fitst_transition_to_joined_node = 1;
+      uint8_t prev_bootstrap_state = hck_formation_bootstrap_state;
+      uint64_t prev_state_transition_asn = hck_formation_state_transition_asn;
+      hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_3_JOINED_NODE;
+      hck_formation_state_transition_asn = tsch_calculate_current_asn();
+      LOG_HCK_FORMATION("rpku %u bs %u at %llx pbs %u pat %llx\n",
+                        1, 
+                        hck_formation_bootstrap_state, 
+                        hck_formation_state_transition_asn,
+                        prev_bootstrap_state,
+                        prev_state_transition_asn);
+
+      hck_first_asn_joined_node = hck_formation_state_transition_asn;
+      LOG_HCK_FORMATION("FTST %u at %llx\n", 
+                        hck_formation_bootstrap_state, 
+                        hck_formation_state_transition_asn);
+
+      LOG_HCK_FORMATION("FASN %u TJ %llx RJ %llx JN %llx\n", 
+                        hck_formation_bootstrap_state, 
+                        hck_first_asn_tsch_joined,
+                        hck_first_asn_rpl_joined,
+                        hck_first_asn_joined_node);
+    }
   }
 #endif
 
@@ -1408,13 +1430,29 @@ tsch_associate(const struct input_packet *input_eb, rtimer_clock_t timestamp)
       uint8_t prev_bootstrap_state = hck_formation_bootstrap_state;
       uint64_t prev_state_transition_asn = hck_formation_state_transition_asn;
       hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_1_TSCH_JOINED;
-      hck_formation_state_transition_asn = tsch_calculate_current_asn();
+      //hck_formation_state_transition_asn = tsch_calculate_current_asn();
+      hck_formation_state_transition_asn = (uint64_t)(tsch_current_asn.ls4b) 
+                                         + ((uint64_t)(tsch_current_asn.ms1b) << 32);
       LOG_HCK_FORMATION("asso %u bs %u at %llx pbs %u pat %llx\n", 
                         tsch_association_count,
                         hck_formation_bootstrap_state, 
                         hck_formation_state_transition_asn,
                         prev_bootstrap_state,
                         prev_state_transition_asn);
+
+    if(hck_fitst_transition_to_tsch_joined == 0) {
+      hck_fitst_transition_to_tsch_joined = 1;
+      hck_first_asn_tsch_joined = hck_formation_state_transition_asn;
+      LOG_HCK_FORMATION("FTST %u at %llx\n", 
+                        hck_formation_bootstrap_state, 
+                        hck_formation_state_transition_asn);
+
+      LOG_HCK_FORMATION("FASN %u TJ %llx RJ %llx JN %llx\n", 
+                        hck_formation_bootstrap_state, 
+                        hck_first_asn_tsch_joined,
+                        hck_first_asn_rpl_joined,
+                        hck_first_asn_joined_node);
+    }
 #endif
 
       tsch_log_association_count++;

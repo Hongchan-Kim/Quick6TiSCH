@@ -274,28 +274,29 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
       prev_state_transition_asn = hck_formation_state_transition_asn;
       hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_2_RPL_JOINED;
       hck_formation_state_transition_asn = tsch_calculate_current_asn();
-    }
-    /* else {
-      prev_bootstrap_state = hck_formation_bootstrap_state;
-      prev_state_transition_asn = hck_formation_state_transition_asn;
-      hck_formation_bootstrap_state = HCK_BOOTSTRAP_STATE_0_NEW_NODE;
-      hck_formation_state_transition_asn = tsch_calculate_current_asn();
-    } */
-    if(p != NULL) {
+
       LOG_HCK_FORMATION("ps_o %u bs %u at %llx pbs %u pat %llx\n", 
                         rpl_parent_switch_count + 1,
                         hck_formation_bootstrap_state, 
                         hck_formation_state_transition_asn,
                         prev_bootstrap_state,
                         prev_state_transition_asn);
+
+      if(hck_fitst_transition_to_rpl_joined == 0) {
+        hck_fitst_transition_to_rpl_joined = 1;
+        hck_first_asn_rpl_joined = hck_formation_state_transition_asn;
+        LOG_HCK_FORMATION("FTST %u at %llx\n", 
+                          hck_formation_bootstrap_state, 
+                          hck_formation_state_transition_asn);
+
+        LOG_HCK_FORMATION("FASN %u TJ %llx RJ %llx JN %llx\n", 
+                          hck_formation_bootstrap_state, 
+                          hck_first_asn_tsch_joined,
+                          hck_first_asn_rpl_joined,
+                          hck_first_asn_joined_node);
+      }
     } else {
       LOG_HCK_FORMATION("ps_n %u\n", rpl_parent_switch_count + 1);
-      /* LOG_HCK_FORMATION("ps_n %u bs %u at %llx pbs %u pat %llx\n", 
-                        rpl_parent_switch_count + 1,
-                        hck_formation_bootstrap_state, 
-                        hck_formation_state_transition_asn,
-                        prev_bootstrap_state,
-                        prev_state_transition_asn); */
     }
 #endif
 

@@ -103,6 +103,21 @@ orchestra_packet_sent(int mac_status)
                         hck_formation_state_transition_asn,
                         prev_bootstrap_state,
                         prev_state_transition_asn);
+
+      if(hck_fitst_transition_to_joined_node == 0) {
+        hck_fitst_transition_to_joined_node = 1;
+        hck_first_asn_joined_node = hck_formation_state_transition_asn;
+        LOG_HCK_FORMATION("FTST %u at %llx\n", 
+                          hck_formation_bootstrap_state, 
+                          hck_formation_state_transition_asn);
+
+
+        LOG_HCK_FORMATION("FASN %u TJ %llx RJ %llx JN %llx\n", 
+                          hck_formation_bootstrap_state, 
+                          hck_first_asn_tsch_joined,
+                          hck_first_asn_rpl_joined,
+                          hck_first_asn_joined_node);
+      }
 #endif
 
 #if HCK_MOD_TSCH_OFFLOAD_UCAST_PACKET_FOR_RPL_NBR

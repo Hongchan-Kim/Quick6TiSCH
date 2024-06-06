@@ -70,6 +70,14 @@ void keepalive_packet_sent(void *ptr, int status, int transmissions);
 #endif
 
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+extern uint8_t hck_fitst_transition_to_tsch_joined;
+extern uint8_t hck_fitst_transition_to_rpl_joined;
+extern uint8_t hck_fitst_transition_to_joined_node;
+
+extern uint64_t hck_first_asn_tsch_joined;
+extern uint64_t hck_first_asn_rpl_joined;
+extern uint64_t hck_first_asn_joined_node;
+
 extern uint8_t hck_formation_bootstrap_state;
 extern uint64_t hck_formation_state_transition_asn;
 #endif
