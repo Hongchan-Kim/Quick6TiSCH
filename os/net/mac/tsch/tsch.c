@@ -780,7 +780,7 @@ tsch_reset(void)
 
   /* Second, set as the minimum number of slotframes 
      that ensures a period of at least one second. */
-  DRA_T_SLOTFRAMES = 1000 / DRA_SLOTFRAME_LENGTH + 1;
+  DRA_T_SLOTFRAMES = 1000 / (DRA_SLOTFRAME_LENGTH * 10) + 1;
 
 #if DRA_LOG
   LOG_HCK_DRA("dra param %u %u %u\n", DRA_SLOTFRAME_LENGTH, DRA_MAX_M, DRA_T_SLOTFRAMES);
@@ -913,7 +913,8 @@ keepalive_send(void *ptr)
         LOG_INFO_("\n");
 
         ++tsch_ka_packet_send_count;
-        LOG_HCK("ka_send %u |\n", tsch_ka_packet_send_count);
+        uint64_t tsch_ka_send_asn = tsch_calculate_current_asn();
+        LOG_HCK("ka_send %u | at %llx\n", tsch_ka_packet_send_count, tsch_ka_send_asn);
 
         /* Simply send an empty packet */
         packetbuf_clear();
@@ -1674,13 +1675,15 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
             LOG_ERR("! could not enqueue EB packet\n");
 
             ++tsch_eb_packet_qloss_count;
-            LOG_HCK("eb_qloss %u |\n", tsch_eb_packet_qloss_count);
+            uint64_t tsch_eb_qloss_asn = tsch_calculate_current_asn();
+            LOG_HCK("eb_qloss %u | at %llx\n", tsch_eb_packet_qloss_count, tsch_eb_qloss_asn);
           } else {
             LOG_INFO("TSCH: enqueue EB packet %u %u\n",
                      packetbuf_totlen(), packetbuf_hdrlen());
 
             ++tsch_eb_packet_enqueue_count;
-            LOG_HCK("eb_enq %u |\n", tsch_eb_packet_enqueue_count);
+            uint64_t tsch_eb_enqueue_asn = tsch_calculate_current_asn();
+            LOG_HCK("eb_enq %u | at %llx\n", tsch_eb_packet_enqueue_count, tsch_eb_enqueue_asn);
 
             p->tsch_sync_ie_offset = tsch_sync_ie_offset;
             p->header_len = hdr_len;

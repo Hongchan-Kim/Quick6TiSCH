@@ -61,6 +61,10 @@
 #include "orchestra.h"
 #endif
 
+#if HCK_FORMATION_BOOTSTRAP_STATE_INFO
+#include "net/mac/tsch/tsch.h"
+#endif
+
 #if WITH_TRGB
 #include "sys/node-id.h"
 #endif
@@ -323,7 +327,8 @@ dis_output(uip_ipaddr_t *addr)
   LOG_INFO_("\n");
 
   ++rpl_dis_send_count;
-  LOG_HCK("dis_send %u |\n", rpl_dis_send_count);
+  uint64_t rpl_dis_send_asn = tsch_calculate_current_asn();
+  LOG_HCK("dis_send %u | at %llx\n", rpl_dis_send_count, rpl_dis_send_asn);
 
   uip_icmp6_send(addr, ICMP6_RPL, RPL_CODE_DIS, 2);
 }
@@ -702,7 +707,8 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
   LOG_INFO_("\n");
 
   ++rpl_dio_ucast_send_count;
-  LOG_HCK("dioU_send %u |\n", rpl_dio_ucast_send_count);
+  uint64_t rpl_dio_ucast_send_asn = tsch_calculate_current_asn();
+  LOG_HCK("dioU_send %u | at %llx\n", rpl_dio_ucast_send_count, rpl_dio_ucast_send_asn);
 
   uip_icmp6_send(uc_addr, ICMP6_RPL, RPL_CODE_DIO, pos);
 #else /* RPL_LEAF_ONLY */
@@ -712,7 +718,8 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
            (unsigned)instance->current_dag->rank);
 
     ++rpl_dio_mcast_send_count;
-    LOG_HCK("dioM_send %u |\n", rpl_dio_mcast_send_count);
+    uint64_t rpl_dio_mcast_send_asn = tsch_calculate_current_asn();
+    LOG_HCK("dioM_send %u | at %llx\n", rpl_dio_mcast_send_count, rpl_dio_mcast_send_asn);
 
     uip_create_linklocal_rplnodes_mcast(&addr);
     uip_icmp6_send(&addr, ICMP6_RPL, RPL_CODE_DIO, pos);
@@ -723,7 +730,8 @@ dio_output(rpl_instance_t *instance, uip_ipaddr_t *uc_addr)
     LOG_INFO_("\n");
 
     ++rpl_dio_ucast_send_count;
-    LOG_HCK("dioU_send %u |\n", rpl_dio_ucast_send_count);
+    uint64_t rpl_dio_ucast_send_asn = tsch_calculate_current_asn();
+    LOG_HCK("dioU_send %u | at %llx\n", rpl_dio_ucast_send_count, rpl_dio_ucast_send_asn);
 
     uip_icmp6_send(uc_addr, ICMP6_RPL, RPL_CODE_DIO, pos);
   }
@@ -922,7 +930,8 @@ dao_input_storing(void)
         LOG_DBG_("\n");
 
         ++rpl_dao_nopath_fwd_count;
-        LOG_HCK("daoN_fwd %u |\n", rpl_dao_nopath_fwd_count);
+        uint64_t rpl_dao_nopath_fwd_asn = tsch_calculate_current_asn();
+        LOG_HCK("daoN_fwd %u | at %llx\n", rpl_dao_nopath_fwd_count, rpl_dao_nopath_fwd_asn);
 
         buffer = UIP_ICMP_PAYLOAD;
         buffer[3] = out_seq; /* add an outgoing seq no before fwd */
@@ -1032,7 +1041,8 @@ fwd_dao:
       LOG_DBG_(" in seq: %d out seq: %d\n", sequence, out_seq);
 
       ++rpl_dao_path_fwd_count;
-      LOG_HCK("daoP_fwd %u |\n", rpl_dao_path_fwd_count);
+      uint64_t rpl_dao_path_fwd_asn = tsch_calculate_current_asn();
+      LOG_HCK("daoP_fwd %u | at %llx\n", rpl_dao_path_fwd_count, rpl_dao_path_fwd_asn);
 
       buffer = UIP_ICMP_PAYLOAD;
       buffer[3] = out_seq; /* add an outgoing seq no before fwd */
@@ -1407,10 +1417,12 @@ dao_output_target_seq(rpl_parent_t *parent, uip_ipaddr_t *prefix,
 
   if(lifetime == RPL_ZERO_LIFETIME) {
     ++rpl_dao_nopath_send_count;
-    LOG_HCK("daoN_send %u |\n", rpl_dao_nopath_send_count);
+    uint64_t rpl_dao_nopath_send_asn = tsch_calculate_current_asn();
+    LOG_HCK("daoN_send %u | at %llx\n", rpl_dao_nopath_send_count, rpl_dao_nopath_send_asn);
   } else {
     ++rpl_dao_path_send_count;
-    LOG_HCK("daoP_send %u |\n", rpl_dao_path_send_count);
+    uint64_t rpl_dao_path_send_asn = tsch_calculate_current_asn();
+    LOG_HCK("daoP_send %u | at %llx\n", rpl_dao_path_send_count, rpl_dao_path_send_asn);
   }
 
   if(dest_ipaddr != NULL) {
@@ -1542,7 +1554,8 @@ dao_ack_output(rpl_instance_t *instance, uip_ipaddr_t *dest, uint8_t sequence,
   LOG_INFO_(" with status %d\n", status);
 
   ++rpl_dao_ack_send_count;
-  LOG_HCK("daoA_send %u |\n", rpl_dao_ack_send_count);
+  uint64_t rpl_dao_ack_send_asn = tsch_calculate_current_asn();
+  LOG_HCK("daoA_send %u | at %llx\n", rpl_dao_ack_send_count, rpl_dao_ack_send_asn);
 
   buffer = UIP_ICMP_PAYLOAD;
 
