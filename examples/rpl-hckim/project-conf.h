@@ -422,13 +422,8 @@
 #undef HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS
 #define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1
 //
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
 #undef TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
 #define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   7 // default: 7
-#else /* Orchestra */
-#undef ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define ORCHESTRA_CONF_COMMON_SHARED_PERIOD                 61 // 11, 23, 31, 41, 53, 61, 83, 101 ...
-#endif
 
 /***************************************************************
  * Prerequisite/common logging messages for network formation acceleration
@@ -459,13 +454,8 @@
 #define DRA_DBG                                             1
 
 #define DRA_NBR_NUM                                         MAX_NBR_NODE_NUM
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
 #define DRA_SLOTFRAME_LENGTH                                TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
 #define DRA_SLOTFRAME_HANDLE                                0
-#else /* Orchestra */
-#define DRA_SLOTFRAME_LENGTH                                ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define DRA_SLOTFRAME_HANDLE                                TSCH_SCHED_COMMON_SF_HANDLE
-#endif
 #endif /* WITH_DRA */
 
 /***************************************************************
@@ -477,13 +467,8 @@
 #define TRGB_DBG                                            1
 
 #define TRGB_ROOT_ID                                        1
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
 #define TRGB_SLOTFRAME_LENGTH                               TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
 #define TRGB_SLOTFRAME_HANDLE                               0
-#else /* Orchestra */
-#define TRGB_SLOTFRAME_LENGTH                               ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define TRGB_SLOTFRAME_HANDLE                               TSCH_SCHED_COMMON_SF_HANDLE
-#endif
 #endif /* WITH_TRGB */
 
 /***************************************************************
@@ -494,13 +479,8 @@
 #define QUICK6_LOG                                          1
 #define QUICK6_DBG                                          0 /* TODO: further optimization */
 
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
 #define QUICK6_SLOTFRAME_LENGTH                             TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
 #define QUICK6_SLOTFRAME_HANDLE                             0
-#else /* Orchestra */
-#define QUICK6_SLOTFRAME_LENGTH                             ORCHESTRA_CONF_COMMON_SHARED_PERIOD
-#define QUICK6_SLOTFRAME_HANDLE                             TSCH_SCHED_COMMON_SF_HANDLE
-#endif
 
 /* Quick6TiSCH offset configuration - up to five offsets (the sixth offset is available only for broadcast packets) */
 #define QUICK6_NUM_OF_OFFSETS                               5    /* 0, 1, 2, 3, 4 */

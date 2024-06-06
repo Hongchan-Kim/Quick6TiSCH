@@ -1436,7 +1436,7 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
   if(link->link_options & LINK_OPTION_TX) {
     /* is it for advertisement of EB? */
 
-#if WITH_TRGB && TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+#if WITH_TRGB
     if(link->slotframe_handle == TRGB_SLOTFRAME_HANDLE) { /* Common shared cell only */
       /* First, initialize current TRGB cell type and operation */
       trgb_current_cell = TRGB_CELL_NULL;
@@ -1514,7 +1514,7 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
 #endif
     }
 
-#else /* WITH_TRGB && TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
+#else /* WITH_TRGB
 
     if(link->link_type == LINK_TYPE_ADVERTISING || link->link_type == LINK_TYPE_ADVERTISING_ONLY) {
       /* fetch EB packets */
@@ -1534,7 +1534,7 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
       }
     }
 
-#endif /* WITH_TRGB && TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
+#endif /* WITH_TRGB
   }
 
   /* return nbr (by reference) */
@@ -1811,7 +1811,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         /* Piggybacking to EB will be performed at EB update below */
       }
 #elif WITH_DRA
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
         uint16_t hckim_header_formation_tx_info_1 = 0; /* Store packet type and dra m */
         uint16_t hckim_header_formation_tx_info_2 = 0; /* Store dra seq */
@@ -1841,11 +1840,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       } else {
         /* Piggybacking to EB will be performed at EB update below */
       }
-#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 
 #elif WITH_TRGB
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
         uint16_t hckim_header_formation_tx_info_1 = 0; /* Store packet type and trgb_my_tx_cell */
         uint16_t hckim_header_formation_tx_info_2 = 0; /* Store trgb_parent_id and trgb_granP_id */
@@ -1872,11 +1868,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         /* Piggybacking to EB will be performed at EB update below */
       }
 
-#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-
 #elif WITH_QUICK6
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
         if(current_link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
           quick6_tx_current_offset = random_rand() % (current_packet->quick6_packet_offset_upper_bound + 1);
@@ -1905,8 +1897,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
       } else {
         /* Piggybacking to EB will be performed at EB update below */
       }
-#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 
 #endif /* !WITH_DRA && !WITH_TRGB && !WITH_QUICK6 */
 #endif /* HCK_FORMATION_PACKET_TYPE_INFO */
@@ -2056,7 +2046,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
         hckim_eb_formation_tx_info_1 = (formation_tx_packet_type << 8) + 0;
 #elif WITH_DRA
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
         uint16_t hckim_eb_formation_tx_info_1 = 0;
         uint16_t hckim_eb_formation_tx_info_2 = 0;
 
@@ -2074,11 +2063,8 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                                   hckim_eb_formation_tx_info_1,
                                   hckim_eb_formation_tx_info_2));
 #endif /* DRA_DBG */
-#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 
 #elif WITH_TRGB
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
         uint16_t hckim_eb_formation_tx_info_1 = 0;
         uint16_t hckim_eb_formation_tx_info_2 = 0;
 
@@ -2093,11 +2079,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                                         trgb_parent_id));
 #endif /* DRA_DBG */
 
-#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-
 #elif WITH_QUICK6
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
         if(current_link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
           quick6_tx_current_offset = random_rand() % (current_packet->quick6_packet_offset_upper_bound + 1);
         } else {
@@ -2114,8 +2096,6 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             snprintf(log->message, sizeof(log->message),
             "Q6 tx info %u %u", formation_tx_packet_type, quick6_tx_current_offset));
 #endif
-#else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-#endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 #endif /* !WITH_DRA && !WITH_TRGB && !WITH_QUICK6 */
 
         if(packet_ready && tsch_hck_packet_update_eb(packet, packet_len, current_packet->tsch_sync_ie_offset,

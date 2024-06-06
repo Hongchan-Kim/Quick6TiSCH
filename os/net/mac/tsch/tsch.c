@@ -1657,11 +1657,8 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
       && !NETSTACK_ROUTING.is_in_leaf_mode()
         ) {
 #if WITH_DRA
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
       dra_my_seq++; /* All the EB packets are transmitted via minimal slotframe */
       dra_my_num_of_pkts++;
-#else
-#endif
 #if DRA_DBG
       LOG_INFO("dra send EB seq %u\n", dra_my_seq);
 #endif
@@ -1868,18 +1865,10 @@ send_packet(mac_callback_t sent, void *ptr)
 #endif
 
 #if WITH_DRA
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
     dra_my_seq++; /* All the packets are transmitted via minimal slotframe */
     dra_my_num_of_pkts++;
 #if DRA_DBG
     LOG_INFO("dra send non-EB seq %u\n", dra_my_seq);
-#endif
-#else /* DRA-TODO: multicast DIO only ??? */
-  if(packetbuf_attr(PACKETBUF_ATTR_NETWORK_ID) == UIP_PROTO_ICMP6
-    && packetbuf_attr(PACKETBUF_ATTR_CHANNEL) == (ICMP6_RPL << 8 | RPL_CODE_DIO)
-    && linkaddr_cmp(addr, &tsch_broadcast_address) ) {
-    dra_my_control_packet_seq++;
-  }
 #endif
 #endif
 
