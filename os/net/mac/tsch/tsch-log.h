@@ -107,10 +107,14 @@ struct tsch_log_t {
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
       uint8_t hck_bootstrap_state;
 #endif
-#if WITH_QUICK6
-      uint8_t quick6_log_postponement_count;
-      uint8_t quick6_log_tx_offset_upper_bound;
+#if WITH_DRA && DRA_LOG
+      uint8_t dra_log_tx_dra_m;
+      uint16_t dra_log_tx_dra_seq;
+#endif
+#if WITH_QUICK6 && QUICK6_LOG
       uint8_t quick6_log_tx_selected_offset;
+      uint8_t quick6_log_tx_offset_upper_bound;
+      uint8_t quick6_log_postponement_count;
       uint8_t quick6_log_collision_count;
       uint8_t quick6_log_noack_count;
 #endif
@@ -136,7 +140,11 @@ struct tsch_log_t {
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
       uint8_t hck_bootstrap_state;
 #endif
-#if WITH_QUICK6
+#if WITH_DRA && DRA_LOG
+      uint8_t dra_log_rx_dra_m;
+      uint16_t dra_log_rx_dra_seq;
+#endif
+#if WITH_QUICK6 && QUICK6_LOG
       uint8_t quick6_log_rx_offset;
 #endif
     } rx;

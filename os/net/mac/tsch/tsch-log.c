@@ -132,6 +132,11 @@ tsch_log_process_pending(void)
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
         printf(" BS %u", log->tx.hck_bootstrap_state);
 #endif
+#if WITH_DRA && DRA_LOG
+        printf(" DRA %u %u",
+              log->tx.dra_log_tx_dra_m,
+              log->tx.dra_log_tx_dra_seq);
+#endif
 #if WITH_QUICK6 && QUICK6_LOG
         printf(" Q6 %u %u %u %u %u",
               log->tx.quick6_log_tx_selected_offset,
@@ -220,6 +225,11 @@ tsch_log_process_pending(void)
 #endif
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
         printf(" BS %u", log->rx.hck_bootstrap_state);
+#endif
+#if WITH_DRA && DRA_LOG
+        printf(" DRA %u %u",
+              log->rx.dra_log_rx_dra_m,
+              log->rx.dra_log_rx_dra_seq);
 #endif
 #if WITH_QUICK6 && QUICK6_LOG
         printf(" Q6 %u", log->rx.quick6_log_rx_offset);

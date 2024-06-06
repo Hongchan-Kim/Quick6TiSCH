@@ -115,7 +115,7 @@ void dra_allocate_timeslots()
     }
   }
 
-#if DRA_DBG
+#if DRA_LOG
   TSCH_LOG_ADD(tsch_log_message,
       snprintf(log->message, sizeof(log->message),
       "dra alloc %u %u %u", dra_inter_slot_interval, 
@@ -621,7 +621,7 @@ tsch_schedule_get_link_by_handle(uint16_t handle)
   return NULL;
 }
 /*---------------------------------------------------------------------------*/
-#if HCK_LOG_TSCH_LINK_ADD_REMOVE || ENABLE_LOG_ALICE_LINK_ADD_REMOVE
+#if (HCK_LOG_TSCH_LINK_ADD_REMOVE || ENABLE_LOG_ALICE_LINK_ADD_REMOVE) && !WITH_DRA
 static const char *
 print_link_options(uint16_t link_options)
 {
@@ -718,7 +718,7 @@ tsch_schedule_add_link(struct tsch_slotframe *slotframe,
         }
         linkaddr_copy(&l->addr, address);
 
-#if HCK_LOG_TSCH_LINK_ADD_REMOVE
+#if HCK_LOG_TSCH_LINK_ADD_REMOVE && !WITH_DRA
         LOG_INFO("add_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
                  slotframe->handle,
                  print_link_options(link_options),
@@ -895,7 +895,7 @@ tsch_schedule_remove_link(struct tsch_slotframe *slotframe, struct tsch_link *l)
         current_link = NULL;
       }
 
-#if HCK_LOG_TSCH_LINK_ADD_REMOVE
+#if HCK_LOG_TSCH_LINK_ADD_REMOVE && !WITH_DRA
       LOG_INFO("remove_link sf=%u opt=%s type=%s ts=%u ch=%u addr=",
                slotframe->handle,
                print_link_options(l->link_options),
@@ -1755,13 +1755,6 @@ tsch_schedule_create_minimal(void)
       (LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED | LINK_OPTION_TIME_KEEPING),
       LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
       0, 0, 1);
-
-#if 0 //DRA_DBG
-  tsch_schedule_add_link(sf_min,
-      (LINK_OPTION_RX | LINK_OPTION_TX | LINK_OPTION_SHARED | LINK_OPTION_TIME_KEEPING),
-      LINK_TYPE_ADVERTISING, &tsch_broadcast_address,
-      3, 0, 1);
-#endif
 }
 /*---------------------------------------------------------------------------*/
 struct tsch_slotframe *

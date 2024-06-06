@@ -448,10 +448,10 @@
 /***************************************************************
  * Dynamic resource allocation implementation - WITH_DRA
  ****************************************************************/
-#define WITH_DRA                                            0
+#define WITH_DRA                                            1
 #if WITH_DRA
 #define DRA_LOG                                             1
-#define DRA_DBG                                             1
+#define DRA_DBG                                             0
 
 #define DRA_NBR_NUM                                         MAX_NBR_NODE_NUM
 #define DRA_SLOTFRAME_LENGTH                                TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
@@ -474,7 +474,7 @@
 /***************************************************************
  * Quick6TiSCH implementation - WITH_QUICK6
  ****************************************************************/
-#define WITH_QUICK6                                         1
+#define WITH_QUICK6                                         0
 #if WITH_QUICK6
 #define QUICK6_LOG                                          1
 #define QUICK6_DBG                                          0 /* TODO: further optimization */

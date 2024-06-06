@@ -150,6 +150,11 @@ static enum HCK_PACKET_TYPE formation_tx_packet_type = HCK_PACKET_TYPE_NULL;
 static enum HCK_PACKET_TYPE formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
 #endif
 
+#if WITH_DRA
+static uint8_t rx_dra_m = 0; 
+static uint16_t rx_dra_seq = 0;
+#endif
+
 #if WITH_TRGB
 static enum TRGB_CELL trgb_current_cell = TRGB_CELL_NULL;
 static enum TRGB_OPERATION trgb_current_operation = TRGB_OPERATION_NULL;
@@ -1514,7 +1519,7 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
 #endif
     }
 
-#else /* WITH_TRGB
+#else /* WITH_TRGB */
 
     if(link->link_type == LINK_TYPE_ADVERTISING || link->link_type == LINK_TYPE_ADVERTISING_ONLY) {
       /* fetch EB packets */
@@ -1534,7 +1539,7 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
       }
     }
 
-#endif /* WITH_TRGB
+#endif /* WITH_TRGB */
   }
 
   /* return nbr (by reference) */
@@ -1832,7 +1837,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if DRA_DBG
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-            "dra tx %u %u %u %u", formation_tx_packet_type, 
+            "dra tx info %u %u %u %u", formation_tx_packet_type, 
                                   tx_dra_m, 
                                   hckim_header_formation_tx_info_1, 
                                   hckim_header_formation_tx_info_2));
@@ -2058,7 +2063,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if DRA_DBG
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-            "dra txE %u %u %u %u", formation_tx_packet_type, 
+            "dra txE info %u %u %u %u", formation_tx_packet_type, 
                                   tx_dra_m, 
                                   hckim_eb_formation_tx_info_1,
                                   hckim_eb_formation_tx_info_2));
@@ -2074,7 +2079,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if TRGB_DBG
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-            "TRGB tx info %u %u %u", formation_tx_packet_type, 
+            "TRGB txE info %u %u %u", formation_tx_packet_type, 
                                         trgb_my_tx_cell, 
                                         trgb_parent_id));
 #endif /* DRA_DBG */
@@ -2094,7 +2099,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if QUICK6_DBG
         TSCH_LOG_ADD(tsch_log_message,
             snprintf(log->message, sizeof(log->message),
-            "Q6 tx info %u %u", formation_tx_packet_type, quick6_tx_current_offset));
+            "Q6 txE info %u %u", formation_tx_packet_type, quick6_tx_current_offset));
 #endif
 #endif /* !WITH_DRA && !WITH_TRGB && !WITH_QUICK6 */
 
@@ -2585,10 +2590,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
         log->tx.hck_bootstrap_state = hck_formation_bootstrap_state;
 #endif
-#if WITH_QUICK6
-        log->tx.quick6_log_postponement_count = current_packet->quick6_packet_postponement_count;
-        log->tx.quick6_log_tx_offset_upper_bound = current_packet->quick6_packet_offset_upper_bound;
+#if WITH_DRA && DRA_LOG
+        log->tx.dra_log_tx_dra_m = current_packet->dra_m;
+        log->tx.dra_log_tx_dra_seq = current_packet->dra_seq;
+#endif
+#if WITH_QUICK6 && QUICK6_LOG
         log->tx.quick6_log_tx_selected_offset = quick6_tx_current_offset;
+        log->tx.quick6_log_tx_offset_upper_bound = current_packet->quick6_packet_offset_upper_bound;
+        log->tx.quick6_log_postponement_count = current_packet->quick6_packet_postponement_count;
         log->tx.quick6_log_collision_count = current_packet->quick6_packet_collision_count;
         log->tx.quick6_log_noack_count = current_packet->quick6_packet_noack_count;
 #endif
@@ -2953,8 +2962,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             uint16_t hckim_formation_rx_info_1 = 0; /* Store packet type and dra m */
             uint16_t hckim_formation_rx_info_2 = 0; /* Store dra seq */
 
-            uint8_t rx_dra_m = 0; 
-            uint16_t rx_dra_seq = 0;
+            rx_dra_m = 0; 
+            rx_dra_seq = 0;
 
             if(frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
               if(frame.fcf.ie_list_present) {
@@ -2989,7 +2998,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if DRA_DBG
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
-                "dra rx %u %u %u %u", formation_rx_packet_type, 
+                "dra rx info %u %u %u %u", formation_rx_packet_type, 
                                       rx_dra_m, 
                                       hckim_formation_rx_info_1, 
                                       rx_dra_seq));
@@ -3334,7 +3343,11 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if HCK_FORMATION_BOOTSTRAP_STATE_INFO
               log->rx.hck_bootstrap_state = hck_formation_bootstrap_state;
 #endif
-#if WITH_QUICK6
+#if WITH_DRA && DRA_LOG
+              log->rx.dra_log_rx_dra_m = rx_dra_m;
+              log->rx.dra_log_rx_dra_seq = rx_dra_seq;
+#endif
+#if WITH_QUICK6 && QUICK6_LOG
               log->rx.quick6_log_rx_offset = quick6_rx_current_offset;
 #endif
             );

@@ -108,6 +108,9 @@ uint16_t dra_total_num_of_pkts = 0;
 uint16_t dra_avg_num_of_pkts = 0;
 uint8_t dra_total_max_m = 0;
 
+struct tsch_asn_t dra_current_asn;
+uint64_t dra_lastly_scheduled_asfn = 0;
+
 struct dra_nbr_info {
   uint8_t dra_nbr_id;
   uint8_t dra_nbr_last_m;
@@ -605,11 +608,6 @@ PROCESS(tsch_pending_events_process, "pending events process");
 /* Other function prototypes */
 static void packet_input(void);
 
-#if WITH_DRA
-struct tsch_asn_t dra_current_asn;
-uint64_t dra_lastly_scheduled_asfn = 0;
-#endif
-
 /*---------------------------------------------------------------------------*/
 #if WITH_ALICE
 #ifdef ALICE_TIME_VARYING_SCHEDULING
@@ -783,8 +781,8 @@ tsch_reset(void)
      that ensures a period of at least one second. */
   DRA_T_SLOTFRAMES = 1000 / DRA_SLOTFRAME_LENGTH + 1;
 
-#if DRA_DBG
-  LOG_INFO("dra param %u %u %u\n", DRA_SLOTFRAME_LENGTH, DRA_MAX_M, DRA_T_SLOTFRAMES);
+#if DRA_LOG
+  LOG_HCK_DRA("dra param %u %u %u\n", DRA_SLOTFRAME_LENGTH, DRA_MAX_M, DRA_T_SLOTFRAMES);
 #endif
 
   /* Third, initialize DRA neighbor information */
