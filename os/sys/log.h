@@ -268,6 +268,13 @@ extern struct log_module all_modules[];
 #define LOG_HCK_DRA_6ADDR(...)      LOG_6ADDR(0, __VA_ARGS__)
 #endif
 
+#if WITH_TRGB
+#define LOG_HCK_TRGB(...)            LOG(1, 0, "HK-T", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_TRGB_(...)           LOG(0, 0, "HK-T", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_TRGB_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)
+#define LOG_HCK_TRGB_6ADDR(...)      LOG_6ADDR(0, __VA_ARGS__)
+#endif
+
 #if WITH_QUICK6
 #define LOG_HCK_QUICK6(...)            LOG(1, 0, "HK-6", LOG_COLOR_PRI, __VA_ARGS__)
 #define LOG_HCK_QUICK6_(...)           LOG(0, 0, "HK-6", LOG_COLOR_PRI, __VA_ARGS__)

@@ -160,6 +160,9 @@ static enum TRGB_CELL trgb_current_cell = TRGB_CELL_NULL;
 static enum TRGB_OPERATION trgb_current_operation = TRGB_OPERATION_NULL;
 static uint8_t trgb_skip_slot = 0;
 
+static uint8_t trgb_received_tx_cell = 0;
+static uint8_t trgb_received_parent_id = 0;
+
 uint8_t
 hash_for_trgb(uint8_t value)
 {
@@ -1849,7 +1852,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #elif WITH_TRGB
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
         uint16_t hckim_header_formation_tx_info_1 = 0; /* Store packet type and trgb_my_tx_cell */
-        uint16_t hckim_header_formation_tx_info_2 = 0; /* Store trgb_parent_id and trgb_granP_id */
+        uint16_t hckim_header_formation_tx_info_2 = 0; /* Store trgb_parent_id */
 
         hckim_header_formation_tx_info_1 = (formation_tx_packet_type << 8) + (uint8_t)trgb_my_tx_cell;
         hckim_header_formation_tx_info_2 = (trgb_parent_id << 8) + 0;
@@ -1868,7 +1871,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             "TRGB tx info %u %u %u", formation_tx_packet_type, 
                                         trgb_my_tx_cell, 
                                         trgb_parent_id));
-#endif /* DRA_DBG */
+#endif
       } else {
         /* Piggybacking to EB will be performed at EB update below */
       }
@@ -2067,7 +2070,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                                   tx_dra_m, 
                                   hckim_eb_formation_tx_info_1,
                                   hckim_eb_formation_tx_info_2));
-#endif /* DRA_DBG */
+#endif
 
 #elif WITH_TRGB
         uint16_t hckim_eb_formation_tx_info_1 = 0;
@@ -2082,7 +2085,7 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             "TRGB txE info %u %u %u", formation_tx_packet_type, 
                                         trgb_my_tx_cell, 
                                         trgb_parent_id));
-#endif /* DRA_DBG */
+#endif
 
 #elif WITH_QUICK6
         if(current_link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
@@ -2594,6 +2597,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         log->tx.dra_log_tx_dra_m = current_packet->dra_m;
         log->tx.dra_log_tx_dra_seq = current_packet->dra_seq;
 #endif
+#if WITH_TRGB && TRGB_LOG
+        log->tx.trgb_log_tx_my_tx_cell = trgb_my_tx_cell;
+        log->tx.trgb_log_tx_parent_id = trgb_parent_id;
+#endif
 #if WITH_QUICK6 && QUICK6_LOG
         log->tx.quick6_log_tx_selected_offset = quick6_tx_current_offset;
         log->tx.quick6_log_tx_offset_upper_bound = current_packet->quick6_packet_offset_upper_bound;
@@ -3012,8 +3019,8 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             uint16_t hckim_formation_rx_info_1 = 0; /* Store packet type and trgb_tx_cell */
             uint16_t hckim_formation_rx_info_2 = 0; /* Store trgb_parent_id */
 
-            uint8_t trgb_received_tx_cell = 0;
-            uint8_t trgb_received_parent_id = 0;
+            trgb_received_tx_cell = 0;
+            trgb_received_parent_id = 0;
 
             if(frame.fcf.frame_type != FRAME802154_BEACONFRAME) {
               if(frame.fcf.ie_list_present) {
@@ -3074,7 +3081,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                                             trgb_received_tx_cell, 
                                             trgb_received_parent_id,
                                             trgb_my_tx_cell));
-#endif /* DRA_DBG */
+#endif
 #elif WITH_QUICK6
             formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
             quick6_rx_current_offset = QUICK6_OFFSET_NULL;
@@ -3118,7 +3125,7 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
             TSCH_LOG_ADD(tsch_log_message,
                 snprintf(log->message, sizeof(log->message),
                 "Q6 rx info %u %u", formation_rx_packet_type, quick6_rx_current_offset));
-#endif /* DRA_DBG */
+#endif
 
 #endif /* !WITH_DRA && !WITH_TRGB && !WITH_QUICK6 */
 #endif /* HCK_FORMATION_PACKET_TYPE_INFO */
@@ -3346,6 +3353,10 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #if WITH_DRA && DRA_LOG
               log->rx.dra_log_rx_dra_m = rx_dra_m;
               log->rx.dra_log_rx_dra_seq = rx_dra_seq;
+#endif
+#if WITH_TRGB && TRGB_LOG
+              log->rx.trgb_log_rx_received_tx_cell = trgb_received_tx_cell;
+              log->rx.trgb_log_rx_received_parent_id = trgb_received_parent_id;
 #endif
 #if WITH_QUICK6 && QUICK6_LOG
               log->rx.quick6_log_rx_offset = quick6_rx_current_offset;

@@ -111,6 +111,10 @@ struct tsch_log_t {
       uint8_t dra_log_tx_dra_m;
       uint16_t dra_log_tx_dra_seq;
 #endif
+#if WITH_TRGB && TRGB_LOG
+      uint8_t trgb_log_tx_my_tx_cell;
+      uint8_t trgb_log_tx_parent_id;
+#endif
 #if WITH_QUICK6 && QUICK6_LOG
       uint8_t quick6_log_tx_selected_offset;
       uint8_t quick6_log_tx_offset_upper_bound;
@@ -143,6 +147,10 @@ struct tsch_log_t {
 #if WITH_DRA && DRA_LOG
       uint8_t dra_log_rx_dra_m;
       uint16_t dra_log_rx_dra_seq;
+#endif
+#if WITH_TRGB && TRGB_LOG
+      uint8_t trgb_log_rx_received_tx_cell;
+      uint8_t trgb_log_rx_received_parent_id;
 #endif
 #if WITH_QUICK6 && QUICK6_LOG
       uint8_t quick6_log_rx_offset;

@@ -318,8 +318,8 @@ rpl_set_preferred_parent(rpl_dag_t *dag, rpl_parent_t *p)
     }
 
 #if TRGB_DBG
-    LOG_INFO("TRGB ps p %u gp %u cell %u\n", 
-            trgb_parent_id, trgb_grandP_id, trgb_my_tx_cell);
+    LOG_HCK_TRGB("TRGB ps p %u gp %u cell %u\n", 
+                  trgb_parent_id, trgb_grandP_id, trgb_my_tx_cell);
 #endif
 #endif
 

@@ -695,8 +695,8 @@ tsch_set_coordinator(int enable)
   }
 
 #if TRGB_DBG
-  LOG_INFO("TRGB tx_cell_init tsch_set_coord %u %d %d %u\n", 
-            tsch_is_coordinator, trgb_rand_num, trgb_rand_mod, trgb_my_tx_cell);
+  LOG_HCK_TRGB("TRGB tx_cell_init tsch_set_coord %u %d %d %u\n", 
+                tsch_is_coordinator, trgb_rand_num, trgb_rand_mod, trgb_my_tx_cell);
 #endif
 #endif
 }
@@ -815,8 +815,8 @@ tsch_reset(void)
   }
 
 #if TRGB_DBG
-  LOG_INFO("TRGB tx_cell_init tsch_reset %u %d %d %u\n", 
-            tsch_is_coordinator, trgb_rand_num, trgb_rand_mod, trgb_my_tx_cell);
+  LOG_HCK_TRGB("TRGB tx_cell_init tsch_reset %u %d %d %u\n", 
+                tsch_is_coordinator, trgb_rand_num, trgb_rand_mod, trgb_my_tx_cell);
 #endif
 #endif
 }
@@ -1658,7 +1658,7 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
       dra_my_seq++; /* All the EB packets are transmitted via minimal slotframe */
       dra_my_num_of_pkts++;
 #if DRA_DBG
-      LOG_INFO("dra send EB seq %u\n", dra_my_seq);
+      LOG_HCK_DRA("dra send EB seq %u\n", dra_my_seq);
 #endif
 #endif
       /* Enqueue EB only if there isn't already one in queue */
@@ -1866,7 +1866,7 @@ send_packet(mac_callback_t sent, void *ptr)
     dra_my_seq++; /* All the packets are transmitted via minimal slotframe */
     dra_my_num_of_pkts++;
 #if DRA_DBG
-    LOG_INFO("dra send non-EB seq %u\n", dra_my_seq);
+    LOG_HCK_DRA("dra send non-EB seq %u\n", dra_my_seq);
 #endif
 #endif
 

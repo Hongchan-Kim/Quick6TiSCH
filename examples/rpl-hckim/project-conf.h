@@ -448,7 +448,7 @@
 /***************************************************************
  * Dynamic resource allocation implementation - WITH_DRA
  ****************************************************************/
-#define WITH_DRA                                            1
+#define WITH_DRA                                            0
 #if WITH_DRA
 #define DRA_LOG                                             1
 #define DRA_DBG                                             0
@@ -464,7 +464,7 @@
 #define WITH_TRGB                                           0
 #if WITH_TRGB
 #define TRGB_LOG                                            1
-#define TRGB_DBG                                            1
+#define TRGB_DBG                                            0
 
 #define TRGB_ROOT_ID                                        1
 #define TRGB_SLOTFRAME_LENGTH                               TSCH_SCHEDULE_CONF_DEFAULT_LENGTH

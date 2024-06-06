@@ -137,6 +137,11 @@ tsch_log_process_pending(void)
               log->tx.dra_log_tx_dra_m,
               log->tx.dra_log_tx_dra_seq);
 #endif
+#if WITH_TRGB && TRGB_LOG
+        printf(" TR %u %u",
+              log->tx.trgb_log_tx_my_tx_cell,
+              log->tx.trgb_log_tx_parent_id);
+#endif
 #if WITH_QUICK6 && QUICK6_LOG
         printf(" Q6 %u %u %u %u %u",
               log->tx.quick6_log_tx_selected_offset,
@@ -230,6 +235,11 @@ tsch_log_process_pending(void)
         printf(" DRA %u %u",
               log->rx.dra_log_rx_dra_m,
               log->rx.dra_log_rx_dra_seq);
+#endif
+#if WITH_TRGB && TRGB_LOG
+        printf(" TR %u %u",
+              log->rx.trgb_log_rx_received_tx_cell,
+              log->rx.trgb_log_rx_received_parent_id);
 #endif
 #if WITH_QUICK6 && QUICK6_LOG
         printf(" Q6 %u", log->rx.quick6_log_rx_offset);
