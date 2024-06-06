@@ -665,12 +665,13 @@ tsch_set_coordinator(int enable)
       LOG_HCK_FORMATION("FTST %u at %llx\n", 
                         hck_formation_bootstrap_state, 
                         hck_formation_state_transition_asn);
-
+/*
       LOG_HCK_FORMATION("FASN %u TJ %llx RJ %llx JN %llx\n", 
                         hck_formation_bootstrap_state, 
                         hck_first_asn_tsch_joined,
                         hck_first_asn_rpl_joined,
                         hck_first_asn_joined_node);
+*/
     }
   }
 #endif

@@ -90,6 +90,7 @@ app_down_sequence_register_seqno(uint16_t current_app_down_seqno)
 }
 #endif /* HCK_MOD_APP_SEQNO_DUPLICATE_CHECK */
 /*---------------------------------------------------------------------------*/
+#if 0
 static void
 reset_log_app_client()
 {
@@ -178,6 +179,7 @@ print_log()
   print_log_rpl();
   print_log_simple_energest();
 }
+#endif
 /*---------------------------------------------------------------------------*/
 static void
 udp_rx_callback(struct simple_udp_connection *c,
@@ -233,8 +235,8 @@ AUTOSTART_PROCESSES(&udp_client_process);
 PROCESS_THREAD(udp_client_process, ev, data)
 {
   static struct etimer print_node_info_timer;
-  static struct etimer reset_before_data_timer;
-  static struct etimer print_log_timer;
+  //static struct etimer reset_before_data_timer;
+  //static struct etimer print_log_timer;
 
 #if WITH_UPWARD_TRAFFIC
   static struct etimer data_start_timer;
@@ -255,8 +257,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
                       UDP_SERVER_PORT, udp_rx_callback);
 
   etimer_set(&print_node_info_timer, APP_PRINT_NODE_INFO_DELAY);
-  etimer_set(&reset_before_data_timer, APP_RESET_BEFORE_DATA_DELAY);
-  etimer_set(&print_log_timer, APP_PRINT_LOG_DELAY);
+  //etimer_set(&reset_before_data_timer, APP_RESET_BEFORE_DATA_DELAY);
+  //etimer_set(&print_log_timer, APP_PRINT_LOG_DELAY);
 
 #if WITH_UPWARD_TRAFFIC
   etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % (APP_UPWARD_SEND_INTERVAL)));
@@ -265,32 +267,24 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #if HCK_LOG_EVAL_CONFIG
   LOG_HCK("eval_config 1 lite_log %u |\n", 
           HCK_LOG_LEVEL_LITE);
-#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
-  LOG_HCK("eval_config 2 mcsf %u |\n",
-          TSCH_SCHEDULE_DEFAULT_LENGTH);
-#else
-  LOG_HCK("eval_config 2 ebsf %u cssf %u ucsf %u |\n",
-          ORCHESTRA_CONF_EBSF_PERIOD, 
-          ORCHESTRA_CONF_COMMON_SHARED_PERIOD, 
-          ORCHESTRA_CONF_UNICAST_PERIOD);
-#endif /* !TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
-
-#if WITH_TRGB
-  LOG_HCK("eval_config 3 with_trgb %u |\n", WITH_TRGB);
-#elif 0//WITH_QUICK6
-#if QUICK6_OFFSET_ASSIGNMENT == QUICK6_OFFSET_ASSIGNMENT_RANDOM
-  LOG_HCK("eval_config 3 with_top rand offs %u |\n",
-          QUICK6_NUM_OF_OFFSETS);
-#elif QUICK6_OFFSET_ASSIGNMENT == QUICK6_OFFSET_ASSIGNMENT_STATE_BASED
-  LOG_HCK("eval_config 3 with_top s_b offs %u thr %u fco %u nco %u que %u esc %u sel %u retx %u bac %u |\n", 
-          QUICK6_NUM_OF_OFFSETS,
+  LOG_HCK("eval_config 2 nodes %u mcsf %u |\n",
+          NODE_NUM, TSCH_SCHEDULE_DEFAULT_LENGTH);
+#if !WITH_DRA && !WITH_TRGB && !WITH_QUICK6
+  LOG_HCK("eval_config 3 scheme 0 | 6TiSCH-MC\n");
+#elif WITH_DRA
+  LOG_HCK("eval_config 3 scheme 1 | DRA\n");
+#elif WITH_TRGB
+  LOG_HCK("eval_config 3 scheme 2 | TRGB\n");
+#elif WITH_QUICK6
+  LOG_HCK("eval_config 3 scheme 3 | Quick6TiSCH %u %u %u %u %u %u %u %u\n",
+          QUICK6_OFFSET_AUTONOMOUS_PRIORITIZATION,
           QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH,
-          QUICK6_OFFSET_ASSIGNMENT_CRITICAL_PKTS_OFFSET,
-          QUICK6_OFFSET_ASSIGNMENT_NON_CRITICAL_PKTS_OFFSET,
-          QUICK6_DUPLICATE_PACKET_MANAGEMENT,
+          QUICK6_OFFSET_UPPER_BOUND_CRITICAL,
+          QUICK6_OFFSET_POSTPONEMENT_SCALING_FACTOR,
           QUICK6_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS,
-          QUICK6_BACKOFF_FOR_BCAST_PACKETS);
-#endif
+          QUICK6_BACKOFF_FOR_BCAST_PACKETS,
+          QUICK6_PER_SLOTFRAME_BACKOFF,
+          QUICK6_DUPLICATE_PACKET_MANAGEMENT);
 #endif
 #endif
 
@@ -299,9 +293,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
     if(data == &print_node_info_timer) {
       print_iotlab_node_info();
     }
-    else if(data == &reset_before_data_timer) {
+    /* else if(data == &reset_before_data_timer) {
       reset_eval(1);
-    }
+    } */
 #if WITH_UPWARD_TRAFFIC
     else if(data == &data_start_timer || data == &data_periodic_timer) {
       if(data == &data_start_timer) {
@@ -346,10 +340,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
       }
     }
 #endif
-    else if(data == &print_log_timer) {
+    /* else if(data == &print_log_timer) {
       etimer_set(&print_log_timer, APP_PRINT_LOG_PERIOD);
       print_log();
-    }
+    } */
   }
 
   PROCESS_END();
