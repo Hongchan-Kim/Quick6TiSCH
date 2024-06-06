@@ -93,26 +93,19 @@
 #if WITH_COOJA
 //
 #elif WITH_IOTLAB
-#define IOTLAB_GRENOBLE_79_L_CORNER_U                       1 /* 79 nodes */
-#define IOTLAB_GRENOBLE_78_R_CORNER_U                       2 /* 78 nodes */
-#define IOTLAB_LILLE_79_CORNER                              3 /* 79 nodes */
-#define IOTLAB_LILLE_2_CORNER                               4 /* 2 nodes */
-#define IOTLAB_LILLE_87_CORNER                              5 /* 87 nodes */
-#define IOTLAB_LILLE_3_CORNER                               6 /* 3 nodes */
-#define IOTLAB_GRENOBLE_3_CORNER                            7 /* 3 nodes */
+#define IOTLAB_LILLE_83_CORNER                              1 /* 83 nodes */
 //
-#define IOTLAB_SITE                                         IOTLAB_LILLE_79_CORNER
+#define IOTLAB_LILLE_2_CORNER                               11 /* 2 nodes */
+#define IOTLAB_LILLE_3_CORNER                               12 /* 3 nodes */
+#define IOTLAB_GRENOBLE_3_CORNER                            13 /* 3 nodes */
+
 //
-#if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
-#define NODE_NUM                                            79
-#elif IOTLAB_SITE == IOTLAB_GRENOBLE_78_R_CORNER_U
-#define NODE_NUM                                            78
-#elif IOTLAB_SITE == IOTLAB_LILLE_79_CORNER
-#define NODE_NUM                                            79
+#define IOTLAB_SITE                                         IOTLAB_LILLE_83_CORNER
+//
+#if IOTLAB_SITE == IOTLAB_LILLE_83_CORNER
+#define NODE_NUM                                            83
 #elif IOTLAB_SITE == IOTLAB_LILLE_2_CORNER
 #define NODE_NUM                                            2
-#elif IOTLAB_SITE == IOTLAB_LILLE_87_CORNER
-#define NODE_NUM                                            87
 #elif IOTLAB_SITE == IOTLAB_LILLE_3_CORNER
 #define NODE_NUM                                            3
 #elif IOTLAB_SITE == IOTLAB_GRENOBLE_3_CORNER
@@ -423,7 +416,12 @@
 #define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1
 //
 #undef TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
-#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   7 // default: 7
+#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   101 /* HCKIM-Eval - 11, 29, 47, 67, 83, 101 */
+/* Prime number list
+ * 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 
+ * 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
+ * 73, 79, 83, 89, 97, 101
+*/
 
 /***************************************************************
  * Prerequisite/common logging messages for network formation acceleration
@@ -448,7 +446,7 @@
 /***************************************************************
  * Dynamic resource allocation implementation - WITH_DRA
  ****************************************************************/
-#define WITH_DRA                                            0
+#define WITH_DRA                                            0 /* HCKIM-Eval */
 #if WITH_DRA
 #define DRA_LOG                                             1
 #define DRA_DBG                                             0
@@ -461,7 +459,7 @@
 /***************************************************************
  * TRGB implementation - WITH_TRGB
  ****************************************************************/
-#define WITH_TRGB                                           0
+#define WITH_TRGB                                           0 /* HCKIM-Eval */
 #if WITH_TRGB
 #define TRGB_LOG                                            1
 #define TRGB_DBG                                            0
@@ -474,7 +472,7 @@
 /***************************************************************
  * Quick6TiSCH implementation - WITH_QUICK6
  ****************************************************************/
-#define WITH_QUICK6                                         0
+#define WITH_QUICK6                                         0 /* HCKIM-Eval */
 #if WITH_QUICK6
 #define QUICK6_LOG                                          1
 #define QUICK6_DBG                                          0 /* TODO: further optimization */
@@ -490,7 +488,7 @@
 #define QUICK6_TIMING_RX_OFFSET_RIGHT                       2900 /* 1300 ~ 4200, 500 right margin from the tx timing */
 #define QUICK6_TIMING_INTER_OFFSET_INTERVAL                 600
 
-/* Quick6TiSCH offset assignment policy */
+/* Quick6TiSCH offset assignment policy - HCKIM-Eval */
 #define QUICK6_OFFSET_AUTONOMOUS_PRIORITIZATION             1 /* If 0, simple random is applied */
 #if QUICK6_OFFSET_AUTONOMOUS_PRIORITIZATION
 #define QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH                2 /* Up to two packets */
@@ -499,7 +497,7 @@
 #define QUICK6_OFFSET_POSTPONEMENT_SCALING_FACTOR           1
 #endif
 
-/* Quick6TiSCH supplementary features */
+/* Quick6TiSCH supplementary features - HCKIM-Eval */
 #define QUICK6_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
 #define QUICK6_BACKOFF_FOR_BCAST_PACKETS                     1 /* Backoff policy for postponed packets, QUICK-TODO: Need to distinguish EB/broadcast nbrs */
 #define QUICK6_TSCH_MAC_BCAST_MAX_BE                         5
