@@ -260,6 +260,14 @@ extern struct log_module all_modules[];
 #define LOG_HCK_FORMATION_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)
 #define LOG_HCK_FORMATION_6ADDR(...)      LOG_6ADDR(0, __VA_ARGS__)
 #endif
+
+#if WITH_QUICK6
+#define LOG_HCK_QUICK6(...)            LOG(1, 0, "HK-6", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_QUICK6_(...)           LOG(0, 0, "HK-6", LOG_COLOR_PRI, __VA_ARGS__)
+#define LOG_HCK_QUICK6_LLADDR(...)     LOG_LLADDR(0, __VA_ARGS__)
+#define LOG_HCK_QUICK6_6ADDR(...)      LOG_6ADDR(0, __VA_ARGS__)
+#endif
+
 #endif /* HCK_LOG */
 
 #if NETSTACK_CONF_WITH_IPV6

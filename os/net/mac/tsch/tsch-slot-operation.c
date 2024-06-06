@@ -1560,6 +1560,17 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
       } else {
         quick6_temp_offset_upper_bound = quick6_temp_offset_upper_bound - quick6_delta;
       }
+
+#if QUICK6_DBG
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "Q6 get pkt %u %u %u %u", (*target_neighbor)->is_time_source ? 
+                                      quick6_offset_upper_bound_parent[p->hck_packet_type] : 
+                                      quick6_offset_upper_bound_others[p->hck_packet_type],
+                                    quick6_delta,
+                                    p->quick6_packet_postponement_count,
+                                    quick6_temp_offset_upper_bound));
+#endif
 #endif
       p->quick6_packet_offset_upper_bound = quick6_temp_offset_upper_bound;
     }
@@ -1885,6 +1896,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         ((uint8_t *)(packet))[formation_hdr_len + 3] = (uint8_t)((hckim_header_formation_tx_info_1 >> 8) & 0xFF);
         ((uint8_t *)(packet))[formation_hdr_len + 4] = (uint8_t)(hckim_header_formation_tx_info_2 & 0xFF);
         ((uint8_t *)(packet))[formation_hdr_len + 5] = (uint8_t)((hckim_header_formation_tx_info_2 >> 8) & 0xFF);
+
+#if QUICK6_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "Q6 tx info %u %u", formation_tx_packet_type, quick6_tx_current_offset));
+#endif
       } else {
         /* Piggybacking to EB will be performed at EB update below */
       }
@@ -2092,6 +2109,11 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
         hckim_eb_formation_tx_info_1 = (formation_tx_packet_type << 8) + (uint8_t)quick6_tx_current_offset;
 
+#if QUICK6_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "Q6 tx info %u %u", formation_tx_packet_type, quick6_tx_current_offset));
+#endif
 #else /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 #endif /* TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL */
 #endif /* !WITH_DRA && !WITH_TRGB && !WITH_QUICK6 */
@@ -2130,6 +2152,12 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         cca_status = 1;
 
 #if WITH_QUICK6
+#if QUICK6_DBG
+        static uint8_t quick6_ccq_31 = 0;
+        static uint8_t quick6_ccq_42 = 0;
+        static uint8_t quick6_ccq_q6 = 0;
+#endif
+
         if(current_link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
           if(quick6_tx_current_offset == QUICK6_OFFSET_3) {
             /* delay before CCA */
@@ -2146,6 +2174,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                               + QUICK6_OFFSET_1 * US_TO_RTIMERTICKS(QUICK6_TIMING_INTER_OFFSET_INTERVAL)
                               + tsch_timing[tsch_ts_cca]);
 
+#if QUICK6_DBG
+            quick6_ccq_31 = 1;
+#endif
           } else if(quick6_tx_current_offset == QUICK6_OFFSET_4) {
             /* delay before CCA */
             TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, 
@@ -2160,6 +2191,10 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                               US_TO_RTIMERTICKS(QUICK6_TIMING_CCA_OFFSET) 
                               + QUICK6_OFFSET_2 * US_TO_RTIMERTICKS(QUICK6_TIMING_INTER_OFFSET_INTERVAL)
                               + tsch_timing[tsch_ts_cca]);
+
+#if QUICK6_DBG
+            quick6_ccq_42 = 1;
+#endif
           }
 
           /* delay before CCA */
@@ -2176,6 +2211,14 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
                             + quick6_tx_current_offset * US_TO_RTIMERTICKS(QUICK6_TIMING_INTER_OFFSET_INTERVAL)
                             + tsch_timing[tsch_ts_cca]);
           TSCH_DEBUG_TX_EVENT();
+
+#if QUICK6_DBG
+            quick6_ccq_q6 = 1;
+
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "Q6 cca %u %u %u", quick6_ccq_31, quick6_ccq_42, quick6_ccq_q6));
+#endif
         } else {
           /* delay before CCA */
           TSCH_SCHEDULE_AND_YIELD(pt, t, current_slot_start, tsch_timing[tsch_ts_cca_offset], "cca");
@@ -3081,6 +3124,13 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
                                + US_TO_RTIMERTICKS(QUICK6_TIMING_TX_OFFSET)  
                                + quick6_rx_current_offset * US_TO_RTIMERTICKS(QUICK6_TIMING_INTER_OFFSET_INTERVAL);
             }
+
+#if QUICK6_DBG
+            TSCH_LOG_ADD(tsch_log_message,
+                snprintf(log->message, sizeof(log->message),
+                "Q6 rx info %u %u", formation_rx_packet_type, quick6_rx_current_offset));
+#endif /* DRA_DBG */
+
 #endif /* !WITH_DRA && !WITH_TRGB && !WITH_QUICK6 */
 #endif /* HCK_FORMATION_PACKET_TYPE_INFO */
 
@@ -3595,7 +3645,7 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         /* Current bootstrap state: hck_formation_bootstrap_state */
         TSCH_LOG_ADD(tsch_log_message,
                         snprintf(log->message, sizeof(log->message),
-                            "Q6 st %u", hck_formation_bootstrap_state);
+                            "Q6 bst %u", hck_formation_bootstrap_state);
         );
 #endif
         /* HCK_PACKET_TYPE_EB */

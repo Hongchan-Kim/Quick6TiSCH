@@ -568,8 +568,10 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
           }
           if(quick6_same_type_packet_exist_or_not) {
 #if QUICK6_DBG
-            LOG_INFO("hck-dbg delete overlapped packet %u %u %u\n", 
-                    hck_current_packet_type, quick6_current_postponed_count, quick6_same_type_packet_get_index);
+            LOG_HCK_QUICK6("delete dup packet %u %u %u\n", 
+                          hck_current_packet_type, 
+                          quick6_current_postponed_count, 
+                          quick6_same_type_packet_get_index);
 #endif
             struct tsch_packet *quick6_overlapped_packet = n->tx_array[quick6_same_type_packet_get_index];
             tsch_queue_free_packet(quick6_overlapped_packet);
@@ -1219,6 +1221,9 @@ void
 tsch_queue_backoff_inc(struct tsch_neighbor *n)
 {
 #if WITH_QUICK6 && QUICK6_BACKOFF_FOR_BCAST_PACKETS
+#if QUICK6_DBG
+  uint8_t quick6_dbg_backoff_exponent_prev = n->backoff_exponent;
+#endif
   if(n == n_broadcast) {
     /* Increment exponent */
     n->backoff_exponent = MIN(n->backoff_exponent + 1, QUICK6_TSCH_MAC_BCAST_MAX_BE);
@@ -1226,6 +1231,9 @@ tsch_queue_backoff_inc(struct tsch_neighbor *n)
     /* Increment exponent */
     n->backoff_exponent = MIN(n->backoff_exponent + 1, TSCH_MAC_MAX_BE);
   }
+#if QUICK6_DBG
+  uint8_t quick6_dbg_backoff_exponent_new = n->backoff_exponent;
+#endif
 #else
   /* Increment exponent */
   n->backoff_exponent = MIN(n->backoff_exponent + 1, TSCH_MAC_MAX_BE);
@@ -1238,6 +1246,10 @@ tsch_queue_backoff_inc(struct tsch_neighbor *n)
   /* Add one to the window as we will decrement it at the end of the current slot
    * through tsch_queue_update_all_backoff_windows */
   n->backoff_window++;
+
+#if WITH_QUICK6 && QUICK6_DBG
+  LOG_HCK_QUICK6("bo_inc %u %u %u %u\n", !(n == n_broadcast), quick6_dbg_backoff_exponent_prev, quick6_dbg_backoff_exponent_new, n->backoff_window);
+#endif
 }
 /*---------------------------------------------------------------------------*/
 /* Decrement backoff window for all queues directed at dest_addr */
@@ -1263,6 +1275,9 @@ tsch_queue_update_all_backoff_windows(const linkaddr_t *dest_addr)
 int
 quick6_tsch_queue_cssf_backoff_expired(const struct tsch_neighbor *n)
 {
+#if WITH_QUICK6 && QUICK6_DBG
+  LOG_HCK_QUICK6("bo_cssf_exp %u\n", n->quick6_cssf_backoff_window);
+#endif
   return n->quick6_cssf_backoff_window == 0;
 }
 /*---------------------------------------------------------------------------*/
@@ -1270,6 +1285,10 @@ quick6_tsch_queue_cssf_backoff_expired(const struct tsch_neighbor *n)
 void
 quick6_tsch_queue_cssf_backoff_reset(struct tsch_neighbor *n)
 {
+#if WITH_QUICK6 && QUICK6_DBG
+  LOG_HCK_QUICK6("bo_cssf_reset %u\n", n->quick6_cssf_backoff_window);
+#endif
+
   n->quick6_cssf_backoff_window = 0;
   n->quick6_cssf_backoff_exponent = QUICK6_PER_SLOTFRAME_BACKOFF_MIN_BE;
 }
@@ -1279,6 +1298,9 @@ void
 quick6_tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n)
 {
 #if WITH_QUICK6 && QUICK6_BACKOFF_FOR_BCAST_PACKETS
+#if QUICK6_DBG
+  uint8_t quick6_dbg_cssf_backoff_exponent_prev = n->quick6_cssf_backoff_exponent;
+#endif
   if(n == n_broadcast) {
     /* Increment exponent */
     n->quick6_cssf_backoff_exponent = MIN(n->quick6_cssf_backoff_exponent + 1, QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE);
@@ -1286,6 +1308,9 @@ quick6_tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n)
     /* Increment exponent */
     n->quick6_cssf_backoff_exponent = MIN(n->quick6_cssf_backoff_exponent + 1, QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE);
   }
+#if QUICK6_DBG
+  uint8_t quick6_dbg_cssf_backoff_exponent_new = n->quick6_cssf_backoff_exponent;
+#endif
 #else /* Quick6TiSCH-TODO: unicast neighbors only? */
   /* Increment exponent */
   n->quick6_cssf_backoff_exponent = MIN(n->quick6_cssf_backoff_exponent + 1, QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE);
@@ -1298,12 +1323,26 @@ quick6_tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n)
   /* Add one to the window as we will decrement it at the end of the current slot
    * through tsch_queue_update_all_backoff_windows */
   n->quick6_cssf_backoff_window++;
+
+#if WITH_QUICK6 && QUICK6_DBG
+  LOG_HCK_QUICK6("bo_cssf_inc %u %u %u %u\n", !(n == n_broadcast), 
+                                              quick6_dbg_cssf_backoff_exponent_prev, 
+                                              quick6_dbg_cssf_backoff_exponent_new, 
+                                              n->quick6_cssf_backoff_window);
+#endif
 }
 /*---------------------------------------------------------------------------*/
 /* Decrement backoff window for all queues directed at dest_addr */
 void
 quick6_tsch_queue_update_all_cssf_backoff_windows(const linkaddr_t *dest_addr)
 {
+#if WITH_QUICK6 && QUICK6_DBG
+  TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+              "bo_cssf_up", ost_ssq_schedule_list[i].link.slotframe_handle);
+  );
+#endif
+
   if(!tsch_is_locked()) {
     int is_broadcast = linkaddr_cmp(dest_addr, &tsch_broadcast_address);
     struct tsch_neighbor *n = (struct tsch_neighbor *)nbr_table_head(tsch_neighbors);

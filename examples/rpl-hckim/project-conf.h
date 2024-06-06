@@ -101,7 +101,7 @@
 #define IOTLAB_LILLE_3_CORNER                               6 /* 3 nodes */
 #define IOTLAB_GRENOBLE_3_CORNER                            7 /* 3 nodes */
 //
-#define IOTLAB_SITE                                         IOTLAB_LILLE_2_CORNER
+#define IOTLAB_SITE                                         IOTLAB_LILLE_79_CORNER
 //
 #if IOTLAB_SITE == IOTLAB_GRENOBLE_79_L_CORNER_U
 #define NODE_NUM                                            79
@@ -492,7 +492,7 @@
 #define WITH_QUICK6                                         1
 #if WITH_QUICK6
 #define QUICK6_LOG                                          1
-#define QUICK6_DBG                                          1 /* duplicate packet mgmt, */
+#define QUICK6_DBG                                          0 /* TODO: further optimization */
 
 #if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
 #define QUICK6_SLOTFRAME_LENGTH                             TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
@@ -527,7 +527,6 @@
 #define QUICK6_PER_SLOTFRAME_BACKOFF_MIN_BE                  1 /* Slotframe level backoff configuration */
 #define QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE                  5 /* Slotframe level backoff configuration */
 #define QUICK6_DUPLICATE_PACKET_MANAGEMENT                   1 /* Replace duplicate packet within neighbor queue, while maintaining the position within the ringbuf.*/
-
 
 #endif /* WITH_QUICK6 */
 
