@@ -457,11 +457,17 @@ void print_log_tsch()
           tsch_scheduled_ost_odp_sf_tx_cell_count, 
           tsch_scheduled_ost_odp_sf_rx_cell_count);
 #else
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+  LOG_HCK("asso_ts %lu sch_cs %lu |\n", 
+          tsch_total_associated_timeslots, 
+          tsch_scheduled_common_sf_cell_count);
+#else
   LOG_HCK("asso_ts %lu sch_eb %lu sch_bc %lu sch_uc %lu |\n", 
           tsch_total_associated_timeslots, 
           tsch_scheduled_eb_sf_cell_count, 
           tsch_scheduled_common_sf_cell_count, 
           tsch_scheduled_unicast_sf_cell_count);
+#endif
 #endif
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
@@ -495,6 +501,11 @@ void print_log_tsch()
           tsch_ost_odp_sf_tx_operation_count, 
           tsch_ost_odp_sf_rx_operation_count);
 #else
+#if TSCH_SCHEDULE_CONF_WITH_6TISCH_MINIMAL
+  LOG_HCK("cs_tx_op %lu cs_rx_op %lu |\n", 
+          tsch_common_sf_tx_operation_count, 
+          tsch_common_sf_rx_operation_count);
+#else
   LOG_HCK("eb_tx_op %lu eb_rx_op %lu bc_tx_op %lu bc_rx_op %lu uc_tx_op %lu uc_rx_op %lu |\n", 
           tsch_eb_sf_tx_operation_count, 
           tsch_eb_sf_rx_operation_count, 
@@ -502,6 +513,7 @@ void print_log_tsch()
           tsch_common_sf_rx_operation_count, 
           tsch_unicast_sf_tx_operation_count, 
           tsch_unicast_sf_rx_operation_count);
+#endif
 #endif
 
 #if WITH_TSCH_DEFAULT_BURST_TRANSMISSION
