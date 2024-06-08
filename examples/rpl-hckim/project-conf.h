@@ -456,6 +456,7 @@
 
 #define DRA_NBR_NUM                                         MAX_NBR_NODE_NUM
 #define TSCH_SCHEDULE_CONF_MAX_LINKS                        64
+#define DRA_MINIMUM_INTER_SLOT_INTERVAL                     2
 #endif /* WITH_DRA */
 
 /***************************************************************

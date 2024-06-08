@@ -186,16 +186,13 @@ void dra_calculate_shared_slots()
 
   dra_avg_num_of_pkts = dra_total_num_of_pkts / DRA_T_SLOTFRAMES;
 
-  int dra_power_of_two = 1;
   int dra_exponent = 0;
   dra_my_m = 0;
-
-  while(dra_power_of_two * 2 < dra_avg_num_of_pkts) { // DRA-TODO
-    dra_power_of_two *= 2;
+  while((1 << dra_exponent) < dra_avg_num_of_pkts) {
     dra_exponent++;
   }
-  dra_my_m = dra_exponent + 1; // DRA-TODO
-  dra_my_m = MIN(dra_my_m, DRA_MAX_M); // DRA-TODO
+  dra_my_m = dra_exponent;
+  dra_my_m = MIN(dra_my_m, DRA_MAX_M);
 
 
   /* Second, derive dra_total_max_m */
@@ -212,13 +209,12 @@ void dra_calculate_shared_slots()
 #if DRA_DBG
     TSCH_LOG_ADD(tsch_log_message,
         snprintf(log->message, sizeof(log->message),
-        "dra al1 %u %u %u %u %u %u %u", dra_my_num_of_pkts,
-                                  dra_total_num_of_pkts,
-                                  dra_avg_num_of_pkts,
-                                  DRA_T_SLOTFRAMES,
-                                  dra_exponent,
-                                  dra_my_m,
-                                  dra_total_max_m));
+        "dra calc %u %u %u %u %u %u", dra_my_m,
+                                      dra_total_max_m,
+                                      dra_my_num_of_pkts,
+                                      dra_total_num_of_pkts,
+                                      dra_avg_num_of_pkts,
+                                      dra_exponent));
 #endif
 
 
@@ -803,7 +799,7 @@ tsch_reset(void)
   int dra_power_of_two = 1;
   int dra_exponent = 0;
 
-  while(dra_power_of_two * 2 < DRA_SLOTFRAME_LENGTH) {
+  while(dra_power_of_two * 2 <= (DRA_SLOTFRAME_LENGTH / DRA_MINIMUM_INTER_SLOT_INTERVAL)) {
     dra_power_of_two *= 2;
     dra_exponent++;
   }
@@ -815,7 +811,10 @@ tsch_reset(void)
   DRA_T_SLOTFRAMES = 1000 / (DRA_SLOTFRAME_LENGTH * 10) + 1;
 
 #if DRA_LOG
-  LOG_HCK_DRA("dra param %u %u %u\n", DRA_SLOTFRAME_LENGTH, DRA_MAX_M, DRA_T_SLOTFRAMES);
+  LOG_HCK_DRA("dra param %u %u %u %u\n", DRA_SLOTFRAME_LENGTH, 
+                                         DRA_MAX_M, 
+                                         DRA_MINIMUM_INTER_SLOT_INTERVAL, 
+                                         DRA_T_SLOTFRAMES);
 #endif
 
   /* Third, initialize DRA neighbor information */

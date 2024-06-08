@@ -94,11 +94,11 @@ void dra_allocate_shared_slots()
     tsch_schedule_remove_link(dra_mc_sf, l);
   }
 
-  int dra_larger_m = MAX(dra_my_m, dra_total_max_m); // DRA-TODO
+  int dra_larger_m = MAX(dra_my_m, dra_total_max_m);
 
   int dra_inter_slot_interval = 1 << (DRA_MAX_M - dra_larger_m + 1);
   int dra_num_of_tx_slots = 1 << dra_my_m;
-  int dra_num_of_slots = 1 << dra_larger_m;  // DRA-TODO
+  int dra_num_of_slots = 1 << dra_larger_m;
 
   int i = 0;
   for(i = 0; i < dra_num_of_slots; i++) {
@@ -118,11 +118,11 @@ void dra_allocate_shared_slots()
 #if DRA_LOG
   TSCH_LOG_ADD(tsch_log_message,
       snprintf(log->message, sizeof(log->message),
-      "dra allo %u %u %u %u %u", dra_my_m, 
+      "dra allo %u %u %u %u %u", dra_num_of_slots,
+                                 dra_num_of_tx_slots,
+                                 dra_my_m, 
                                  dra_larger_m,
-                                 dra_inter_slot_interval, 
-                                 dra_num_of_tx_slots, 
-                                 dra_num_of_slots));
+                                 dra_inter_slot_interval));
 #endif
 }
 #endif /* WITH_DRA */
