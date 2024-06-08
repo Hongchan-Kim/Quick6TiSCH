@@ -56,7 +56,7 @@
 #define HCK_LOG_TSCH_PACKET_ADD_REMOVE                      1
 #define HCK_LOG_TSCH_SLOT                                   1
 #define HCK_LOG_TSCH_SLOT_APP_SEQNO                         1
-#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      0
+#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      0 /* HCKIM-Eval */
 //
 #define SIMPLE_ENERGEST_CONF_PERIOD                         (1 * 60 * CLOCK_SECOND)
 #define RPL_FIRST_MEASURE_PERIOD                            (1 * 60)
@@ -446,14 +446,16 @@
 /***************************************************************
  * Dynamic resource allocation implementation - WITH_DRA
  ****************************************************************/
-#define WITH_DRA                                            0 /* HCKIM-Eval */
+#define WITH_DRA                                            1 /* HCKIM-Eval */
 #if WITH_DRA
 #define DRA_LOG                                             1
-#define DRA_DBG                                             0
+#define DRA_DBG                                             1
+
+#define DRA_SLOTFRAME_HANDLE                                0
+#define DRA_SLOTFRAME_LENGTH                                TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
 
 #define DRA_NBR_NUM                                         MAX_NBR_NODE_NUM
-#define DRA_SLOTFRAME_LENGTH                                TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
-#define DRA_SLOTFRAME_HANDLE                                0
+#define TSCH_SCHEDULE_CONF_MAX_LINKS                        64
 #endif /* WITH_DRA */
 
 /***************************************************************
@@ -464,9 +466,10 @@
 #define TRGB_LOG                                            1
 #define TRGB_DBG                                            0
 
-#define TRGB_ROOT_ID                                        1
-#define TRGB_SLOTFRAME_LENGTH                               TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
 #define TRGB_SLOTFRAME_HANDLE                               0
+#define TRGB_SLOTFRAME_LENGTH                               TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
+
+#define TRGB_ROOT_ID                                        1
 #endif /* WITH_TRGB */
 
 /***************************************************************

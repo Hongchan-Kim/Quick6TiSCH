@@ -86,7 +86,7 @@ LIST(slotframe_list);
 
 /*---------------------------------------------------------------------------*/
 #if WITH_DRA
-void dra_allocate_timeslots()
+void dra_allocate_shared_slots()
 {
   struct tsch_slotframe *dra_mc_sf = tsch_schedule_get_slotframe_by_handle(0);
   struct tsch_link *l;
@@ -94,11 +94,11 @@ void dra_allocate_timeslots()
     tsch_schedule_remove_link(dra_mc_sf, l);
   }
 
-  int dra_larger_m = MAX(dra_my_m, dra_total_max_m);
+  int dra_larger_m = MAX(dra_my_m, dra_total_max_m); // DRA-TODO
 
   int dra_inter_slot_interval = 1 << (DRA_MAX_M - dra_larger_m + 1);
   int dra_num_of_tx_slots = 1 << dra_my_m;
-  int dra_num_of_slots = 1 << dra_larger_m;
+  int dra_num_of_slots = 1 << dra_larger_m;  // DRA-TODO
 
   int i = 0;
   for(i = 0; i < dra_num_of_slots; i++) {
@@ -118,9 +118,11 @@ void dra_allocate_timeslots()
 #if DRA_LOG
   TSCH_LOG_ADD(tsch_log_message,
       snprintf(log->message, sizeof(log->message),
-      "dra alloc %u %u %u", dra_inter_slot_interval, 
-                            dra_num_of_tx_slots, 
-                            dra_num_of_slots));
+      "dra allo %u %u %u %u %u", dra_my_m, 
+                                 dra_larger_m,
+                                 dra_inter_slot_interval, 
+                                 dra_num_of_tx_slots, 
+                                 dra_num_of_slots));
 #endif
 }
 #endif /* WITH_DRA */
@@ -1090,8 +1092,8 @@ tsch_schedule_get_next_active_link(struct tsch_asn_t *asn, uint16_t *time_offset
 
             /* TODO: reschedule at here! */
             if((dra_lastly_scheduled_asfn % DRA_T_SLOTFRAMES) == 0) {
+              dra_calculate_shared_slots();
               dra_allocate_shared_slots();
-              dra_allocate_timeslots();
 
 #if DRA_DBG
               TSCH_LOG_ADD(tsch_log_message,

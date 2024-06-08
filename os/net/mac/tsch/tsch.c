@@ -98,14 +98,13 @@ uint8_t DRA_MAX_M = 0; /* Set as the maximum number of slots that can be
 uint8_t DRA_T_SLOTFRAMES = 0; /* Set as the minimum number of slotframes 
                                  that ensures a period of at least one second. */
 
-uint8_t dra_my_m = 0;
-uint16_t dra_my_seq = 0; /* In the case of 6TiSCH-MC, include all packets 
+uint16_t dra_my_seq = 1; /* In the case of 6TiSCH-MC, include all packets 
                           * In the case of Orchestra, include packets allocated for 
-                          * common shared slotframe */
+                          * common shared slotframe.
+                          * Begins with 1 */
 uint16_t dra_my_num_of_pkts = 0;
 
-uint16_t dra_total_num_of_pkts = 0;
-uint16_t dra_avg_num_of_pkts = 0;
+uint8_t dra_my_m = 0;
 uint8_t dra_total_max_m = 0;
 
 struct tsch_asn_t dra_current_asn;
@@ -137,7 +136,12 @@ int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dr
   if(nbr_index != -1) {
     uint16_t dra_nbr_last_seq = dra_nbr_info_table[nbr_index].dra_nbr_last_seq;
 
-    uint16_t dra_nbr_accum_pkts = rx_dra_seq - dra_nbr_last_seq;
+    uint16_t dra_nbr_accum_pkts = 0;
+    if(dra_nbr_last_seq == 0) { /* First time received within current period */
+      dra_nbr_accum_pkts = 1; // DRA-FFS: could be further optimized by using timestamp
+    } else {
+      dra_nbr_accum_pkts = rx_dra_seq - dra_nbr_last_seq;
+    }
     dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts += dra_nbr_accum_pkts;
 
     dra_nbr_info_table[nbr_index].dra_nbr_last_m = rx_dra_m;
@@ -146,10 +150,12 @@ int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dr
 #if DRA_DBG
     TSCH_LOG_ADD(tsch_log_message,
         snprintf(log->message, sizeof(log->message),
-        "dra nbr %u %u %u %u %u", nbr_index,
+        "dra nbr %u %u %u %u %u %u %u", nbr_index,
                                   dra_nbr_info_table[nbr_index].dra_nbr_id,
                                   dra_nbr_info_table[nbr_index].dra_nbr_last_m,
+                                  dra_nbr_last_seq,
                                   dra_nbr_info_table[nbr_index].dra_nbr_last_seq,
+                                  dra_nbr_accum_pkts,
                                   dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts));
 #endif
 
@@ -165,40 +171,66 @@ int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dr
   }
 }
 /*---------------------------------------------------------------------------*/
-void dra_allocate_shared_slots()
+void dra_calculate_shared_slots()
 {
-  dra_total_num_of_pkts = 0;
-  dra_total_max_m = 0;
+  /* First, derive dra_my_m */
+  uint16_t dra_total_num_of_pkts = 0;
+  uint16_t dra_avg_num_of_pkts = 0; // DRA-TODO: should be double?
 
   dra_total_num_of_pkts += dra_my_num_of_pkts;
-  dra_my_num_of_pkts = 0;
-
-  dra_total_max_m = dra_my_m;
-  dra_my_m = 0;
 
   int i = 0;
   for(i = 0; i < DRA_NBR_NUM; i++) {
     dra_total_num_of_pkts += dra_nbr_info_table[i].dra_nbr_num_of_pkts;
-    dra_nbr_info_table[i].dra_nbr_num_of_pkts = 0;
-
-    if(dra_total_max_m < dra_nbr_info_table[i].dra_nbr_last_m) {
-      dra_total_max_m = dra_nbr_info_table[i].dra_nbr_last_m;
-    }
-    dra_nbr_info_table[i].dra_nbr_last_m = 0;
   }
 
   dra_avg_num_of_pkts = dra_total_num_of_pkts / DRA_T_SLOTFRAMES;
 
   int dra_power_of_two = 1;
   int dra_exponent = 0;
+  dra_my_m = 0;
 
-  while(dra_power_of_two * 2 < dra_avg_num_of_pkts) {
+  while(dra_power_of_two * 2 < dra_avg_num_of_pkts) { // DRA-TODO
     dra_power_of_two *= 2;
     dra_exponent++;
   }
+  dra_my_m = dra_exponent + 1; // DRA-TODO
+  dra_my_m = MIN(dra_my_m, DRA_MAX_M); // DRA-TODO
 
-  dra_my_m = dra_exponent + 1;
-  dra_my_m = MIN(dra_my_m, DRA_MAX_M);
+
+  /* Second, derive dra_total_max_m */
+  dra_total_max_m = 0;
+  dra_total_max_m = dra_my_m;
+
+  for(i = 0; i < DRA_NBR_NUM; i++) {
+    if(dra_total_max_m < dra_nbr_info_table[i].dra_nbr_last_m) {
+      dra_total_max_m = dra_nbr_info_table[i].dra_nbr_last_m;
+    }
+  }
+
+
+#if DRA_DBG
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "dra al1 %u %u %u %u %u %u %u", dra_my_num_of_pkts,
+                                  dra_total_num_of_pkts,
+                                  dra_avg_num_of_pkts,
+                                  DRA_T_SLOTFRAMES,
+                                  dra_exponent,
+                                  dra_my_m,
+                                  dra_total_max_m));
+#endif
+
+
+  /* Last, reset dra_nbr_info_table */
+  dra_my_num_of_pkts = 0;
+
+  for(i = 0; i < DRA_NBR_NUM; i++) {
+    dra_nbr_info_table[i].dra_nbr_id = 0;
+    dra_nbr_info_table[i].dra_nbr_last_m = 0;
+    dra_nbr_info_table[i].dra_nbr_last_seq = 0;
+    dra_nbr_info_table[i].dra_nbr_num_of_pkts = 0;
+  }
 }
 #endif /* WITH_DRA */
 /*---------------------------------------------------------------------------*/
