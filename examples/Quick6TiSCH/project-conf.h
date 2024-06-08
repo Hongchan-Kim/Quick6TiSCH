@@ -399,7 +399,7 @@
  * Prerequisite modifications of Contiki-NG for network formation acceleration
  * - Configurations that must be fixed regardless of definitions above
  ****************************************************************/
-#define RPL_CONF_DIS_SEND                                   0 /* Turn on/off DIS */
+#define RPL_CONF_DIS_SEND                                   0  /* HCKIM-Eval Turn on/off DIS */
 #undef RPL_CONF_WITH_PROBING
 #define RPL_CONF_WITH_PROBING                               0 /* Turn on/off RPL probing */
 //
@@ -422,6 +422,8 @@
  * 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
  * 73, 79, 83, 89, 97, 101
 */
+#undef TSCH_CONF_MAX_EB_PERIOD
+#define TSCH_CONF_MAX_EB_PERIOD                             (16 * CLOCK_SECOND) /* HCKIM-Eval */
 
 /***************************************************************
  * Prerequisite/common logging messages for network formation acceleration
