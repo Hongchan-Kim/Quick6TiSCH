@@ -1217,7 +1217,7 @@ tsch_queue_backoff_inc(struct tsch_neighbor *n)
 #if QUICK6_DBG
   uint8_t quick6_dbg_backoff_exponent_prev = n->backoff_exponent;
 #endif
-  if(n == n_broadcast) {
+  if(n == n_broadcast || n == n_eb) {
     /* Increment exponent */
     n->backoff_exponent = MIN(n->backoff_exponent + 1, QUICK6_TSCH_MAC_BCAST_MAX_BE);
   } else {
@@ -1241,7 +1241,10 @@ tsch_queue_backoff_inc(struct tsch_neighbor *n)
   n->backoff_window++;
 
 #if WITH_QUICK6 && QUICK6_DBG
-  LOG_HCK_QUICK6("bo_inc %u %u %u %u\n", !(n == n_broadcast), quick6_dbg_backoff_exponent_prev, quick6_dbg_backoff_exponent_new, n->backoff_window);
+  LOG_HCK_QUICK6("bo_inc %u %u %u %u\n", !(n == n_broadcast || n == n_eb), 
+                                         quick6_dbg_backoff_exponent_prev, 
+                                         quick6_dbg_backoff_exponent_new, 
+                                         n->backoff_window);
 #endif
 }
 /*---------------------------------------------------------------------------*/
@@ -1294,7 +1297,7 @@ quick6_tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n)
 #if QUICK6_DBG
   uint8_t quick6_dbg_cssf_backoff_exponent_prev = n->quick6_cssf_backoff_exponent;
 #endif
-  if(n == n_broadcast) {
+  if(n == n_broadcast || n == n_eb) {
     /* Increment exponent */
     n->quick6_cssf_backoff_exponent = MIN(n->quick6_cssf_backoff_exponent + 1, QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE);
   } else {
@@ -1318,7 +1321,7 @@ quick6_tsch_queue_cssf_backoff_inc(struct tsch_neighbor *n)
   n->quick6_cssf_backoff_window++;
 
 #if WITH_QUICK6 && QUICK6_DBG
-  LOG_HCK_QUICK6("bo_cssf_inc %u %u %u %u\n", !(n == n_broadcast), 
+  LOG_HCK_QUICK6("bo_cssf_inc %u %u %u %u\n", !(n == n_broadcast || n == n_eb), 
                                               quick6_dbg_cssf_backoff_exponent_prev, 
                                               quick6_dbg_cssf_backoff_exponent_new, 
                                               n->quick6_cssf_backoff_window);
