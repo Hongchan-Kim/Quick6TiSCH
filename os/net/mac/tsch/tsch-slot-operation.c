@@ -3923,7 +3923,9 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
             if(trgb_current_operation == TRGB_OPERATION_RED_TX
               || trgb_current_operation == TRGB_OPERATION_RED_RX) {
-              tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(0 + trgb_asfn)];
+              /* Hop channel - Tx/Rx on channel offset of 0 */
+              tsch_current_channel_offset = 0;
+              tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
 
             } else { /* GREEN or BLUE cell operation */
               int trgb_is_root = tsch_rpl_callback_is_root();
@@ -3932,22 +3934,22 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
 
                 if(trgb_current_operation == TRGB_OPERATION_GREEN_TX
                   || trgb_current_operation == TRGB_OPERATION_BLUE_TX) {
-                  // Tx on Channel(ROOT_ID)
-                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(TRGB_ROOT_ID + trgb_asfn)];
-
+                  /* Hop channel - Tx on channel offset from ROOT_ID */
+                  tsch_current_channel_offset = hash_for_trgb(TRGB_ROOT_ID + trgb_asfn);
+                  tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
                 } else if(trgb_current_operation == TRGB_OPERATION_GREEN_RX
                   || trgb_current_operation == TRGB_OPERATION_BLUE_RX) {
-                  // Rx on Channel(ROOT_ID)
-                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(TRGB_ROOT_ID + trgb_asfn)];
-
+                  /* Hop channel - Rx on channel offset from ROOT_ID */
+                  tsch_current_channel_offset = hash_for_trgb(TRGB_ROOT_ID + trgb_asfn);
+                  tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
                 } else if(trgb_current_operation == TRGB_OPERATION_GREEN_TX_NO_PACKET
                   || trgb_current_operation == TRGB_OPERATION_BLUE_TX_NO_PACKET) {
                   // Sikp this slot operation
                   trgb_skip_slot = 1;
-
                 } else if(trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE) {
-                  // ROOT never experiences this case
-                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(TRGB_ROOT_ID + trgb_asfn)];
+                  /* Hop channel - ROOT never experiences this case */
+                  tsch_current_channel_offset = hash_for_trgb(TRGB_ROOT_ID + trgb_asfn);
+                  tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
                 }
 
               } else { /* Non-root nodes */
@@ -3961,21 +3963,25 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                     rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent))) { /* Packet toward parent */
                     if(HCK_GET_NODE_ID_FROM_LINKADDR(rpl_get_parent_lladdr(trgb_instance->current_dag->preferred_parent)) 
                         == TRGB_ROOT_ID) { /* Paretn is root */
-                      // Tx on Channel(Root_ID)
-                      tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(TRGB_ROOT_ID + trgb_asfn)]; 
+                      /* Hop channel - Tx on channel offset from ROOT_ID */
+                      tsch_current_channel_offset = hash_for_trgb(TRGB_ROOT_ID + trgb_asfn);
+                      tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
                     } else { /* Parent is non-root */
-                      // Tx on Channel(granP_ID)
-                      tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(trgb_grandP_id + trgb_asfn)];
+                      /* Hop channel - Tx on channel offset from granP ID */
+                      tsch_current_channel_offset = hash_for_trgb(trgb_grandP_id + trgb_asfn);
+                      tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
                     }
                   } else { /* Packet toward non-parent */
-                    // Tx on Channel(own_ID)
-                    tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(node_id + trgb_asfn)];
+                    /* Hop channel - Tx on channel offset from own ID */
+                    tsch_current_channel_offset = hash_for_trgb(node_id + trgb_asfn);
+                    tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
                   }
 
                 } else if(trgb_current_operation == TRGB_OPERATION_GREEN_RX
                   || trgb_current_operation == TRGB_OPERATION_BLUE_RX) {
-                  // Rx on Channel(parent_ID)
-                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(trgb_parent_id + trgb_asfn)];
+                  /* Hop channel - Rx on channel offset from parent ID */
+                  tsch_current_channel_offset = hash_for_trgb(trgb_parent_id + trgb_asfn);
+                  tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
 
                 } else if(trgb_current_operation == TRGB_OPERATION_GREEN_TX_NO_PACKET
                   || trgb_current_operation == TRGB_OPERATION_BLUE_TX_NO_PACKET) {
@@ -3983,8 +3989,9 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
                   trgb_skip_slot = 1;
 
                 } else if(trgb_current_operation == TRGB_OPERATION_GREEN_OR_BLUE_UNAVAILABLE) {
-                  // Do Rx operation
-                  tsch_current_channel = tsch_hopping_sequence[hash_for_trgb(trgb_parent_id + trgb_asfn)];
+                  /* Hop channel - Rx on channel offset from parent ID */
+                  tsch_current_channel_offset = hash_for_trgb(trgb_parent_id + trgb_asfn);
+                  tsch_current_channel = tsch_calculate_channel(&tsch_current_asn, tsch_current_channel_offset);
                 }
               }
             }
