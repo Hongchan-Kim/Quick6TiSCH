@@ -170,6 +170,7 @@ reset_eval(uint8_t phase)
 #endif
 #endif
 }
+#endif
 /*---------------------------------------------------------------------------*/
 static void
 print_log()
@@ -179,7 +180,6 @@ print_log()
   print_log_rpl();
   print_log_simple_energest();
 }
-#endif
 /*---------------------------------------------------------------------------*/
 static void
 udp_rx_callback(struct simple_udp_connection *c,
@@ -236,7 +236,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 {
   static struct etimer print_node_info_timer;
   //static struct etimer reset_before_data_timer;
-  //static struct etimer print_log_timer;
+  static struct etimer print_log_timer;
 
 #if WITH_UPWARD_TRAFFIC
   static struct etimer data_start_timer;
@@ -258,7 +258,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
 
   etimer_set(&print_node_info_timer, APP_PRINT_NODE_INFO_DELAY);
   //etimer_set(&reset_before_data_timer, APP_RESET_BEFORE_DATA_DELAY);
-  //etimer_set(&print_log_timer, APP_PRINT_LOG_DELAY);
+  etimer_set(&print_log_timer, APP_PRINT_LOG_DELAY);
 
 #if WITH_UPWARD_TRAFFIC
   etimer_set(&data_start_timer, (APP_DATA_START_DELAY + random_rand() % (APP_UPWARD_SEND_INTERVAL)));
@@ -340,10 +340,10 @@ PROCESS_THREAD(udp_client_process, ev, data)
       }
     }
 #endif
-    /* else if(data == &print_log_timer) {
+    else if(data == &print_log_timer) {
       etimer_set(&print_log_timer, APP_PRINT_LOG_PERIOD);
       print_log();
-    } */
+    }
   }
 
   PROCESS_END();

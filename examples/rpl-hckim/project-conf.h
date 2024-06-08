@@ -457,6 +457,7 @@
 #define DRA_NBR_NUM                                         MAX_NBR_NODE_NUM
 #define TSCH_SCHEDULE_CONF_MAX_LINKS                        64
 #define DRA_MINIMUM_INTER_SLOT_INTERVAL                     2
+#define DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT              1
 #endif /* WITH_DRA */
 
 /***************************************************************
@@ -471,6 +472,9 @@
 #define TRGB_SLOTFRAME_LENGTH                               TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
 
 #define TRGB_ROOT_ID                                        1
+#undef TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                   /* HCKIM-Eval */
+#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                  TSCH_HOPPING_SEQUENCE_16_16
+//#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                  TSCH_HOPPING_SEQUENCE_4_4
 #endif /* WITH_TRGB */
 
 /***************************************************************

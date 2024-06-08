@@ -101,8 +101,11 @@ uint8_t DRA_T_SLOTFRAMES = 0; /* Set as the minimum number of slotframes
 uint16_t dra_my_seq = 1; /* In the case of 6TiSCH-MC, include all packets 
                           * In the case of Orchestra, include packets allocated for 
                           * common shared slotframe.
-                          * Begins with 1 */
+                          * Begins from 1 */
 uint16_t dra_my_num_of_pkts = 0;
+#if DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
+uint32_t dra_my_adapt_count = 1; /* Begins from 1 */
+#endif
 
 uint8_t dra_my_m = 0;
 uint8_t dra_total_max_m = 0;
@@ -115,11 +118,15 @@ struct dra_nbr_info {
   uint8_t dra_nbr_last_m;
   uint16_t dra_nbr_last_seq;
   uint16_t dra_nbr_num_of_pkts;
+#if DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
+  uint32_t dra_nbr_last_adapt_count;
+#endif
 };
 static struct dra_nbr_info dra_nbr_info_table[DRA_NBR_NUM];
 /*---------------------------------------------------------------------------*/
 int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dra_seq)
 {
+#if !DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
   /* First, get matched/available index */
   int nbr_index = -1;
   int i = 0;
@@ -134,16 +141,16 @@ int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dr
 
   /* Second, update corresponding info */
   if(nbr_index != -1) {
-    uint16_t dra_nbr_last_seq = dra_nbr_info_table[nbr_index].dra_nbr_last_seq;
-
+    uint16_t dra_nbr_stored_last_seq = dra_nbr_info_table[nbr_index].dra_nbr_last_seq;
     uint16_t dra_nbr_accum_pkts = 0;
-    if(dra_nbr_last_seq == 0) { /* First time received within current period */
+
+    if(dra_nbr_stored_last_seq == 0) { /* First time received within current period */
       dra_nbr_accum_pkts = 1; // DRA-FFS: could be further optimized by using timestamp
     } else {
-      dra_nbr_accum_pkts = rx_dra_seq - dra_nbr_last_seq;
+      dra_nbr_accum_pkts = rx_dra_seq - dra_nbr_stored_last_seq;
     }
-    dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts += dra_nbr_accum_pkts;
 
+    dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts += dra_nbr_accum_pkts;
     dra_nbr_info_table[nbr_index].dra_nbr_last_m = rx_dra_m;
     dra_nbr_info_table[nbr_index].dra_nbr_last_seq = rx_dra_seq;
 
@@ -153,7 +160,7 @@ int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dr
         "dra nbr %u %u %u %u %u %u %u", nbr_index,
                                   dra_nbr_info_table[nbr_index].dra_nbr_id,
                                   dra_nbr_info_table[nbr_index].dra_nbr_last_m,
-                                  dra_nbr_last_seq,
+                                  dra_nbr_stored_last_seq,
                                   dra_nbr_info_table[nbr_index].dra_nbr_last_seq,
                                   dra_nbr_accum_pkts,
                                   dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts));
@@ -169,6 +176,74 @@ int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dr
 
     return -1;
   }
+
+#else /* DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT */
+  /* First, get matched/available index */
+  int nbr_index = -1;
+  int i = 0;
+  for(i = 0; i < DRA_NBR_NUM; i++) {
+    if(dra_nbr_info_table[i].dra_nbr_id == 0 
+      || dra_nbr_info_table[i].dra_nbr_id == dra_nbr_id) {
+      nbr_index = i;
+      dra_nbr_info_table[nbr_index].dra_nbr_id = dra_nbr_id;
+      break;
+    }
+  }
+
+  /* Second, update corresponding info */
+  if(nbr_index != -1) {
+    uint16_t dra_nbr_stored_last_seq = dra_nbr_info_table[nbr_index].dra_nbr_last_seq;
+    uint16_t dra_nbr_accum_pkts = 0;
+
+    uint32_t dra_nbr_stored_last_adapt_count = dra_nbr_info_table[nbr_index].dra_nbr_last_adapt_count;
+    uint32_t dra_nbr_adapt_count_diff = 0;
+    uint16_t dra_nbr_tot_accum_pkts = 0;
+    
+    if(dra_nbr_stored_last_seq == 0 || dra_nbr_stored_last_adapt_count == 0) { /* First time received */
+      dra_nbr_accum_pkts = 1;
+    } else {
+      dra_nbr_tot_accum_pkts = rx_dra_seq - dra_nbr_stored_last_seq;
+      if(dra_my_adapt_count > dra_nbr_stored_last_adapt_count) {
+        dra_nbr_adapt_count_diff = dra_my_adapt_count - dra_nbr_stored_last_adapt_count;
+        dra_nbr_accum_pkts = dra_nbr_tot_accum_pkts / dra_nbr_adapt_count_diff;
+      } else if(dra_my_adapt_count == dra_nbr_stored_last_adapt_count) {
+        dra_nbr_accum_pkts = dra_nbr_tot_accum_pkts;
+      } else {
+        dra_nbr_accum_pkts = 1;
+      }
+    }
+
+    dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts += dra_nbr_accum_pkts;
+    dra_nbr_info_table[nbr_index].dra_nbr_last_m = rx_dra_m;
+    dra_nbr_info_table[nbr_index].dra_nbr_last_seq = rx_dra_seq;
+    dra_nbr_info_table[nbr_index].dra_nbr_last_adapt_count = dra_my_adapt_count;
+
+#if DRA_DBG
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "dra nbr %u %u %u %u %u %lu %lu %u %u", nbr_index,
+                                  dra_nbr_info_table[nbr_index].dra_nbr_id,
+                                  dra_nbr_info_table[nbr_index].dra_nbr_last_m,
+                                  dra_nbr_stored_last_seq,
+                                  dra_nbr_info_table[nbr_index].dra_nbr_last_seq,
+                                  dra_nbr_stored_last_adapt_count,
+                                  dra_nbr_info_table[nbr_index].dra_nbr_last_adapt_count,
+                                  dra_nbr_accum_pkts,
+                                  dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts));
+#endif
+
+    return 1;
+  } else {
+#if DRA_DBG
+    TSCH_LOG_ADD(tsch_log_message,
+        snprintf(log->message, sizeof(log->message),
+        "dra nbr N/A"));
+#endif
+
+    return -1;
+  }
+
+#endif /* DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT */
 }
 /*---------------------------------------------------------------------------*/
 void dra_calculate_shared_slots()
@@ -222,11 +297,17 @@ void dra_calculate_shared_slots()
   dra_my_num_of_pkts = 0;
 
   for(i = 0; i < DRA_NBR_NUM; i++) {
+#if !DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
     dra_nbr_info_table[i].dra_nbr_id = 0;
-    dra_nbr_info_table[i].dra_nbr_last_m = 0;
     dra_nbr_info_table[i].dra_nbr_last_seq = 0;
+#endif
+    dra_nbr_info_table[i].dra_nbr_last_m = 0;
     dra_nbr_info_table[i].dra_nbr_num_of_pkts = 0;
   }
+
+#if DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
+  dra_my_adapt_count++;
+#endif
 }
 #endif /* WITH_DRA */
 /*---------------------------------------------------------------------------*/
@@ -1634,6 +1715,10 @@ PROCESS_THREAD(tsch_process, ev, data)
                       hck_formation_state_transition_asn,
                       prev_bootstrap_state,
                       prev_state_transition_asn);
+#endif
+
+#if DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
+    dra_my_adapt_count = 1; /* Reset, begins from 1 */
 #endif
 
     print_log_tsch();
