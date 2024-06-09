@@ -607,7 +607,22 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
 #if WITH_DRA
             /* All the packets are transmitted via minimal slotframe */
             p->dra_m = dra_my_m;
-            p->dra_seq = dra_my_seq;
+            if(linkaddr_cmp(addr, &tsch_eb_address)) {
+              p->dra_seq = dra_my_eb_seq;
+#if DRA_DBG
+              LOG_HCK_DRA("dra add_pkt eb seq %u\n", dra_my_eb_seq);
+#endif
+            } else if(linkaddr_cmp(addr, &tsch_broadcast_address)) {
+              p->dra_seq = dra_my_bc_seq;
+#if DRA_DBG
+              LOG_HCK_DRA("dra add_pkt bc seq %u\n", dra_my_bc_seq);
+#endif
+            } else {
+              p->dra_seq = dra_my_uc_seq;
+#if DRA_DBG
+              LOG_HCK_DRA("dra add_pkt uc seq %u\n", dra_my_uc_seq);
+#endif
+            }
 #endif
 
 #if WITH_QUICK6

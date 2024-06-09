@@ -399,7 +399,7 @@
  * Prerequisite modifications of Contiki-NG for network formation acceleration
  * - Configurations that must be fixed regardless of definitions above
  ****************************************************************/
-#define RPL_CONF_DIS_SEND                                   0  /* HCKIM-Eval Turn on/off DIS */
+#define RPL_CONF_DIS_SEND                                   1  /* HCKIM-Eval Turn on/off DIS */
 #undef RPL_CONF_WITH_PROBING
 #define RPL_CONF_WITH_PROBING                               0 /* Turn on/off RPL probing */
 //
@@ -448,10 +448,10 @@
 /***************************************************************
  * Dynamic resource allocation implementation - WITH_DRA
  ****************************************************************/
-#define WITH_DRA                                            1 /* HCKIM-Eval */
+#define WITH_DRA                                            0 /* HCKIM-Eval */
 #if WITH_DRA
 #define DRA_LOG                                             1
-#define DRA_DBG                                             1
+#define DRA_DBG                                             0
 
 #define DRA_SLOTFRAME_HANDLE                                0
 #define DRA_SLOTFRAME_LENGTH                                TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
@@ -459,7 +459,6 @@
 #define DRA_NBR_NUM                                         MAX_NBR_NODE_NUM
 #define TSCH_SCHEDULE_CONF_MAX_LINKS                        64
 #define DRA_MINIMUM_INTER_SLOT_INTERVAL                     2
-#define DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT              1
 #endif /* WITH_DRA */
 
 /***************************************************************
@@ -477,6 +476,8 @@
 #undef TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                   /* HCKIM-Eval */
 #define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                  TSCH_HOPPING_SEQUENCE_16_16
 //#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                  TSCH_HOPPING_SEQUENCE_4_4
+#undef TSCH_CONF_MAX_EB_PERIOD
+#define TSCH_CONF_MAX_EB_PERIOD                             (4 * CLOCK_SECOND) /* HCKIM-Eval (16 * CLOCK_SECOND) */
 #endif /* WITH_TRGB */
 
 /***************************************************************

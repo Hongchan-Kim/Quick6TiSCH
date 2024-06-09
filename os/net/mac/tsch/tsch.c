@@ -98,14 +98,13 @@ uint8_t DRA_MAX_M = 0; /* Set as the maximum number of slots that can be
 uint8_t DRA_T_SLOTFRAMES = 0; /* Set as the minimum number of slotframes 
                                  that ensures a period of at least one second. */
 
-uint16_t dra_my_seq = 1; /* In the case of 6TiSCH-MC, include all packets 
-                          * In the case of Orchestra, include packets allocated for 
-                          * common shared slotframe.
-                          * Begins from 1 */
-uint16_t dra_my_num_of_pkts = 0;
-#if DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
-uint32_t dra_my_adapt_count = 1; /* Begins from 1 */
-#endif
+/* All sequence numbers begins from 1 */
+uint16_t dra_my_eb_seq = 1;
+uint16_t dra_my_bc_seq = 1;
+uint16_t dra_my_uc_seq = 1;
+
+static uint16_t dra_my_num_of_pkts = 0;
+static uint16_t dra_my_adapt_count = 1; /* Begins from 1 */
 
 uint8_t dra_my_m = 0;
 uint8_t dra_total_max_m = 0;
@@ -116,123 +115,156 @@ uint64_t dra_lastly_scheduled_asfn = 0;
 struct dra_nbr_info {
   uint8_t dra_nbr_id;
   uint8_t dra_nbr_last_m;
-  uint16_t dra_nbr_last_seq;
+  uint16_t dra_nbr_last_eb_seq;
+  uint16_t dra_nbr_last_bc_seq;
+  uint16_t dra_nbr_last_uc_seq;
+  uint16_t dra_nbr_last_eb_adapt_count;
+  uint16_t dra_nbr_last_bc_adapt_count;
+  uint16_t dra_nbr_last_uc_adapt_count;
   uint16_t dra_nbr_num_of_pkts;
-#if DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
-  uint32_t dra_nbr_last_adapt_count;
-#endif
 };
 static struct dra_nbr_info dra_nbr_info_table[DRA_NBR_NUM];
 /*---------------------------------------------------------------------------*/
-int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dra_seq)
+int dra_receive_control_message(int rx_dra_nbr_id, uint8_t rx_dra_m, 
+                                uint16_t rx_dra_seq, uint8_t rx_dra_eb_1_bc_2_uc_3)
 {
-#if !DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
   /* First, get matched/available index */
   int nbr_index = -1;
   int i = 0;
   for(i = 0; i < DRA_NBR_NUM; i++) {
     if(dra_nbr_info_table[i].dra_nbr_id == 0 
-      || dra_nbr_info_table[i].dra_nbr_id == dra_nbr_id) {
+      || dra_nbr_info_table[i].dra_nbr_id == rx_dra_nbr_id) {
       nbr_index = i;
-      dra_nbr_info_table[nbr_index].dra_nbr_id = dra_nbr_id;
+      dra_nbr_info_table[nbr_index].dra_nbr_id = rx_dra_nbr_id;
       break;
     }
   }
 
   /* Second, update corresponding info */
   if(nbr_index != -1) {
-    uint16_t dra_nbr_stored_last_seq = dra_nbr_info_table[nbr_index].dra_nbr_last_seq;
+    uint16_t dra_nbr_stored_seq = 0;
+    uint16_t dra_nbr_stored_adapt_count = 0;
+    uint16_t dra_nbr_adapt_count_diff = 0;
+    uint16_t dra_nbr_accum_pkts_tot = 0;
     uint16_t dra_nbr_accum_pkts = 0;
 
-    if(dra_nbr_stored_last_seq == 0) { /* First time received within current period */
-      dra_nbr_accum_pkts = 1; // DRA-FFS: could be further optimized by using timestamp
-    } else {
-      dra_nbr_accum_pkts = rx_dra_seq - dra_nbr_stored_last_seq;
-    }
+    if(rx_dra_eb_1_bc_2_uc_3 == 1) {
+      dra_nbr_stored_seq = dra_nbr_info_table[nbr_index].dra_nbr_last_eb_seq;
+      dra_nbr_stored_adapt_count = dra_nbr_info_table[nbr_index].dra_nbr_last_eb_adapt_count;
+      dra_nbr_adapt_count_diff = 0;
 
-    dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts += dra_nbr_accum_pkts;
-    dra_nbr_info_table[nbr_index].dra_nbr_last_m = rx_dra_m;
-    dra_nbr_info_table[nbr_index].dra_nbr_last_seq = rx_dra_seq;
-
-#if DRA_DBG
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "dra nbr %u %u %u %u %u %u %u", nbr_index,
-                                  dra_nbr_info_table[nbr_index].dra_nbr_id,
-                                  dra_nbr_info_table[nbr_index].dra_nbr_last_m,
-                                  dra_nbr_stored_last_seq,
-                                  dra_nbr_info_table[nbr_index].dra_nbr_last_seq,
-                                  dra_nbr_accum_pkts,
-                                  dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts));
-#endif
-
-    return 1;
-  } else {
-#if DRA_DBG
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "dra nbr N/A"));
-#endif
-
-    return -1;
-  }
-
-#else /* DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT */
-  /* First, get matched/available index */
-  int nbr_index = -1;
-  int i = 0;
-  for(i = 0; i < DRA_NBR_NUM; i++) {
-    if(dra_nbr_info_table[i].dra_nbr_id == 0 
-      || dra_nbr_info_table[i].dra_nbr_id == dra_nbr_id) {
-      nbr_index = i;
-      dra_nbr_info_table[nbr_index].dra_nbr_id = dra_nbr_id;
-      break;
-    }
-  }
-
-  /* Second, update corresponding info */
-  if(nbr_index != -1) {
-    uint16_t dra_nbr_stored_last_seq = dra_nbr_info_table[nbr_index].dra_nbr_last_seq;
-    uint16_t dra_nbr_accum_pkts = 0;
-
-    uint32_t dra_nbr_stored_last_adapt_count = dra_nbr_info_table[nbr_index].dra_nbr_last_adapt_count;
-    uint32_t dra_nbr_adapt_count_diff = 0;
-    uint16_t dra_nbr_tot_accum_pkts = 0;
-    
-    if(dra_nbr_stored_last_seq == 0 || dra_nbr_stored_last_adapt_count == 0) { /* First time received */
-      dra_nbr_accum_pkts = 1;
-    } else {
-      dra_nbr_tot_accum_pkts = rx_dra_seq - dra_nbr_stored_last_seq;
-      if(dra_my_adapt_count > dra_nbr_stored_last_adapt_count) {
-        dra_nbr_adapt_count_diff = dra_my_adapt_count - dra_nbr_stored_last_adapt_count;
-        dra_nbr_accum_pkts = dra_nbr_tot_accum_pkts / dra_nbr_adapt_count_diff;
-      } else if(dra_my_adapt_count == dra_nbr_stored_last_adapt_count) {
-        dra_nbr_accum_pkts = dra_nbr_tot_accum_pkts;
-      } else {
+      if(dra_nbr_stored_seq == 0 || dra_nbr_stored_adapt_count == 0) { /* First time received */
         dra_nbr_accum_pkts = 1;
+      } else if(rx_dra_seq < dra_nbr_stored_seq) {
+        dra_nbr_accum_pkts = 1;
+      } else {
+        dra_nbr_accum_pkts_tot = rx_dra_seq - dra_nbr_stored_seq;
+        if(dra_my_adapt_count > dra_nbr_stored_adapt_count) {
+          dra_nbr_adapt_count_diff = dra_my_adapt_count - dra_nbr_stored_adapt_count;
+          dra_nbr_accum_pkts = dra_nbr_accum_pkts_tot / dra_nbr_adapt_count_diff;
+        } else if(dra_my_adapt_count == dra_nbr_stored_adapt_count) {
+          dra_nbr_accum_pkts = dra_nbr_accum_pkts_tot;
+        } else {
+          dra_nbr_accum_pkts = 1;
+        }
+      }
+      dra_nbr_info_table[nbr_index].dra_nbr_last_eb_seq = rx_dra_seq;
+      if(dra_nbr_stored_seq < rx_dra_seq) {
+        dra_nbr_info_table[nbr_index].dra_nbr_last_eb_adapt_count = dra_my_adapt_count;
+      }
+
+    } else if(rx_dra_eb_1_bc_2_uc_3 == 2) {
+      dra_nbr_stored_seq = dra_nbr_info_table[nbr_index].dra_nbr_last_bc_seq;
+      dra_nbr_stored_adapt_count = dra_nbr_info_table[nbr_index].dra_nbr_last_bc_adapt_count;
+      dra_nbr_adapt_count_diff = 0;
+
+      if(dra_nbr_stored_seq == 0 || dra_nbr_stored_adapt_count == 0) { /* First time received */
+        dra_nbr_accum_pkts = 1;
+      } else if(rx_dra_seq < dra_nbr_stored_seq) {
+        dra_nbr_accum_pkts = 1;
+      } else {
+        dra_nbr_accum_pkts_tot = rx_dra_seq - dra_nbr_stored_seq;
+        if(dra_my_adapt_count > dra_nbr_stored_adapt_count) {
+          dra_nbr_adapt_count_diff = dra_my_adapt_count - dra_nbr_stored_adapt_count;
+          dra_nbr_accum_pkts = dra_nbr_accum_pkts_tot / dra_nbr_adapt_count_diff;
+        } else if(dra_my_adapt_count == dra_nbr_stored_adapt_count) {
+          dra_nbr_accum_pkts = dra_nbr_accum_pkts_tot;
+        } else {
+          dra_nbr_accum_pkts = 1;
+        }
+      }
+      dra_nbr_info_table[nbr_index].dra_nbr_last_bc_seq = rx_dra_seq;
+      if(dra_nbr_stored_seq < rx_dra_seq) {
+        dra_nbr_info_table[nbr_index].dra_nbr_last_bc_adapt_count = dra_my_adapt_count;
+      }
+
+    } else { /* UC packets other than EB and BC packets */
+      dra_nbr_stored_seq = dra_nbr_info_table[nbr_index].dra_nbr_last_uc_seq;
+      dra_nbr_stored_adapt_count = dra_nbr_info_table[nbr_index].dra_nbr_last_uc_adapt_count;
+      dra_nbr_adapt_count_diff = 0;
+
+      if(dra_nbr_stored_seq == 0 || dra_nbr_stored_adapt_count == 0) { /* First time received */
+        dra_nbr_accum_pkts = 1;
+      } else if(rx_dra_seq < dra_nbr_stored_seq) {
+        dra_nbr_accum_pkts = 1;
+      } else {
+        dra_nbr_accum_pkts_tot = rx_dra_seq - dra_nbr_stored_seq;
+        if(dra_my_adapt_count > dra_nbr_stored_adapt_count) {
+          dra_nbr_adapt_count_diff = dra_my_adapt_count - dra_nbr_stored_adapt_count;
+          dra_nbr_accum_pkts = dra_nbr_accum_pkts_tot / dra_nbr_adapt_count_diff;
+        } else if(dra_my_adapt_count == dra_nbr_stored_adapt_count) {
+          dra_nbr_accum_pkts = dra_nbr_accum_pkts_tot;
+        } else {
+          dra_nbr_accum_pkts = 1;
+        }
+      }
+      dra_nbr_info_table[nbr_index].dra_nbr_last_uc_seq = rx_dra_seq;
+      if(dra_nbr_stored_seq < rx_dra_seq) {
+        dra_nbr_info_table[nbr_index].dra_nbr_last_uc_adapt_count = dra_my_adapt_count;
       }
     }
-
     dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts += dra_nbr_accum_pkts;
     dra_nbr_info_table[nbr_index].dra_nbr_last_m = rx_dra_m;
-    dra_nbr_info_table[nbr_index].dra_nbr_last_seq = rx_dra_seq;
-    dra_nbr_info_table[nbr_index].dra_nbr_last_adapt_count = dra_my_adapt_count;
 
 #if DRA_DBG
-    TSCH_LOG_ADD(tsch_log_message,
-        snprintf(log->message, sizeof(log->message),
-        "dra nbr %u %u %u %u %u %lu %lu %u %u", nbr_index,
-                                  dra_nbr_info_table[nbr_index].dra_nbr_id,
-                                  dra_nbr_info_table[nbr_index].dra_nbr_last_m,
-                                  dra_nbr_stored_last_seq,
-                                  dra_nbr_info_table[nbr_index].dra_nbr_last_seq,
-                                  dra_nbr_stored_last_adapt_count,
-                                  dra_nbr_info_table[nbr_index].dra_nbr_last_adapt_count,
-                                  dra_nbr_accum_pkts,
-                                  dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts));
+    if(rx_dra_eb_1_bc_2_uc_3 == 1) {
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "dra nbr eb %u %u %u %u %u %u %u %u", dra_nbr_info_table[nbr_index].dra_nbr_id,
+                                                dra_nbr_stored_seq,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_last_eb_seq,
+                                                dra_nbr_stored_adapt_count,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_last_eb_adapt_count,
+                                                dra_nbr_accum_pkts,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_last_m));
+    } else if(rx_dra_eb_1_bc_2_uc_3 == 2) {
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "dra nbr bc %u %u %u %u %u %u %u %u", dra_nbr_info_table[nbr_index].dra_nbr_id,
+                                                dra_nbr_stored_seq,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_last_bc_seq,
+                                                dra_nbr_stored_adapt_count,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_last_bc_adapt_count,
+                                                dra_nbr_accum_pkts,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_last_m));
+    } else {
+      TSCH_LOG_ADD(tsch_log_message,
+          snprintf(log->message, sizeof(log->message),
+          "dra nbr uc %u %u %u %u %u %u %u %u", dra_nbr_info_table[nbr_index].dra_nbr_id,
+                                                dra_nbr_stored_seq,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_last_uc_seq,
+                                                dra_nbr_stored_adapt_count,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_last_uc_adapt_count,
+                                                dra_nbr_accum_pkts,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_num_of_pkts,
+                                                dra_nbr_info_table[nbr_index].dra_nbr_last_m));
+    }
 #endif
 
     return 1;
+
   } else {
 #if DRA_DBG
     TSCH_LOG_ADD(tsch_log_message,
@@ -242,8 +274,6 @@ int dra_receive_control_message(int dra_nbr_id, uint8_t rx_dra_m, uint16_t rx_dr
 
     return -1;
   }
-
-#endif /* DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT */
 }
 /*---------------------------------------------------------------------------*/
 void dra_calculate_shared_slots()
@@ -284,12 +314,11 @@ void dra_calculate_shared_slots()
 #if DRA_DBG
     TSCH_LOG_ADD(tsch_log_message,
         snprintf(log->message, sizeof(log->message),
-        "dra calc %u %u %u %u %u %u", dra_my_m,
-                                      dra_total_max_m,
-                                      dra_my_num_of_pkts,
-                                      dra_total_num_of_pkts,
-                                      dra_avg_num_of_pkts,
-                                      dra_exponent));
+        "dra calc %u %u %u %u %u", dra_my_m,
+                                   dra_total_max_m,
+                                   dra_my_num_of_pkts,
+                                   dra_total_num_of_pkts,
+                                   dra_avg_num_of_pkts));
 #endif
 
 
@@ -297,17 +326,18 @@ void dra_calculate_shared_slots()
   dra_my_num_of_pkts = 0;
 
   for(i = 0; i < DRA_NBR_NUM; i++) {
-#if !DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
-    dra_nbr_info_table[i].dra_nbr_id = 0;
-    dra_nbr_info_table[i].dra_nbr_last_seq = 0;
-#endif
     dra_nbr_info_table[i].dra_nbr_last_m = 0;
     dra_nbr_info_table[i].dra_nbr_num_of_pkts = 0;
   }
 
-#if DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
   dra_my_adapt_count++;
+
+#if DRA_DBG
+  TSCH_LOG_ADD(tsch_log_message,
+      snprintf(log->message, sizeof(log->message),
+      "dra adapt %u", dra_my_adapt_count));
 #endif
+
 }
 #endif /* WITH_DRA */
 /*---------------------------------------------------------------------------*/
@@ -915,9 +945,16 @@ tsch_reset(void)
   for(j = 0; j < DRA_NBR_NUM; j++) {
     dra_nbr_info_table[j].dra_nbr_id = 0;
     dra_nbr_info_table[j].dra_nbr_last_m = 0;
-    dra_nbr_info_table[j].dra_nbr_last_seq = 0;
+    dra_nbr_info_table[j].dra_nbr_last_eb_seq = 0;
+    dra_nbr_info_table[j].dra_nbr_last_bc_seq = 0;
+    dra_nbr_info_table[j].dra_nbr_last_uc_seq = 0;
+    dra_nbr_info_table[j].dra_nbr_last_eb_adapt_count = 0;
+    dra_nbr_info_table[j].dra_nbr_last_bc_adapt_count = 0;
+    dra_nbr_info_table[j].dra_nbr_last_uc_adapt_count = 0;
     dra_nbr_info_table[j].dra_nbr_num_of_pkts = 0;
   }
+
+    dra_my_adapt_count = 1; /* Reset, begins from 1 */
 #endif
 
 #if WITH_TRGB
@@ -1729,10 +1766,6 @@ PROCESS_THREAD(tsch_process, ev, data)
                       prev_state_transition_asn);
 #endif
 
-#if DRA_MODIFIED_NUM_OF_PACKET_MEASUREMENT
-    dra_my_adapt_count = 1; /* Reset, begins from 1 */
-#endif
-
     print_log_tsch();
 
     tsch_timeslots_until_last_session = tsch_total_associated_timeslots;
@@ -1785,10 +1818,10 @@ PROCESS_THREAD(tsch_send_eb_process, ev, data)
       && !NETSTACK_ROUTING.is_in_leaf_mode()
         ) {
 #if WITH_DRA
-      dra_my_seq++; /* All the EB packets are transmitted via minimal slotframe */
+      dra_my_eb_seq++;
       dra_my_num_of_pkts++;
 #if DRA_DBG
-      LOG_HCK_DRA("dra send EB seq %u\n", dra_my_seq);
+      LOG_HCK_DRA("dra send EB seq %u\n", dra_my_eb_seq);
 #endif
 #endif
       /* Enqueue EB only if there isn't already one in queue */
@@ -1995,11 +2028,18 @@ send_packet(mac_callback_t sent, void *ptr)
 #endif
 
 #if WITH_DRA
-    dra_my_seq++; /* All the packets are transmitted via minimal slotframe */
-    dra_my_num_of_pkts++;
+    if(linkaddr_cmp(addr, &linkaddr_null)) {
+      dra_my_bc_seq++;
 #if DRA_DBG
-    LOG_HCK_DRA("dra send non-EB seq %u\n", dra_my_seq);
+      LOG_HCK_DRA("dra send_pkt bc seq %u\n", dra_my_bc_seq);
 #endif
+    } else {
+      dra_my_uc_seq++;
+#if DRA_DBG
+      LOG_HCK_DRA("dra send_pkt uc seq %u\n", dra_my_uc_seq);
+#endif
+    }
+    dra_my_num_of_pkts++;
 #endif
 
 #if LLSEC802154_ENABLED

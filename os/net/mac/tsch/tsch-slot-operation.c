@@ -3012,7 +3012,17 @@ PT_THREAD(tsch_rx_slot(struct pt *pt, struct rtimer *t))
 #endif
               /* Update nbr */
               int dra_nbr_id = HCK_GET_NODE_ID_FROM_LINKADDR(&source_address);
-              dra_receive_control_message(dra_nbr_id, rx_dra_m, rx_dra_seq);
+              uint8_t dra_nbr_eb_1_bc_2_uc_3 = 0;
+              if(frame.fcf.frame_type == FRAME802154_BEACONFRAME) {
+                dra_nbr_eb_1_bc_2_uc_3 = 1;
+              } else {
+                if(!(frame.fcf.ack_required)) {
+                  dra_nbr_eb_1_bc_2_uc_3 = 2;
+                } else {
+                  dra_nbr_eb_1_bc_2_uc_3 = 3;
+                }
+              }
+              dra_receive_control_message(dra_nbr_id, rx_dra_m, rx_dra_seq, dra_nbr_eb_1_bc_2_uc_3);
             }
 #elif WITH_TRGB
             formation_rx_packet_type = HCK_PACKET_TYPE_NULL;
