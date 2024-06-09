@@ -274,7 +274,9 @@ PROCESS_THREAD(udp_client_process, ev, data)
 #elif WITH_DRA
   LOG_HCK("eval_config 3 scheme 1 | DRA\n");
 #elif WITH_TRGB
-  LOG_HCK("eval_config 3 scheme 2 | TRGB\n");
+  LOG_HCK("eval_config 3 scheme 2 | TRGB %u %u\n",
+          TRGB_NUM_OF_CHANNEL,
+          (TSCH_CONF_MAX_EB_PERIOD / CLOCK_SECOND));
 #elif WITH_QUICK6
   LOG_HCK("eval_config 3 scheme 3 | Quick6TiSCH %u %u %u %u %u %u %u %u\n",
           QUICK6_OFFSET_AUTONOMOUS_PRIORITIZATION,

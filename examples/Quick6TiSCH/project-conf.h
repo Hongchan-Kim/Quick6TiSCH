@@ -473,9 +473,13 @@
 #define TRGB_SLOTFRAME_LENGTH                               TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
 
 #define TRGB_ROOT_ID                                        1
-#undef TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                   /* HCKIM-Eval */
+#define TRGB_NUM_OF_CHANNEL                                 16 /* HCKIM-Eval - 4, 16*/
+#undef TSCH_CONF_DEFAULT_HOPPING_SEQUENCE
+#if TRGB_NUM_OF_CHANNEL == 4
+#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                  TSCH_HOPPING_SEQUENCE_4_4
+#elif TRGB_NUM_OF_CHANNEL == 16
 #define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                  TSCH_HOPPING_SEQUENCE_16_16
-//#define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                  TSCH_HOPPING_SEQUENCE_4_4
+#endif
 #undef TSCH_CONF_MAX_EB_PERIOD
 #define TSCH_CONF_MAX_EB_PERIOD                             (4 * CLOCK_SECOND) /* HCKIM-Eval (16 * CLOCK_SECOND) */
 #endif /* WITH_TRGB */
@@ -501,10 +505,10 @@
 
 /* Quick6TiSCH offset assignment policy - HCKIM-Eval */
 #define QUICK6_OFFSET_AUTONOMOUS_PRIORITIZATION             1 /* If 0, simple random is applied */
-#define QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH                2 /* Up to two packets */
+#define QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH                2 /* Up to two packets */ /* HCKIM-Eval */
 #define QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL              4 /* 0, 1, 2, 3, 4 */
-#define QUICK6_OFFSET_UPPER_BOUND_CRITICAL                  2 /* 0, 1, 2 */
-#define QUICK6_OFFSET_POSTPONEMENT_SCALING_FACTOR           1
+#define QUICK6_OFFSET_UPPER_BOUND_CRITICAL                  2 /* 0, 1, 2 */ /* HCKIM-Eval */
+#define QUICK6_OFFSET_POSTPONEMENT_SCALING_FACTOR           1 /* HCKIM-Eval */
 
 /* Quick6TiSCH supplementary features - HCKIM-Eval */
 #define QUICK6_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
