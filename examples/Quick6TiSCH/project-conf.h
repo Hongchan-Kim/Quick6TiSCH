@@ -504,11 +504,16 @@
 #define QUICK6_TIMING_INTER_OFFSET_INTERVAL                 600
 
 /* Quick6TiSCH offset assignment policy - HCKIM-Eval */
-#define QUICK6_OFFSET_AUTONOMOUS_PRIORITIZATION             1 /* If 0, simple random is applied */
-#define QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH                2 /* Up to two packets */ /* HCKIM-Eval */
-#define QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL              4 /* 0, 1, 2, 3, 4 */
-#define QUICK6_OFFSET_UPPER_BOUND_CRITICAL                  2 /* 0, 1, 2 */ /* HCKIM-Eval */
+/* Baseline: Simple random offset assignment */
+/* Postponement count-based prioritization */
+#define QUICK6_OFFSET_POSTPONEMENT_BASED_PRIORITIZATION     0
+#define QUICK6_OFFSET_POSTPONEMENT_THRESH                   (TSCH_MAC_MAX_FRAME_RETRIES + 1)
 #define QUICK6_OFFSET_POSTPONEMENT_SCALING_FACTOR           1 /* HCKIM-Eval */
+/* Packet criticality-based prioritization */
+#define QUICK6_OFFSET_CRITICALITY_BASED_PRIORITIZATION      0
+#define QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH                2 /* Up to two packets */ /* HCKIM-Eval */
+#define QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL              (QUICK6_NUM_OF_OFFSETS - 1) /* 0, 1, 2, 3, 4 */
+#define QUICK6_OFFSET_UPPER_BOUND_CRITICAL                  2 /* 0, 1, 2 */ /* HCKIM-Eval */
 
 /* Quick6TiSCH supplementary features - HCKIM-Eval */
 #define QUICK6_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
