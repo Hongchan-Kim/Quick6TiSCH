@@ -47,6 +47,10 @@
 #include <stdio.h>
 #include <limits.h>
 
+#if NETWORK_FORMATION_ACCELERATION
+#include "net/mac/tsch/tsch.h"
+#endif
+
 /* Log configuration */
 #include "sys/log.h"
 #define LOG_MODULE "Energest"
@@ -60,8 +64,9 @@ uint32_t dc_total_sum;
 /*---------------------------------------------------------------------------*/
 void print_log_simple_energest()
 {
-  LOG_HCK("dc_count %lu dc_tx_sum %lu dc_rx_sum %lu dc_total_sum %lu |\n", 
-          dc_count, dc_tx_sum, dc_rx_sum, dc_total_sum);
+  uint64_t simple_energest_asn = tsch_calculate_current_asn();
+  LOG_HCK("dc_count %lu dc_tx_sum %lu dc_rx_sum %lu dc_total_sum %lu | at %llx\n", 
+          dc_count, dc_tx_sum, dc_rx_sum, dc_total_sum, simple_energest_asn);
 }
 /*---------------------------------------------------------------------------*/
 void reset_log_simple_energest()
