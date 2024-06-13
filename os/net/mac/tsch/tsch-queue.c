@@ -575,7 +575,7 @@ tsch_queue_add_packet(const linkaddr_t *addr, uint8_t max_transmissions,
           }
           if(quick6_same_type_packet_exist_or_not) {
 #if QUICK6_DBG
-            LOG_HCK_QUICK6("delete dup packet %u %u %u\n", 
+            LOG_HCK_QUICK6("del dup pkt %u %u %u\n", 
                           hck_current_packet_type, 
                           quick6_current_postponed_count, 
                           quick6_same_type_packet_get_index);

@@ -302,10 +302,9 @@ PROCESS_THREAD(udp_server_process, ev, data)
           TRGB_NUM_OF_CHANNEL,
           (TSCH_CONF_MAX_EB_PERIOD / CLOCK_SECOND));
 #elif WITH_QUICK6
-  LOG_HCK("eval_config 3 scheme 3 | Quick6TiSCH %u %u %u %u %u | %u %u %u | %u %u %u %u %u %u\n",
+  LOG_HCK("eval_config 3 scheme 3 | Quick6TiSCH %u %u %u %u | %u %u %u | %u %u %u %u %u %u\n",
           QUICK6_PRIORITIZATION_CRITICALITY_BASED,
           QUICK6_PRIORITIZATION_EB_DIO_CRITICAL_THRESH,
-          QUICK6_PRIORITIZATION_CRITICALITY_BASED_TWO_TIER,
           QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM,
           QUICK6_CRITICALITY_BASED_PACKET_SELECTION, //
           QUICK6_PRIORITIZATION_POSTPONEMENT_BASED,

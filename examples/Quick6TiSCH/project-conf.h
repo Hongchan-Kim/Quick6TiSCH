@@ -416,7 +416,7 @@
 #define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1
 //
 #undef TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
-#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   101 /* HCKIM-Eval - 11, 29, 47, 67, 83, 101 */
+#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   29 /* HCKIM-Eval - 11, 29, 47, 67, 83, 101 */
 /* Prime number list
  * 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 
  * 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
@@ -490,6 +490,7 @@
 #define WITH_QUICK6                                         1 /* HCKIM-Eval */
 #if WITH_QUICK6
 #define QUICK6_LOG                                          1
+#define NEW_QUICK6_DBG                                          1 /* TODO: further optimization */
 #define QUICK6_DBG                                          0 /* TODO: further optimization */
 
 #define QUICK6_SLOTFRAME_LENGTH                             TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
@@ -504,16 +505,15 @@
 #define QUICK6_TIMING_INTER_OFFSET_INTERVAL                 600
 
 /* Packet criticality-based prioritization */
-#define QUICK6_PRIORITIZATION_CRITICALITY_BASED             1 /* HCKIM-Eval */
+#define QUICK6_PRIORITIZATION_CRITICALITY_BASED             0 /* HCKIM-Eval */
 #define QUICK6_PRIORITIZATION_EB_DIO_CRITICAL_THRESH        2 /* Up to two packets */ /* HCKIM-Eval */
 //
-#define QUICK6_PRIORITIZATION_CRITICALITY_BASED_TWO_TIER    0 /* HCKIM-Eval */
-#define QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM      1 /* HCKIM-Eval */
+#define QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM      0 /* HCKIM-Eval */
 //
-#define QUICK6_CRITICALITY_BASED_PACKET_SELECTION           1 /* HCKIM-Eval */
+#define QUICK6_CRITICALITY_BASED_PACKET_SELECTION           0 /* HCKIM-Eval */
 
 /* Packet postponement-based prioritization */
-#define QUICK6_PRIORITIZATION_POSTPONEMENT_BASED            1
+#define QUICK6_PRIORITIZATION_POSTPONEMENT_BASED            0
 #define QUICK6_POSTPONEMENT_BASED_THRESH                    (TSCH_MAC_MAX_FRAME_RETRIES + 1)
 #define QUICK6_POSTPONEMENT_BASED_SCALING_FACTOR            1 /* HCKIM-Eval */
 
