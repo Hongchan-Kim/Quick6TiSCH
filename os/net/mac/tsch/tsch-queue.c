@@ -726,8 +726,10 @@ static struct tsch_packet *
 quick6_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p)
 {
 #if NEW_QUICK6_DBG
-  int before_get_index = ringbufindex_peek_get(&n->tx_ringbuf);
-  int before_put_index = ringbufindex_peek_put(&n->tx_ringbuf);
+  static int before_get_index = -1;
+  static int before_put_index = -1;
+  before_get_index = ringbufindex_peek_get(&n->tx_ringbuf);
+  before_put_index = ringbufindex_peek_put(&n->tx_ringbuf);
 #endif
   if(!tsch_is_locked()) {
     if(n != NULL) {
@@ -753,7 +755,7 @@ quick6_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, str
 #if NEW_QUICK6_DBG
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "Q6 P3b %d %d %d\n", before_get_index, before_put_index, matched_index));
+              "Q6 P3b %d %d %d", before_get_index, before_put_index, matched_index));
 #endif
         /* Second, remove the matched packet and shift ringbufindex/ringbuf */
         if(matched_index != -1) {
@@ -863,7 +865,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 #if NEW_QUICK6_DBG
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "Q6 P3a %d %d\n", ringbufindex_peek_get(&n->tx_ringbuf), ringbufindex_peek_put(&n->tx_ringbuf)));
+              "Q6 P3a %d %d", ringbufindex_peek_get(&n->tx_ringbuf), ringbufindex_peek_put(&n->tx_ringbuf)));
 #endif
 #else
     tsch_queue_remove_packet_from_queue(n);
@@ -908,7 +910,7 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
 #if NEW_QUICK6_DBG
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "Q6 P3a %d %d\n", ringbufindex_peek_get(&n->tx_ringbuf), ringbufindex_peek_put(&n->tx_ringbuf)));
+              "Q6 P3a %d %d", ringbufindex_peek_get(&n->tx_ringbuf), ringbufindex_peek_put(&n->tx_ringbuf)));
 #endif
 #else
       tsch_queue_remove_packet_from_queue(n);
@@ -1231,11 +1233,11 @@ struct tsch_packet *
 quick6_tsch_queue_get_earliest_critical_packet_and_nbr(struct tsch_link *link, struct tsch_neighbor **n)
 {
 #if NEW_QUICK6_DBG
-  int the_first_packet = 1;
-  int the_first_packet_nbr = -1;
-  int the_first_packet_type = -1;
-  int the_first_packet_criticality = -1;
-  int the_best_packet_index = -1;
+  static int the_first_packet = 1;
+  static int the_first_packet_nbr = -1;
+  static int the_first_packet_type = -1;
+  static int the_first_packet_criticality = -1;
+  static int the_best_packet_index = -1;
 #endif
 
   if(!tsch_is_locked()) {
@@ -1312,10 +1314,13 @@ quick6_tsch_queue_get_earliest_critical_packet_and_nbr(struct tsch_link *link, s
 #if NEW_QUICK6_DBG
           TSCH_LOG_ADD(tsch_log_message,
               snprintf(log->message, sizeof(log->message),
-              "Q6 P3g %d %d %d | %d %d %d %d", the_first_packet_nbr, the_first_packet_type, the_first_packet_criticality,
-                                           HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(best_nbr)),
-                                           best_p->hck_packet_type, best_p->quick6_packet_criticality,
-                                           the_best_packet_index));
+              "Q6 P3g %d %d %d | %d %d %d %d", the_first_packet_nbr, 
+                                               the_first_packet_type, 
+                                               the_first_packet_criticality,
+                                               HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(best_nbr)),
+                                               best_p->hck_packet_type, 
+                                               best_p->quick6_packet_criticality,
+                                               the_best_packet_index));
 #endif
 
     return best_p;
