@@ -1560,12 +1560,6 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
       } else {
         p->quick6_packet_criticality = quick6_packet_criticality_others[p->hck_packet_type];
       }
-#if NEW_QUICK6_DBG
-        TSCH_LOG_ADD(tsch_log_message,
-            snprintf(log->message, sizeof(log->message),
-            "q6 pkt cr %u", p->quick6_packet_criticality));
-
-#endif
     }
   }
 #endif
@@ -1807,10 +1801,27 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             quick6_offset_upper_bound = quick6_offset_upper_bound - quick6_delta;
           }
           quick6_tx_current_offset = random_rand() % (quick6_offset_upper_bound + 1); /* 0, ..., quick6_offset_upper_bound */
+#else /* QUICK6_PRIORITIZATION_POSTPONEMENT_BASED */
+#if NEW_QUICK6_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "Q6 P2 tx off %u %u %u", quick6_tx_current_offset, current_packet->hck_packet_type, current_packet->quick6_packet_criticality));
+#endif
 #endif
         } else {
           quick6_tx_current_offset = QUICK6_OFFSET_4; /* 4 */
+#if NEW_QUICK6_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "Q6 P2 tx off %u %u %u", quick6_tx_current_offset, current_packet->hck_packet_type, current_packet->quick6_packet_criticality));
+#endif
         }
+#else /* QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM */
+#if NEW_QUICK6_DBG
+        TSCH_LOG_ADD(tsch_log_message,
+            snprintf(log->message, sizeof(log->message),
+            "Q6 P1 tx off %u %u %u", quick6_tx_current_offset, current_packet->hck_packet_type, current_packet->quick6_packet_criticality));
+#endif
 #endif
 #else /* QUICK6_PRIORITIZATION_CRITICALITY_BASED */
 #if NEW_QUICK6_DBG

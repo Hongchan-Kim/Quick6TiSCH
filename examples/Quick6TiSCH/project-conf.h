@@ -505,10 +505,10 @@
 #define QUICK6_TIMING_INTER_OFFSET_INTERVAL                 600
 
 /* Packet criticality-based prioritization */
-#define QUICK6_PRIORITIZATION_CRITICALITY_BASED             0 /* HCKIM-Eval */
+#define QUICK6_PRIORITIZATION_CRITICALITY_BASED             1 /* HCKIM-Eval */
 #define QUICK6_PRIORITIZATION_EB_DIO_CRITICAL_THRESH        2 /* Up to two packets */ /* HCKIM-Eval */
 //
-#define QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM      0 /* HCKIM-Eval */
+#define QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM      1 /* HCKIM-Eval */
 //
 #define QUICK6_CRITICALITY_BASED_PACKET_SELECTION           0 /* HCKIM-Eval */
 
