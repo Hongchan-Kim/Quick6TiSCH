@@ -725,6 +725,10 @@ tsch_queue_nbr_packet_count(const struct tsch_neighbor *n)
 static struct tsch_packet *
 quick6_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, struct tsch_packet *p)
 {
+#if NEW_QUICK6_DBG
+  int before_get_index = ringbufindex_peek_get(&n->tx_ringbuf);
+  int before_put_index = ringbufindex_peek_put(&n->tx_ringbuf);
+#endif
   if(!tsch_is_locked()) {
     if(n != NULL) {
       /* Get and remove packet from ringbuf (remove committed through an atomic operation */
@@ -746,6 +750,11 @@ quick6_tsch_queue_remove_specific_packet_from_queue(struct tsch_neighbor *n, str
             break;
           }
         }
+#if NEW_QUICK6_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "Q6 P3b %d %d %d\n", before_get_index, before_put_index, matched_index));
+#endif
         /* Second, remove the matched packet and shift ringbufindex/ringbuf */
         if(matched_index != -1) {
           struct tsch_packet *matched_p = n->tx_array[matched_index];
@@ -851,6 +860,11 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
     /* Successful transmission */
 #if WITH_QUICK6 && QUICK6_CRITICALITY_BASED_PACKET_SELECTION
     quick6_tsch_queue_remove_specific_packet_from_queue(n, p);
+#if NEW_QUICK6_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "Q6 P3a %d %d\n", ringbufindex_peek_get(&n->tx_ringbuf), ringbufindex_peek_put(&n->tx_ringbuf)));
+#endif
 #else
     tsch_queue_remove_packet_from_queue(n);
 #endif
@@ -891,6 +905,11 @@ tsch_queue_packet_sent(struct tsch_neighbor *n, struct tsch_packet *p,
       /* Drop packet */
 #if WITH_QUICK6 && QUICK6_CRITICALITY_BASED_PACKET_SELECTION
       quick6_tsch_queue_remove_specific_packet_from_queue(n, p);
+#if NEW_QUICK6_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "Q6 P3a %d %d\n", ringbufindex_peek_get(&n->tx_ringbuf), ringbufindex_peek_put(&n->tx_ringbuf)));
+#endif
 #else
       tsch_queue_remove_packet_from_queue(n);
 #endif
@@ -1211,6 +1230,14 @@ tsch_queue_get_packet_for_dest_addr(const linkaddr_t *addr, struct tsch_link *li
 struct tsch_packet *
 quick6_tsch_queue_get_earliest_critical_packet_and_nbr(struct tsch_link *link, struct tsch_neighbor **n)
 {
+#if NEW_QUICK6_DBG
+  int the_first_packet = 1;
+  int the_first_packet_nbr = -1;
+  int the_first_packet_type = -1;
+  int the_first_packet_criticality = -1;
+  int the_best_packet_index = -1;
+#endif
+
   if(!tsch_is_locked()) {
     struct tsch_neighbor *best_nbr = NULL;
     struct tsch_packet *best_p = NULL;
@@ -1249,15 +1276,30 @@ quick6_tsch_queue_get_earliest_critical_packet_and_nbr(struct tsch_link *link, s
 
             curr_p->quick6_packet_criticality = quick6_curr_criticality; /* Update metadat!!! */
 
+#if NEW_QUICK6_DBG
+            if(the_first_packet == 1) {
+              the_first_packet = 0;
+              the_first_packet_nbr = HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(curr_nbr));
+              the_first_packet_type = curr_p->hck_packet_type;
+              the_first_packet_criticality = curr_p->quick6_packet_criticality;
+            }
+#endif
+
             if(best_nbr == NULL && best_p == NULL) {
               best_nbr = curr_nbr;
               best_p = curr_p;
               quick6_best_criticality = quick6_curr_criticality;
+#if NEW_QUICK_DBG
+              the_best_packet_index = temp_index;
+#endif
             } else {
               if(quick6_best_criticality < quick6_curr_criticality) {
                 best_nbr = curr_nbr;
                 best_p = curr_p;
                 quick6_best_criticality = quick6_curr_criticality;
+#if NEW_QUICK_DBG
+                the_best_packet_index = temp_index;
+#endif
               }
             }
           }
@@ -1266,6 +1308,16 @@ quick6_tsch_queue_get_earliest_critical_packet_and_nbr(struct tsch_link *link, s
       curr_nbr = (struct tsch_neighbor *)nbr_table_next(tsch_neighbors, curr_nbr);
     }
     *n = best_nbr;
+
+#if NEW_QUICK6_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "Q6 P3g %d %d %d | %d %d %d %d", the_first_packet_nbr, the_first_packet_type, the_first_packet_criticality,
+                                           HCK_GET_NODE_ID_FROM_LINKADDR(tsch_queue_get_nbr_address(best_nbr)),
+                                           best_p->hck_packet_type, best_p->quick6_packet_criticality,
+                                           the_best_packet_index));
+#endif
+
     return best_p;
   }
   return NULL;

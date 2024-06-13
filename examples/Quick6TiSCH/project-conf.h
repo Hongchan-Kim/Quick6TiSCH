@@ -510,7 +510,7 @@
 //
 #define QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM      1 /* HCKIM-Eval */
 //
-#define QUICK6_CRITICALITY_BASED_PACKET_SELECTION           0 /* HCKIM-Eval */
+#define QUICK6_CRITICALITY_BASED_PACKET_SELECTION           1 /* HCKIM-Eval */
 
 /* Packet postponement-based prioritization */
 #define QUICK6_PRIORITIZATION_POSTPONEMENT_BASED            0
