@@ -177,9 +177,9 @@ hash_for_trgb(uint8_t value)
 #endif
 
 #if WITH_QUICK6
-#if QUICK6_OFFSET_CRITICALITY_BASED_PRIORITIZATION
-static enum QUICK6_OFFSET quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_NULL];
-static enum QUICK6_OFFSET quick6_offset_upper_bound_others[HCK_PACKET_TYPE_NULL];
+#if QUICK6_PRIORITIZATION_CRITICALITY_BASED
+enum QUICK6_PACKET_CRITICALITY quick6_packet_criticality_parent[HCK_PACKET_TYPE_NULL];
+enum QUICK6_PACKET_CRITICALITY quick6_packet_criticality_others[HCK_PACKET_TYPE_NULL];
 #endif
 static enum QUICK6_OFFSET quick6_tx_current_offset = QUICK6_OFFSET_NULL;
 static enum QUICK6_OFFSET quick6_rx_current_offset = QUICK6_OFFSET_NULL;
@@ -1552,39 +1552,14 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
     *target_neighbor = n;
   }
 
-#if WITH_QUICK6
-  enum QUICK6_OFFSET quick6_temp_offset_upper_bound = QUICK6_NUM_OF_OFFSETS - 1; /* The maximum value */
-
+#if WITH_QUICK6 && QUICK6_PRIORITIZATION_CRITICALITY_BASED
   if(n != NULL && p != NULL) {
     if(link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
-#if QUICK6_OFFSET_CRITICALITY_BASED_PRIORITIZATION
       if((*target_neighbor)->is_time_source) {
-        quick6_temp_offset_upper_bound = quick6_offset_upper_bound_parent[p->hck_packet_type];
+        p->quick6_packet_criticality = quick6_packet_criticality_parent[p->hck_packet_type];
       } else {
-        quick6_temp_offset_upper_bound = quick6_offset_upper_bound_others[p->hck_packet_type];
+        p->quick6_packet_criticality = quick6_packet_criticality_others[p->hck_packet_type];
       }
-#endif
-#if QUICK6_OFFSET_POSTPONEMENT_BASED_PRIORITIZATION
-      int quick6_delta = (p->quick6_packet_postponement_count) 
-                        / (QUICK6_OFFSET_POSTPONEMENT_THRESH / QUICK6_OFFSET_POSTPONEMENT_SCALING_FACTOR);
-      if(quick6_temp_offset_upper_bound < quick6_delta) {
-        quick6_temp_offset_upper_bound = QUICK6_OFFSET_0; /* The minimum value */
-      } else {
-        quick6_temp_offset_upper_bound = quick6_temp_offset_upper_bound - quick6_delta;
-      }
-#endif
-
-#if QUICK6_DBG
-      TSCH_LOG_ADD(tsch_log_message,
-          snprintf(log->message, sizeof(log->message),
-          "Q6 get pkt %u %u %u %u", (*target_neighbor)->is_time_source ? 
-                                      quick6_offset_upper_bound_parent[p->hck_packet_type] : 
-                                      quick6_offset_upper_bound_others[p->hck_packet_type],
-                                    quick6_delta,
-                                    p->quick6_packet_postponement_count,
-                                    quick6_temp_offset_upper_bound));
-#endif
-      p->quick6_packet_offset_upper_bound = quick6_temp_offset_upper_bound;
     }
   }
 #endif
@@ -1883,7 +1858,34 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 #elif WITH_QUICK6
       if(formation_tx_packet_type != HCK_PACKET_TYPE_EB) {
         if(current_link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
-          quick6_tx_current_offset = random_rand() % (current_packet->quick6_packet_offset_upper_bound + 1);
+          /* Baseline: simple random assignment */
+          quick6_tx_current_offset = random_rand() % QUICK6_NUM_OF_OFFSETS; /* 0, 1, 2, 3, 4 */
+#if QUICK6_PRIORITIZATION_CRITICALITY_BASED
+#if QUICK6_PRIORITIZATION_CRITICALITY_BASED_TWO_TIER
+          if(current_packet->quick6_packet_criticality == QUICK6_PACKET_CRITICAL) {
+            quick6_tx_current_offset = QUICK6_OFFSET_0; /* 0 */
+          } else {
+            quick6_tx_current_offset = QUICK6_OFFSET_1; /* 1 */
+          }
+#elif QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM
+          if(current_packet->quick6_packet_criticality == QUICK6_PACKET_CRITICAL) {
+            quick6_tx_current_offset = random_rand() % QUICK6_OFFSET_4; /* 0, 1, 2, 3 */
+#if QUICK6_PRIORITIZATION_POSTPONEMENT_BASED
+            enum QUICK6_OFFSET quick6_offset_upper_bound = QUICK6_OFFSET_3;
+            int quick6_delta = (current_packet->quick6_packet_postponement_count) 
+                              / (QUICK6_POSTPONEMENT_BASED_THRESH / QUICK6_POSTPONEMENT_BASED_SCALING_FACTOR);
+            if(quick6_delta > QUICK6_OFFSET_3) {
+              quick6_offset_upper_bound = QUICK6_OFFSET_0; /* The minimum value */
+            } else {
+              quick6_offset_upper_bound = quick6_offset_upper_bound - quick6_delta;
+            }
+            quick6_tx_current_offset = random_rand() % (quick6_offset_upper_bound + 1); /* 0, ..., quick6_offset_upper_bound */
+#endif
+          } else {
+            quick6_tx_current_offset = QUICK6_OFFSET_4; /* 4 */
+          }
+#endif
+#endif /* QUICK6_PRIORITIZATION_CRITICALITY_BASED */
         } else {
           quick6_tx_current_offset = QUICK6_OFFSET_NULL;
         }
@@ -2093,7 +2095,34 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
 
 #elif WITH_QUICK6
         if(current_link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
-          quick6_tx_current_offset = random_rand() % (current_packet->quick6_packet_offset_upper_bound + 1);
+          /* Baseline: simple random assignment */
+          quick6_tx_current_offset = random_rand() % QUICK6_NUM_OF_OFFSETS; /* 0, 1, 2, 3, 4 */
+#if QUICK6_PRIORITIZATION_CRITICALITY_BASED
+#if QUICK6_PRIORITIZATION_CRITICALITY_BASED_TWO_TIER
+          if(current_packet->quick6_packet_criticality == QUICK6_PACKET_CRITICAL) {
+            quick6_tx_current_offset = QUICK6_OFFSET_0; /* 0 */
+          } else {
+            quick6_tx_current_offset = QUICK6_OFFSET_1; /* 1 */
+          }
+#elif QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM
+          if(current_packet->quick6_packet_criticality == QUICK6_PACKET_CRITICAL) {
+            quick6_tx_current_offset = random_rand() % QUICK6_OFFSET_4; /* 0, 1, 2, 3 */
+#if QUICK6_PRIORITIZATION_POSTPONEMENT_BASED
+            enum QUICK6_OFFSET quick6_offset_upper_bound = QUICK6_OFFSET_3;
+            int quick6_delta = (current_packet->quick6_packet_postponement_count) 
+                              / (QUICK6_POSTPONEMENT_BASED_THRESH / QUICK6_POSTPONEMENT_BASED_SCALING_FACTOR);
+            if(quick6_delta > QUICK6_OFFSET_3) {
+              quick6_offset_upper_bound = QUICK6_OFFSET_0; /* The minimum value */
+            } else {
+              quick6_offset_upper_bound = quick6_offset_upper_bound - quick6_delta;
+            }
+            quick6_tx_current_offset = random_rand() % (quick6_offset_upper_bound + 1); /* 0, ..., quick6_offset_upper_bound */
+#endif
+          } else {
+            quick6_tx_current_offset = QUICK6_OFFSET_4; /* 4 */
+          }
+#endif
+#endif /* QUICK6_PRIORITIZATION_CRITICALITY_BASED */
         } else {
           quick6_tx_current_offset = QUICK6_OFFSET_NULL;
         }
@@ -2606,8 +2635,9 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
         log->tx.trgb_log_tx_parent_id = trgb_parent_id;
 #endif
 #if WITH_QUICK6 && QUICK6_LOG
+        log->tx.quick6_log_tx_criticality = current_packet->quick6_packet_criticality;
         log->tx.quick6_log_tx_selected_offset = quick6_tx_current_offset;
-        log->tx.quick6_log_tx_offset_upper_bound = current_packet->quick6_packet_offset_upper_bound;
+        //log->tx.quick6_log_tx_offset_upper_bound = current_packet->quick6_packet_offset_upper_bound;
         log->tx.quick6_log_postponement_count = current_packet->quick6_packet_postponement_count;
         log->tx.quick6_log_collision_count = current_packet->quick6_packet_collision_count;
         log->tx.quick6_log_noack_count = current_packet->quick6_packet_noack_count;
@@ -3657,69 +3687,72 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
       }
 #else /* WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HOLD_CURRENT_NBR */
 
-#if WITH_QUICK6 && QUICK6_OFFSET_CRITICALITY_BASED_PRIORITIZATION /* QUICK6: construct packet tier table */
+#if WITH_QUICK6 && QUICK6_PRIORITIZATION_CRITICALITY_BASED /* QUICK6: construct packet criticality table */
       if(current_link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
-#if QUICK6_DBG
-        /* Current bootstrap state: hck_formation_bootstrap_state */
-        TSCH_LOG_ADD(tsch_log_message,
-                        snprintf(log->message, sizeof(log->message),
-                            "Q6 bst %u", hck_formation_bootstrap_state);
-        );
-#endif
         /* HCK_PACKET_TYPE_EB */
-        if(quick6_eb_sent_count < QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH) {
-          quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_EB] = QUICK6_OFFSET_UPPER_BOUND_CRITICAL;
-          quick6_offset_upper_bound_others[HCK_PACKET_TYPE_EB] = QUICK6_OFFSET_UPPER_BOUND_CRITICAL;
+        if(quick6_eb_sent_count < QUICK6_PRIORITIZATION_EB_DIO_CRITICAL_THRESH) {
+          quick6_packet_criticality_parent[HCK_PACKET_TYPE_EB] = QUICK6_PACKET_CRITICAL;
+          quick6_packet_criticality_others[HCK_PACKET_TYPE_EB] = QUICK6_PACKET_CRITICAL;
         } else {
-          quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_EB] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
-          quick6_offset_upper_bound_others[HCK_PACKET_TYPE_EB] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+          quick6_packet_criticality_parent[HCK_PACKET_TYPE_EB] = QUICK6_PACKET_NON_CRITICAL;
+          quick6_packet_criticality_others[HCK_PACKET_TYPE_EB] = QUICK6_PACKET_NON_CRITICAL;
         }
         /* HCK_PACKET_TYPE_KA */
         if(sync_count == 0) {
-          quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_KA] = QUICK6_OFFSET_UPPER_BOUND_CRITICAL;
-          quick6_offset_upper_bound_others[HCK_PACKET_TYPE_KA] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+          quick6_packet_criticality_parent[HCK_PACKET_TYPE_KA] = QUICK6_PACKET_CRITICAL;
+          quick6_packet_criticality_others[HCK_PACKET_TYPE_KA] = QUICK6_PACKET_NON_CRITICAL;
         } else {
-          quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_KA] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
-          quick6_offset_upper_bound_others[HCK_PACKET_TYPE_KA] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+          quick6_packet_criticality_parent[HCK_PACKET_TYPE_KA] = QUICK6_PACKET_NON_CRITICAL;
+          quick6_packet_criticality_others[HCK_PACKET_TYPE_KA] = QUICK6_PACKET_NON_CRITICAL;
         }
         /* HCK_PACKET_TYPE_DIS */
-        quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_DIS] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
-        quick6_offset_upper_bound_others[HCK_PACKET_TYPE_DIS] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+        quick6_packet_criticality_parent[HCK_PACKET_TYPE_DIS] = QUICK6_PACKET_NON_CRITICAL;
+        quick6_packet_criticality_others[HCK_PACKET_TYPE_DIS] = QUICK6_PACKET_NON_CRITICAL;
         /* HCK_PACKET_TYPE_M_DIO */
-        if(quick6_m_dio_sent_count < QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH) {
-          quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_M_DIO] = QUICK6_OFFSET_UPPER_BOUND_CRITICAL;
-          quick6_offset_upper_bound_others[HCK_PACKET_TYPE_M_DIO] = QUICK6_OFFSET_UPPER_BOUND_CRITICAL;
+        if(quick6_m_dio_sent_count < QUICK6_PRIORITIZATION_EB_DIO_CRITICAL_THRESH) {
+          quick6_packet_criticality_parent[HCK_PACKET_TYPE_M_DIO] = QUICK6_PACKET_CRITICAL;
+          quick6_packet_criticality_others[HCK_PACKET_TYPE_M_DIO] = QUICK6_PACKET_CRITICAL;
         } else {
-          quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_M_DIO] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
-          quick6_offset_upper_bound_others[HCK_PACKET_TYPE_M_DIO] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+          quick6_packet_criticality_parent[HCK_PACKET_TYPE_M_DIO] = QUICK6_PACKET_NON_CRITICAL;
+          quick6_packet_criticality_others[HCK_PACKET_TYPE_M_DIO] = QUICK6_PACKET_NON_CRITICAL;
         }
         /* HCK_PACKET_TYPE_U_DIO */
-        quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_U_DIO] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
-        quick6_offset_upper_bound_others[HCK_PACKET_TYPE_U_DIO] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+        quick6_packet_criticality_parent[HCK_PACKET_TYPE_U_DIO] = QUICK6_PACKET_NON_CRITICAL;
+        quick6_packet_criticality_others[HCK_PACKET_TYPE_U_DIO] = QUICK6_PACKET_NON_CRITICAL;
         /* HCK_PACKET_TYPE_DAO */
         if(hck_formation_bootstrap_state < HCK_BOOTSTRAP_STATE_3_JOINED_NODE) {
-          quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_DAO] = QUICK6_OFFSET_UPPER_BOUND_CRITICAL;
-          quick6_offset_upper_bound_others[HCK_PACKET_TYPE_DAO] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+          quick6_packet_criticality_parent[HCK_PACKET_TYPE_DAO] = QUICK6_PACKET_CRITICAL;
+          quick6_packet_criticality_others[HCK_PACKET_TYPE_DAO] = QUICK6_PACKET_NON_CRITICAL;
         } else {
-          quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_DAO] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
-          quick6_offset_upper_bound_others[HCK_PACKET_TYPE_DAO] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+          quick6_packet_criticality_parent[HCK_PACKET_TYPE_DAO] = QUICK6_PACKET_NON_CRITICAL;
+          quick6_packet_criticality_others[HCK_PACKET_TYPE_DAO] = QUICK6_PACKET_NON_CRITICAL;
         }
 #if HCK_MOD_RPL_CODE_NO_PATH_DAO
         /* HCK_PACKET_TYPE_NP_DAO */
-        quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_NP_DAO] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
-        quick6_offset_upper_bound_others[HCK_PACKET_TYPE_NP_DAO] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+        quick6_packet_criticality_parent[HCK_PACKET_TYPE_NP_DAO] = QUICK6_PACKET_NON_CRITICAL;
+        quick6_packet_criticality_others[HCK_PACKET_TYPE_NP_DAO] = QUICK6_PACKET_NON_CRITICAL;
 #endif
         /* HCK_PACKET_TYPE_DAOA */
-        quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_DAOA] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
-        quick6_offset_upper_bound_others[HCK_PACKET_TYPE_DAOA] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+        quick6_packet_criticality_parent[HCK_PACKET_TYPE_DAOA] = QUICK6_PACKET_NON_CRITICAL;
+        quick6_packet_criticality_others[HCK_PACKET_TYPE_DAOA] = QUICK6_PACKET_NON_CRITICAL;
         /* HCK_PACKET_TYPE_DATA */
-        quick6_offset_upper_bound_parent[HCK_PACKET_TYPE_DATA] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
-        quick6_offset_upper_bound_others[HCK_PACKET_TYPE_DATA] = QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL;
+        quick6_packet_criticality_parent[HCK_PACKET_TYPE_DATA] = QUICK6_PACKET_NON_CRITICAL;
+        quick6_packet_criticality_others[HCK_PACKET_TYPE_DATA] = QUICK6_PACKET_NON_CRITICAL;
       }
-#endif /* WITH_QUICK6 && QUICK6_OFFSET_CRITICALITY_BASED_PRIORITIZATION */
+#endif /* WITH_QUICK6 && QUICK6_PRIORITIZATION_CRITICALITY_BASED */
 
+#if WITH_QUICK6 && QUICK6_CRITICALITY_BASED_PACKET_SELECTION
+      if(current_link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
+        /* Get a packet ready to be sent */
+        current_packet = quick6_tsch_queue_get_earliest_critical_packet_and_nbr(current_link, &current_neighbor);
+      } else {
+        /* Get a packet ready to be sent */
+        current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+      }
+#else
       /* Get a packet ready to be sent */
       current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+#endif
 
 #endif /* WITH_TSCH_DEFAULT_BURST_TRANSMISSION && TSCH_DBT_HOLD_CURRENT_NBR */
 
@@ -3740,16 +3773,36 @@ PT_THREAD(tsch_slot_operation(struct rtimer *t, void *ptr))
         update_link_backoff(current_link);
 
         current_link = backup_link;
+#if WITH_QUICK6 && QUICK6_CRITICALITY_BASED_PACKET_SELECTION
+        if(current_link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
+          /* Get a packet ready to be sent */
+          current_packet = quick6_tsch_queue_get_earliest_critical_packet_and_nbr(current_link, &current_neighbor);
+        } else {
+          /* Get a packet ready to be sent */
+          current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+        }
+#else
         /* Get a packet ready to be sent */
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+#endif
       }
 #else /* HCK_MOD_TSCH_APPLY_LATEST_CONTIKI */
       /* There is no packet to send, and this link does not have Rx flag. Instead of doing
        * nothing, switch to the backup link (has Rx flag) if any. */
       if(current_packet == NULL && !(current_link->link_options & LINK_OPTION_RX) && backup_link != NULL) {
         current_link = backup_link;
+#if WITH_QUICK6 && QUICK6_CRITICALITY_BASED_PACKET_SELECTION
+        if(current_link->slotframe_handle == QUICK6_SLOTFRAME_HANDLE) {
+          /* Get a packet ready to be sent */
+          current_packet = quick6_tsch_queue_get_earliest_critical_packet_and_nbr(current_link, &current_neighbor);
+        } else {
+          /* Get a packet ready to be sent */
+          current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+        }
+#else
         /* Get a packet ready to be sent */
         current_packet = get_packet_and_neighbor_for_link(current_link, &current_neighbor);
+#endif
       }
 
 #if WITH_OST

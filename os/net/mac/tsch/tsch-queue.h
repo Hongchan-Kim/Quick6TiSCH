@@ -78,6 +78,10 @@ struct tsch_neighbor *tsch_queue_get_nbr_from_id(const uint16_t id);
 void ost_update_N_of_packets_in_queue(const linkaddr_t *lladdr, uint16_t updated_N);
 #endif
 
+#if QUICK6_CRITICALITY_BASED_PACKET_SELECTION
+struct tsch_packet * quick6_tsch_queue_get_earliest_critical_packet_and_nbr(struct tsch_link *link, struct tsch_neighbor **n);
+#endif
+
 #if WITH_QUICK6 && QUICK6_PER_SLOTFRAME_BACKOFF
 int quick6_tsch_queue_cssf_backoff_expired(const struct tsch_neighbor *n);
 void quick6_tsch_queue_cssf_backoff_reset(struct tsch_neighbor *n);

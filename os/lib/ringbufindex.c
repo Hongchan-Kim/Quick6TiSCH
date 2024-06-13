@@ -45,6 +45,19 @@
 #include <string.h>
 #include "lib/ringbufindex.h"
 
+#if WITH_QUICK6 && QUICK6_CRITICALITY_BASED_PACKET_SELECTION
+/* Shift get_ptr of ring buffer */
+int
+ringbufindex_shift_get_ptr(struct ringbufindex *r, int shift)
+{
+  int new_get_ptr;
+
+  r->get_ptr = (r->get_ptr + shift) & r->mask;
+  new_get_ptr = r->get_ptr;
+  return new_get_ptr;
+}
+#endif
+
 /* Initialize a ring buffer. The size must be a power of two */
 void
 ringbufindex_init(struct ringbufindex *r, uint8_t size)

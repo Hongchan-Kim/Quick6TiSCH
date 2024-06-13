@@ -251,6 +251,11 @@ extern struct tsch_asn_t dra_current_asn;
 extern uint64_t dra_lastly_scheduled_asfn;
 #endif
 
+#if WITH_QUICK6 && QUICK6_PRIORITIZATION_CRITICALITY_BASED
+extern enum QUICK6_PACKET_CRITICALITY quick6_packet_criticality_parent[HCK_PACKET_TYPE_NULL];
+extern enum QUICK6_PACKET_CRITICALITY quick6_packet_criticality_others[HCK_PACKET_TYPE_NULL];
+#endif
+
 #if WITH_ALICE
 #ifdef ALICE_TIME_VARYING_SCHEDULING
 /* ALICE: ASN at the start of the ongoing slot operation. */

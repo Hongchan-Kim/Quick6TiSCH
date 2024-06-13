@@ -116,8 +116,9 @@ struct tsch_log_t {
       uint8_t trgb_log_tx_parent_id;
 #endif
 #if WITH_QUICK6 && QUICK6_LOG
+      uint8_t quick6_log_tx_criticality;
       uint8_t quick6_log_tx_selected_offset;
-      uint8_t quick6_log_tx_offset_upper_bound;
+      //uint8_t quick6_log_tx_offset_upper_bound;
       uint8_t quick6_log_postponement_count;
       uint8_t quick6_log_collision_count;
       uint8_t quick6_log_noack_count;

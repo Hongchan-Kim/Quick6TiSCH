@@ -109,6 +109,10 @@ enum QUICK6_OFFSET {
   QUICK6_OFFSET_4,   // 4
   QUICK6_OFFSET_NULL // 5
 };
+enum QUICK6_PACKET_CRITICALITY {
+  QUICK6_PACKET_NON_CRITICAL,   // 0 
+  QUICK6_PACKET_CRITICAL        // 1
+};
 #endif
 
 /********** Data types **********/
@@ -180,7 +184,8 @@ struct tsch_packet {
 #endif
 
 #if WITH_QUICK6
-  uint8_t quick6_packet_offset_upper_bound;
+  uint8_t quick6_packet_criticality;
+  //uint8_t quick6_packet_offset_upper_bound;
   uint8_t quick6_packet_postponement_count;
   uint8_t quick6_packet_collision_count;
   uint8_t quick6_packet_noack_count;

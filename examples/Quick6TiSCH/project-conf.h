@@ -487,7 +487,7 @@
 /***************************************************************
  * Quick6TiSCH implementation - WITH_QUICK6
  ****************************************************************/
-#define WITH_QUICK6                                         0 /* HCKIM-Eval */
+#define WITH_QUICK6                                         1 /* HCKIM-Eval */
 #if WITH_QUICK6
 #define QUICK6_LOG                                          1
 #define QUICK6_DBG                                          0 /* TODO: further optimization */
@@ -503,26 +503,28 @@
 #define QUICK6_TIMING_RX_OFFSET_RIGHT                       2900 /* 1300 ~ 4200, 500 right margin from the tx timing */
 #define QUICK6_TIMING_INTER_OFFSET_INTERVAL                 600
 
-/* Quick6TiSCH offset assignment policy - HCKIM-Eval */
-/* Baseline: Simple random offset assignment */
-/* Postponement count-based prioritization */
-#define QUICK6_OFFSET_POSTPONEMENT_BASED_PRIORITIZATION     0
-#define QUICK6_OFFSET_POSTPONEMENT_THRESH                   (TSCH_MAC_MAX_FRAME_RETRIES + 1)
-#define QUICK6_OFFSET_POSTPONEMENT_SCALING_FACTOR           1 /* HCKIM-Eval */
 /* Packet criticality-based prioritization */
-#define QUICK6_OFFSET_CRITICALITY_BASED_PRIORITIZATION      0
-#define QUICK6_OFFSET_EB_DIO_CRITICAL_THRESH                2 /* Up to two packets */ /* HCKIM-Eval */
-#define QUICK6_OFFSET_UPPER_BOUND_NON_CRITICAL              (QUICK6_NUM_OF_OFFSETS - 1) /* 0, 1, 2, 3, 4 */
-#define QUICK6_OFFSET_UPPER_BOUND_CRITICAL                  2 /* 0, 1, 2 */ /* HCKIM-Eval */
+#define QUICK6_PRIORITIZATION_CRITICALITY_BASED             1 /* HCKIM-Eval */
+#define QUICK6_PRIORITIZATION_EB_DIO_CRITICAL_THRESH        2 /* Up to two packets */ /* HCKIM-Eval */
+//
+#define QUICK6_PRIORITIZATION_CRITICALITY_BASED_TWO_TIER    0 /* HCKIM-Eval */
+#define QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM      1 /* HCKIM-Eval */
+//
+#define QUICK6_CRITICALITY_BASED_PACKET_SELECTION           1 /* HCKIM-Eval */
+
+/* Packet postponement-based prioritization */
+#define QUICK6_PRIORITIZATION_POSTPONEMENT_BASED            1
+#define QUICK6_POSTPONEMENT_BASED_THRESH                    (TSCH_MAC_MAX_FRAME_RETRIES + 1)
+#define QUICK6_POSTPONEMENT_BASED_SCALING_FACTOR            1 /* HCKIM-Eval */
 
 /* Quick6TiSCH supplementary features - HCKIM-Eval */
-#define QUICK6_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS    1
-#define QUICK6_BACKOFF_FOR_BCAST_PACKETS                     1 /* Backoff policy for postponed packets, QUICK-TODO: Need to distinguish EB/broadcast nbrs */
-#define QUICK6_TSCH_MAC_BCAST_MAX_BE                         5
-#define QUICK6_PER_SLOTFRAME_BACKOFF                         1 /* Slotframe level backoff for contention mitigation */
-#define QUICK6_PER_SLOTFRAME_BACKOFF_MIN_BE                  1 /* Slotframe level backoff configuration */
-#define QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE                  5 /* Slotframe level backoff configuration */
-#define QUICK6_DUPLICATE_PACKET_MANAGEMENT                   1 /* Replace duplicate packet within neighbor queue, while maintaining the position within the ringbuf.*/
+#define QUICK6_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS   1
+#define QUICK6_BACKOFF_FOR_BCAST_PACKETS                    1 /* Backoff policy for postponed packets, QUICK-TODO: Need to distinguish EB/broadcast nbrs */
+#define QUICK6_TSCH_MAC_BCAST_MAX_BE                        5
+#define QUICK6_PER_SLOTFRAME_BACKOFF                        1 /* Slotframe level backoff for contention mitigation */
+#define QUICK6_PER_SLOTFRAME_BACKOFF_MIN_BE                 1 /* Slotframe level backoff configuration */
+#define QUICK6_PER_SLOTFRAME_BACKOFF_MAX_BE                 5 /* Slotframe level backoff configuration */
+#define QUICK6_DUPLICATE_PACKET_MANAGEMENT                  1 /* Replace duplicate packet within neighbor queue, while maintaining the position within the ringbuf.*/
 
 #endif /* WITH_QUICK6 */
 
