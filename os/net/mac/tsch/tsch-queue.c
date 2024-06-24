@@ -1368,7 +1368,7 @@ tsch_queue_get_packet_for_trgb(struct tsch_neighbor **n, struct tsch_link *link,
       /* For broadcast neighbor or neighbors without tx_links */
       if(curr_nbr->is_broadcast || (!curr_nbr->is_broadcast && curr_nbr->tx_links_count == 0)) {
         get_index = ringbufindex_peek_get(&curr_nbr->tx_ringbuf);
-        if(get_index != -1) {
+        if(get_index != -1 && tsch_queue_backoff_expired(curr_nbr)) {
           uint8_t trgb_current_packet_type = curr_nbr->tx_array[get_index]->hck_packet_type;
           if(trgb_current_cell == TRGB_CELL_RED) { /* Get packet for TRGB RED cell */
             if((trgb_current_packet_type == HCK_PACKET_TYPE_M_DIO)

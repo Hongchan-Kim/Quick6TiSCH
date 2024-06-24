@@ -56,7 +56,7 @@
 #define HCK_LOG_TSCH_PACKET_ADD_REMOVE                      1
 #define HCK_LOG_TSCH_SLOT                                   1
 #define HCK_LOG_TSCH_SLOT_APP_SEQNO                         1
-#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      0 /* HCKIM-Eval */
+#define HCK_LOG_TSCH_SLOT_RX_OPERATION                      0
 //
 #define SIMPLE_ENERGEST_CONF_PERIOD                         (1 * 60 * CLOCK_SECOND)
 #define RPL_FIRST_MEASURE_PERIOD                            (1 * 60)
@@ -100,7 +100,7 @@
 #define IOTLAB_GRENOBLE_3_CORNER                            13 /* 3 nodes */
 
 //
-#define IOTLAB_SITE                                         IOTLAB_LILLE_83_CORNER /* HCKIM-Eval */
+#define IOTLAB_SITE                                         IOTLAB_LILLE_83_CORNER
 //
 #if IOTLAB_SITE == IOTLAB_LILLE_83_CORNER
 #define NODE_NUM                                            83
@@ -399,7 +399,7 @@
  * Prerequisite modifications of Contiki-NG for network formation acceleration
  * - Configurations that must be fixed regardless of definitions above
  ****************************************************************/
-#define RPL_CONF_DIS_SEND                                   1  /* HCKIM-Eval Turn on/off DIS */
+#define RPL_CONF_DIS_SEND                                   1  /* Turn on/off DIS */
 #undef RPL_CONF_WITH_PROBING
 #define RPL_CONF_WITH_PROBING                               0 /* Turn on/off RPL probing */
 //
@@ -416,14 +416,14 @@
 #define HCK_MOD_TSCH_PIGGYBACKING_EB_IE_32BITS              1
 //
 #undef TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
-#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   29 /* HCKIM-Eval - 11, 29, 47, 67, 83, 101 */
+#define TSCH_SCHEDULE_CONF_DEFAULT_LENGTH                   101 /* 11, 29, 47, 67, 83, 101 */
 /* Prime number list
  * 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 
  * 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 
  * 73, 79, 83, 89, 97, 101
 */
 #undef TSCH_CONF_MAX_EB_PERIOD
-#define TSCH_CONF_MAX_EB_PERIOD                             (16 * CLOCK_SECOND) /* HCKIM-Eval */
+#define TSCH_CONF_MAX_EB_PERIOD                             (16 * CLOCK_SECOND)
 
 /***************************************************************
  * Prerequisite/common logging messages for network formation acceleration
@@ -448,7 +448,7 @@
 /***************************************************************
  * Dynamic resource allocation implementation - WITH_DRA
  ****************************************************************/
-#define WITH_DRA                                            0 /* HCKIM-Eval */
+#define WITH_DRA                                            0
 #if WITH_DRA
 #define DRA_LOG                                             1
 #define DRA_DBG                                             0
@@ -464,7 +464,7 @@
 /***************************************************************
  * TRGB implementation - WITH_TRGB
  ****************************************************************/
-#define WITH_TRGB                                           0 /* HCKIM-Eval */
+#define WITH_TRGB                                           0
 #if WITH_TRGB
 #define TRGB_LOG                                            1
 #define TRGB_DBG                                            0
@@ -473,7 +473,7 @@
 #define TRGB_SLOTFRAME_LENGTH                               TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
 
 #define TRGB_ROOT_ID                                        1
-#define TRGB_NUM_OF_CHANNEL                                 16 /* HCKIM-Eval - 4, 16*/
+#define TRGB_NUM_OF_CHANNEL                                 16 /* 4, 16 */
 #undef TSCH_CONF_DEFAULT_HOPPING_SEQUENCE
 #if TRGB_NUM_OF_CHANNEL == 4
 #define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                  TSCH_HOPPING_SEQUENCE_4_4
@@ -481,16 +481,16 @@
 #define TSCH_CONF_DEFAULT_HOPPING_SEQUENCE                  TSCH_HOPPING_SEQUENCE_16_16
 #endif
 #undef TSCH_CONF_MAX_EB_PERIOD
-#define TSCH_CONF_MAX_EB_PERIOD                             (4 * CLOCK_SECOND) /* HCKIM-Eval (16 * CLOCK_SECOND) */
+#define TSCH_CONF_MAX_EB_PERIOD                             (4 * CLOCK_SECOND) /* (16 * CLOCK_SECOND) */
 #endif /* WITH_TRGB */
 
 /***************************************************************
  * Quick6TiSCH implementation - WITH_QUICK6
  ****************************************************************/
-#define WITH_QUICK6                                         1 /* HCKIM-Eval */
+#define WITH_QUICK6                                         0
 #if WITH_QUICK6
 #define QUICK6_LOG                                          1
-#define NEW_QUICK6_DBG                                          1 /* TODO: further optimization */
+#define NEW_QUICK6_DBG                                      0 /* TODO: further optimization */
 #define QUICK6_DBG                                          0 /* TODO: further optimization */
 
 #define QUICK6_SLOTFRAME_LENGTH                             TSCH_SCHEDULE_CONF_DEFAULT_LENGTH
@@ -505,19 +505,17 @@
 #define QUICK6_TIMING_INTER_OFFSET_INTERVAL                 600
 
 /* Packet criticality-based prioritization */
-#define QUICK6_PRIORITIZATION_CRITICALITY_BASED             1 /* HCKIM-Eval */
-#define QUICK6_PRIORITIZATION_EB_DIO_CRITICAL_THRESH        2 /* Up to two packets */ /* HCKIM-Eval */
-//
-#define QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM      1 /* HCKIM-Eval */
-//
-#define QUICK6_CRITICALITY_BASED_PACKET_SELECTION           1 /* HCKIM-Eval */
+#define QUICK6_PRIORITIZATION_CRITICALITY_BASED             1
+#define QUICK6_PRIORITIZATION_EB_DIO_CRITICAL_THRESH        2 /* Up to two packets */
+#define QUICK6_PRIORITIZATION_CRITICALITY_BASED_RANDOM      1
+#define QUICK6_CRITICALITY_BASED_PACKET_SELECTION           1
 
 /* Packet postponement-based prioritization */
-#define QUICK6_PRIORITIZATION_POSTPONEMENT_BASED            0
+#define QUICK6_PRIORITIZATION_POSTPONEMENT_BASED            1
 #define QUICK6_POSTPONEMENT_BASED_THRESH                    (TSCH_MAC_MAX_FRAME_RETRIES + 1)
-#define QUICK6_POSTPONEMENT_BASED_SCALING_FACTOR            1 /* HCKIM-Eval */
+#define QUICK6_POSTPONEMENT_BASED_SCALING_FACTOR            1
 
-/* Quick6TiSCH supplementary features - HCKIM-Eval */
+/* Quick6TiSCH supplementary features */
 #define QUICK6_NO_TX_COUNT_INCREASE_FOR_POSTPONED_PACKETS   1
 #define QUICK6_BACKOFF_FOR_BCAST_PACKETS                    1 /* Backoff policy for postponed packets, QUICK-TODO: Need to distinguish EB/broadcast nbrs */
 #define QUICK6_TSCH_MAC_BCAST_MAX_BE                        5

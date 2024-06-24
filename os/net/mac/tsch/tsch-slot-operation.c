@@ -1444,7 +1444,6 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
 
   /* Is this a Tx link? */
   if(link->link_options & LINK_OPTION_TX) {
-    /* is it for advertisement of EB? */
 
 #if WITH_TRGB
     if(link->slotframe_handle == TRGB_SLOTFRAME_HANDLE) { /* Common shared cell only */
@@ -1526,6 +1525,7 @@ get_packet_and_neighbor_for_link(struct tsch_link *link, struct tsch_neighbor **
 
 #else /* WITH_TRGB */
 
+    /* is it for advertisement of EB? */
     if(link->link_type == LINK_TYPE_ADVERTISING || link->link_type == LINK_TYPE_ADVERTISING_ONLY) {
       /* fetch EB packets */
       n = n_eb;
@@ -1801,6 +1801,15 @@ PT_THREAD(tsch_tx_slot(struct pt *pt, struct rtimer *t))
             quick6_offset_upper_bound = quick6_offset_upper_bound - quick6_delta;
           }
           quick6_tx_current_offset = random_rand() % (quick6_offset_upper_bound + 1); /* 0, ..., quick6_offset_upper_bound */
+#if NEW_QUICK6_DBG
+          TSCH_LOG_ADD(tsch_log_message,
+              snprintf(log->message, sizeof(log->message),
+              "Q6 P4 tx off %u %u %u %u %u", quick6_tx_current_offset, 
+                                             current_packet->hck_packet_type, 
+                                             current_packet->quick6_packet_criticality, 
+                                             quick6_offset_upper_bound,
+                                             quick6_delta));
+#endif
 #else /* QUICK6_PRIORITIZATION_POSTPONEMENT_BASED */
 #if NEW_QUICK6_DBG
           TSCH_LOG_ADD(tsch_log_message,
