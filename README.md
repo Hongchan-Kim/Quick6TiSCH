@@ -1,3 +1,21 @@
+Quick6TiSCH
+============================
+
+This is the open-source code of "Quick6TiSCH: Accelerating Formation of 6TiSCH Networks with TSCH and RPL," to appear in IEEE MASS 2024.
+Quick6TiSCH is implemented on Contiki-NG.
+
+When using this source code, please cite the following paper:
+
+Hongchan Kim, Geonhee Lee, Juhun Shin, Jeongyeup Paek, and Saewoong Bahk, "Quick6TiSCH: Accelerating Formation of 6TiSCH Networks with TSCH and RPL," to appear in IEEE MASS 2024.
+
+Main application files can be found in examples/Quick6TiSCH/.
+1. udp-server.c contains operations of 6TiSCH/TSCH/RPL root node.
+2. udp-client.c contains operations of non-root node.
+3. project-conf.h introduces various experimental settings and parameters.
+4. node-info.[h, c] contain topology configuration.
+
+----------------------------
+
 <img src="https://github.com/contiki-ng/contiki-ng.github.io/blob/master/images/logo/Contiki_logo_2RGB.png" alt="Logo" width="256">
 
 # Contiki-NG: The OS for Next Generation IoT Devices
